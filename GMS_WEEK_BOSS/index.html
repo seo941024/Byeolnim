@@ -10,8 +10,8 @@
 
 <!-- ═══════════ HEADER ═══════════ -->
 <header class="header">
-  <div class="header__logo">
-    <span class="header__maple"></span>
+  <div class="header__logo" id="headerLogo" style="cursor:pointer">
+    <img src="images/etc/MapleStory_logo.png" class="header__maple-img" alt="">
     <span class="header__title">Byeolnim.app</span>
   </div>
   <div class="header__center">
@@ -58,27 +58,31 @@
         <span class="sb-weekmeso__label">전체 주간 획득 메소</span>
         <span class="sb-weekmeso__val" id="totalWeekMeso">0 메소</span>
       </div>
+      <div class="sb-weekmeso">
+        <span class="sb-weekmeso__label">전체 월간 획득 메소</span>
+        <span class="sb-weekmeso__val" id="totalMonthMeso">0 메소</span>
+      </div>
     </div>
 
     <!-- 네비게이션 -->
     <nav class="sb-nav">
       <button class="sb-nav__item active" data-sec="charinfo">
-        <span class="sb-nav__icon sb-nav__icon--char"></span><span>캐릭터 정보</span>
+        <img class="sb-nav__icon" src="images/icons/info.webp" alt="" onerror="this.style.display='none'"><span>캐릭터 정보</span>
       </button>
       <button class="sb-nav__item" data-sec="boss">
-        <span class="sb-nav__icon sb-nav__icon--boss"></span><span>주보 트래커</span>
+        <img class="sb-nav__icon" src="images/icons/weekly.webp" alt=""><span>주간보스 수익 계산기</span>
       </button>
       <button class="sb-nav__item" data-sec="hexa">
-        <span class="sb-nav__icon sb-nav__icon--hexa"></span><span>헥사 계산기</span>
+        <img class="sb-nav__icon" src="images/icons/fragment.webp" alt=""><span>헥사 계산기</span>
       </button>
       <button class="sb-nav__item" data-sec="liberation">
-        <span class="sb-nav__icon sb-nav__icon--liberation"></span><span>해방 계산기</span>
+        <img class="sb-nav__icon" src="images/icons/Destiny.webp" alt=""><span>해방 계산기</span>
       </button>
       <button class="sb-nav__item" data-sec="starforce">
-        <span class="sb-nav__icon sb-nav__icon--starforce"></span><span>스타포스</span>
+        <img class="sb-nav__icon" src="images/icons/mose.webp" alt="" onerror="this.style.display='none'"><span>스타포스 시뮬레이터</span>
       </button>
       <button class="sb-nav__item" data-sec="bosshp">
-        <span class="sb-nav__icon sb-nav__icon--hp"></span><span>보스 HP 테이블</span>
+        <img class="sb-nav__icon" src="images/icons/boss.webp" alt="" onerror="this.style.display='none'"><span>보스 HP 테이블</span>
       </button>
     </nav>
   </aside>
@@ -112,6 +116,10 @@
           <span class="boss-total__label">이번 주 예상 수익</span>
           <span class="boss-total__val" id="weeklyTotal">0 메소</span>
         </div>
+        <div class="boss-total boss-total--month">
+          <span class="boss-total__label">이번 달 예상 수익 <span class="boss-total__sub" id="monthResetCount"></span></span>
+          <span class="boss-total__val boss-total__val--month" id="monthlyTotal">0 메소</span>
+        </div>
       </div>
     </section>
 
@@ -125,32 +133,26 @@
           <div class="card__title">보유 현황</div>
           <div class="hexa-field-group">
             <div class="hexa-row">
-              <span class="hexa-label">보유 솔 에르다</span>
-              <input class="inp" id="hxHaveSE" type="number" value="0" min="0" placeholder="0" />
+              <span class="hexa-label"><img src="images/skill/Common/sol_erda.webp" class="hx-node-icon" alt="">보유 솔 에르다</span>
+              <input class="inp" id="hxHaveSE" type="number" value="0" min="0" max="20" placeholder="0" />
             </div>
             <div class="hexa-row">
-              <span class="hexa-label">보유 솔 에르다 조각</span>
+              <span class="hexa-label"><img src="images/skill/Common/fragment.webp" class="hx-node-icon" alt="">보유 솔 에르다 조각</span>
               <input class="inp" id="hxHaveSEF" type="number" value="0" min="0" placeholder="0" />
             </div>
           </div>
 
-          <div class="card__title mt16">오리진 스킬 (최대 Lv.30)</div>
-          <div class="hexa-field-group">
-            <div class="hexa-row">
-              <span class="hexa-label">현재 레벨</span>
-              <input class="inp" id="hxOriginCur" type="number" value="0" min="0" max="30" />
-            </div>
-            <div class="hexa-row">
-              <span class="hexa-label">목표 레벨</span>
-              <input class="inp" id="hxOriginTgt" type="number" value="30" min="1" max="30" />
-            </div>
-          </div>
+          <div class="card__title mt16">스킬 코어 (최대 Lv.30)</div>
+          <div id="hxSkillList" class="hexa-support-list"></div>
 
-          <div class="card__title mt16">서포트 스킬 (마스터리·강화·부스트, 최대 Lv.10)</div>
-          <div id="hxSupportList" class="hexa-support-list">
-            <!-- JS 렌더 -->
-          </div>
-          <button class="sbtn sbtn--ghost mt8" id="hxAddSupport">+ 스킬 추가</button>
+          <div class="card__title mt16">마스터리 코어 (최대 Lv.30)</div>
+          <div id="hxMasteryList" class="hexa-support-list"></div>
+
+          <div class="card__title mt16">강화 코어 (최대 Lv.30)</div>
+          <div id="hxBoostList" class="hexa-support-list"></div>
+
+          <div class="card__title mt16">공용 코어 (최대 Lv.30)</div>
+          <div id="hxCommonList" class="hexa-support-list"></div>
 
           <button class="sbtn sbtn--primary mt16 w100" id="hxCalc">계산하기</button>
         </div>
@@ -293,9 +295,49 @@
   </div>
 </div>
 
+<canvas id="starCanvas"></canvas>
+<img id="customCursor" src="images/icons/corsor.gif" alt="" draggable="false" />
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="data.js"></script>
 <script src="app.js"></script>
 <script src="calculators.js"></script>
+<script>
+(function(){
+  const cvs=document.getElementById('starCanvas');
+  const ctx=cvs.getContext('2d');
+  let stars=[];
+  function resize(){cvs.width=innerWidth;cvs.height=innerHeight;}
+  function init(){
+    const n=Math.floor(cvs.width*cvs.height/1800);
+    stars=Array.from({length:n},(_,i)=>{
+      const big=i<n*0.04; // 4% = 큰별
+      return {
+        x:Math.random()*cvs.width, y:Math.random()*cvs.height,
+        r:big?Math.random()*1.8+1:Math.random()*1.1+0.2,
+        a:Math.random(), da:(Math.random()-.5)*(big?.004:.009),
+        minA:big?.3:.05, maxA:big?.95:1,
+        color:Math.random()>.65?'#f6c744':'#ffffff'
+      };
+    });
+  }
+  function draw(){
+    ctx.clearRect(0,0,cvs.width,cvs.height);
+    stars.forEach(s=>{
+      s.a+=s.da;
+      if(s.a>=s.maxA){s.a=s.maxA;s.da=-Math.abs(s.da);}
+      if(s.a<=s.minA){s.a=s.minA;s.da=Math.abs(s.da);}
+      ctx.globalAlpha=s.a;
+      ctx.fillStyle=s.color;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize();init();draw();
+  window.addEventListener('resize',()=>{resize();init();});
+})();
+const _cur=document.getElementById('customCursor');
+document.addEventListener('mousemove',e=>{_cur.style.left=e.clientX+'px';_cur.style.top=e.clientY+'px';});
+</script>
 </body>
 </html>

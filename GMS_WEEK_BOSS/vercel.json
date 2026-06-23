@@ -3,7 +3,7 @@
   "buildCommand": null,
   "outputDirectory": ".",
   "functions": {
-    "api/*.js": { "runtime": "nodejs20.x" }
+    "api/*.js": { "runtime": "@vercel/node@5" }
   },
   "crons": [
     { "path": "/api/collect", "schedule": "0 0 * * *" }

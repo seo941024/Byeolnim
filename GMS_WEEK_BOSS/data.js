@@ -60,7 +60,7 @@ const JOB_LIST = [
   {name:'Kaiser'},{name:'Kain'},{name:'Cadena'},{name:'Angelic Buster'},
   {name:'Hayato'},{name:'Kanna'},
   {name:'Illium'},{name:'Ark'},{name:'Adele'},{name:'Khali'},
-  {name:'Hoyoung'},{name:'Lara'},
+  {name:'Hoyoung'},{name:'Lara'},{name:'Ren'},
   {name:'Zero'},{name:'Kinesis'},{name:'Lynn'},
   {name:'Erel Light'},{name:'Sia Astelle'},
 ];
@@ -69,16 +69,107 @@ const JOB_LIST = [
    HEXA Matrix 솔 에르다 비용 (근삿값 — 게임 패치로 변경될 수 있음)
    [SE(솔 에르다), SEF(솔 에르다 조각)]  레벨 n→n+1 비용
 ══════════════════════════════════════════════ */
-// 오리진 스킬 (최대 30레벨)
-const HEXA_ORIGIN_COSTS = [
-  [0,10],[0,20],[1,20],[1,30],[2,30],[2,40],[3,40],[3,50],[4,60],[5,70],
-  [6,80],[7,90],[8,100],[9,110],[10,130],[12,150],[14,170],[16,190],[18,220],[20,250],
-  [22,280],[25,310],[28,350],[31,390],[35,430],[39,480],[43,530],[48,590],[53,650],[60,720],
+// 스킬 코어 (오리진) lv 0→30
+const HEXA_SKILL_COSTS = [
+  [5,100],[1,30],[1,35],[1,40],[2,45],[2,50],[2,55],[3,60],[3,65],[10,200],
+  [3,80],[3,90],[4,100],[4,110],[4,120],[4,130],[4,140],[4,150],[5,160],[15,350],
+  [5,170],[5,180],[5,190],[5,200],[5,210],[6,220],[6,230],[6,240],[7,250],[20,500],
 ];
-// 마스터리 / 강화 / 부스트 코어 (최대 10레벨, 동일 비용표 사용)
-const HEXA_SUPPORT_COSTS = [
-  [0,5],[0,10],[1,15],[2,25],[3,35],[4,45],[5,60],[6,80],[7,100],[8,130],
+// 마스터리 코어 lv 0→30
+const HEXA_MASTERY_COSTS = [
+  [3,50],[1,15],[1,18],[1,20],[1,23],[1,25],[1,28],[2,30],[2,33],[5,100],
+  [2,40],[2,45],[2,50],[2,55],[2,60],[2,65],[2,70],[2,75],[3,80],[8,175],
+  [3,85],[3,90],[3,95],[3,100],[3,105],[3,110],[3,115],[3,120],[4,125],[10,250],
 ];
+// 강화 코어 lv 0→30
+const HEXA_BOOST_COSTS = [
+  [4,75],[1,23],[1,27],[1,30],[2,34],[2,38],[2,42],[3,45],[3,49],[8,150],
+  [3,60],[3,68],[3,75],[3,83],[3,90],[3,98],[3,105],[3,113],[4,120],[12,263],
+  [4,128],[4,135],[4,143],[4,150],[4,158],[5,165],[5,173],[5,180],[6,188],[15,375],
+];
+// 공용 코어 (Sol Janus / Sol Hecate) lv 0→30
+const HEXA_COMMON_COSTS = [
+  [7,125],[2,38],[2,44],[2,50],[3,57],[3,63],[3,69],[5,75],[5,82],[14,300],
+  [5,110],[5,124],[6,138],[6,152],[6,165],[6,179],[6,193],[6,207],[7,220],[17,525],
+  [7,234],[7,248],[7,262],[7,275],[7,289],[9,303],[9,317],[9,330],[10,344],[20,750],
+];
+// 하위 호환용 alias
+const HEXA_ORIGIN_COSTS = HEXA_SKILL_COSTS;
+
+/* ══════════════════════════════════════════════
+   직업별 헥사 스킬 데이터
+   folder: images/skill/{folder}/ 안에 1.webp~14.webp 배치
+   skill[0~1]=스킬코어, mastery[0~3]=마스터리, boost[0~3]=강화, common[0~1]=공용
+══════════════════════════════════════════════ */
+const HEXA_JOB_DATA = {
+  /* ── 이미지 폴더가 있는 직업 ── */
+  'Mercedes': {
+    folder:  'Mercedes',
+    skill:   ['스킬 노드 1', '스킬 노드 2'],
+    mastery: ['마스터리 1', '마스터리 2', '마스터리 3', '마스터리 4'],
+    boost:   ['부스트 1', '부스트 2', '부스트 3', '부스트 4'],
+    common:  ['Sol Janus', 'Sol Hecate'],
+  },
+  'Adele': {
+    folder:  'Adele',
+    skill:   ['스킬 노드 1', '스킬 노드 2'],
+    mastery: ['마스터리 1', '마스터리 2', '마스터리 3', '마스터리 4'],
+    boost:   ['부스트 1', '부스트 2', '부스트 3', '부스트 4'],
+    common:  ['Sol Janus', 'Sol Hecate'],
+  },
+  /* ── 이미지 폴더 없는 직업 (이름만 지정, 이미지 추가 시 folder도 설정) ── */
+  'Hero':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Paladin':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Dark Knight':    { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Arch Mage (Fire, Poison)':     { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Arch Mage (Ice, Lightning)':   { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Bishop':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Bowmaster':      { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Marksman':       { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Pathfinder':     { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Night Lord':     { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Shadower':       { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Dual Blade':     { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Buccaneer':      { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Corsair':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Cannoneer':      { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Dawn Warrior':   { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Blaze Wizard':   { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Wind Archer':    { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Night Walker':   { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Thunder Breaker':{ folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Mihile':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Aran':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Evan':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Phantom':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Luminous':       { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Shade':          { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Battle Mage':    { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Wild Hunter':    { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Mechanic':       { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Blaster':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Demon Slayer':   { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Demon Avenger':  { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Xenon':          { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Kaiser':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Kain':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Cadena':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Angelic Buster': { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Hayato':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Kanna':          { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Illium':         { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Ark':            { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Khali':          { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Hoyoung':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Lara':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Ren':            { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Zero':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Kinesis':        { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Lynn':           { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Erel Light':     { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+  'Sia Astelle':    { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] },
+};
+const HEXA_DEFAULT_DATA = { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] };
 
 /* 누적 비용 헬퍼 */
 function hexaCumulative(costTable, fromLv, toLv) {
@@ -149,75 +240,52 @@ const BOSS_HP_TABLE = [
   {name:'노히메',             diff:'노말',     hp:5_000,      lv:140, pdr:100, force:null, ftype:null},
   {name:'아케치',             diff:'노말',     hp:3_040,      lv:140, pdr:300, force:null, ftype:null},
   // ── 스우 ──
-  {name:'스우',               diff:'노말',     hp:8_700,      lv:190, pdr:300, force:null, ftype:null},
-  {name:'스우',               diff:'하드',     hp:15_700,     lv:210, pdr:300, force:null, ftype:null},
-  {name:'스우',               diff:'익스트림', hp:27_900,     lv:250, pdr:380, force:null, ftype:null, nameOverride:'섬멸병기 스우'},
+  {name:'스우',               diff:'노말',     hp:15_700,       lv:190, pdr:300, force:null, ftype:null},
+  {name:'스우',               diff:'하드',     hp:335_000,      lv:210, pdr:300, force:null, ftype:null},
+  {name:'스우',               diff:'익스트림', hp:18_100_000,   lv:285, pdr:380, force:null, ftype:null, nameOverride:'섬멸병기 스우'},
   // ── 데미안 ──
-  {name:'데미안',             diff:'노말',     hp:6_000,      lv:190, pdr:null, force:null, ftype:null},
-  {name:'데미안',             diff:'하드',     hp:12_000,     lv:210, pdr:null, force:null, ftype:null},
+  {name:'데미안',             diff:'노말',     hp:12_000,       lv:190, pdr:300, force:null, ftype:null},
+  {name:'데미안',             diff:'하드',     hp:360_000,      lv:210, pdr:300, force:null, ftype:null},
   // ── 가디언 엔젤 슬라임 ──
-  {name:'가디언 엔젤 슬라임', diff:'노말',     hp:25_000,     lv:210, pdr:null, force:null, ftype:null},
-  {name:'가디언 엔젤 슬라임', diff:'카오스',   hp:50_000,     lv:225, pdr:null, force:null, ftype:null},
+  {name:'가디언 엔젤 슬라임', diff:'노말',     hp:50_000,       lv:210, pdr:300, force:null, ftype:null},
+  {name:'가디언 엔젤 슬라임', diff:'카오스',   hp:900_000,      lv:220, pdr:300, force:null, ftype:null},
   // ── 아케인 포스 보스 ──
-  {name:'루시드',             diff:'이지',     hp:26_700,     lv:220, pdr:null, force:360, ftype:'arc'},
-  {name:'루시드',             diff:'노말',     hp:66_700,     lv:220, pdr:null, force:360, ftype:'arc'},
-  {name:'루시드',             diff:'하드',     hp:120_000,    lv:230, pdr:null, force:360, ftype:'arc'},
-  {name:'윌',                 diff:'이지',     hp:36_000,     lv:235, pdr:null, force:480, ftype:'arc'},
-  {name:'윌',                 diff:'노말',     hp:84_000,     lv:235, pdr:null, force:480, ftype:'arc'},
-  {name:'윌',                 diff:'하드',     hp:168_000,    lv:250, pdr:null, force:480, ftype:'arc'},
-  {name:'더스크',             diff:'노말',     hp:127_500,    lv:245, pdr:300, force:590, ftype:'arc'},
-  {name:'더스크',             diff:'하드',     hp:255_000,    lv:255, pdr:300, force:590, ftype:'arc'},
-  {name:'진 힐라',            diff:'노말',     hp:440_000,    lv:250, pdr:null, force:760, ftype:'arc'},
-  {name:'진 힐라',            diff:'하드',     hp:880_000,    lv:255, pdr:300, force:760, ftype:'arc'},
-  {name:'듄켈',               diff:'노말',     hp:130_000,    lv:255, pdr:300, force:900, ftype:'arc'},
-  {name:'듄켈',               diff:'하드',     hp:260_000,    lv:265, pdr:300, force:900, ftype:'arc'},
-  {name:'검은 마법사',        diff:'하드',     hp:4_725_000,  lv:275, pdr:null, force:1320,ftype:'arc'},
-  {name:'검은 마법사',        diff:'익스트림', hp:9_450_000,  lv:285, pdr:null, force:1320,ftype:'arc'},
+  {name:'루시드',             diff:'이지',     hp:120_000,      lv:230, pdr:300, force:360, ftype:'arc'},
+  {name:'루시드',             diff:'노말',     hp:240_000,      lv:230, pdr:300, force:360, ftype:'arc'},
+  {name:'루시드',             diff:'하드',     hp:1_176_000,    lv:230, pdr:300, force:360, ftype:'arc'},
+  {name:'윌',                 diff:'이지',     hp:168_000,      lv:235, pdr:300, force:560, ftype:'arc'},
+  {name:'윌',                 diff:'노말',     hp:252_000,      lv:250, pdr:300, force:760, ftype:'arc'},
+  {name:'윌',                 diff:'하드',     hp:1_260_000,    lv:250, pdr:300, force:760, ftype:'arc'},
+  {name:'더스크',             diff:'노말',     hp:255_000,      lv:255, pdr:300, force:730, ftype:'arc'},
+  {name:'더스크',             diff:'카오스',   hp:1_275_000,    lv:255, pdr:300, force:730, ftype:'arc'},
+  {name:'진 힐라',            diff:'노말',     hp:880_000,      lv:250, pdr:300, force:820, ftype:'arc'},
+  {name:'진 힐라',            diff:'하드',     hp:1_760_000,    lv:255, pdr:300, force:900, ftype:'arc'},
+  {name:'듄켈',               diff:'노말',     hp:260_000,      lv:265, pdr:300, force:850, ftype:'arc'},
+  {name:'듄켈',               diff:'하드',     hp:1_575_000,    lv:265, pdr:300, force:850, ftype:'arc'},
+  {name:'검은 마법사',        diff:'하드',     hp:4_725_000,    lv:275, pdr:300, force:1320, ftype:'arc'},
+  {name:'검은 마법사',        diff:'익스트림', hp:48_100_000,   lv:280, pdr:300, force:1320, ftype:'arc'},
   // ── 어센틱 포스 보스 ──
-  {name:'선택받은 세렌',               diff:'노말',     hp:1_040_000,  lv:260, pdr:380, force:130, ftype:'auth'},
-  {name:'선택받은 세렌',               diff:'하드',     hp:2_080_000,  lv:270, pdr:380, force:130, ftype:'auth'},
-  {name:'선택받은 세렌',               diff:'익스트림', hp:4_368_000,  lv:285, pdr:380, force:130, ftype:'auth'},
-  {name:'감시자 칼로스',             diff:'이지',     hp:714_000,    lv:270, pdr:380, force:350, ftype:'auth'},
-  {name:'감시자 칼로스',             diff:'노말',     hp:1_606_500,  lv:270, pdr:380, force:350, ftype:'auth'},
-  {name:'감시자 칼로스',             diff:'카오스',   hp:3_570_000,  lv:275, pdr:380, force:350, ftype:'auth'},
-  {name:'감시자 칼로스',             diff:'익스트림', hp:7_140_000,  lv:285, pdr:380, force:350, ftype:'auth'},
-  {name:'최초의 대적자',             diff:'이지',     hp:1_142_200,  lv:270, pdr:380, force:450, ftype:'auth'},
-  {name:'최초의 대적자',             diff:'노말',     hp:2_569_900,  lv:270, pdr:380, force:450, ftype:'auth'},
-  {name:'최초의 대적자',             diff:'하드',     hp:5_710_900,  lv:280, pdr:380, force:450, ftype:'auth'},
-  {name:'최초의 대적자',             diff:'익스트림', hp:11_421_800, lv:290, pdr:380, force:450, ftype:'auth'},
-  {name:'카링',               diff:'이지',     hp:1_842_000,  lv:275, pdr:380, force:530, ftype:'auth'},
-  {name:'카링',               diff:'노말',     hp:4_298_000,  lv:275, pdr:380, force:530, ftype:'auth'},
-  {name:'카링',               diff:'하드',     hp:9_210_000,  lv:280, pdr:380, force:530, ftype:'auth'},
-  {name:'카링',               diff:'익스트림', hp:18_420_000, lv:290, pdr:380, force:530, ftype:'auth'},
-  {name:'찬란한 흉성',               diff:'노말',     hp:16_300_000, lv:280, pdr:380, force:670, ftype:'auth'},
-  {name:'찬란한 흉성',               diff:'하드',     hp:32_600_000, lv:285, pdr:380, force:670, ftype:'auth'},
-  {name:'림보',               diff:'노말',     hp:32_400_000, lv:285, pdr:380, force:770, ftype:'auth'},
-  {name:'림보',               diff:'하드',     hp:64_800_000, lv:290, pdr:380, force:770, ftype:'auth'},
-  {name:'발드릭스',           diff:'노말',     hp:45_300_000, lv:290, pdr:380, force:880, ftype:'auth'},
-  {name:'발드릭스',           diff:'하드',     hp:90_600_000, lv:295, pdr:380, force:880, ftype:'auth'},
-];
-
-/* ══════════════════════════════════════════════
-   포스 (아케인/사크레드) 요구량 & 포뻥
-══════════════════════════════════════════════ */
-const ARCANE_MAPS = [
-  { area:'소멸의 여로',  req:100,  symbol:'소멸', maxSymbol:2679 },
-  { area:'리버스 시티', req:120,  symbol:'리버스', maxSymbol:2679 },
-  { area:'모라스',      req:200,  symbol:'모라스', maxSymbol:2679 },
-  { area:'에스페라',    req:260,  symbol:'에스페라', maxSymbol:2679 },
-  { area:'문브릿지',    req:380,  symbol:'문브릿지', maxSymbol:2679 },
-  { area:'라비린스',    req:440,  symbol:'라비린스', maxSymbol:2679 },
-  { area:'리미니아',    req:500,  symbol:'리미니아', maxSymbol:2679 },
-];
-
-const SACRED_MAPS = [
-  { area:'세르니움',      req:300,  symbol:'세르니움', maxSymbol:2679 },
-  { area:'버닝세르니움',  req:500,  symbol:'버닝세르니움', maxSymbol:2679 },
-  { area:'호텔 아르크스', req:600,  symbol:'아르크스', maxSymbol:2679 },
-  { area:'오디움',        req:700,  symbol:'오디움', maxSymbol:2679 },
-  { area:'상그릴라',      req:800,  symbol:'상그릴라', maxSymbol:2679 },
-  { area:'아르테리아',    req:850,  symbol:'아르테리아', maxSymbol:2679 },
-  { area:'카르시온',      req:930,  symbol:'카르시온', maxSymbol:2679 },
+  {name:'선택받은 세렌',      diff:'노말',     hp:2_080_000,    lv:270, pdr:380, force:200,  ftype:'auth'},
+  {name:'선택받은 세렌',      diff:'하드',     hp:4_830_000,    lv:275, pdr:380, force:200,  ftype:'auth'},
+  {name:'선택받은 세렌',      diff:'익스트림', hp:64_800_000,   lv:280, pdr:380, force:200,  ftype:'auth'},
+  {name:'감시자 칼로스',      diff:'이지',     hp:3_570_000,    lv:270, pdr:380, force:200,  ftype:'auth'},
+  {name:'감시자 칼로스',      diff:'노말',     hp:10_600_000,   lv:280, pdr:380, force:300,  ftype:'auth'},
+  {name:'감시자 칼로스',      diff:'카오스',   hp:51_000_000,   lv:285, pdr:380, force:330,  ftype:'auth'},
+  {name:'감시자 칼로스',      diff:'익스트림', hp:215_700_000,  lv:285, pdr:380, force:440,  ftype:'auth'},
+  {name:'최초의 대적자',      diff:'이지',     hp:5_710_900,    lv:270, pdr:380, force:220,  ftype:'auth'},
+  {name:'최초의 대적자',      diff:'노말',     hp:16_400_000,   lv:280, pdr:380, force:320,  ftype:'auth'},
+  {name:'최초의 대적자',      diff:'하드',     hp:105_900_000,  lv:285, pdr:380, force:340,  ftype:'auth'},
+  {name:'최초의 대적자',      diff:'익스트림', hp:335_600_000,  lv:290, pdr:380, force:460,  ftype:'auth'},
+  {name:'카링',               diff:'이지',     hp:9_210_000,    lv:275, pdr:380, force:230,  ftype:'auth'},
+  {name:'카링',               diff:'노말',     hp:39_300_000,   lv:285, pdr:380, force:330,  ftype:'auth'},
+  {name:'카링',               diff:'하드',     hp:94_000_000,   lv:285, pdr:380, force:350,  ftype:'auth'},
+  {name:'카링',               diff:'익스트림', hp:545_900_000,  lv:285, pdr:380, force:480,  ftype:'auth'},
+  {name:'찬란한 흉성',        diff:'노말',     hp:32_600_000,   lv:280, pdr:380, force:400,  ftype:'auth'},
+  {name:'찬란한 흉성',        diff:'하드',     hp:147_000_000,  lv:280, pdr:380, force:550,  ftype:'auth'},
+  {name:'림보',               diff:'노말',     hp:64_800_000,   lv:285, pdr:380, force:500,  ftype:'auth'},
+  {name:'림보',               diff:'하드',     hp:125_500_000,  lv:285, pdr:380, force:500,  ftype:'auth'},
+  {name:'발드릭스',           diff:'노말',     hp:90_600_000,   lv:290, pdr:380, force:700,  ftype:'auth'},
+  {name:'발드릭스',           diff:'하드',     hp:203_400_000,  lv:290, pdr:380, force:700,  ftype:'auth'},
 ];
 
 // 포뻥: 요구포스 초과분 5당 +2% 데미지 (최대 +100%)
@@ -234,7 +302,7 @@ function forceBoost(myForce, requiredForce) {
 const ARCANE_SYM_EXP = [
   0,12,15,20,27,36,48,64,86,115,154,207,277,371,496,664,888,1188,1590,2130,
 ];
-// 사크레드 심볼 레벨별 누적 경험치
+// 어센틱 심볼 레벨별 누적 경험치
 const SACRED_SYM_EXP = [
   0,20,30,45,67,100,150,225,338,507,760,1140,1710,2565,3848,5772,8658,12987,19480,29220,
 ];
@@ -264,7 +332,7 @@ const GENESIS_QUESTS = [
   { name:'반 레온',      cum:0    },
   { name:'아카이럼',     cum:500  },
   { name:'매그너스',     cum:1000 },
-  { name:'스우(로터스)', cum:1500 },
+  { name:'스우', cum:1500 },
   { name:'데미안',       cum:2500 },
   { name:'윌',           cum:3500 },
   { name:'루시드',       cum:4500 },
@@ -281,77 +349,207 @@ const GENESIS_PASS_MULT = 3;     // 제네시스 패스: 흔적 획득 3배
    ※ BOSS_HP_TABLE 의 diff 값(한글)과 동일하게 키를 작성하세요.
 ══════════════════════════════════════════════ */
 const BOSS_HP_PHASES = {
+  // ── 아케치 ──
   '아케치_노말': [
-    { label:'1페이즈', hp:'152B' },
-    { label:'2페이즈', hp:'152B' },
+    { label:'Phase 1', hp:'152B' },
+    { label:'Phase 2', hp:'152B' },
   ],
+  // ── 파풀라투스 ──
   '파풀라투스_카오스': [
-    { label:'1페이즈', hp:'378B' },
-    { label:'2페이즈', hp:'126B' },
+    { label:'Phase 1', hp:'378B' },
+    { label:'Phase 2', hp:'126B' },
   ],
-  '스우_하드': [
-    { label:'1페이즈', hp:'470B' },
-    { label:'2페이즈', hp:'470B' },
-    { label:'3페이즈', hp:'630B' },
+  // ── 데미안 ──
+  '데미안_노말': [
+    { label:'Phase 1', hp:'840B' },
+    { label:'Phase 2', hp:'360B' },
   ],
   '데미안_하드': [
-    { label:'1페이즈', hp:'840B' },
-    { label:'2페이즈', hp:'360B' },
+    { label:'Phase 1', hp:'25.20T' },
+    { label:'Phase 2', hp:'10.80T' },
+  ],
+  // ── 스우 (Lotus) ──
+  '스우_노말': [
+    { label:'Phase 1', hp:'470B' },
+    { label:'Phase 2', hp:'470B' },
+    { label:'Phase 3', hp:'630B' },
+  ],
+  '스우_하드': [
+    { label:'Phase 1', hp:'10T' },
+    { label:'Phase 2', hp:'10T' },
+    { label:'Phase 3', hp:'13.50T' },
+  ],
+  '스우_익스트림': [
+    { label:'Phase 1', hp:'545T' },
+    { label:'Phase 2', hp:'545T' },
+    { label:'Phase 3', hp:'720T' },
+  ],
+  // ── 루시드 (Lucid) ──
+  '루시드_이지': [
+    { label:'Phase 1', hp:'6T' },
+    { label:'Phase 2', hp:'6T' },
+  ],
+  '루시드_노말': [
+    { label:'Phase 1', hp:'12T' },
+    { label:'Phase 2', hp:'12T' },
   ],
   '루시드_하드': [
-    { label:'1페이즈', hp:'6T' },
-    { label:'2페이즈', hp:'6T' },
+    { label:'Phase 1', hp:'50.80T' },
+    { label:'Phase 2', hp:'54T' },
+    { label:'Phase 3', hp:'12.80T' },
+  ],
+  // ── 윌 (Will) ──
+  '윌_이지': [
+    { label:'Phase 1 Blue (×3)', hp:'933.33B' },
+    { label:'Phase 1 Purple (×3)', hp:'933.33B' },
+    { label:'Phase 2 (×2)', hp:'2.10T' },
+    { label:'Phase 3', hp:'7T' },
+  ],
+  '윌_노말': [
+    { label:'Phase 1 Blue (×3)', hp:'1.40T' },
+    { label:'Phase 1 Purple (×3)', hp:'1.40T' },
+    { label:'Phase 2 (×2)', hp:'3.15T' },
+    { label:'Phase 3', hp:'10.50T' },
   ],
   '윌_하드': [
-    { label:'1페이즈 (파랑)', hp:'933.33B' },
-    { label:'1페이즈 (보라)', hp:'933.33B' },
-    { label:'2페이즈', hp:'2.10T' },
-    { label:'3페이즈', hp:'7T' },
+    { label:'Phase 1 Blue (×3)', hp:'7T' },
+    { label:'Phase 1 Purple (×3)', hp:'7T' },
+    { label:'Phase 2 (×2)', hp:'15.75T' },
+    { label:'Phase 3', hp:'52.50T' },
+  ],
+  // ── 진 힐라 (Verus Hilla) ──
+  '진 힐라_노말': [
+    { label:'Phase 1', hp:'22T' },
+    { label:'Phase 2', hp:'22T' },
+    { label:'Phase 3', hp:'22T' },
+    { label:'Phase 4', hp:'22T' },
   ],
   '진 힐라_하드': [
-    { label:'1페이즈', hp:'22T' },
-    { label:'2페이즈', hp:'22T' },
-    { label:'3페이즈', hp:'22T' },
-    { label:'4페이즈', hp:'22T' },
+    { label:'Phase 1', hp:'44T' },
+    { label:'Phase 2', hp:'44T' },
+    { label:'Phase 3', hp:'44T' },
+    { label:'Phase 4', hp:'44T' },
   ],
-  '세렌_하드': [
-    { label:'1페이즈', hp:'52.50T' },
-    { label:'2페이즈', hp:'155.50T' },
+  // ── 검은 마법사 (Black Mage) ──
+  '검은 마법사_하드': [
+    { label:'Phase 1', hp:'63T' },
+    { label:'Phase 2', hp:'115.50T' },
+    { label:'Phase 3', hp:'157.50T' },
+    { label:'Phase 4', hp:'136.50T' },
   ],
-  '칼로스_카오스': [
-    { label:'1페이즈', hp:'94.50T' },
-    { label:'2페이즈 (×4)', hp:'65.63T' },
+  '검은 마법사_익스트림': [
+    { label:'Phase 1', hp:'1.18Q' },
+    { label:'Phase 2', hp:'1.19Q' },
+    { label:'Phase 3', hp:'1.28Q' },
+    { label:'Phase 4', hp:'1.15Q' },
   ],
-  '대적자_하드': [
-    { label:'1페이즈', hp:'171.54T' },
-    { label:'2페이즈', hp:'171.54T' },
-    { label:'3페이즈', hp:'228.01T' },
+  // ── 선택받은 세렌 (Chosen Seren) ──
+  '선택받은 세렌_노말': [
+    { label:'Phase 1', hp:'52.50T' },
+    { label:'Phase 2', hp:'155.50T' },
+  ],
+  '선택받은 세렌_하드': [
+    { label:'Phase 1', hp:'126T' },
+    { label:'Phase 2', hp:'357T' },
+  ],
+  '선택받은 세렌_익스트림': [
+    { label:'Phase 1', hp:'1.32Q' },
+    { label:'Phase 2', hp:'5.16Q' },
+  ],
+  // ── 감시자 칼로스 (Kalos the Guardian) ──
+  '감시자 칼로스_이지': [
+    { label:'Phase 1', hp:'94.50T' },
+    { label:'Phase 2 (×4)', hp:'65.63T' },
+  ],
+  '감시자 칼로스_노말': [
+    { label:'Phase 1', hp:'336T' },
+    { label:'Phase 2 (×4)', hp:'180T' },
+  ],
+  '감시자 칼로스_카오스': [
+    { label:'Phase 1', hp:'1.06Q' },
+    { label:'Phase 2 (×4)', hp:'1.01Q' },
+  ],
+  '감시자 칼로스_익스트림': [
+    { label:'Phase 1', hp:'5.97Q' },
+    { label:'Phase 2 (×4)', hp:'3.90Q' },
+  ],
+  // ── 최초의 대적자 (The First Adversary) ──
+  '최초의 대적자_이지': [
+    { label:'Phase 1', hp:'171.54T' },
+    { label:'Phase 2', hp:'171.54T' },
+    { label:'Phase 3', hp:'228.01T' },
+  ],
+  '최초의 대적자_노말': [
+    { label:'Phase 1', hp:'494.11T' },
+    { label:'Phase 2', hp:'494.11T' },
+    { label:'Phase 3', hp:'646.78T' },
+  ],
+  '최초의 대적자_익스트림': [
+    { label:'Phase 1', hp:'10.08Q' },
+    { label:'Phase 2', hp:'10.08Q' },
+    { label:'Phase 3', hp:'13.40Q' },
+  ],
+  '최초의 대적자_하드': [
+    { label:'Phase 1', hp:'3.18Q' },
+    { label:'Phase 2', hp:'3.18Q' },
+    { label:'Phase 3', hp:'4.23Q' },
+  ],
+  // ── 카링 (Kaling) ──
+  '카링_이지': [
+    { label:'Phase 1 Perils (×3)', hp:'96T' },
+    { label:'Phase 2', hp:'105T' },
+    { label:'Phase 3 Kaling', hp:'150T' },
+    { label:'Phase 3 Perils (×3)', hp:'126T' },
+  ],
+  '카링_노말': [
+    { label:'Phase 1 Perils (×3)', hp:'400T' },
+    { label:'Phase 2', hp:'468T' },
+    { label:'Phase 3 Kaling', hp:'722T' },
+    { label:'Phase 3 Perils (×3)', hp:'512T' },
   ],
   '카링_하드': [
-    { label:'1페이즈 페릴스 (×3)', hp:'96T' },
-    { label:'2페이즈', hp:'105T' },
-    { label:'3페이즈 보스', hp:'150T' },
-    { label:'3페이즈 페릴스 (×3)', hp:'126T' },
+    { label:'Phase 1 Perils (×3)', hp:'906T' },
+    { label:'Phase 2', hp:'1.40Q' },
+    { label:'Phase 3 Kaling', hp:'2.24Q' },
+    { label:'Phase 3 Perils (×3)', hp:'1.83Q' },
   ],
-  '흉성_하드': [
-    { label:'1페이즈', hp:'657.60T' },
-    { label:'2페이즈', hp:'1.30Q' },
-    { label:'3페이즈', hp:'1.30Q' },
+  '카링_익스트림': [
+    { label:'Phase 1 Perils (×3)', hp:'6.07Q' },
+    { label:'Phase 2', hp:'6.93Q' },
+    { label:'Phase 3 Kaling', hp:'8.66Q' },
+    { label:'Phase 3 Perils (×3)', hp:'6.93Q' },
+  ],
+  // ── 찬란한 흉성 (Malefic Star) ──
+  '찬란한 흉성_노말': [
+    { label:'Phase 1', hp:'657.60T' },
+    { label:'Phase 2', hp:'1.30Q' },
+    { label:'Phase 3', hp:'1.30Q' },
+  ],
+  '찬란한 흉성_하드': [
+    { label:'Phase 1', hp:'2.90Q' },
+    { label:'Phase 2', hp:'5.90Q' },
+    { label:'Phase 3', hp:'5.90Q' },
+  ],
+  // ── 림보 (Limbo) ──
+  '림보_노말': [
+    { label:'Phase 1', hp:'1.94Q' },
+    { label:'Phase 2 (×2)', hp:'970T' },
+    { label:'Phase 3', hp:'2.60Q' },
   ],
   '림보_하드': [
-    { label:'1페이즈', hp:'1.94Q' },
-    { label:'2페이즈', hp:'970T' },
-    { label:'3페이즈', hp:'2.60Q' },
+    { label:'Phase 1', hp:'3.78Q' },
+    { label:'Phase 2 (×2)', hp:'1.89Q' },
+    { label:'Phase 3', hp:'4.99Q' },
+  ],
+  // ── 발드릭스 (Baldrix) ──
+  '발드릭스_노말': [
+    { label:'Phase 1', hp:'2.38Q' },
+    { label:'Phase 2', hp:'2.53Q' },
+    { label:'Phase 3', hp:'4.15Q' },
   ],
   '발드릭스_하드': [
-    { label:'1페이즈', hp:'2.38Q' },
-    { label:'2페이즈', hp:'2.53Q' },
-    { label:'3페이즈', hp:'4.15Q' },
-  ],
-  '검은 마법사_하드': [
-    { label:'1페이즈', hp:'63T' },
-    { label:'2페이즈', hp:'115.50T' },
-    { label:'3페이즈', hp:'157.50T' },
-    { label:'4페이즈', hp:'136.50T' },
+    { label:'Phase 1', hp:'5.34Q' },
+    { label:'Phase 2', hp:'5.69Q' },
+    { label:'Phase 3', hp:'9.31Q' },
   ],
 };

@@ -51,17 +51,22 @@ function tickTimer() {
 tickTimer(); setInterval(tickTimer, 1000);
 
 /* ── 네비게이션 ── */
+function navigateTo(sec) {
+  document.querySelectorAll('.sb-nav__item').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
+  const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
+  if (btn) btn.classList.add('active');
+  const secEl = document.getElementById('sec-' + sec);
+  if (secEl) secEl.classList.add('active');
+  if (sec === 'charinfo') renderCharInfo();
+  if (sec === 'bosshp')    renderBossHPTable();
+  if (sec === 'starforce') renderSFRateTable();
+  if (sec === 'hexa')      renderAllHexaLists();
+}
 document.querySelectorAll('.sb-nav__item').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.sb-nav__item').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('sec-' + btn.dataset.sec).classList.add('active');
-    if (btn.dataset.sec === 'charinfo') renderCharInfo();
-    if (btn.dataset.sec === 'bosshp')    renderBossHPTable();
-    if (btn.dataset.sec === 'starforce') renderSFRateTable();
-  });
+  btn.addEventListener('click', () => navigateTo(btn.dataset.sec));
 });
+document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
 
 /* ── 유틸 ── */
 function fmtMeso(n) {
@@ -89,6 +94,15 @@ function countCrystals(ch) {
   return Math.min(Object.values(ch.checks || {}).filter(v => v?.on).length, MAX_CRYSTALS_PP);
 }
 /* 한 캐릭터의 주간 보스 수익 합 */
+function thursdaysInMonth() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth();
+  const days = new Date(y, m + 1, 0).getDate();
+  let n = 0;
+  for (let d = 1; d <= days; d++) if (new Date(y, m, d).getDay() === 4) n++;
+  return n;
+}
+
 function charWeeklyMeso(ch) {
   let sum = 0;
   Object.entries(ch.checks || {}).forEach(([key, v]) => {
@@ -102,14 +116,32 @@ function charWeeklyMeso(ch) {
   return sum;
 }
 
+function charMonthlyMeso(ch) {
+  const resets = thursdaysInMonth();
+  let sum = 0;
+  Object.entries(ch.checks || {}).forEach(([key, v]) => {
+    if (!v?.on) return;
+    const us = key.lastIndexOf('_');
+    const bossId = key.slice(0, us), diff = key.slice(us + 1);
+    const boss = BOSS_DATA.find(b => b.id === bossId);
+    if (!boss || !boss.diffs[diff]) return;
+    const count = boss.monthly ? 1 : resets;
+    sum += Math.floor(boss.diffs[diff] / (v.party || 1)) * count;
+  });
+  return sum;
+}
+
 function updateCrystalBar() {
   let total = state.chars.reduce((s, c) => s + countCrystals(c), 0);
   total = Math.min(total, MAX_CRYSTALS);
   document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
   document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
   const weekTotal = state.chars.reduce((s, c) => s + charWeeklyMeso(c), 0);
-  const el = document.getElementById('totalWeekMeso');
-  if (el) el.textContent = fmtMeso(weekTotal);
+  const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c), 0);
+  const elW = document.getElementById('totalWeekMeso');
+  if (elW) elW.textContent = fmtMeso(weekTotal);
+  const elM = document.getElementById('totalMonthMeso');
+  if (elM) elM.textContent = fmtMeso(monthTotal);
 }
 
 /* ── 캐릭터 목록 렌더 ── */
@@ -134,18 +166,22 @@ function renderCharList() {
       ? `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">JOB</span>`
       : '<span class="noimg">JOB</span>';
     const jn = charJobName(ch);
+    const world = ch.fetched?.world || '';
+    const sIcon = world ? serverIconSrc(world) : '';
+    const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
     li.innerHTML = `
-      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
-      <div class="char-card__row">
-        <div class="char-card__av">${avatar}</div>
+      <div class="char-card__inner">
         <div class="char-card__txt">
           <div class="char-card__name">${ch.name}</div>
-          <div class="char-card__sub"><span class="char-card__lv">Lv.${ch.level}</span>${jn ? ' · ' + jn : ''}${ch.fetched?.world ? ' · ' + ch.fetched.world : ''}</div>
+          <div class="char-card__lv">Lv.${ch.level}</div>
+          ${world ? `<div class="char-card__world-line">${sIconHtml}${world}</div>` : ''}
+          ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
+          <div class="char-card__btns">
+            <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
+            <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
+          </div>
         </div>
-        <div class="char-card__btns">
-          <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
-          <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
-        </div>
+        <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
       </div>`;
     li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
     ul.appendChild(li);
@@ -193,16 +229,13 @@ function renderBossTable() {
     const activeDiff = diffs.find(d => ch.checks?.[ck(boss.id, d)]?.on);
     if (activeDiff) { tr.classList.add('done'); }
 
-    // diff select + 선택된 난이도 pill 표시
-    const opts = diffs.map(d =>
-      `<option value="${d}"${activeDiff === d ? ' selected' : ''}>${DIFF_META[d].label}</option>`
-    ).join('');
-    const selPill = activeDiff
-      ? `<span class="dpill ${DIFF_META[activeDiff].cls} dpill--sm sel"><span class="dpill__t">${DIFF_META[activeDiff].label}</span></span>`
-      : '';
-    const pillsHtml = `<div class="diff-sel-wrap">
-      <select class="diff-sel" data-boss="${boss.id}"><option value="">선택 안함</option>${opts}</select>
-      ${selPill}
+    // 난이도 버튼 (dpill)
+    const pillsHtml = `<div class="diff-btns" data-boss="${boss.id}">
+      ${diffs.map(d =>
+        `<span class="dpill ${DIFF_META[d].cls} dpill--sm${activeDiff===d?' sel':''}" data-boss="${boss.id}" data-diff="${d}">
+          <span class="dpill__t">${DIFF_META[d].label}</span>
+        </span>`
+      ).join('')}
     </div>`;
 
     const maxP  = activeDiff ? getMaxParty(boss, activeDiff) : 6;
@@ -234,18 +267,23 @@ function renderBossTable() {
   });
 
   document.getElementById('weeklyTotal').textContent = fmtMeso(total);
+  const resets = thursdaysInMonth();
+  const monthEl = document.getElementById('monthlyTotal');
+  const monthSubEl = document.getElementById('monthResetCount');
+  if (monthEl) monthEl.textContent = fmtMeso(charMonthlyMeso(ch));
+  if (monthSubEl) monthSubEl.textContent = `(주${resets}회 기준)`;
 
-  // 난이도 select → change
-  tb.querySelectorAll('.diff-sel').forEach(sel => {
-    sel.addEventListener('change', () => {
-      const bossId = sel.dataset.boss;
-      const diff   = sel.value;
-      const boss   = BOSS_DATA.find(b => b.id === bossId);
-      const prevDiff = Object.keys(boss.diffs).find(d => ch.checks?.[ck(bossId,d)]?.on);
+  // 난이도 dpill 클릭 → 토글
+  tb.querySelectorAll('.diff-btns .dpill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const bossId  = pill.dataset.boss;
+      const diff    = pill.dataset.diff;
+      const boss    = BOSS_DATA.find(b => b.id === bossId);
+      const isActive = ch.checks?.[ck(bossId, diff)]?.on;
       if (!ch.checks) ch.checks = {};
       // 같은 보스 다른 난이도 해제
       Object.keys(boss.diffs).forEach(d => { ch.checks[ck(bossId,d)] = { on:false, party: ch.checks[ck(bossId,d)]?.party ?? 1 }; });
-      if (diff) {
+      if (!isActive) {
         if (countCrystals(ch) >= MAX_CRYSTALS_PP) {
           showToast(`보스 결정석은 최대 ${MAX_CRYSTALS_PP}개까지 판매 가능합니다.`);
           save(); renderBossTable(); renderCharList(); return;
@@ -652,7 +690,10 @@ function renderCharInfo() {
   const rankRows = f ? `
     <div class="ci-rank-row"><span>${region} 전체 랭킹</span><b>${f.rank ? '#'+f.rank.toLocaleString() : '—'}</b></div>
     <div class="ci-rank-row"><span>월드</span><b>${world || '—'}</b></div>
-    <div class="ci-rank-row"><span>유니온(레지온) 레벨</span><b>${f.legion ? f.legion.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row ci-rank-row--div"></div>
+    <div class="ci-rank-row"><span>유니온 랭킹</span><b>${f.legionRank ? '#'+f.legionRank.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>유니온 레벨</span><b>${f.legion ? f.legion.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>유니온 전투력</span><b>${f.legionPower ? f.legionPower.toLocaleString() : '—'}</b></div>
   ` : '<div class="ci-rank-row"><span class="ci-dim">랭킹 조회 데이터 없음 — 캐릭터 수정 → 랭킹 조회</span></div>';
 
   box.innerHTML = `
@@ -662,11 +703,11 @@ function renderCharInfo() {
         <div class="ci-portrait">${bigImg}<span class="ci-portrait__ph">NO IMAGE</span></div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
-            ${jobIcon}
             <div>
               <div class="ci-card__name">${ch.name}</div>
               <div class="ci-card__job">${jobName}</div>
             </div>
+            ${jobIcon}
           </div>
           <div class="ci-card__meta">
             <span class="ci-lv">Lv.${ch.level}</span>
@@ -736,7 +777,7 @@ fontSel.addEventListener('change', () => applyFont(fontSel.value));
 /* ── 초기화 ── */
 load();
 applyRegionUI();
-applyFont(localStorage.getItem(FONT_KEY) || 'NEXON_Gothic');
+applyFont(localStorage.getItem(FONT_KEY) || '8bit');
 renderCharList();
 renderBossTable();
 renderCharInfo();

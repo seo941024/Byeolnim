@@ -1,0 +1,13 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "GMS_WEEK_BOSS",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["serve.js"],
+      "port": 3001,
+      "autoPort": true,
+      "cwd": "C:\\Users\\AISW_203_106\\Desktop\\2601340028\\Web_PRG\\GMS_WEEK_BOSS\\GMS_WEEK_BOSS"
+    }
+  ]
+}

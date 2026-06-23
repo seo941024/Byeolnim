@@ -3,107 +3,121 @@
    ============================================= */
 
 /* ═══════════════════════════════════════════════
-   HEXA 계산기
+   HEXA 계산기 — 노드 구조 재편
+   Skill Node (×2, max30) / Mastery (×4, max10) /
+   Boost (×4, max10) / Common: Sol Janus·Sol Hecate (×2, max30)
 ═══════════════════════════════════════════════ */
-let hexaSupportSkills = [
-  { name:'마스터리 코어 1', cur:0, tgt:10 },
-  { name:'강화 코어 1',     cur:0, tgt:10 },
-  { name:'부스트 코어 1',   cur:0, tgt:10 },
-];
+function _hxLoad(key, names, maxLv) {
+  const stored = JSON.parse(localStorage.getItem(key) || '[]');
+  return names.map((n, i) => ({ name:n, cur: stored[i]?.cur ?? 0, tgt: stored[i]?.tgt ?? maxLv, max: maxLv }));
+}
+function _hxSave(key, nodes) {
+  localStorage.setItem(key, JSON.stringify(nodes.map(n => ({ cur:n.cur, tgt:n.tgt }))));
+}
 
-function renderHexaSupport() {
-  const list = document.getElementById('hxSupportList');
+let hxSkill = (() => {
+  const stored = JSON.parse(localStorage.getItem('hx_skill') || '[]');
+  const defaults = [1, 0]; // 스킬 노드 1은 전직 시 기본 1렙
+  return ['스킬 노드 1', '스킬 노드 2'].map((n, i) => ({ name:n, cur: stored[i]?.cur ?? defaults[i], tgt: stored[i]?.tgt ?? 30, max: 30 }));
+})();
+let hxMastery = _hxLoad('hx_mastery', ['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], 30);
+let hxBoost   = _hxLoad('hx_boost',   ['부스트 1','부스트 2','부스트 3','부스트 4'], 30);
+let hxCommon  = _hxLoad('hx_common',  ['Sol Janus', 'Sol Hecate'], 30);
+
+function renderNodeList(nodes, containerId, storageKey, icons=[]) {
+  const list = document.getElementById(containerId);
+  if (!list) return;
   list.innerHTML = '';
-  hexaSupportSkills.forEach((sk, i) => {
+  nodes.forEach((sk, i) => {
     const div = document.createElement('div');
     div.className = 'hexa-support-item';
+    const iconHtml = icons[i]
+      ? `<img src="${icons[i]}" class="hx-node-icon" alt="" />`
+      : '';
     div.innerHTML = `
-      <span>${sk.name}</span>
+      <span class="hx-node-name">${iconHtml}${sk.name}</span>
       <span style="font-size:.75rem;color:var(--text-sub)">현재</span>
-      <input class="inp" type="number" value="${sk.cur}" min="0" max="10" data-i="${i}" data-field="cur" />
+      <input class="inp" type="number" value="${sk.cur}" min="0" max="${sk.max}" data-i="${i}" data-field="cur" />
       <span style="font-size:.75rem;color:var(--text-sub)">목표</span>
-      <input class="inp" type="number" value="${sk.tgt}" min="1" max="10" data-i="${i}" data-field="tgt" />
-      <button onclick="removeHexaSkill(${i})" style="color:var(--danger);font-size:1rem">×</button>`;
+      <input class="inp" type="number" value="${sk.tgt}" min="0" max="${sk.max}" data-i="${i}" data-field="tgt" />`;
     div.querySelectorAll('input[data-i]').forEach(inp => {
       inp.addEventListener('change', () => {
-        hexaSupportSkills[i][inp.dataset.field] = Math.max(0, Math.min(10, parseInt(inp.value)||0));
+        nodes[i][inp.dataset.field] = Math.max(0, Math.min(sk.max, parseInt(inp.value) || 0));
+        _hxSave(storageKey, nodes);
       });
     });
     list.appendChild(div);
   });
 }
 
-window.removeHexaSkill = (i) => {
-  hexaSupportSkills.splice(i, 1);
-  renderHexaSupport();
-};
+function renderAllHexaLists() {
+  const ch  = typeof state !== 'undefined' ? state.chars[state.activeChar] : null;
+  const job = ch?.fetched?.job || (typeof JOB_LIST !== 'undefined' && JOB_LIST[ch?.jobIdx]?.name) || '';
+  const jd  = (typeof HEXA_JOB_DATA !== 'undefined' && HEXA_JOB_DATA[job]) || (typeof HEXA_DEFAULT_DATA !== 'undefined' ? HEXA_DEFAULT_DATA : { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['Sol Janus','Sol Hecate'] });
 
-document.getElementById('hxAddSupport').addEventListener('click', () => {
-  hexaSupportSkills.push({ name:`스킬 ${hexaSupportSkills.length+1}`, cur:0, tgt:10 });
-  renderHexaSupport();
-});
+  const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.webp` : null;
+  const commonIco = ['images/skill/Common/sol_janus.webp', 'images/skill/Common/sol_hecate.webp'];
+
+  hxSkill.forEach((n,i)   => { if(jd.skill[i])   n.name = jd.skill[i]; });
+  hxMastery.forEach((n,i) => { if(jd.mastery[i]) n.name = jd.mastery[i]; });
+  hxBoost.forEach((n,i)   => { if(jd.boost[i])   n.name = jd.boost[i]; });
+  hxCommon.forEach((n,i)  => { if(jd.common[i])  n.name = jd.common[i]; });
+
+  renderNodeList(hxSkill,   'hxSkillList',   'hx_skill',   [ico(1), ico(2)]);
+  renderNodeList(hxMastery, 'hxMasteryList', 'hx_mastery', [ico(5), ico(6), ico(7), ico(8)]);
+  renderNodeList(hxBoost,   'hxBoostList',   'hx_boost',   [ico(9), ico(10), ico(11), ico(12)]);
+  renderNodeList(hxCommon,  'hxCommonList',  'hx_common',  commonIco);
+}
 
 document.getElementById('hxCalc').addEventListener('click', () => {
   const haveSE  = parseInt(document.getElementById('hxHaveSE').value)  || 0;
   const haveSEF = parseInt(document.getElementById('hxHaveSEF').value) || 0;
-
-  const oriCur = Math.max(0, Math.min(30, parseInt(document.getElementById('hxOriginCur').value)||0));
-  const oriTgt = Math.max(1, Math.min(30, parseInt(document.getElementById('hxOriginTgt').value)||30));
-
   let totalSE = 0, totalSEF = 0;
 
-  // 오리진
-  if (oriTgt > oriCur) {
-    const { se, sef } = hexaCumulative(HEXA_ORIGIN_COSTS, oriCur, oriTgt);
-    totalSE += se; totalSEF += sef;
+  function addNodes(nodes, costTable) {
+    nodes.forEach(sk => {
+      const cur = Math.max(0, Math.min(sk.max, sk.cur));
+      const tgt = Math.max(cur, Math.min(sk.max, sk.tgt));
+      if (tgt > cur) { const { se, sef } = hexaCumulative(costTable, cur, tgt); totalSE += se; totalSEF += sef; }
+    });
   }
-  // 서포트
-  hexaSupportSkills.forEach(sk => {
-    const cur = Math.max(0, Math.min(10, sk.cur));
-    const tgt = Math.max(cur, Math.min(10, sk.tgt));
-    if (tgt > cur) {
-      const { se, sef } = hexaCumulative(HEXA_SUPPORT_COSTS, cur, tgt);
-      totalSE += se; totalSEF += sef;
-    }
-  });
 
-  // 보유 환산 (SEF 10개 = SE 1개 등가 계산)
-  const haveTotalSEF = haveSE * 10 + Math.floor(haveSEF / 10);  // SE를 SEF로 통합
-  // 필요량 vs 보유량
-  const needSE  = totalSE;
-  const needSEF = totalSEF;
-  const needTotal_asSEF = needSE * 100 + needSEF; // 대략적 가중치
-  const haveTotal_asSEF = haveSE * 100 + haveSEF;
-  const diff = haveTotal_asSEF - needTotal_asSEF;
-  const enough = diff >= 0;
+  addNodes(hxSkill,   HEXA_SKILL_COSTS);
+  addNodes(hxMastery, HEXA_MASTERY_COSTS);
+  addNodes(hxBoost,   HEXA_BOOST_COSTS);
+  addNodes(hxCommon,  HEXA_COMMON_COSTS);
 
+  const needTotal = needSE => needSE * 100 + totalSEF;
+  const enough  = haveSE >= totalSE;
+  const enoughF = haveSEF >= totalSEF;
   const res = document.getElementById('hxResult');
+  const SE_ICON  = `<img src="images/skill/Common/sol_erda.webp"  class="hx-res-icon" alt="">`;
+  const SEF_ICON = `<img src="images/skill/Common/fragment.webp" class="hx-res-icon" alt="">`;
   res.innerHTML = `
-    <div class="hexa-result-row"><span class="rl">필요 솔 에르다</span><span class="rv">${needSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">필요 솔 에르다 조각</span><span class="rv">${needSEF.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">보유 솔 에르다</span><span class="rv">${haveSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">보유 솔 에르다 조각</span><span class="rv">${haveSEF.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">필요 솔 에르다</span><span class="rv">${SE_ICON}${totalSE.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">필요 솔 에르다 조각</span><span class="rv">${SEF_ICON}${totalSEF.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">보유 솔 에르다</span><span class="rv">${SE_ICON}${haveSE.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">보유 솔 에르다 조각</span><span class="rv">${SEF_ICON}${haveSEF.toLocaleString()} 개</span></div>
     <div class="hexa-result-row" style="margin-top:8px;padding-top:8px;border-top:2px solid var(--border)">
       <span class="rl">솔 에르다 부족량</span>
-      <span class="rv ${enough?'ok':'ng'}">${enough?'충분!':'부족 ' + (needSE - haveSE) + ' 개'}</span>
+      <span class="rv ${enough?'hp-suf':'ng'}">${enough?'요구량 충족':(totalSE-haveSE)+' 개 부족'}</span>
     </div>
     <div class="hexa-result-row">
       <span class="rl">솔 에르다 조각 부족량</span>
-      <span class="rv ${haveSEF>=needSEF?'ok':'ng'}">${haveSEF>=needSEF?'충분!':'부족 ' + (needSEF - haveSEF) + ' 개'}</span>
+      <span class="rv ${enoughF?'hp-suf':'ng'}">${enoughF?'요구량 충족':(totalSEF-haveSEF)+' 개 부족'}</span>
     </div>
     <div style="margin-top:10px;font-size:.75rem;color:var(--text-sub);line-height:1.6">
-      ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.<br>
-      ※ 오리진 ${oriCur}→${oriTgt}레벨, 서포트 ${hexaSupportSkills.length}개 스킬 기준
+      ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.
     </div>`;
 });
 
-renderHexaSupport();
+renderAllHexaLists();
 
 /* ═══════════════════════════════════════════════
    해방 계산기 — 제네시스 (어둠의 흔적)
 ═══════════════════════════════════════════════ */
 const genState = (() => {
-  const def = { quest:0, held:0, pass:false, sel:{} };
+  const def = { quest:0, held:0, pass:false, party:1, sel:{} };
   try { return Object.assign(def, JSON.parse(localStorage.getItem('lib_genesis_v2') || '{}')); }
   catch { return def; }
 })();
@@ -112,14 +126,25 @@ function saveGen() { localStorage.setItem('lib_genesis_v2', JSON.stringify(genSt
 function bossInfo(id) { return BOSS_DATA.find(b => b.id === id) || { name:id, img:'' }; }
 function fmtTrace(n) { return Number(n).toLocaleString(); }
 
-/* 선택된 보스들의 주간/월간 흔적 합계 (패스 배율 적용) */
+const QUEST_BOSS_IMG = {
+  '반 레온':   'images/bosses/vanleon.webp',
+  '아카이럼':  'images/bosses/akaiyrum.webp',
+  '매그너스':  'images/bosses/magnus.webp',
+  '스우':      'images/bosses/suu.webp',
+  '데미안':    'images/bosses/demian.webp',
+  '윌':        'images/bosses/will.webp',
+  '루시드':    'images/bosses/lucid.webp',
+  '진 힐라':   'images/bosses/jinhilla.webp',
+};
+
 function genTraceSums() {
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
   let weekly = 0, monthly = 0;
   for (const id in TRACE_YIELD) {
     const sel = genState.sel[id];
     if (!sel || !sel.on) continue;
-    const yld = (TRACE_YIELD[id][sel.diff] || 0) * mult;
+    const party = Math.max(1, sel.party || 1);
+    const yld = Math.floor((TRACE_YIELD[id][sel.diff] || 0) * mult / party);
     if (id === 'blackmage') monthly += yld; else weekly += yld;
   }
   return { weekly, monthly, mult };
@@ -127,8 +152,7 @@ function genTraceSums() {
 
 function renderGenesis() {
   const panel = document.getElementById('lib-genesis');
-  const { weekly, monthly, mult } = genTraceSums();
-  const fourWeek = weekly * 4 + monthly;
+  const { weekly, monthly } = genTraceSums();
   const avgPerWeek = weekly + monthly / 4;
 
   const held = Math.max(0, genState.held);
@@ -138,10 +162,9 @@ function renderGenesis() {
   const pct = Math.min(100, Math.round(held / GENESIS_TARGET * 100));
   const weeksLeft = avgPerWeek > 0 ? Math.ceil(remaining / avgPerWeek) : Infinity;
 
-  // 현재 퀘스트 소모량 & 다음 퀘스트까지 진행
   const prevCum = genState.quest > 0 ? GENESIS_QUESTS[genState.quest - 1].cum : 0;
   const consume = q.cum - prevCum;
-  const nextLabel = nextQ ? `→ 다음: ${nextQ.name} (${fmtTrace(nextQ.cum)} 흔적)` : '최종 단계';
+  const nextLabel = nextQ ? `→ 다음: ${nextQ.name}` : '최종 단계';
   const toNext = nextQ ? Math.max(0, nextQ.cum - held) : 0;
 
   const clearedCount = Object.values(genState.sel).filter(s => s && s.on).length;
@@ -151,15 +174,28 @@ function renderGenesis() {
     return `${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
   })();
 
-  const questOpts = GENESIS_QUESTS.map((qq, i) =>
-    `<option value="${i}" ${i===genState.quest?'selected':''}>${qq.name} — ${fmtTrace(qq.cum)}</option>`).join('');
+  // 퀘스트 아이콘 행
+  const questIcons = GENESIS_QUESTS.map((qq, i) => {
+    const img = QUEST_BOSS_IMG[qq.name];
+    const imgHtml = img
+      ? `<img src="${img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none;font-size:.5rem">?</span>`
+      : `<span style="font-size:.7rem;font-weight:800;color:var(--accent)">✓</span>`;
+    return `<div class="gen-qi${i===genState.quest?' active':''}" data-qi="${i}">
+      <div class="gen-qi__img">${imgHtml}</div>
+      <div class="gen-qi__label">${qq.name}</div>
+    </div>`;
+  }).join('');
 
   // 보스 선택 카드
+  const mult = genState.pass ? GENESIS_PASS_MULT : 1;
   const bossCards = Object.keys(TRACE_YIELD).map(id => {
     const info = bossInfo(id);
-    const sel  = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0] };
-    const diffOpts = Object.keys(TRACE_YIELD[id]).map(d =>
-      `<option value="${d}" ${sel.diff===d?'selected':''}>${DIFF_META[d]?.label || d} · ${fmtTrace(TRACE_YIELD[id][d] * mult)}</option>`).join('');
+    const sel  = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+    const party = Math.max(1, sel.party || 1);
+    const diffOpts = Object.keys(TRACE_YIELD[id]).map(d => {
+      const yld = Math.floor((TRACE_YIELD[id][d] || 0) * mult / party);
+      return `<option value="${d}" ${sel.diff===d?'selected':''}>${DIFF_META[d]?.label || d} · ${fmtTrace(yld)}</option>`;
+    }).join('');
     return `
       <div class="gen-boss ${sel.on?'on':''}" data-id="${id}">
         <div class="boss-thumb"><img src="${info.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
@@ -167,70 +203,82 @@ function renderGenesis() {
           <div class="gen-boss__name">${info.name}${id==='blackmage'?'<span class="boss-monthly">월간</span>':''}</div>
           <select class="sel gen-boss__diff" data-id="${id}">${diffOpts}</select>
         </div>
+        <div class="party-stepper gen-boss__party" data-id="${id}">
+          <button class="pm" ${party<=1?'disabled':''}>−</button>
+          <span class="party-stepper__val">${party}</span>
+          <button class="pp" ${party>=6?'disabled':''}>+</button>
+        </div>
         <button class="gen-boss__toggle ${sel.on?'on':''}" data-id="${id}">${sel.on?'격파':'미격파'}</button>
       </div>`;
   }).join('');
 
   panel.innerHTML = `
     <div class="gen-grid">
-      <!-- 좌: 진행도 -->
       <div class="card gen-progress">
         <div class="card__title">해방 진행도</div>
         <div class="gen-date">${targetDate}</div>
         <div class="gen-date__sub">예상 해방일 (${isFinite(weeksLeft)?weeksLeft+'주':'—'})</div>
-        <div class="gen-prog-row"><span>현재 진행</span><span>${fmtTrace(held)} / ${fmtTrace(GENESIS_TARGET)} 흔적</span></div>
+        <div class="gen-prog-row"><span>보유 흔적</span><span>${fmtTrace(held)}</span></div>
         <div class="lib-progress"><div class="lib-progress__fill" style="width:${pct}%"></div></div>
-        <div class="lib-pct">${pct}%</div>
+        <div class="lib-pct">${pct}% · 남은 흔적 ${fmtTrace(remaining)}</div>
         <div class="gen-quest-now">현재 퀘스트: <b>${q.name}</b> · 소모 ${fmtTrace(consume)} 흔적<br><span class="gen-quest-next">${nextLabel}${nextQ?` · ${fmtTrace(toNext)} 남음`:''}</span></div>
       </div>
 
-      <!-- 우: 흔적 소스 -->
       <div class="card gen-sources">
         <div class="card__title">흔적 획득량</div>
         <div class="gen-src-row"><span class="dot dot-blue"></span>주간 흔적<b>${fmtTrace(weekly)}</b></div>
         <div class="gen-src-row"><span class="dot dot-purple"></span>검은 마법사 (월간)<b>${fmtTrace(monthly)}</b></div>
-        <div class="gen-src-row total">4주 합계<b>${fmtTrace(fourWeek)}</b></div>
-        <div class="gen-src-note">주당 평균 ≈ ${fmtTrace(Math.round(avgPerWeek))} · 남은 흔적 ${fmtTrace(remaining)}${genState.pass?' · 패스 3배 적용':''}</div>
+        <div class="gen-src-note">주당 평균 ≈ ${fmtTrace(Math.round(avgPerWeek))}${genState.pass?' · 패스 적용':''}</div>
       </div>
     </div>
 
-    <!-- 설정 -->
     <div class="card">
       <div class="card__title">설정</div>
       <div class="gen-config">
-        <div class="field">
-          <label class="field__label">현재 퀘스트</label>
-          <select class="sel" id="genQuest">${questOpts}</select>
-        </div>
         <div class="field">
           <label class="field__label">보유 어둠의 흔적</label>
           <input class="inp" id="genHeld" type="number" min="0" max="${TRACE_HOLD_MAX}" value="${held}" />
         </div>
         <div class="field">
-          <label class="field__label">제네시스 패스 (흔적 3배)</label>
+          <label class="field__label">제네시스 패스</label>
           <label class="gen-switch"><input type="checkbox" id="genPass" ${genState.pass?'checked':''} /> <span>사용 ${genState.pass?'ON':'OFF'}</span></label>
         </div>
       </div>
     </div>
 
-    <!-- 보스 선택 -->
+    <div class="card">
+      <div class="card__title">현재 퀘스트</div>
+      <div class="gen-quest-icons">${questIcons}</div>
+    </div>
+
     <div class="card">
       <div class="card__title">이번 주 보스 선택 <span class="gen-cleared">${clearedCount}개 선택</span></div>
       <div class="gen-bosses">${bossCards}</div>
     </div>`;
 
   // 이벤트
-  document.getElementById('genQuest').addEventListener('change', e => {
-    genState.quest = parseInt(e.target.value) || 0;
-    // 퀘스트 선택 시 보유 흔적이 해당 누적 미만이면 맞춰줌(편의)
-    saveGen(); renderGenesis();
-  });
-  document.getElementById('genHeld').addEventListener('input', e => {
+  document.getElementById('genHeld').addEventListener('change', e => {
     genState.held = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
     saveGen(); renderGenesis();
   });
   document.getElementById('genPass').addEventListener('change', e => {
     genState.pass = e.target.checked; saveGen(); renderGenesis();
+  });
+  panel.querySelectorAll('.gen-boss__party').forEach(ps => {
+    const id = ps.dataset.id;
+    ps.querySelector('.pm').addEventListener('click', () => {
+      const cur = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+      if ((cur.party||1) > 1) { genState.sel[id] = { ...cur, party:(cur.party||1)-1 }; saveGen(); renderGenesis(); }
+    });
+    ps.querySelector('.pp').addEventListener('click', () => {
+      const cur = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+      if ((cur.party||1) < 6) { genState.sel[id] = { ...cur, party:(cur.party||1)+1 }; saveGen(); renderGenesis(); }
+    });
+  });
+  panel.querySelectorAll('.gen-qi').forEach(el => {
+    el.addEventListener('click', () => {
+      genState.quest = parseInt(el.dataset.qi); saveGen(); renderGenesis();
+    });
   });
   panel.querySelectorAll('.gen-boss__toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -419,7 +467,7 @@ function renderBossHPTable() {
     const activeMeta = DIFF_META[activeEngDiff] || { label: active.diff, cls: 'diff-normal' };
 
     const forceEl = active.force
-      ? `<span class="force ${active.ftype === 'auth' ? 'force-auth' : 'force-arc'}">${active.force}</span>`
+      ? `<span class="force ${active.ftype === 'auth' ? 'force-auth' : 'force-arc'}"><img src="images/icons/${active.ftype === 'auth' ? 'auth' : 'arc'}.png" class="force-icon" />${active.force}</span>`
       : '';
 
     // 난이도 select
@@ -449,22 +497,24 @@ function renderBossHPTable() {
 
     const threshHtml = totalHpEok > 0 ? `
       <div class="bhp-thresholds">
-        <div class="bhp-thresh bhp-thresh--10"><span>10%</span><b>${fmtBossHpEok(totalHpEok * 0.10)}</b></div>
-        <div class="bhp-thresh bhp-thresh--5"><span>5%</span><b>${fmtBossHpEok(totalHpEok * 0.05)}</b></div>
+        <div class="bhp-tr"><span class="bhp-tr__pct">10%</span><span class="bhp-tr__dot--10">●</span><span class="bhp-tr__val">${fmtBossHpEok(totalHpEok * 0.10)}</span></div>
+        <div class="bhp-tr"><span class="bhp-tr__pct">5%</span><span class="bhp-tr__dot--5">●</span><span class="bhp-tr__val">${fmtBossHpEok(totalHpEok * 0.05)}</span></div>
       </div>` : '';
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
       <div class="bhp-card__img">${imgHtml}</div>
       <div class="bhp-card__body">
-        <div class="bhp-card__name">${active.nameOverride || boss.name}${boss.monthly ? '<span class="boss-monthly">월간</span>' : ''}</div>
-        <div class="bhp-card__info">
-          <span class="bhp-lv">Lv.${active.lv ?? '—'}</span>
-          ${forceEl}
+        <div class="bhp-card__top">
+          <div class="bhp-card__name">${active.nameOverride || boss.name}${boss.monthly ? '<span class="boss-monthly">월간</span>' : ''}</div>
+          <div class="bhp-card__info">
+            <span class="bhp-lv">Lv.${active.lv ?? '—'}</span>
+            ${forceEl}
+          </div>
+          ${pdrHtml}
+          ${activePill}
+          ${diffSel}
+          <div class="bhp-diff">${phaseHtml}</div>
         </div>
-        ${pdrHtml}
-        ${activePill}
-        ${diffSel}
-        <div class="bhp-diff">${phaseHtml}</div>
         ${threshHtml}
       </div>
     </div>`;
@@ -475,6 +525,14 @@ function renderBossHPTable() {
       bossHPActiveDiffs[sel.dataset.boss] = sel.value;
       renderBossHPTable();
     });
+  });
+
+  // 모든 카드 높이를 최대 카드 기준으로 통일
+  requestAnimationFrame(() => {
+    const cards = container.querySelectorAll('.bhp-card');
+    let maxH = 0;
+    cards.forEach(c => { c.style.minHeight = ''; const h = c.getBoundingClientRect().height; if (h > maxH) maxH = h; });
+    cards.forEach(c => c.style.minHeight = maxH + 'px');
   });
 }
 

@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Byeolnim.app</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<!-- ═══════════ HEADER ═══════════ -->
+<header class="header">
+  <div class="header__logo">
+    <span class="header__maple"></span>
+    <span class="header__title">Byeolnim.app</span>
+  </div>
+  <div class="header__center">
+    <span class="header__rlabel">다음 초기화</span>
+    <span class="header__timer" id="resetTimer">--일 --:--:--</span>
+  </div>
+  <div class="header__right">
+    <select class="font-sel" id="fontSel" title="폰트 선택">
+      <option value="NEXON_Gothic">NEXON</option>
+      <option value="Maple">Maple</option>
+      <option value="8bit">8bit</option>
+    </select>
+    <button class="hbtn" id="btnExport">내보내기</button>
+    <button class="hbtn" id="btnImport">불러오기</button>
+    <input type="file" id="fileImport" accept=".json" style="display:none" />
+  </div>
+</header>
+
+<!-- ═══════════ APP BODY ═══════════ -->
+<div class="app">
+
+  <!-- ── SIDEBAR ── -->
+  <aside class="sidebar">
+    <!-- 서버(NA/EU) 토글 -->
+    <div class="region-toggle">
+      <button class="region-toggle__btn active" data-region="na">NA</button>
+      <button class="region-toggle__btn" data-region="eu">EU</button>
+    </div>
+    <!-- 캐릭터 영역 -->
+    <div class="sb-char-area">
+      <div class="sb-char-head">
+        <span class="sb-label">캐릭터</span>
+        <button class="sbtn sbtn--add" id="btnAddChar">+ 추가</button>
+      </div>
+      <ul class="char-list" id="charList"></ul>
+      <div class="crystal-bar">
+        <div class="crystal-bar__row">
+          <span class="crystal-bar__label">전체 결정석</span>
+          <span class="crystal-bar__count" id="totalCrystalCount">0 / 180</span>
+        </div>
+        <div class="crystal-bar__track"><div class="crystal-bar__fill" id="totalCrystalFill" style="width:0%"></div></div>
+      </div>
+      <div class="sb-weekmeso">
+        <span class="sb-weekmeso__label">전체 주간 획득 메소</span>
+        <span class="sb-weekmeso__val" id="totalWeekMeso">0 메소</span>
+      </div>
+    </div>
+
+    <!-- 네비게이션 -->
+    <nav class="sb-nav">
+      <button class="sb-nav__item active" data-sec="charinfo">
+        <span class="sb-nav__icon sb-nav__icon--char"></span><span>캐릭터 정보</span>
+      </button>
+      <button class="sb-nav__item" data-sec="boss">
+        <span class="sb-nav__icon sb-nav__icon--boss"></span><span>주보 트래커</span>
+      </button>
+      <button class="sb-nav__item" data-sec="hexa">
+        <span class="sb-nav__icon sb-nav__icon--hexa"></span><span>헥사 계산기</span>
+      </button>
+      <button class="sb-nav__item" data-sec="liberation">
+        <span class="sb-nav__icon sb-nav__icon--liberation"></span><span>해방 계산기</span>
+      </button>
+      <button class="sb-nav__item" data-sec="starforce">
+        <span class="sb-nav__icon sb-nav__icon--starforce"></span><span>스타포스</span>
+      </button>
+      <button class="sb-nav__item" data-sec="bosshp">
+        <span class="sb-nav__icon sb-nav__icon--hp"></span><span>보스 HP 테이블</span>
+      </button>
+    </nav>
+  </aside>
+
+  <!-- ── MAIN ── -->
+  <main class="content">
+
+    <!-- ══════ 캐릭터 정보 ══════ -->
+    <section class="sec active" id="sec-charinfo">
+      <div id="charInfoBody"></div>
+    </section>
+
+    <!-- ══════ 주보 트래커 ══════ -->
+    <section class="sec" id="sec-boss">
+      <div class="boss-panel">
+        <div class="boss-panel__head">
+          <span class="boss-panel__charname" id="bossCharName">캐릭터를 선택하세요</span>
+          <div class="boss-panel__headr">
+            <span class="pill pill--blue" id="btnCrystalCount">결정석 0 / 0</span>
+            <button class="pill pill--red" id="btnResetBoss">초기화</button>
+          </div>
+        </div>
+        <div class="boss-table-wrap">
+          <table class="boss-table">
+            <colgroup><col style="width:300px"/><col/><col style="width:130px"/><col style="width:200px"/></colgroup>
+            <thead><tr><th>보스</th><th>난이도 선택</th><th>파티원</th><th>수익</th></tr></thead>
+            <tbody id="bossTableBody"></tbody>
+          </table>
+        </div>
+        <div class="boss-total">
+          <span class="boss-total__label">이번 주 예상 수익</span>
+          <span class="boss-total__val" id="weeklyTotal">0 메소</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ 헥사 계산기 ══════ -->
+    <section class="sec" id="sec-hexa">
+      <div class="sec-head"><h2 class="sec-title">헥사 매트릭스 솔 에르다 계산기</h2><span class="sec-badge">근삿값</span></div>
+
+      <div class="hexa-layout">
+        <!-- 입력 -->
+        <div class="card">
+          <div class="card__title">보유 현황</div>
+          <div class="hexa-field-group">
+            <div class="hexa-row">
+              <span class="hexa-label">보유 솔 에르다</span>
+              <input class="inp" id="hxHaveSE" type="number" value="0" min="0" placeholder="0" />
+            </div>
+            <div class="hexa-row">
+              <span class="hexa-label">보유 솔 에르다 조각</span>
+              <input class="inp" id="hxHaveSEF" type="number" value="0" min="0" placeholder="0" />
+            </div>
+          </div>
+
+          <div class="card__title mt16">오리진 스킬 (최대 Lv.30)</div>
+          <div class="hexa-field-group">
+            <div class="hexa-row">
+              <span class="hexa-label">현재 레벨</span>
+              <input class="inp" id="hxOriginCur" type="number" value="0" min="0" max="30" />
+            </div>
+            <div class="hexa-row">
+              <span class="hexa-label">목표 레벨</span>
+              <input class="inp" id="hxOriginTgt" type="number" value="30" min="1" max="30" />
+            </div>
+          </div>
+
+          <div class="card__title mt16">서포트 스킬 (마스터리·강화·부스트, 최대 Lv.10)</div>
+          <div id="hxSupportList" class="hexa-support-list">
+            <!-- JS 렌더 -->
+          </div>
+          <button class="sbtn sbtn--ghost mt8" id="hxAddSupport">+ 스킬 추가</button>
+
+          <button class="sbtn sbtn--primary mt16 w100" id="hxCalc">계산하기</button>
+        </div>
+
+        <!-- 결과 -->
+        <div class="card">
+          <div class="card__title">필요량 계산 결과</div>
+          <div id="hxResult" class="hexa-result">
+            <p class="empty">계산하기를 눌러주세요.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ 해방 계산기 ══════ -->
+    <section class="sec" id="sec-liberation">
+      <div class="sec-head"><h2 class="sec-title">무기 해방 계산기</h2><span class="sec-badge">근삿값</span></div>
+
+      <div class="lib-tabs">
+        <button class="lib-tab active" data-lib="genesis">제네시스 해방</button>
+        <button class="lib-tab" data-lib="destiny">데스티니 해방</button>
+      </div>
+
+      <div id="lib-genesis" class="lib-panel active"></div>
+      <div id="lib-destiny" class="lib-panel"></div>
+    </section>
+
+    <!-- ══════ 스타포스 계산기 ══════ -->
+    <section class="sec" id="sec-starforce">
+      <div class="sec-head"><h2 class="sec-title">스타포스 기댓값 계산기</h2><span class="sec-badge">시뮬레이션 기반</span></div>
+
+      <div class="sf-layout">
+        <div class="card">
+          <div class="card__title">설정</div>
+          <div class="form-grid">
+            <div class="field">
+              <label class="field__label">아이템 레벨</label>
+              <input class="inp" id="sfLevel" type="number" value="200" min="100" max="300" step="10" />
+            </div>
+            <div class="field">
+              <label class="field__label">현재 성</label>
+              <input class="inp" id="sfFrom" type="number" value="15" min="0" max="24" />
+            </div>
+            <div class="field">
+              <label class="field__label">목표 성</label>
+              <input class="inp" id="sfTo" type="number" value="22" min="1" max="25" />
+            </div>
+            <div class="field">
+              <label class="field__label">메소 할인 이벤트</label>
+              <select class="sel" id="sfDiscount">
+                <option value="1">없음</option>
+                <option value="0.7">30% 할인</option>
+                <option value="0.5">50% 할인</option>
+              </select>
+            </div>
+          </div>
+          <div class="field mt16">
+            <label class="field__label">파괴 방지 옵션</label>
+            <div class="check-row">
+              <label><input type="checkbox" id="sfSafe12" /> 12성 파괴방지</label>
+              <label><input type="checkbox" id="sfSafe17" /> 17성 파괴방지</label>
+              <label><input type="checkbox" id="sfSafe22" checked /> 22성 파괴방지</label>
+            </div>
+          </div>
+          <button class="sbtn sbtn--primary mt16 w100" id="sfCalc">기댓값 계산 (10만회 시뮬)</button>
+        </div>
+
+        <div class="card">
+          <div class="card__title">시뮬레이션 결과</div>
+          <div id="sfResult"><p class="empty">계산하기를 눌러주세요.</p></div>
+        </div>
+      </div>
+
+      <!-- 성공률 표 -->
+      <div class="card mt16">
+        <div class="card__title">스타포스 성공률 표</div>
+        <div class="table-wrap">
+          <table class="data-table" id="sfRateTable"></table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════ 보스 HP 카드 ══════ -->
+    <section class="sec" id="sec-bosshp">
+      <div class="sec-head">
+        <h2 class="sec-title">보스 HP 카드</h2>
+        <span class="sec-badge">난이도 · 페이즈별</span>
+      </div>
+      <div id="bossHPCards" class="bhp-grid"></div>
+    </section>
+
+
+  </main>
+</div>
+
+<!-- ═══════════ MODAL: 캐릭터 ═══════════ -->
+<div class="overlay" id="overlayChar">
+  <div class="modal">
+    <div class="modal__head">
+      <span class="modal__title" id="modalCharTitle">캐릭터 추가</span>
+      <button class="modal__close" id="modalCharClose">×</button>
+    </div>
+    <div class="modal__body">
+      <div class="lookup-box">
+        <div class="lookup-box__title">GMS 랭킹에서 불러오기</div>
+        <div class="lookup-box__row">
+          <input class="inp" id="lkName" placeholder="GMS 캐릭터명 (영문)" autocomplete="off" />
+          <button class="sbtn sbtn--primary" id="lkBtn">조회</button>
+        </div>
+        <div class="lookup-box__result" id="lkResult"></div>
+      </div>
+      <div class="lookup-readonly">
+        <div class="field"><label class="field__label">닉네임</label>
+          <input class="inp" id="inpName" placeholder="랭킹 조회 후 자동 입력" maxlength="12" readonly /></div>
+        <div class="field"><label class="field__label">레벨</label>
+          <input class="inp" id="inpLevel" type="number" placeholder="랭킹 조회 후 자동 입력" min="200" max="300" readonly /></div>
+        <div class="field"><label class="field__label">직업</label>
+          <input class="inp" id="inpJob" placeholder="랭킹 조회 후 자동 입력" readonly /></div>
+      </div>
+      <input type="hidden" id="inpJobSearch" />
+      <div class="job-grid job-grid--hidden" id="jobGrid"></div>
+    </div>
+    <div class="modal__foot">
+      <button class="sbtn sbtn--ghost" id="modalCharCancel">취소</button>
+      <button class="sbtn sbtn--primary" id="modalCharSave">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ MODAL: 확인 ═══════════ -->
+<div class="overlay" id="overlayConfirm">
+  <div class="modal modal--sm">
+    <div class="modal__head"><span class="modal__title">삭제 확인</span>
+      <button class="modal__close" id="confirmClose">×</button></div>
+    <div class="modal__body"><p id="confirmMsg" style="color:var(--text-sub)"></p></div>
+    <div class="modal__foot">
+      <button class="sbtn sbtn--ghost" id="confirmCancel">취소</button>
+      <button class="sbtn sbtn--danger" id="confirmOk">삭제</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<script src="calculators.js"></script>
+</body>
+</html>

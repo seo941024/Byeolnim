@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "GMS_Calc",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["GMS_WEEK_BOSS/serve.js"],
+      "port": 3001
+    }
+  ]
+}

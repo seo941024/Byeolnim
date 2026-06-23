@@ -1,0 +1,2 @@
+cd "C:\Users\seo94\Desktop\Python GUI 3.7\GMS\GMS_WEEK_BOSS\GMS_WEEK_BOSS"
+node serve.js

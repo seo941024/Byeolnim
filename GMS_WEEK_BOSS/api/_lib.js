@@ -70,6 +70,22 @@ async function lookupCharacter(name, reboot, region) {
     if (jhit) jobRankWorld = jhit.rank || 0;
   }
 
+  // 3) Redis 캐시에서 랭킹 보완
+  try {
+    const redis = getRedis();
+    if (redis) {
+      const cached = await redis.get(`rnk:${reg}:${lc}`);
+      const c = cached ? (typeof cached === 'string' ? JSON.parse(cached) : cached) : null;
+      if (c) {
+        if (!worldRank   && c.worldRank)    worldRank    = c.worldRank;
+        if (!jobRankWorld && c.jobRankWorld) jobRankWorld = c.jobRankWorld;
+        if (!legionRank  && c.legionRank)   legionRank   = c.legionRank;
+        if (!legionLevel && c.legionLevel)  legionLevel  = c.legionLevel;
+        if (!legionPower && c.legionPower)  legionPower  = c.legionPower;
+      }
+    }
+  } catch { /* 무시 */ }
+
   return {
     name:         hit.characterName,
     level:        hit.level,

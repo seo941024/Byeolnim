@@ -22,6 +22,9 @@ async function scrapePage(page, url) {
   await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
   await page.waitForSelector('tbody tr', { timeout: 15000 }).catch(() => {});
 
+  const html = await page.content();
+  console.log('HTML snippet:', html.slice(2000, 4000));
+
   const data = await page.evaluate(() => {
     const rows = document.querySelectorAll('tbody tr');
     const result = [];

@@ -41,7 +41,13 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
       <span style="font-size:.75rem;color:var(--text-sub)">목표</span>
       <input class="inp" type="number" value="${sk.tgt}" min="0" max="${sk.max}" data-i="${i}" data-field="tgt" />`;
     div.querySelectorAll('input[data-i]').forEach(inp => {
+      const clampInp = () => {
+        const v = parseInt(inp.value);
+        if (!isNaN(v)) inp.value = Math.max(0, Math.min(sk.max, v));
+      };
+      inp.addEventListener('input', clampInp);
       inp.addEventListener('change', () => {
+        clampInp();
         nodes[i][inp.dataset.field] = Math.max(0, Math.min(sk.max, parseInt(inp.value) || 0));
         _hxSave(storageKey, nodes);
       });
@@ -137,6 +143,17 @@ document.getElementById('hxCalc').addEventListener('click', () => {
 
 renderAllHexaLists();
 
+/* 보유 솔 에르다 max=20 실시간 강제 */
+(function() {
+  const seInp = document.getElementById('hxHaveSE');
+  if (!seInp) return;
+  seInp.addEventListener('input', () => {
+    const v = parseInt(seInp.value);
+    if (!isNaN(v) && v > 20) seInp.value = 20;
+    if (!isNaN(v) && v < 0)  seInp.value = 0;
+  });
+})();
+
 /* ═══════════════════════════════════════════════
    해방 계산기 — 제네시스 (어둠의 흔적)
 ═══════════════════════════════════════════════ */
@@ -170,149 +187,155 @@ const QUEST_BOSS_IMG = {
 
 function genTraceSums() {
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
-  let weekly = 0, monthly = 0;
+  let weekly = 0;
   for (const id in TRACE_YIELD) {
-    const sel = genState.sel[id];
-    if (!sel || !sel.on) continue;
+    if (id === 'blackmage') continue;
+    const sel  = genState.sel[id] || {};
+    const diff = sel.diff || 'none';
+    if (diff === 'none') continue;
     const party = Math.max(1, sel.party || 1);
-    const yld = Math.floor((TRACE_YIELD[id][sel.diff] || 0) * mult / party);
-    if (id === 'blackmage') monthly += yld; else weekly += yld;
+    weekly += Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
   }
-  return { weekly, monthly, mult };
+  return { weekly, mult };
 }
 
 function renderGenesis() {
   const panel = document.getElementById('lib-genesis');
-  const { weekly, monthly } = genTraceSums();
-  const avgPerWeek = weekly + monthly / 4;
+  const { weekly, mult } = genTraceSums();
+  const avgPerWeek = weekly;
 
-  const held = Math.max(0, genState.held);
-  const q    = GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0];
-  const nextQ = GENESIS_QUESTS[genState.quest + 1];
-  const remaining = Math.max(0, GENESIS_TARGET - held);
-  const pct = Math.min(100, Math.round(held / GENESIS_TARGET * 100));
+  const held       = Math.max(0, genState.held);
+  const questCum   = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
+  const totalSpent = questCum + held;
+  const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
+  const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
   const weeksLeft = avgPerWeek > 0 ? Math.ceil(remaining / avgPerWeek) : Infinity;
+  const daysLeft  = isFinite(weeksLeft) ? weeksLeft * 7 : null;
 
-  const prevCum = genState.quest > 0 ? GENESIS_QUESTS[genState.quest - 1].cum : 0;
-  const consume = q.cum - prevCum;
-  const nextLabel = nextQ ? `→ 다음: ${nextQ.name}` : '최종 단계';
-  const toNext = nextQ ? Math.max(0, nextQ.cum - held) : 0;
-
-  const clearedCount = Object.values(genState.sel).filter(s => s && s.on).length;
   const startDate = genState.startDate || nextThursday();
   const targetDate = (() => {
     if (!isFinite(weeksLeft)) return '—';
-    // 시작일이 목요일 이전이면(화/수) 해당 주 목요일로 스냅 → 같은 주 시작은 같은 날 해방
     const d = new Date(startDate);
     const daysToThu = (4 - d.getDay() + 7) % 7;
-    d.setDate(d.getDate() + daysToThu);        // 이번 주 목요일
-    d.setDate(d.getDate() + weeksLeft * 7);    // N주 후 목요일
-    return `${d.getFullYear()}. ${String(d.getMonth()+1).padStart(2,'0')}. ${String(d.getDate()).padStart(2,'0')}.`;
+    d.setDate(d.getDate() + daysToThu);
+    d.setDate(d.getDate() + weeksLeft * 7);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
   })();
 
-  // 퀘스트 아이콘 행
-  const questIcons = GENESIS_QUESTS.map((qq, i) => {
-    const img = QUEST_BOSS_IMG[qq.name];
-    const imgHtml = img
-      ? `<img src="${img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none;font-size:.5rem">?</span>`
-      : `<span style="font-size:.7rem;font-weight:800;color:var(--accent)">✓</span>`;
-    return `<div class="gen-qi${i===genState.quest?' active':''}" data-qi="${i}">
-      <div class="gen-qi__img">${imgHtml}</div>
-      <div class="gen-qi__label">${qq.name}</div>
-    </div>`;
-  }).join('');
+  const durationStr = daysLeft != null
+    ? `${daysLeft}일`
+    : '—';
 
-  // 보스 선택 카드
-  const mult = genState.pass ? GENESIS_PASS_MULT : 1;
+  // 퀘스트 select 옵션
+  const questOpts = GENESIS_QUESTS.map((qq, i) =>
+    `<option value="${i}" ${i===genState.quest?'selected':''}>${qq.name}</option>`
+  ).join('');
+
+  // 보스 카드
   const bossCards = Object.keys(TRACE_YIELD).map(id => {
-    const info = bossInfo(id);
-    const sel  = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+    const info  = bossInfo(id);
+    const sel   = genState.sel[id] || {};
+    const diff  = sel.diff  || 'none';
     const party = Math.max(1, sel.party || 1);
-    const diffOpts = Object.keys(TRACE_YIELD[id]).map(d => {
-      const yld = Math.floor((TRACE_YIELD[id][d] || 0) * mult / party);
-      return `<option value="${d}" ${sel.diff===d?'selected':''}>${DIFF_META[d]?.label || d} · ${fmtTrace(yld)}</option>`;
+    const cleared = !!sel.cleared;
+    const yld   = diff === 'none' ? 0 : Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
+    const active = diff !== 'none';
+
+    const diffOpts = ['none', ...Object.keys(TRACE_YIELD[id])].map(d => {
+      return `<option value="${d}" ${diff===d?'selected':''}>${DIFF_META[d]?.label || d}</option>`;
     }).join('');
+
     return `
-      <div class="gen-boss ${sel.on?'on':''}" data-id="${id}">
+      <div class="gen-boss ${active?'on':''}" data-id="${id}">
         <div class="boss-thumb"><img src="${info.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
         <div class="gen-boss__body">
           <div class="gen-boss__top">
             <span class="gen-boss__name">${info.name}</span>
-            ${id==='blackmage'?'<span class="boss-monthly">월간</span>':''}
           </div>
-          <select class="sel gen-boss__diff" data-id="${id}">${diffOpts}</select>
-          <div class="gen-boss__btm">
+          <div class="gen-boss__row2">
+            <select class="sel gen-boss__diff" data-id="${id}">${diffOpts}</select>
             <div class="party-stepper gen-boss__party" data-id="${id}">
               <button class="pm" ${party<=1?'disabled':''}>−</button>
               <span class="party-stepper__val">${party}</span>
               <button class="pp" ${party>=6?'disabled':''}>+</button>
             </div>
-            <button class="gen-boss__toggle ${sel.on?'on':''}" data-id="${id}">${sel.on?'격파':'미격파'}</button>
+          </div>
+          <div class="gen-boss__row3">
+            <label class="gen-boss__ck">
+              <input type="checkbox" class="gen-boss__cb" data-id="${id}" ${cleared?'checked':''}/>
+              <span>금주 격파</span>
+            </label>
+            <span class="gen-boss__trace ${active?'on':''}">+${fmtTrace(yld)}</span>
           </div>
         </div>
       </div>`;
   }).join('');
 
+  const clearedCount = Object.values(genState.sel).filter(s => s && s.on).length;
+
   panel.innerHTML = `
-    <div class="gen-grid">
-      <div class="card gen-progress">
-        <div class="card__title">해방 진행도</div>
-        <div class="lib-progress" style="margin-bottom:6px"><div class="lib-progress__fill" style="width:${pct}%"></div></div>
-        <div class="lib-pct">${pct}% · ${fmtTrace(held)} / ${fmtTrace(GENESIS_TARGET)} 흔적</div>
-        <div class="gen-stat-row"><span>남은 흔적</span><b>${fmtTrace(remaining)}</b></div>
-        <div class="gen-stat-row"><span>예상 해방 기간</span><b>${isFinite(weeksLeft)?weeksLeft+'주 후':'—'}</b></div>
-        <div class="gen-stat-row accent"><span>예상 해방 날짜</span><b>${targetDate}</b></div>
-        <div class="gen-quest-now" style="margin-top:10px">현재 퀘스트: <b>${q.name}</b> · 소모 ${fmtTrace(consume)} 흔적<br><span class="gen-quest-next">${nextLabel}${nextQ?` · ${fmtTrace(toNext)} 남음`:''}</span></div>
-      </div>
-
-      <div class="card gen-sources">
-        <div class="card__title">흔적 획득량</div>
-        <div class="gen-src-row"><span class="dot dot-blue"></span>주간 흔적<b>${fmtTrace(weekly)}</b></div>
-        <div class="gen-src-row"><span class="dot dot-purple"></span>검은 마법사 (월간)<b>${fmtTrace(monthly)}</b></div>
-        <div class="gen-src-note">주당 평균 ≈ ${fmtTrace(Math.round(avgPerWeek))}${genState.pass?' · 패스 적용':''}</div>
-      </div>
-    </div>
-
-    <div class="gen-cfg-wrap">
-      <div class="gen-cfg-card">
-        <img class="gen-cfg-card__img" src="images/icons/Trace_of_darkness.webp" alt="어둠의 흔적">
-        <div class="gen-cfg-card__body">
-          <div class="gen-cfg-card__title">어둠의 흔적</div>
-          <div class="gen-cfg-card__fields">
+    <div class="gen-main-layout">
+      <!-- 좌측: 설정 + 보스 목록 -->
+      <div class="gen-left">
+        <div class="card gen-inputs">
+          <div class="gen-input-row">
             <div class="field">
-              <label class="field__label">보유 수량</label>
-              <input class="inp" id="genHeld" type="number" min="0" max="${TRACE_HOLD_MAX}" value="${held}" />
+              <label class="field__label">시작 날짜</label>
+              <input class="inp gen-inp" id="genStartDate" type="date" value="${startDate}" />
             </div>
-            <div class="field">
-              <label class="field__label">시작일 <span style="font-size:.7rem;font-weight:400;color:var(--text-dim)">(목요일 기준)</span></label>
-              <input class="inp" id="genStartDate" type="date" value="${startDate}" />
+            <div class="field" style="flex:1.5">
+              <label class="field__label">현재 퀘스트</label>
+              <select class="sel gen-inp" id="genQuestSel">${questOpts}</select>
+            </div>
+          </div>
+          <div class="gen-input-row" style="margin-top:12px;align-items:stretch">
+            <div class="gen-cfg-card">
+              <img class="gen-cfg-card__img" src="images/icons/Trace_of_darkness.webp" alt="">
+              <div class="gen-cfg-card__body">
+                <div class="gen-cfg-card__title">보유 어둠의 흔적</div>
+                <input class="inp" id="genHeld" type="number" min="0" max="${TRACE_HOLD_MAX}" value="${held}" />
+              </div>
+            </div>
+            <div class="gen-cfg-card gen-cfg-card--pass${genState.pass?' on':''}">
+              <img class="gen-cfg-card__img" src="images/icons/Genesis.png" alt="">
+              <div class="gen-cfg-card__body">
+                <div class="gen-cfg-card__title">제네시스 패스</div>
+                <label class="gen-switch gen-pass-toggle">
+                  <input type="checkbox" id="genPass" ${genState.pass?'checked':''} />
+                  <span class="gen-switch__track"><span class="gen-switch__thumb"></span></span>
+                  <span class="gen-switch__label">${genState.pass?'ON':'OFF'}</span>
+                </label>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div class="gen-cfg-card gen-cfg-card--pass${genState.pass?' on':''}">
-        <img class="gen-cfg-card__img" src="images/icons/Genesis.png" alt="제네시스 패스">
-        <div class="gen-cfg-card__body">
-          <div class="gen-cfg-card__title">제네시스 패스</div>
-          <div class="gen-cfg-card__desc">활성화 시 흔적 획득량 <b>×3</b></div>
-          <label class="gen-switch gen-pass-toggle">
-            <input type="checkbox" id="genPass" ${genState.pass?'checked':''} />
-            <span class="gen-switch__track"><span class="gen-switch__thumb"></span></span>
-            <span class="gen-switch__label">${genState.pass?'ON · 적용 중':'OFF'}</span>
-          </label>
+        <div class="card">
+          <div class="card__title">보스 / 난이도 <span class="gen-cleared">${clearedCount}개 선택</span></div>
+          <div class="gen-bosses">${bossCards}</div>
         </div>
       </div>
-    </div>
 
-    <div class="card">
-      <div class="card__title">현재 퀘스트</div>
-      <div class="gen-quest-icons">${questIcons}</div>
-    </div>
+      <!-- 우측: 통계 패널 -->
+      <div class="card gen-stat-panel">
+        <div class="lib-progress" style="margin-bottom:6px"><div class="lib-progress__fill" style="width:${pct}%"></div></div>
+        <div class="lib-pct" style="margin-bottom:14px">${pct}% · ${fmtTrace(totalSpent)} / ${fmtTrace(GENESIS_TARGET)}</div>
 
-    <div class="card">
-      <div class="card__title">이번 주 보스 선택 <span class="gen-cleared">${clearedCount}개 선택</span></div>
-      <div class="gen-bosses">${bossCards}</div>
+        <div class="gen-stat2"><span>필요 흔적</span><b>${fmtTrace(GENESIS_TARGET)}</b></div>
+        <div class="gen-stat2"><span>퀘스트 소모</span><b>${fmtTrace(questCum)}</b></div>
+        <div class="gen-stat2"><span>보유 흔적</span><b>${fmtTrace(held)}</b></div>
+        <div class="gen-stat2"><span>누적 진행</span><b>${fmtTrace(totalSpent)}</b></div>
+        <div class="gen-stat2"><span>남은 흔적</span><b>${fmtTrace(remaining)}</b></div>
+        <div class="gen-stat2-div"></div>
+        <div class="gen-stat2"><span>주간 흔적</span><b>${fmtTrace(weekly)}</b></div>
+        <div class="gen-stat2-div"></div>
+        <div class="gen-stat2"><span>남은 기간</span><b>${durationStr}</b></div>
+
+        <div class="gen-date-wrap">
+          <div class="gen-date-label">예상 해방 날짜</div>
+          <div class="gen-date-big">${targetDate}</div>
+        </div>
+      </div>
     </div>`;
 
   // 이벤트
@@ -326,35 +349,31 @@ function renderGenesis() {
   document.getElementById('genStartDate').addEventListener('change', e => {
     genState.startDate = e.target.value || nextThursday(); saveGen(); renderGenesis();
   });
+  document.getElementById('genQuestSel').addEventListener('change', e => {
+    genState.quest = parseInt(e.target.value); saveGen(); renderGenesis();
+  });
   panel.querySelectorAll('.gen-boss__party').forEach(ps => {
     const id = ps.dataset.id;
     ps.querySelector('.pm').addEventListener('click', () => {
-      const cur = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+      const cur = genState.sel[id] || {};
       if ((cur.party||1) > 1) { genState.sel[id] = { ...cur, party:(cur.party||1)-1 }; saveGen(); renderGenesis(); }
     });
     ps.querySelector('.pp').addEventListener('click', () => {
-      const cur = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0], party:1 };
+      const cur = genState.sel[id] || {};
       if ((cur.party||1) < 6) { genState.sel[id] = { ...cur, party:(cur.party||1)+1 }; saveGen(); renderGenesis(); }
     });
   });
-  panel.querySelectorAll('.gen-qi').forEach(el => {
-    el.addEventListener('click', () => {
-      genState.quest = parseInt(el.dataset.qi); saveGen(); renderGenesis();
-    });
-  });
-  panel.querySelectorAll('.gen-boss__toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const cur = genState.sel[id] || { on:false, diff:Object.keys(TRACE_YIELD[id])[0] };
-      genState.sel[id] = { ...cur, on:!cur.on };
-      saveGen(); renderGenesis();
+  panel.querySelectorAll('.gen-boss__cb').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const id = cb.dataset.id;
+      genState.sel[id] = { ...(genState.sel[id] || {}), cleared: cb.checked };
+      saveGen();
     });
   });
   panel.querySelectorAll('.gen-boss__diff').forEach(s => {
     s.addEventListener('change', () => {
       const id = s.dataset.id;
-      const cur = genState.sel[id] || { on:false };
-      genState.sel[id] = { ...cur, diff:s.value };
+      genState.sel[id] = { ...(genState.sel[id] || {}), diff: s.value };
       saveGen(); renderGenesis();
     });
   });
@@ -383,80 +402,761 @@ renderGenesis();
 renderDestiny();
 
 /* ═══════════════════════════════════════════════
-   스타포스 기댓값 계산기 (몬테카를로 시뮬레이션)
+   스타포스 시뮬레이터 (직접 강화 모드)
 ═══════════════════════════════════════════════ */
-function renderSFRateTable() {
-  const table = document.getElementById('sfRateTable');
-  table.innerHTML = `<thead><tr>
-    <th>현재 성</th><th>목표 성</th><th>성공률</th><th>실패율</th><th>파괴율</th><th>1회 비용 (Lv.200)</th>
-  </tr></thead><tbody>` +
-  SF_RATES.map((r, i) => `<tr>
-    <td>${i}★</td><td>${i+1}★</td>
-    <td style="color:var(--success);font-weight:700">${(r[0]*100).toFixed(0)}%</td>
-    <td style="color:var(--primary)">${(r[1]*100).toFixed(0)}%</td>
-    <td style="color:var(--danger);font-weight:${r[2]>0?700:400}">${r[2]>0?(r[2]*100).toFixed(0)+'%':'—'}</td>
-    <td>${fmtMeso(sfCost(200, i))}</td>
-  </tr>`).join('') + '</tbody>';
+
+/* 단계별 파괴율 라벨 계산 (shining 반영) */
+function _sfDestLabel(star, stage, isShining) {
+  const p = getSfProb(star, isShining, false, stage);
+  if (p.dest <= 0) return '파괴 없음';
+  return `파괴 ${(p.dest * 100).toFixed(2)}%`;
 }
 
-document.getElementById('sfCalc').addEventListener('click', () => {
-  const lv       = parseInt(document.getElementById('sfLevel').value) || 200;
-  const from     = parseInt(document.getElementById('sfFrom').value)  || 0;
-  const to       = Math.min(25, parseInt(document.getElementById('sfTo').value) || 22);
-  const discount = parseFloat(document.getElementById('sfDiscount').value) || 1;
-  const safe12   = document.getElementById('sfSafe12').checked;
-  const safe17   = document.getElementById('sfSafe17').checked;
-  const safe22   = document.getElementById('sfSafe22').checked;
-  const safeSet  = new Set([safe12?12:null, safe17?17:null, safe22?22:null].filter(Boolean));
+/* 단계 드롭다운 그리드 빌드 */
+function sfBuildStageGrid() {
+  const grid = document.getElementById('sfStageGrid');
+  if (!grid) return;
+  const shining = _sfGetEvent() === 'shining';
 
-  if (from >= to) return alert('목표 성이 현재 성보다 높아야 합니다.');
+  const rows = [];
+  for (let s = 15; s <= 21; s++) {
+    const curStage = _sfStages[s] || 1;
+    const maxStage = (s <= 17) ? 4 : 4;
 
-  const SIM = 100_000;
-  let totalMeso = 0, totalBooms = 0, totalAttempts = 0;
-
-  for (let sim = 0; sim < SIM; sim++) {
-    let star = from, meso = 0, attempts = 0;
-    while (star < to) {
-      const cost = sfCost(lv, star) * discount;
-      meso += cost;
-      attempts++;
-      const rand = Math.random();
-      const [ps, pf, pd] = SF_RATES[star];
-      if (rand < ps) {
-        star++;
-      } else if (rand < ps + pd) {
-        // 파괴
-        if (safeSet.has(star)) {
-          // 파괴방지: 해당 성으로 복구 (비용만 지불)
-        } else {
-          totalBooms++;
-          star = Math.max(from, 12); // 12성으로 복구 (일반)
-        }
-      } else {
-        // 실패
-        if (SF_DECREASE[star]) star = Math.max(0, star - 1);
-      }
+    const opts = [];
+    for (let st = 1; st <= maxStage; st++) {
+      const isProt = s <= 16 && st === 4;
+      const label  = isProt ? '파괴방지' : `${st}단계`;
+      opts.push(`<option value="${st}" ${curStage===st?'selected':''}>${label}</option>`);
     }
-    totalMeso += meso;
-    totalAttempts += attempts;
+
+    const p = (s <= 16 && curStage === 4)
+      ? getSfProb(s, shining, true, 1)
+      : getSfProb(s, shining, false, curStage);
+
+    const succPct = (p.succ * 100).toFixed(2);
+    const failPct = (p.fail * 100).toFixed(2);
+    const destPct = (p.dest * 100).toFixed(2);
+
+    rows.push(`
+      <div class="sf-stage-row2" data-star="${s}">
+        <span class="sf-stage-lbl2">${s}→${s+1}</span>
+        <select class="sel sf-stage-sel" data-star="${s}">${opts.join('')}</select>
+        <span class="sf-stage-info">
+          <span class="sf-stage-prob--succ">성공 ${succPct}%</span>
+          <span class="sf-stage-prob--fail">실패 ${failPct}%</span>
+          <span class="sf-stage-prob--dest">파괴 ${destPct}%</span>
+        </span>
+      </div>`);
+  }
+  grid.innerHTML = rows.join('');
+
+  grid.querySelectorAll('.sf-stage-sel').forEach(sel => {
+    sel.addEventListener('change', () => {
+      _sfStages[+sel.dataset.star] = +sel.value;
+      sfBuildStageGrid();
+    });
+  });
+}
+
+/* 상태 */
+let _sfState = { star: 0, cost: 0, attempts: 0, destroys: 0, log: [] };
+let _sfStages = { 15:1, 16:1, 17:1, 18:1, 19:1, 20:1, 21:1 };
+let _sfAutoTimer = null;
+
+function _sfGetEvent()    { return document.querySelector('#sfEventGroup .sf-toggle.active')?.dataset.val || 'none'; }
+function _sfGetMvp()      { return parseFloat(document.querySelector('#sfMvpGroup .sf-toggle.active')?.dataset.val || '0'); }
+function _sfGetLevel()    { return parseInt(document.getElementById('sfLevel').value) || 200; }
+function _sfGetFrom()     { return parseInt(document.getElementById('sfFrom').value) || 0; }
+function _sfGetTo()       { return Math.min(30, parseInt(document.getElementById('sfTo').value) || 22); }
+
+function _sfGetCfg() {
+  const star = _sfState.star;
+  const btn  = _sfStages[star] || 1;
+  const isShining   = _sfGetEvent() === 'shining';
+  const isProtected = (star >= 15 && star <= 17) && btn === 4;
+  const stage       = isProtected ? 1 : btn;
+  return { level: _sfGetLevel(), mvpDiscount: _sfGetMvp(), isShining, isProtected, stage };
+}
+
+function sfEnhanceOnce() {
+  const from = _sfGetFrom();
+  const to   = _sfGetTo();
+  if (_sfState.star >= to) { sfStopAuto(); return false; }
+
+  const star = _sfState.star;
+  const cfg  = _sfGetCfg();
+  const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount, cfg.isShining, cfg.isProtected, cfg.stage, 0);
+  _sfState.cost += cost;
+  _sfState.attempts++;
+
+  const p = getSfProb(star, cfg.isShining, cfg.isProtected, cfg.stage);
+  const r = Math.random();
+
+  let result, nextStar;
+  if (r < p.succ) {
+    nextStar = star + 1;
+    result = { type: 'success', from: star, to: nextStar, cost };
+  } else if (r < p.succ + p.fail) {
+    nextStar = star > 0 ? star - 1 : star;
+    if (star <= 14 || star === 0) nextStar = star; // 0~14성은 유지
+    // 실제론 연속실패 시 강제하락 있지만 jaehoom 로직은 단순 유지
+    nextStar = star; // 실패 = 유지
+    result = { type: 'fail', from: star, to: star, cost };
+  } else {
+    _sfState.destroys++;
+    nextStar = getDestStar(star);
+    result = { type: 'destroy', from: star, to: nextStar, cost };
   }
 
-  const avgMeso     = Math.round(totalMeso / SIM);
-  const avgAttempts = Math.round(totalAttempts / SIM);
-  const avgBooms    = (totalBooms / SIM).toFixed(2);
+  _sfState.star = nextStar;
+  _sfState.log.unshift(result);
+  if (_sfState.log.length > 30) _sfState.log.pop();
 
-  document.getElementById('sfResult').innerHTML = `
-    <div class="sf-res-item"><span class="sf-res-label">평균 소요 메소</span><span class="sf-res-val big">${fmtMeso(avgMeso)}</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">평균 시도 횟수</span><span class="sf-res-val">${avgAttempts.toLocaleString()} 회</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">평균 파괴 횟수</span><span class="sf-res-val" style="color:var(--danger)">${avgBooms} 회</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">아이템 레벨</span><span class="sf-res-val">${lv}</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">구간</span><span class="sf-res-val">${from}★ → ${to}★</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">메소 할인</span><span class="sf-res-val">${discount<1?Math.round((1-discount)*100)+'% 할인':'없음'}</span></div>
-    <div style="margin-top:8px;font-size:.74rem;color:var(--text-sub)">
-      ※ ${SIM.toLocaleString()}회 시뮬레이션 결과. 실제와 차이가 있을 수 있습니다.<br>
-      ※ 비용 기준: 게임 내 실제 메소 비용과 근사값
-    </div>`;
-});
+  sfRenderResult();
+  return _sfState.star < to;
+}
+
+function sfRenderResult() {
+  const el = document.getElementById('sfResult');
+  if (!el) return;
+  const to = _sfGetTo();
+  const done = _sfState.star >= to;
+
+  // 누적 메소 별도 영역
+  const spentWrap = document.getElementById('sfSpentWrap');
+  const spentVal  = document.getElementById('sfSpentVal');
+  if (_sfState.attempts > 0) {
+    if (spentWrap) spentWrap.style.display = 'block';
+    if (spentVal)  spentVal.textContent = fmtMeso(_sfState.cost);
+  }
+
+  const starDisp = `<div class="sf-star-display">${_sfState.star}★ <span style="font-size:.9rem;color:var(--text-sub)">/ ${to}★</span></div>`;
+
+  const stats = `
+    <div class="sf-res-item"><span class="sf-res-label">강화 횟수</span><span class="sf-res-val">${_sfState.attempts.toLocaleString()} 회</span></div>
+    <div class="sf-res-item"><span class="sf-res-label">파괴 횟수</span><span class="sf-res-val" style="color:${_sfState.destroys>0?'var(--danger)':'var(--text)'}">${_sfState.destroys} 회</span></div>
+    ${done ? '<div class="sf-res-item" style="color:var(--success);font-weight:700;text-align:center;padding:10px 0">목표 달성!</div>' : ''}`;
+
+  const logHtml = _sfState.log.slice(0, 15).map(l => {
+    const cls  = l.type === 'success' ? 'log-success' : l.type === 'destroy' ? 'log-destroy' : 'log-fail';
+    const icon = l.type === 'success' ? '✦' : l.type === 'destroy' ? '💥' : '✕';
+    const desc = l.type === 'success' ? `${l.from}★ → ${l.to}★ 성공` : l.type === 'destroy' ? `${l.from}★ 파괴 → ${l.to}★` : `${l.from}★ 실패`;
+    return `<div class="sf-log-row ${cls}"><span class="sf-log-icon">${icon}</span><span class="sf-log-desc">${desc}</span><span class="sf-log-cost">${fmtMeso(l.cost)}</span></div>`;
+  }).join('');
+
+  el.innerHTML = starDisp + stats + (logHtml ? `<div class="sf-log">${logHtml}</div>` : '');
+}
+
+function sfStopAuto() {
+  if (_sfAutoTimer) { clearInterval(_sfAutoTimer); _sfAutoTimer = null; }
+  const btn = document.getElementById('sfBtnAuto');
+  if (btn) { btn.textContent = '자동 강화'; btn.classList.remove('sbtn--danger'); btn.classList.add('sbtn--primary'); }
+}
+
+function initStarforce() {
+  if (!document.getElementById('sfStageGrid')) return;
+
+  // 초기 별 위치를 sfFrom 값으로 세팅
+  _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
+  sfBuildStageGrid();
+
+  // 토글 그룹 처리
+  document.querySelectorAll('.sf-toggle-group').forEach(grp => {
+    grp.querySelectorAll('.sf-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        grp.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        sfBuildStageGrid(); // 샤이닝 상태 바뀌면 파괴율 다시 계산
+      });
+    });
+  });
+
+  // sfFrom 바뀌면 현재 별 리셋
+  document.getElementById('sfFrom')?.addEventListener('change', () => {
+    _sfState.star = _sfGetFrom();
+    sfRenderResult();
+  });
+
+  // 강화 1회
+  document.getElementById('sfBtn1')?.addEventListener('click', () => {
+    sfStopAuto();
+    sfEnhanceOnce();
+  });
+
+  // 자동 강화
+  document.getElementById('sfBtnAuto')?.addEventListener('click', () => {
+    if (_sfAutoTimer) { sfStopAuto(); return; }
+    const btn = document.getElementById('sfBtnAuto');
+    btn.textContent = '■ 중지';
+    btn.classList.remove('sbtn--primary'); btn.classList.add('sbtn--danger');
+    _sfAutoTimer = setInterval(() => {
+      const cont = sfEnhanceOnce();
+      if (!cont) sfStopAuto();
+    }, 80);
+  });
+
+  // 초기화
+  document.getElementById('sfBtnReset')?.addEventListener('click', () => {
+    sfStopAuto();
+    _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
+    document.getElementById('sfResult').innerHTML = '<p class="empty">강화 버튼을 눌러주세요.</p>';
+    document.getElementById('sfSpentWrap').style.display = 'none';
+  });
+
+  // 기댓값 보기
+  document.getElementById('sfBtnExpected')?.addEventListener('click', sfShowExpected);
+
+  // 양방향 메소 ↔ 상위% 이벤트 (한 번만 등록)
+  document.getElementById('sfInputMeso').addEventListener('input', () => {
+    if (!_sfLastCosts.length) return;
+    const val = parseInt(document.getElementById('sfInputMeso').value, 10);
+    if (!val || val <= 0) return;
+    const pct = _sfPctFromMeso(val);
+    document.getElementById('sfInputPct').value = pct.toFixed(3);
+    _sfShowResult(pct, val);
+  });
+  document.getElementById('sfInputPct').addEventListener('input', () => {
+    if (!_sfLastCosts.length) return;
+    const pct = parseFloat(document.getElementById('sfInputPct').value);
+    if (isNaN(pct) || pct < 0 || pct > 100) return;
+    const meso = _sfMesoFromPct(pct);
+    document.getElementById('sfInputMeso').value = meso;
+    _sfShowResult(pct, meso);
+  });
+  document.getElementById('sfInputDestroyCount').addEventListener('input', () => {
+    if (!_sfLastDestroys.length) return;
+    const val = parseInt(document.getElementById('sfInputDestroyCount').value, 10);
+    if (isNaN(val) || val < 0) return;
+    const pct = _sfDestroyPctFromCount(val);
+    document.getElementById('sfInputDestroyPct').value = pct.toFixed(3);
+    _sfShowDestroyResult(pct, val);
+  });
+  document.getElementById('sfInputDestroyPct').addEventListener('input', () => {
+    if (!_sfLastDestroys.length) return;
+    const pct = parseFloat(document.getElementById('sfInputDestroyPct').value);
+    if (isNaN(pct) || pct < 0 || pct > 100) return;
+    const count = _sfDestroyCountFromPct(pct);
+    document.getElementById('sfInputDestroyCount').value = count;
+    _sfShowDestroyResult(pct, count);
+  });
+
+  // 탭 스위칭
+  document.querySelectorAll('.sf-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const mode = tab.dataset.sftab;
+      document.getElementById('sfRightExpected').style.display  = mode === 'expected'  ? '' : 'none';
+      document.getElementById('sfRightSimulate').style.display  = mode === 'simulate'  ? '' : 'none';
+      document.getElementById('sfBtnWrapExpected').style.display = mode === 'expected' ? '' : 'none';
+      document.getElementById('sfBtnWrapSimulate').style.display = mode === 'simulate' ? 'grid' : 'none';
+    });
+  });
+  // 초기 상태
+  document.getElementById('sfBtnWrapSimulate').style.display = 'none';
+}
+
+let _sfChart        = null;
+let _sfDestroyChart = null;
+let _sfLastCosts    = [];
+let _sfLastDestroys = [];
+
+function _sfHighlightBar(val) {
+  if (!_sfChart) return;
+  const p99 = _sfLastCosts[Math.floor(_sfLastCosts.length * 0.99)] || 1;
+  const BINS = 40;
+  const colors = Array(BINS).fill('rgba(139,92,246,0.45)');
+  const binIdx = Math.floor(val / (p99 / BINS));
+  if (binIdx >= 0 && binIdx < BINS) colors[binIdx] = 'rgba(246,199,68,0.9)';
+  _sfChart.data.datasets[0].backgroundColor = colors;
+  _sfChart.update('none');
+}
+
+function _sfDestroyPctFromCount(count) {
+  const N = _sfLastDestroys.length;
+  let lo = 0, hi = N;
+  while (lo < hi) { const m = (lo+hi)>>1; if (_sfLastDestroys[m] < count) lo=m+1; else hi=m; }
+  return lo / N * 100;
+}
+
+function _sfDestroyCountFromPct(pct) {
+  const N = _sfLastDestroys.length;
+  const idx = Math.min(N - 1, Math.max(0, Math.round(pct / 100 * N)));
+  return _sfLastDestroys[idx];
+}
+
+function _sfShowDestroyResult(luckPct, count) {
+  const resEl = document.getElementById('sfDestroyResult');
+  if (!resEl) return;
+  const cls = luckPct <= 25 ? 'lucky' : luckPct >= 75 ? 'unlucky' : '';
+  resEl.innerHTML = `<div class="sf-my-result">
+    <span class="sf-my-result__tag ${cls}">상위 ${luckPct.toFixed(3)}%</span>
+    <span class="sf-my-result__sep"> = </span>
+    <span class="sf-my-result__meso">${count}개</span>
+  </div>`;
+}
+
+function _sfPctFromMeso(val) {
+  const N = _sfLastCosts.length;
+  let lo = 0, hi = N;
+  while (lo < hi) { const m = (lo+hi)>>1; if (_sfLastCosts[m] < val) lo=m+1; else hi=m; }
+  return lo / N * 100;
+}
+
+function _sfMesoFromPct(pct) {
+  const N = _sfLastCosts.length;
+  const idx = Math.min(N - 1, Math.max(0, Math.round(pct / 100 * N)));
+  return _sfLastCosts[idx];
+}
+
+function _sfShowResult(luckPct, mesoVal) {
+  const resEl = document.getElementById('sfMyMesoResult');
+  if (!resEl) return;
+  const cls = luckPct <= 25 ? 'lucky' : luckPct >= 75 ? 'unlucky' : '';
+  resEl.innerHTML = `<div class="sf-my-result">
+    <span class="sf-my-result__tag ${cls}">상위 ${luckPct.toFixed(3)}%</span>
+    <span class="sf-my-result__sep"> = </span>
+    <span class="sf-my-result__meso">${fmtMeso(mesoVal)}</span>
+  </div>`;
+  _sfHighlightBar(mesoVal);
+}
+
+function sfShowExpected() {
+  const from = _sfGetFrom();
+  const to   = _sfGetTo();
+  if (from >= to) { alert('목표 성이 현재 성보다 높아야 합니다.'); return; }
+
+  const cfg = {
+    level: _sfGetLevel(), current: from, target: to,
+    mvpDiscount: _sfGetMvp(), isShining: _sfGetEvent() === 'shining',
+    stages: { ..._sfStages }
+  };
+
+  const N = 20_000;
+  const costs = [], destroyArr = [];
+  let totalDestroy = 0;
+  for (let i = 0; i < N; i++) {
+    const r = sfRunOnce(cfg);
+    costs.push(r.cost);
+    destroyArr.push(r.destroys);
+    totalDestroy += r.destroys;
+  }
+  costs.sort((a, b) => a - b);
+  destroyArr.sort((a, b) => a - b);
+  _sfLastCosts    = costs;
+  _sfLastDestroys = destroyArr;
+
+  const mean = costs.reduce((s, c) => s + c, 0) / N;
+  const p99  = costs[Math.floor(N * 0.99)];
+  const avgDestroy = (totalDestroy / N);
+
+  /* 히스토그램 버킷 40개, p99 범위 */
+  const BINS = 40;
+  const step = p99 / BINS;
+  const buckets = Array(BINS).fill(0);
+  costs.forEach(c => { const idx = Math.floor(c / step); if (idx < BINS) buckets[idx]++; });
+  const labels = buckets.map((_, i) => fmtMeso(Math.round(step * (i + 0.5))));
+
+
+  const canvas = document.getElementById('sfChart');
+  if (_sfChart) { _sfChart.destroy(); _sfChart = null; }
+  _sfChart = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '빈도',
+        data: buckets,
+        backgroundColor: 'rgba(139,92,246,0.55)',
+        borderColor: 'rgba(167,139,250,0.8)',
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => `소모 메소 ≈ ${labels[items[0].dataIndex]}`,
+            label: item  => `${item.raw.toLocaleString()}회 (${(item.raw/N*100).toFixed(1)}%)`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: 'rgba(200,190,240,.6)', maxRotation: 45, font: { size: 9 }, maxTicksLimit: 10 },
+          grid: { color: 'rgba(255,255,255,.05)' }
+        },
+        y: {
+          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
+          grid: { color: 'rgba(255,255,255,.08)' }
+        }
+      }
+    }
+  });
+
+  /* 파괴 횟수 분포 차트 */
+  const maxDest = Math.max(...destroyArr);
+  const destBuckets = Array(maxDest + 1).fill(0);
+  destroyArr.forEach(d => destBuckets[d]++);
+  const destLabels = destBuckets.map((_, i) => `${i}개`);
+  const destCanvas = document.getElementById('sfDestroyChart');
+  if (_sfDestroyChart) { _sfDestroyChart.destroy(); _sfDestroyChart = null; }
+  _sfDestroyChart = new Chart(destCanvas, {
+    type: 'bar',
+    data: {
+      labels: destLabels,
+      datasets: [{
+        label: '빈도',
+        data: destBuckets,
+        backgroundColor: 'rgba(246,99,99,0.55)',
+        borderColor: 'rgba(246,139,139,0.8)',
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title: items => `파괴 ${items[0].label}`,
+            label: item  => `${item.raw.toLocaleString()}회 (${(item.raw/N*100).toFixed(1)}%)`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
+          grid: { color: 'rgba(255,255,255,.05)' }
+        },
+        y: {
+          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
+          grid: { color: 'rgba(255,255,255,.08)' }
+        }
+      }
+    }
+  });
+
+  /* 메소 bidir 평균 세팅 */
+  const avgCost = Math.round(mean);
+  const avgPct  = _sfPctFromMeso(avgCost);
+  document.getElementById('sfInputMeso').value = avgCost;
+  document.getElementById('sfInputPct').value  = avgPct.toFixed(3);
+  _sfShowResult(avgPct, avgCost);
+
+  /* 파괴 bidir 평균 세팅 */
+  const avgDest    = Math.round(avgDestroy);
+  const avgDestPct = _sfDestroyPctFromCount(avgDest);
+  document.getElementById('sfInputDestroyCount').value = avgDest;
+  document.getElementById('sfInputDestroyPct').value   = avgDestPct.toFixed(3);
+  _sfShowDestroyResult(avgDestPct, avgDest);
+
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+/* ═══════════════════════════════════════════════
+   큐브 시뮬레이터
+═══════════════════════════════════════════════ */
+const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 제외)","포스실드, 소울링","방패","모자","상의","한벌옷","하의","신발","장갑","망토","벨트","어깨장식","얼굴장식","눈장식","귀고리","반지","펜던트","기계심장"];
+const CUBE_MESO  = { red: 12_000_000, black: 22_000_000 };
+
+function _cubeLineProb(lineOpts, option) {
+  const total = lineOpts.reduce((s, o) => s + o.probability, 0);
+  if (!total) return 0;
+  const m = /^(STR|DEX|INT|LUK) \+(\d+)%$/.exec(option);
+  return lineOpts
+    .filter(o => o.option === option || (m && o.option === `올스탯 +${m[2]}%`))
+    .reduce((s, o) => s + o.probability, 0) / total;
+}
+
+function _cubeExactP(lineData, goals) {
+  const n = goals.length;
+  if (!n) return 0;
+  const lines = ['line1','line2','line3'].map(k => lineData[k] || []);
+  const p = lines.map(opts => goals.map(g => _cubeLineProb(opts, g)));
+
+  // 가능한 모든 단사함수 goals→lines 열거
+  const injections = [];
+  if (n === 1) {
+    for (let i = 0; i < 3; i++) injections.push([i]);
+  } else if (n === 2) {
+    for (let i = 0; i < 3; i++)
+      for (let j = 0; j < 3; j++)
+        if (i !== j) injections.push([i, j]);
+  } else {
+    [[0,1,2],[0,2,1],[1,0,2],[1,2,0],[2,0,1],[2,1,0]].forEach(s => injections.push(s));
+  }
+
+  const m = injections.length;
+  let result = 0;
+  for (let mask = 1; mask < (1 << m); mask++) {
+    const chosen = [];
+    for (let b = 0; b < m; b++) if (mask & (1 << b)) chosen.push(b);
+    const sign = chosen.length % 2 === 1 ? 1 : -1;
+
+    // 각 line에 요구되는 goal index Set 구성
+    const req = [new Set(), new Set(), new Set()];
+    for (const bi of chosen) {
+      const inj = injections[bi];
+      for (let k = 0; k < n; k++) req[inj[k]].add(k);
+    }
+
+    // 같은 line에 서로 다른 option string이 요구되면 불가능
+    let prob = 1, valid = true;
+    for (let l = 0; l < 3; l++) {
+      const reqs = [...req[l]];
+      if (!reqs.length) continue;
+      const strs = [...new Set(reqs.map(k => goals[k]))];
+      if (strs.length > 1) { valid = false; break; }
+      prob *= p[l][reqs[0]];
+    }
+    if (valid) result += sign * prob;
+  }
+  return result;
+}
+
+let _cubeData     = null;
+let _cubeRunning  = false;
+let _cubeStop     = false;
+let _cubeUseCount = 0;
+let _cubeSucc     = 0;
+
+async function _loadCubeData() {
+  if (_cubeData) return _cubeData;
+  _cubeData = window.CUBE_DATA;
+  return _cubeData;
+}
+
+function _cubeGetLevelRange(lv) {
+  if (lv >= 120 && lv <= 200) return '120~200';
+  if (lv >= 201 && lv <= 250) return '201~250';
+  return null;
+}
+
+const _CUBE_RENAME_160 = {
+  "STR +12%":"STR +13%","DEX +12%":"DEX +13%","INT +12%":"INT +13%","LUK +12%":"LUK +13%",
+  "공격력 +12%":"공격력 +13%","마력 +12%":"마력 +13%","크리티컬 확률 +12%":"크리티컬 확률 +13%",
+  "데미지 +12%":"데미지 +13%","올스탯 +9%":"올스탯 +10%","STR +9%":"STR +10%",
+  "DEX +9%":"DEX +10%","INT +9%":"INT +10%","LUK +9%":"LUK +10%",
+  "공격력 +9%":"공격력 +10%","마력 +9%":"마력 +10%","크리티컬 확률 +9%":"크리티컬 확률 +10%",
+  "데미지 +9%":"데미지 +10%","올스탯 +6%":"올스탯 +7%",
+  "최대 HP +12%":"최대 HP +13%","최대 HP +9%":"최대 HP +10%",
+  "최대 MP +12%":"최대 MP +13%","최대 MP +9%":"최대 MP +10%",
+};
+
+function _cubeIsLv160() {
+  const lv = parseInt(document.getElementById('cubeLevel').value);
+  return lv >= 160 && lv <= 200;
+}
+
+function _cubeRenameOpt(name) {
+  return (_cubeIsLv160() && _CUBE_RENAME_160[name]) || name;
+}
+
+function _cubeApplyRename(lineData) {
+  if (!lineData || !_cubeIsLv160()) return lineData;
+  const rename = arr => arr ? arr.map(o => ({ option: _CUBE_RENAME_160[o.option] || o.option, probability: o.probability })) : arr;
+  return { line1: rename(lineData.line1), line2: rename(lineData.line2), line3: rename(lineData.line3) };
+}
+
+function _weightedRandom(options) {
+  const total = options.reduce((s, o) => s + o.probability, 0);
+  let rand = Math.random() * total;
+  for (const o of options) { rand -= o.probability; if (rand <= 0) return o.option; }
+  return options[options.length-1].option;
+}
+
+function _cubeGetLineData() {
+  if (!_cubeData) return null;
+  const type  = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
+  const part  = document.getElementById('cubePart').value;
+  const range = _cubeGetLevelRange(parseInt(document.getElementById('cubeLevel').value));
+  if (!part || !range) return null;
+  const lineData = _cubeData[type]?.[range]?.[part];
+  if (!lineData) return null;
+  return _cubeApplyRename(lineData);
+}
+
+function _cubeRollOnce(lineData) {
+  const line1 = _weightedRandom(lineData.line1 || []);
+  const line2 = _weightedRandom(lineData.line2 || []);
+  const line3 = _weightedRandom(lineData.line3 || []);
+  return { line1, line2, line3 };
+}
+
+function _cubeGetGoals() {
+  return [1, 2, 3]
+    .map(i => document.getElementById(`cubeGoalSel${i}`)?.value || '-')
+    .filter(v => v && v !== '-');
+}
+
+function _cubeCheckSuccess(rolled, goals) {
+  if (!goals) goals = _cubeGetGoals();
+  if (!goals.length) return false;
+  const lines = [rolled.line1, rolled.line2, rolled.line3];
+  const used  = [false, false, false];
+  for (const opt of goals) {
+    const m = /^(STR|DEX|INT|LUK) \+(\d+)%$/.exec(opt);
+    let found = false;
+    for (let i = 0; i < 3; i++) {
+      if (used[i]) continue;
+      if (lines[i] === opt || (m && lines[i] === `올스탯 +${m[2]}%`)) {
+        used[i] = true; found = true; break;
+      }
+    }
+    if (!found) return false;
+  }
+  return true;
+}
+
+function _cubeRenderResults() {
+  const el = document.getElementById('cubeResults');
+  if (!el) return;
+  if (_cubeUseCount === 0) { el.innerHTML = '<p class="empty">결과가 없습니다.</p>'; return; }
+  const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
+  const meso = CUBE_MESO[type] || 12_000_000;
+  const rate  = (_cubeSucc / _cubeUseCount * 100).toFixed(4);
+  el.innerHTML = `
+    <div class="sf-res-item"><span class="sf-res-label">사용 횟수</span><span class="sf-res-val big">${_cubeUseCount.toLocaleString()}</span></div>
+    <div class="sf-res-item"><span class="sf-res-label">성공 횟수</span><span class="sf-res-val" style="color:var(--success)">${_cubeSucc.toLocaleString()}</span></div>
+    <div class="sf-res-item"><span class="sf-res-label">성공률</span><span class="sf-res-val">${rate}%</span></div>
+    <div class="sf-res-item"><span class="sf-res-label">소요 메소</span><span class="sf-res-val">${fmtMeso(_cubeUseCount * meso)}</span></div>
+    ${_cubeSucc > 0 ? `<div class="sf-res-item"><span class="sf-res-label">성공까지 평균 횟수</span><span class="sf-res-val">${Math.round(_cubeUseCount/_cubeSucc).toLocaleString()} 회</span></div>` : ''}`;
+}
+
+function _cubePopulateGoalOpts(lineData) {
+  const allOpts = new Set();
+  ['line1','line2','line3'].forEach(k => {
+    (lineData?.[k] || []).forEach(o => allOpts.add(o.option));
+  });
+  const opts = ['-', ...allOpts];
+  const html  = opts.map(o => `<option value="${o}">${o}</option>`).join('');
+  for (let i = 1; i <= 3; i++) {
+    const sel = document.getElementById(`cubeGoalSel${i}`);
+    if (sel) sel.innerHTML = html;
+  }
+}
+
+// 160 역방향 매핑
+const _CUBE_RENAME_160_REV = Object.fromEntries(
+  Object.entries(_CUBE_RENAME_160).map(([k, v]) => [v, k])
+);
+
+function _cubeRefreshGoalOpts() {
+  const lv = parseInt(document.getElementById('cubeLevel')?.value);
+  if (!lv || lv < 120 || lv > 250) return;
+
+  const prev = [1, 2, 3].map(i => document.getElementById(`cubeGoalSel${i}`)?.value || '-');
+
+  const lineData = _cubeGetLineData();
+  if (!lineData) return;
+  _cubePopulateGoalOpts(lineData);
+
+  // 저장값 복원 — 레벨에 따라 리네임 적용
+  const isLv160 = _cubeIsLv160();
+  prev.forEach((val, idx) => {
+    if (!val || val === '-') return;
+    // 현재 레벨 기준으로 옵션명 변환
+    const mapped = isLv160
+      ? (_CUBE_RENAME_160[val] || val)
+      : (_CUBE_RENAME_160_REV[val] || val);
+    const sel = document.getElementById(`cubeGoalSel${idx + 1}`);
+    if (!sel) return;
+    const exists = [...sel.options].some(o => o.value === mapped);
+    sel.value = exists ? mapped : '-';
+  });
+}
+
+async function initCube() {
+  // 부위 드롭다운
+  const partSel = document.getElementById('cubePart');
+  if (partSel) {
+    partSel.innerHTML = CUBE_PARTS.map(p => `<option value="${p}">${p}</option>`).join('');
+  }
+
+  // 큐브 타입 버튼
+  document.querySelectorAll('.cube-type-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.cube-type-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _cubeRefreshGoalOpts();
+    });
+  });
+
+  // 부위/레벨 변경 시 옵션 갱신
+  ['cubePart','cubeLevel'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', _cubeRefreshGoalOpts);
+    document.getElementById(id)?.addEventListener('input',  _cubeRefreshGoalOpts);
+  });
+
+  // 데이터 미리 로드 후 옵션 초기화
+  try {
+    await _loadCubeData();
+    _cubeRefreshGoalOpts();
+  } catch(e) { console.error('큐브 데이터 로드 실패', e); }
+
+  // 기댓값 계산
+  document.getElementById('cubeExpectedBtn')?.addEventListener('click', () => {
+    const goals    = _cubeGetGoals();
+    const lineData = _cubeGetLineData();
+    if (!goals.length)  { alert('목표 옵션을 1개 이상 선택하세요.'); return; }
+    if (!lineData)      { alert('레벨과 부위를 올바르게 설정하세요.'); return; }
+
+    const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
+    const meso = CUBE_MESO[type] || 12_000_000;
+
+    const el = document.getElementById('cubeResults');
+    const pSuccess = _cubeExactP(lineData, goals);
+    if (!pSuccess) { el.innerHTML = '<p class="empty">해당 옵션 조합 데이터가 없습니다.</p>'; return; }
+    const eCubes   = 1 / pSuccess;
+    const eMeso    = eCubes * meso;
+
+    el.innerHTML = `
+      <div class="sf-res-item"><span class="sf-res-label">성공 확률</span><span class="sf-res-val big">${(pSuccess * 100).toFixed(4)}%</span></div>
+      <div class="sf-res-item"><span class="sf-res-label">기댓값 평균 큐브 수</span><span class="sf-res-val">${Math.ceil(eCubes).toLocaleString()} 개</span></div>
+      <div class="sf-res-item"><span class="sf-res-label">기댓값 평균 메소</span><span class="sf-res-val">${fmtMeso(Math.round(eMeso))}</span></div>
+      <div class="sf-res-item"><span class="sf-res-label">10% 확률 이내</span><span class="sf-res-val">${Math.ceil(eCubes * 0.105).toLocaleString()} 개</span></div>
+      <div class="sf-res-item"><span class="sf-res-label">90% 확률 이내</span><span class="sf-res-val" style="color:var(--danger)">${Math.ceil(eCubes * 2.303).toLocaleString()} 개</span></div>`;
+  });
+
+  // 시뮬레이션 시작 (RAF 기반 — UI 안 멈춤)
+  document.getElementById('cubeRunBtn')?.addEventListener('click', () => {
+    if (_cubeRunning) return;
+    const goals    = _cubeGetGoals();
+    const lineData = _cubeGetLineData();
+    if (!goals.length)  { alert('목표 옵션을 1개 이상 선택하세요.'); return; }
+    if (!lineData)      { alert('레벨과 부위를 올바르게 설정하세요.'); return; }
+
+    _cubeUseCount = 0; _cubeSucc = 0; _cubeRunning = true; _cubeStop = false;
+    document.getElementById('cubeRunBtn').disabled  = true;
+    document.getElementById('cubeStopBtn').disabled = false;
+
+    let lastRender = 0;
+    function tick(ts) {
+      if (_cubeStop) {
+        _cubeRunning = false;
+        document.getElementById('cubeRunBtn').disabled  = false;
+        document.getElementById('cubeStopBtn').disabled = true;
+        _cubeRenderResults();
+        return;
+      }
+      for (let i = 0; i < 500; i++) {
+        _cubeUseCount++;
+        if (_cubeCheckSuccess(_cubeRollOnce(lineData), goals)) _cubeSucc++;
+      }
+      if (ts - lastRender > 100) { _cubeRenderResults(); lastRender = ts; }
+      requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+
+  document.getElementById('cubeStopBtn')?.addEventListener('click', () => { _cubeStop = true; });
+}
 
 /* ═══════════════════════════════════════════════
    보스 HP 카드
@@ -559,7 +1259,7 @@ function renderBossHPTable() {
       <div class="bhp-card__img">${imgHtml}</div>
       <div class="bhp-card__body">
         <div class="bhp-card__top">
-          <div class="bhp-card__name">${active.nameOverride || boss.name}${boss.monthly ? '<span class="boss-monthly">월간</span>' : ''}</div>
+          <div class="bhp-card__name">${active.nameOverride || boss.name}</div>
           <div class="bhp-card__info">
             <span class="bhp-lv">Lv.${active.lv ?? '—'}</span>
             ${forceEl}
@@ -591,4 +1291,5 @@ function renderBossHPTable() {
 }
 
 renderBossHPTable();
-renderSFRateTable();
+initStarforce();
+initCube();

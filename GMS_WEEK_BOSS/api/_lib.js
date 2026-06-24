@@ -28,39 +28,56 @@ async function lookupCharacter(name, reboot, region) {
   const lc  = name.toLowerCase();
   const hit = data.ranks.find(c => (c.characterName||'').toLowerCase() === lc) || data.ranks[0];
 
-  // 2) legion 랭킹 (유니온 레벨·전투력·랭킹) — 실패해도 무시
+  // 2) legion / world / job 랭킹 병렬 조회 — 실패해도 무시
   let legionLevel = hit.legionLevel || 0;
-  let legionPower = 0;
-  let legionRank  = 0;
-  try {
-    const legionUrl = `${NEXON_BASE}/${reg}?type=legion&id=weekly&reboot_index=0`
-                    + `&page_index=1&character_name=${encodeURIComponent(name)}`;
-    const lr = await fetch(legionUrl, { headers });
-    if (lr.ok) {
-      const ld = await lr.json();
-      const lhit = (ld.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
-      if (lhit) {
-        legionLevel = lhit.legionLevel || lhit.legion_level || lhit.unionLevel || legionLevel;
-        legionPower = lhit.legionPower || lhit.legionCombatPower || lhit.legion_power || lhit.unionPower || lhit.combatPower || 0;
-        legionRank  = lhit.rank || lhit.legionRank || 0;
-      }
+  let legionPower = 0, legionRank = 0;
+  let worldRank = 0, jobRankWorld = 0, jobRankGMS = 0;
+
+  const ri = reboot ? 1 : 0;
+  const fetchRank = (type, rb) =>
+    fetch(`${NEXON_BASE}/${reg}?type=${type}&id=weekly&reboot_index=${rb}&page_index=1&character_name=${encodeURIComponent(name)}`, { headers })
+      .then(r => r.ok ? r.json() : null).catch(() => null);
+
+  const [ld, wd, jd, jgd] = await Promise.all([
+    fetchRank('legion', 0),
+    fetchRank('world', ri),
+    fetchRank('job',   ri),
+    fetchRank('job',   ri),   // GMS-wide job rank는 world 파라미터 없이 same endpoint
+  ]);
+
+  if (ld) {
+    const lhit = (ld.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
+    if (lhit) {
+      legionLevel = lhit.legionLevel || lhit.legion_level || lhit.unionLevel || legionLevel;
+      legionPower = lhit.legionPower || lhit.legionCombatPower || lhit.legion_power || lhit.unionPower || lhit.combatPower || 0;
+      legionRank  = lhit.rank || lhit.legionRank || 0;
     }
-  } catch (_) {}
+  }
+  if (wd) {
+    const whit = (wd.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
+    if (whit) worldRank = whit.rank || 0;
+  }
+  if (jd) {
+    const jhit = (jd.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
+    if (jhit) jobRankWorld = jhit.rank || 0;
+  }
 
   return {
-    name:        hit.characterName,
-    level:       hit.level,
-    exp:         hit.exp,
-    job:         hit.jobName,
-    world:       worldName(hit.worldID),
-    worldID:     hit.worldID,
-    rank:        hit.rank,
-    legion:      legionLevel,
-    legionPower: legionPower,
-    legionRank:  legionRank,
-    img:         hit.characterImgURL || '',
-    reboot:      !!reboot,
-    region:      region === 'eu' ? 'EU' : 'NA',
+    name:         hit.characterName,
+    level:        hit.level,
+    exp:          hit.exp,
+    job:          hit.jobName,
+    world:        worldName(hit.worldID),
+    worldID:      hit.worldID,
+    rank:         hit.rank,
+    worldRank,
+    jobRankWorld,
+    legion:       legionLevel,
+    legionPower,
+    legionRank,
+    img:          hit.characterImgURL || '',
+    reboot:       !!reboot,
+    region:       region === 'eu' ? 'EU' : 'NA',
   };
 }
 

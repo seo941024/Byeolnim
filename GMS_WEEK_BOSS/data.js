@@ -35,6 +35,7 @@ const BOSS_DATA = [
 ];
 
 const DIFF_META = {
+  none:    { label:'-',  cls:'diff-none'    },
   easy:    { label:'EASY',    cls:'diff-easy'    },
   normal:  { label:'NORMAL',  cls:'diff-normal'  },
   hard:    { label:'HARD',    cls:'diff-hard'    },
@@ -308,14 +309,14 @@ const SACRED_SYM_EXP = [
 /* 보스 격파 시 어둠의 흔적 획득량 (난이도별)
    ※ blackmage 는 월간 보스 → 주간이 아닌 월 1회 누적 */
 const TRACE_YIELD = {
-  suu:      { normal:10, hard:50, extreme:50 },  // 스우 (Lotus)
-  demian:   { normal:10, hard:50 },              // 데미안 (Damien)
-  lucid:    { easy:15,  normal:20, hard:65 },    // 루시드 (Lucid)
-  will:     { easy:15,  normal:25, hard:75 },    // 윌 (Will)
-  dusk:     { normal:20, hard:65 },              // 더스크 (Gloom)
-  dunkel:   { normal:25, hard:75 },              // 듄켈 (Darknell)
-  jinhilla: { normal:45, hard:90 },              // 진 힐라 (Verus Hilla)
-  blackmage:{ hard:600, extreme:600 },           // 검은 마법사 (월간)
+  suu:      { normal:10, hard:50, extreme:50 },
+  demian:   { normal:10, hard:50 },
+  lucid:    { easy:15,  normal:20, hard:65 },
+  will:     { easy:15,  normal:25, hard:75 },
+  dusk:     { normal:20, hard:65 },
+  dunkel:   { normal:25, hard:75 },
+  jinhilla: { normal:45, hard:90 },
+  blackmage:{ hard:600, extreme:600 },
 };
 
 /* 제네시스 해방 퀘스트 체인 — 누적 흔적 임계치(cum).

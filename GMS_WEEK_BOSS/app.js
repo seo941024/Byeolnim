@@ -90,11 +90,7 @@ function getMaxParty(boss, diff) {
 function ck(bossId, diff) { return `${bossId}_${diff}`; }
 
 /* ── 결정석 ── */
-function countCrystals(ch) {
-  return Object.values(ch.checks || {}).filter(v => v?.on).length;
-}
 function countWeeklyCrystals(ch) {
-  // 월간 보스 제외 결정석 수
   let n = 0;
   Object.entries(ch.checks || {}).forEach(([key, v]) => {
     if (!v?.on) return;
@@ -103,6 +99,19 @@ function countWeeklyCrystals(ch) {
     if (boss && !boss.monthly) n++;
   });
   return n;
+}
+function countMonthlyCrystals(ch) {
+  let n = 0;
+  Object.entries(ch.checks || {}).forEach(([key, v]) => {
+    if (!v?.on) return;
+    const bossId = key.slice(0, key.lastIndexOf('_'));
+    const boss = BOSS_DATA.find(b => b.id === bossId);
+    if (boss && boss.monthly) n++;
+  });
+  return n;
+}
+function countCrystals(ch) {
+  return countWeeklyCrystals(ch) + countMonthlyCrystals(ch);
 }
 /* 한 캐릭터의 주간 보스 수익 합 */
 function thursdaysInMonth() {
@@ -143,12 +152,17 @@ function charMonthlyMeso(ch) {
 }
 
 function updateCrystalBar() {
-  let total = state.chars.reduce((s, c) => s + countCrystals(c), 0);
-  total = Math.min(total, MAX_CRYSTALS);
+  const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
+  const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
+  const total  = Math.min(totalW + totalM, MAX_CRYSTALS);
   document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
   document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
-  const weekTotal = state.chars.reduce((s, c) => s + charWeeklyMeso(c), 0);
-  const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c), 0);
+  const elCW = document.getElementById('totalCrystalWeekly');
+  if (elCW) elCW.textContent = totalW;
+  const elCM = document.getElementById('totalCrystalMonthly');
+  if (elCM) elCM.textContent = totalM;
+  const weekTotal  = state.chars.reduce((s, c) => s + charWeeklyMeso(c), 0);
+  const monthTotal = Math.max(0, state.chars.reduce((s, c) => s + charMonthlyMeso(c), 0) - rentalMonthlyCost());
   const elW = document.getElementById('totalWeekMeso');
   if (elW) elW.textContent = fmtMeso(weekTotal);
   const elM = document.getElementById('totalMonthMeso');
@@ -194,6 +208,32 @@ function renderCharList() {
         </div>
         <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
       </div>`;
+    li.setAttribute('draggable', 'true');
+    li.dataset.idx = i;
+
+    li.addEventListener('dragstart', e => {
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', i);
+      li.classList.add('dragging');
+    });
+    li.addEventListener('dragend', () => li.classList.remove('dragging'));
+    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('drag-over'); });
+    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
+    li.addEventListener('drop', e => {
+      e.preventDefault();
+      li.classList.remove('drag-over');
+      const from = parseInt(e.dataTransfer.getData('text/plain'));
+      const to   = i;
+      if (from === to) return;
+      const moved = state.chars.splice(from, 1)[0];
+      state.chars.splice(to, 0, moved);
+      if (state.activeChar === from) state.activeChar = to;
+      else if (state.activeChar > from && state.activeChar <= to) state.activeChar--;
+      else if (state.activeChar < from && state.activeChar >= to) state.activeChar++;
+      save();
+      renderCharList();
+    });
+
     li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
     ul.appendChild(li);
   });
@@ -218,15 +258,16 @@ function renderBossTable() {
 
   if (!ch) {
     nm.textContent = '캐릭터를 선택하세요';
-    cp.textContent = '결정석 0 / 0';
+    cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">0개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">0개</span>`;
     tb.innerHTML = `<tr><td colspan="4" class="empty">왼쪽에서 캐릭터를 선택하세요.</td></tr>`;
     document.getElementById('weeklyTotal').textContent = '0 메소';
     return;
   }
 
-  const crystals = countCrystals(ch);
-  nm.textContent = `${ch.name} 보스 선택 (결정석 ${crystals}개)`;
-  cp.textContent = `결정석 ${crystals}개`;
+  const cW = countWeeklyCrystals(ch);
+  const cM = countMonthlyCrystals(ch);
+  nm.textContent = `${ch.name} 보스 목록`;
+  cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">${cW}개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">${cM}개</span>`;
 
   let total = 0;
   tb.innerHTML = '';
@@ -268,7 +309,7 @@ function renderBossTable() {
     tr.innerHTML = `
       <td><div class="boss-name-cell">
         <div class="boss-thumb"><img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
-        <span class="boss-label">${boss.name}${boss.monthly?'<span class="boss-monthly">월간</span>':''}</span>
+        <span class="boss-label">${boss.name}</span>
       </div></td>
       <td>${pillsHtml}</td>
       <td>${partyHtml}</td>
@@ -399,6 +440,7 @@ function updateRentalTotals() {
   const mCost2 = rentalMonthlyCost();
   if (wEl) wEl.textContent = fmtMeso(Math.max(0, bossWeekly - wCost2));
   if (mEl) mEl.textContent = fmtMeso(Math.max(0, charMonthlyMeso(ch) - mCost2));
+  updateCrystalBar();
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -569,7 +611,7 @@ function renderHistHtml(d) {
     `<div class="hist-cody"><img src="${s.img}" onerror="this.style.display='none'" /><span>${s.date.slice(5)}</span></div>`).join('');
   return `
     <div class="hist-sec"><div class="hist-title">경험치 / 레벨 히스토리</div>${expRows}</div>
-    ${codies ? `<div class="hist-sec"><div class="hist-title">코디 히스토리</div><div class="hist-codies">${codies}</div></div>` : ''}`;
+    `;
 }
 document.getElementById('lkBtn').addEventListener('click', async () => {
   const name   = document.getElementById('lkName').value.trim();
@@ -672,32 +714,6 @@ document.querySelectorAll('.overlay').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
 
-/* ── 커서 ON/OFF 토글 ── */
-(function() {
-  const btn = document.getElementById('btnCursor');
-  const cur = document.getElementById('customCursor');
-  const styleEl = document.createElement('style');
-  document.head.appendChild(styleEl);
-
-  let cursorOn = true;
-
-  function applyCursor() {
-    if (cursorOn) {
-      styleEl.textContent = '';
-      if (cur) cur.style.display = 'block';
-      btn.textContent = 'ON';
-      btn.classList.add('hbtn--cursor-on');
-    } else {
-      styleEl.textContent = '*, *:hover, *:active, *:focus { cursor: auto !important; }';
-      if (cur) cur.style.display = 'none';
-      btn.textContent = 'OFF';
-      btn.classList.remove('hbtn--cursor-on');
-    }
-  }
-
-  btn.addEventListener('click', () => { cursorOn = !cursorOn; applyCursor(); });
-  applyCursor();
-})();
 
 /* ── 내보내기 / 불러오기 ── */
 document.getElementById('btnExport').addEventListener('click', () => {
@@ -814,15 +830,21 @@ function renderCharInfo() {
        <div class="ci-avg__sub">/ 일</div>
      </div>`).join('');
 
+  // 코디 히스토리 (오래된 순 → 최신 순: arr은 이미 오래된순 정렬)
+  const codiesHtml = arr.filter(s => s.img).slice(-5).map(s =>
+    `<div class="ci-cody"><img src="${s.img}" onerror="this.style.display='none'" /><span>${s.date.slice(5)}</span></div>`
+  ).join('');
+
   // 랭킹 (가진 데이터: 전체 GMS 랭킹, 레지온)
   const rankRows = f ? `
-    <div class="ci-rank-row"><span>${region} 전체 랭킹</span><b>${f.rank ? '#'+f.rank.toLocaleString() : '—'}</b></div>
-    <div class="ci-rank-row"><span>월드</span><b>${world || '—'}</b></div>
+    <div class="ci-rank-row"><span>${jobName} Rank in ${region}</span><b>${f.rank ? '#'+f.rank.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>${world} Rank</span><b>${f.worldRank ? '#'+f.worldRank.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>${jobName} Rank in ${world}</span><b>${f.jobRankWorld ? '#'+f.jobRankWorld.toLocaleString() : '—'}</b></div>
     <div class="ci-rank-row ci-rank-row--div"></div>
-    <div class="ci-rank-row"><span>유니온 랭킹</span><b>${f.legionRank ? '#'+f.legionRank.toLocaleString() : '—'}</b></div>
-    <div class="ci-rank-row"><span>유니온 레벨</span><b>${f.legion ? f.legion.toLocaleString() : '—'}</b></div>
-    <div class="ci-rank-row"><span>유니온 전투력</span><b>${f.legionPower ? f.legionPower.toLocaleString() : '—'}</b></div>
-  ` : '<div class="ci-rank-row"><span class="ci-dim">랭킹 조회 데이터 없음 — 캐릭터 수정 → 랭킹 조회</span></div>';
+    <div class="ci-rank-row"><span>Legion Rank</span><b>${f.legionRank ? '#'+f.legionRank.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>Legion Level</span><b>${f.legion ? f.legion.toLocaleString() : '—'}</b></div>
+    <div class="ci-rank-row"><span>Legion Power</span><b>${f.legionPower ? f.legionPower.toLocaleString() : '—'}</b></div>
+  ` : '<div class="ci-rank-row"><span class="ci-dim">No ranking data — Edit character → Lookup</span></div>';
 
   box.innerHTML = `
     <div class="ci-layout">
@@ -843,10 +865,19 @@ function renderCharInfo() {
           </div>
           ${f ? `<div class="ci-card__exp">누적 EXP ${Number(f.exp).toLocaleString()}</div>` : ''}
         </div>
+        <div class="ci-card__ranks">
+          <div class="ci-ranks-title">랭킹 / 정보</div>
+          ${rankRows}
+        </div>
       </div>
 
       <!-- 우측 -->
       <div class="ci-main">
+        <div class="ci-panel">
+          <div class="ci-panel__title">코디 히스토리</div>
+          <div class="ci-codies">${codiesHtml || '<span class="ci-dim">코디 기록 없음</span>'}</div>
+        </div>
+
         <div class="ci-panel">
           <div class="ci-panel__head">
             <div>
@@ -856,11 +887,6 @@ function renderCharInfo() {
           </div>
           <div class="ci-avgs">${avgCards}</div>
           <div class="ci-chart-wrap"><canvas id="ciExpChart"></canvas></div>
-        </div>
-
-        <div class="ci-panel">
-          <div class="ci-panel__title">랭킹 / 정보</div>
-          <div class="ci-ranks">${rankRows}</div>
         </div>
       </div>
     </div>`;
@@ -874,15 +900,22 @@ function renderCharInfo() {
       data.push(Math.max(0, arr[i].exp - arr[i-1].exp));
     }
     const ctx = document.getElementById('ciExpChart');
+    const maxVal = Math.max(...data);
     charExpChart = new Chart(ctx, {
       type: 'bar',
-      data: { labels, datasets: [{ data, backgroundColor: '#3b82f6', borderRadius: 4 }] },
+      data: { labels, datasets: [{ data, backgroundColor: 'rgb(255, 255, 255)', borderRadius: 4 }] },
       options: {
         responsive: true, maintainAspectRatio: false,
         plugins: { legend: { display:false }, tooltip: { callbacks: { label: c => fmtExp(c.parsed.y) + ' EXP' } } },
         scales: {
-          y: { ticks: { callback: v => fmtExp(v) }, grid: { color:'#eee' } },
-          x: { grid: { display:false } },
+          y: {
+            ticks: { callback: v => fmtExp(v), color: 'rgba(200,190,240,.6)', font: { size: 10 } },
+            grid: {
+              color: ctx2 => ctx2.tick?.value === 0 ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.04)',
+            },
+            max: maxVal * 1.05,
+          },
+          x: { grid: { display:false }, ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } } },
         },
       },
     });

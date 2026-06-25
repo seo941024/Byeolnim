@@ -1,8 +1,8 @@
-/* =============================================
-   GMS 계산기 — style.css  (묶음1: 청록 다크 테마 + 폰트)
+﻿/* =============================================
+   GMS 怨꾩궛湲???style.css  (臾띠쓬1: 泥?줉 ?ㅽ겕 ?뚮쭏 + ?고듃)
    ============================================= */
 
-/* ── @font-face ── */
+/* ?? @font-face ?? */
 @font-face {
   font-family: 'NEXON_Gothic';
   src: url('font/NEXON_Gothic.ttf') format('truetype');
@@ -19,64 +19,64 @@
   font-weight: normal; font-style: normal;
 }
 
-/* ── CSS 변수 ── */
+/* ?? CSS 蹂???? */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* 배경 — 별님 우주 다크 */
+  /* 諛곌꼍 ??蹂꾨떂 ?곗＜ ?ㅽ겕 */
   --bg:      #06040f;
   --bg2:     #0d0920;
   --bg3:     #130e2a;
   --bg-card: #0e0b1e;
   --bg-hover:#1a1438;
 
-  /* 텍스트 */
+  /* ?띿뒪??*/
   --text:     #ffffff;
   --text-sub: rgba(255,255,255,.72);
   --text-dim: rgba(255,255,255,.42);
 
-  /* 테두리 */
+  /* ?뚮몢由?*/
   --border:   rgba(139,92,246,.2);
   --border-hl:rgba(167,139,250,.45);
 
-  /* 그림자 */
+  /* 洹몃┝??*/
   --shadow:    0 2px 8px rgba(0,0,0,.4);
   --shadow-md: 0 6px 24px rgba(0,0,0,.55);
   --shadow-lg: 0 16px 48px rgba(0,0,0,.7);
 
-  /* 메인 그라데이션 — 우주 보라 */
+  /* 硫붿씤 洹몃씪?곗씠?????곗＜ 蹂대씪 */
   --grad:       linear-gradient(135deg,#3b1f6e 0%,#1d1145 100%);
   --grad-soft:  linear-gradient(180deg,#0f0922 0%,#06040f 100%);
   --grad-card:  linear-gradient(160deg,#140e28 0%,#0c0820 100%);
   --grad-sheen: linear-gradient(180deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,0) 60%);
   --grad-gold:  linear-gradient(135deg,#f0d080 0%,#c8903a 100%);
 
-  /* 포인트 컬러 */
-  --primary:   #a78bfa;   /* 라벤더 */
+  /* ?ъ씤??而щ윭 */
+  --primary:   #a78bfa;   /* ?쇰깽??*/
   --primary-d: #7c3aed;
   --primary-l: rgba(167,139,250,.12);
-  --accent:    #f6c744;   /* 별빛 골드 */
+  --accent:    #f6c744;   /* 蹂꾨튆 怨⑤뱶 */
   --gold:      #d8b15a;
   --danger:    #f05060;
   --danger-l:  rgba(240,80,96,.14);
   --success:   #3dd68c;
   --success-l: rgba(61,214,140,.12);
 
-  /* 난이도 */
+  /* ?쒖씠??*/
   --easy-bg:    #3cc47d; --easy-fg:    #fff;
   --normal-bg:  #5bc8f5; --normal-fg:  #fff;
   --hard-bg:    #c0186e; --hard-fg:    #fff;
   --chaos-bg:   #1c1c1c; --chaos-fg:   #c8924a;
   --extreme-bg: #1c1c1c; --extreme-fg: #e0473c;
 
-  /* 반경 */
+  /* 諛섍꼍 */
   --radius-sm:  10px;
   --radius:     16px;
   --radius-lg:  24px;
   --radius-pill:999px;
 }
 
-/* ── 기본 ── */
-/* ── 별 캔버스 ── */
+/* ?? 湲곕낯 ?? */
+/* ?? 蹂?罹붾쾭???? */
 #starCanvas {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -110,12 +110,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 ::-webkit-scrollbar-thumb { background: rgba(139,92,246,.3); border-radius: 99px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
-/* ── HEADER ── */
+/* ?? HEADER ?? */
 .header {
   height: 60px;
   background: rgba(6,4,15,.75);
-  backdrop-filter: blur(20px) saturate(1.4);
-  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  
+  
   border-bottom: 1px solid rgba(167,139,250,.2);
   display: flex; align-items: center;
   padding: 0 24px; gap: 20px;
@@ -175,14 +175,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .font-sel:hover { border-color: var(--primary); color: #fff; box-shadow: 0 0 16px rgba(139,92,246,.45), 0 2px 8px rgba(0,0,0,.5); }
 .font-sel option { background: #0d091e; color: var(--text); }
 
-/* ── APP ── */
+/* ?? APP ?? */
 .app { display: grid; grid-template-columns: 260px 1fr; flex: 1; min-height: calc(100vh - 60px); min-width: 1100px; }
 
-/* ── SIDEBAR ── */
+/* ?? SIDEBAR ?? */
 .sidebar {
   background: rgba(8,5,20,.6);
-  backdrop-filter: blur(16px) saturate(1.2);
-  -webkit-backdrop-filter: blur(16px) saturate(1.2);
+  
+  
   border-right: 1px solid rgba(139,92,246,.18);
   display: flex; flex-direction: column;
   position: sticky; top: 60px;
@@ -190,7 +190,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   box-shadow: 2px 0 24px rgba(0,0,0,.4);
 }
 
-/* 서버 토글 (NA / EU) */
+/* ?쒕쾭 ?좉? (NA / EU) */
 .region-toggle {
   display: flex; gap: 4px;
   margin: 12px 12px 6px;
@@ -213,7 +213,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   text-shadow: 0 0 8px rgba(246,199,68,.4);
 }
 
-/* 캐릭터 영역 */
+/* 罹먮┃???곸뿭 */
 .sb-char-area { border-bottom: 1px solid var(--border); }
 .sb-char-head {
   display: flex; align-items: center;
@@ -231,8 +231,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 /* char card */
 .char-card {
   background: rgba(15,10,32,.7);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  
+  
   border: 1px solid rgba(139,92,246,.2);
   border-radius: var(--radius);
   cursor: pointer; overflow: hidden;
@@ -253,7 +253,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   50%      { box-shadow: 0 0 0 1px #f5c842, 0 0 32px rgba(245,200,66,.7), 0 0 60px rgba(245,200,66,.25), 0 4px 16px rgba(0,0,0,.5); }
 }
 
-/* 카드 내부: 좌=텍스트+버튼, 우=portrait */
+/* 移대뱶 ?대?: 醫??띿뒪??踰꾪듉, ??portrait */
 .char-card__inner {
   display: flex; align-items: stretch; overflow: hidden;
 }
@@ -312,7 +312,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   border-radius: 99px; transition: width .4s;
 }
 
-/* 전체 주간 획득 메소 */
+/* ?꾩껜 二쇨컙 ?띾뱷 硫붿냼 */
 .sb-weekmeso {
   display: flex; flex-direction: column; gap: 2px;
   margin: 0 10px 10px;
@@ -365,7 +365,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__icon {
   object-fit: contain;
 }
-/* ── nav 아이콘 개별 크기 ── */
+/* ?? nav ?꾩씠肄?媛쒕퀎 ?ш린 ?? */
 .sb-nav__item[data-sec="charinfo"]   .sb-nav__icon { width: 26px; height: 26px; }
 .sb-nav__item[data-sec="boss"]       .sb-nav__icon { width: 28px; height: 28px; }
 .sb-nav__item[data-sec="hexa"]       .sb-nav__icon { width: 31px; height: 31px; }
@@ -374,7 +374,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="starforce"]  .sb-nav__icon { width: 25px; height: 25px; }
 .sb-nav__item[data-sec="cube"]       .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="bosshp"]     .sb-nav__icon { width: 26px; height: 26px; }
-/* CSS 아이콘 (기존 유지 — img 태그에는 적용 안 됨) */
+/* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:#8b5cf6;top:3px}
 .sb-nav__icon--char::after{width:16px;height:8px;border-radius:8px 8px 4px 4px;background:#6d3dcc;bottom:3px}
@@ -388,7 +388,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__icon--force::before{width:17px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#3b82f6)}
 .sb-nav__icon--force::after{width:11px;height:3px;border-radius:99px;background:rgba(255,255,255,.6);bottom:6px}
 
-/* ── CONTENT ── */
+/* ?? CONTENT ?? */
 .content {
   padding: 24px;
   display: flex; flex-direction: column; gap: 0;
@@ -419,11 +419,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   border: 1px solid rgba(167,139,250,.3);
 }
 
-/* ── CARD ── */
+/* ?? CARD ?? */
 .card {
   background: rgba(14,10,30,.65);
-  backdrop-filter: blur(14px) saturate(1.3);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  
+  
   border: 1px solid rgba(139,92,246,.22);
   border-radius: var(--radius);
   padding: 20px 22px;
@@ -448,12 +448,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   color: var(--text-sub); margin-bottom: 14px;
 }
 
-/* ── BOSS PANEL ── */
+/* ?? BOSS PANEL ?? */
 .boss-panel {
   display: flex; flex-direction: column; gap: 0;
   background: rgba(13,9,32,.6);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  
+  
   border: 1px solid rgba(139,92,246,.2);
   border-radius: var(--radius);
   box-shadow: 0 8px 32px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.04); overflow: hidden;
@@ -508,7 +508,7 @@ tr.done .boss-thumb img { filter: none; }
   border: 1px solid rgba(216,177,90,.35);
 }
 
-/* 난이도 필 */
+/* ?쒖씠????*/
 .diff-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
 .dpill {
   position: relative; display: inline-flex; align-items: center; justify-content: center;
@@ -581,7 +581,7 @@ tr.done .boss-thumb img { filter: none; }
 .boss-total__val--month { font-size: 1.3rem; color: rgba(246,199,68,.75); text-shadow: none; }
 .boss-total__deduct { font-size: .8rem; color: #f06c6c; font-weight: 700; margin-top: 2px; display: block; }
 
-/* ── 대여템 섹션 ── */
+/* ?? ??ы뀥 ?뱀뀡 ?? */
 .rental-section {
   background: rgba(255,255,255,.02);
   border-top: 1px solid rgba(167,139,250,.15);
@@ -605,7 +605,7 @@ tr.done .boss-thumb img { filter: none; }
 .rental-wed-label input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; }
 .rental-notice { font-size: .72rem; color: var(--text-dim); }
 
-/* ── BUTTONS ── */
+/* ?? BUTTONS ?? */
 .sbtn {
   padding: 9px 20px; border-radius: var(--radius-pill);
   font-size: .84rem; font-weight: 700; text-align: center;
@@ -637,7 +637,7 @@ tr.done .boss-thumb img { filter: none; }
 .sbtn--danger:hover { transform: translateY(-1px); filter: brightness(1.1); }
 .w100 { width: 100%; justify-content: center; }
 
-/* ── FORM ── */
+/* ?? FORM ?? */
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field__label { font-size: .95rem; color: var(--text-sub); font-weight: 700; }
 .inp, select.sel {
@@ -665,7 +665,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .check-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .check-row input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; }
 
-/* ── DATA TABLE ── */
+/* ?? DATA TABLE ?? */
 .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
 .data-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .data-table th {
@@ -680,7 +680,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .data-table tbody tr:hover { background: var(--bg-hover); }
 .empty { text-align: center; color: var(--text-sub); padding: 32px; font-size: .9rem; }
 
-/* ── HEXA ── */
+/* ?? HEXA ?? */
 .hexa-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .hexa-field-group { display: flex; flex-direction: column; gap: 10px; }
 .hexa-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -713,7 +713,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 
-/* ── LIBERATION ── */
+/* ?? LIBERATION ?? */
 .lib-tabs { display: flex; gap: 0; margin-bottom: 16px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
 .lib-tab__icon { width: 40px; height: 40px; object-fit: contain; margin-right: 10px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(246,199,68,.6)); }
 .lib-tab {
@@ -746,7 +746,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .lib-progress__fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--accent)); border-radius: 99px; transition: width .4s; }
 .lib-pct { font-size: .74rem; color: var(--text-sub); text-align: right; margin-top: 4px; }
 
-/* ── STARFORCE ── */
+/* ?? STARFORCE ?? */
 .sf-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
 .sf-chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .sf-right { display: flex; flex-direction: column; gap: 16px; }
@@ -758,7 +758,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-res-val { font-size: .98rem; font-weight: 800; color: var(--text); }
 .sf-res-val.big { font-size: 1.2rem; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
 
-/* ── 스타포스 토글 그룹 ── */
+/* ?? ?ㅽ??ъ뒪 ?좉? 洹몃９ ?? */
 .sf-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border); width: fit-content; }
 .sf-tab { padding: 10px 28px; font-size: .9rem; font-weight: 700; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all .15s; }
 .sf-tab:last-child { border-right: none; }
@@ -770,7 +770,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-toggle.active { background: var(--primary); color: #fff; font-weight: 700; }
 .sf-toggle:hover:not(.active) { background: rgba(139,92,246,.1); color: var(--text); }
 
-/* ── 스타포스 스테이지 버튼 ── */
+/* ?? ?ㅽ??ъ뒪 ?ㅽ뀒?댁? 踰꾪듉 ?? */
 .sf-stage-row2 { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
 .sf-stage-lbl2 { font-size: .8rem; color: var(--text-sub); min-width: 50px; font-weight: 700; flex-shrink: 0; }
 select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding: 2px 4px; }
@@ -779,7 +779,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-stage-prob--fail { color: rgba(200,190,240,.5); }
 .sf-stage-prob--dest { color: #f87171; }
 
-/* ── 스타포스 결과 ── */
+/* ?? ?ㅽ??ъ뒪 寃곌낵 ?? */
 .sf-star-display { font-size: 2.4rem; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 0 0 20px rgba(246,199,68,.5); padding: 12px 0 8px; }
 .sf-log { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
 .sf-log-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; font-size: .82rem; }
@@ -790,7 +790,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-log-desc { flex: 1; color: var(--text); }
 .sf-log-cost { color: var(--text-sub); font-size: .78rem; }
 
-/* ── 스타포스 기댓값 박스 ── */
+/* ?? ?ㅽ??ъ뒪 湲곕뙎媛?諛뺤뒪 ?? */
 .sf-stat-box { flex: 1; min-width: 120px; background: rgba(139,92,246,.08); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; }
 .sf-stat-box--hi { border-color: rgba(246,199,68,.5); background: rgba(246,199,68,.07); }
 .sf-stat-box--danger { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.07); }
@@ -799,7 +799,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-stat-box--hi .sf-stat-val { color: var(--accent); }
 .sf-stat-box--danger .sf-stat-val { color: var(--danger); }
 
-/* ── 큐브 타입 버튼 ── */
+/* ?? ?먮툕 ???踰꾪듉 ?? */
 .cube-type-btn {
   flex: 1; padding: 9px 14px; border-radius: 10px; border: 1.5px solid rgba(139,92,246,.3);
   background: rgba(139,92,246,.08); color: var(--text-sub); font-size: .85rem; cursor: pointer;
@@ -812,7 +812,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .cube-type-btn:hover:not(.active) { border-color: rgba(139,92,246,.5); color: var(--text); }
 
-/* ── 큐브 목표 옵션 ── */
+/* ?? ?먮툕 紐⑺몴 ?듭뀡 ?? */
 .cube-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
 .cube-type-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; border-radius: var(--radius-sm); background: var(--bg3); border: 1.5px solid var(--border); color: var(--text-sub); font-size: .82rem; font-weight: 700; cursor: pointer; transition: .15s; opacity: .6; }
 .cube-type-btn img { width: 36px; height: 36px; object-fit: contain; }
@@ -833,11 +833,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cube-btn-row { display: flex; gap: 8px; }
 .cube-btn-row .sbtn { flex: 1; text-align: center; }
 
-/* ── 보스 트래커 난이도 버튼 ── */
+/* ?? 蹂댁뒪 ?몃옒而??쒖씠??踰꾪듉 ?? */
 .diff-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .diff-btns .dpill { cursor: pointer; padding: 5px 14px; font-size: .72rem; }
 
-/* ── Genesis 퀘스트 아이콘 ── */
+/* ?? Genesis ?섏뒪???꾩씠肄??? */
 .gen-quest-icons {
   display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 0;
 }
@@ -861,7 +861,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-party-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .gen-party-label { font-size: .76rem; color: var(--text-sub); font-weight: 700; }
 
-/* ── 난이도 셀렉트 (보스 트래커) ── */
+/* ?? ?쒖씠????됲듃 (蹂댁뒪 ?몃옒而? ?? */
 .diff-sel-wrap { display: flex; align-items: center; gap: 10px; }
 .diff-sel {
   background: rgba(255,255,255,.06);
@@ -881,12 +881,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.1); }
 .diff-sel option { background: #0d091e; color: var(--text); }
 
-/* ── BOSS HP 카드 ── */
+/* ?? BOSS HP 移대뱶 ?? */
 .bhp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .bhp-card {
   background: rgba(14,10,30,.65);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  
+  
   border: 1px solid rgba(139,92,246,.22);
   border-radius: var(--radius-lg); overflow: hidden;
   box-shadow: var(--shadow); display: flex; flex-direction: column;
@@ -906,7 +906,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-card__name { font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 6px; color: var(--text); }
 .bhp-card__info { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .bhp-lv { font-size: .82rem; color: var(--text-sub); font-weight: 800; }
-/* 선택된 난이도 pill (Lv/포스 아래, select 위) */
+/* ?좏깮???쒖씠??pill (Lv/?ъ뒪 ?꾨옒, select ?? */
 .bhp-active-diff { display: flex; }
 .bhp-active-diff .dpill {
   flex: 1; width: 100%;
@@ -915,7 +915,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
   letter-spacing: .5px;
 }
-/* 난이도 select */
+/* ?쒖씠??select */
 .bhp-diff-sel {
   width: 100%;
   background-color: rgba(255,255,255,.07);
@@ -935,7 +935,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-diff-sel:hover { border-color: var(--border-hl); background-color: rgba(255,255,255,.11); }
 .bhp-diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.13); }
 .bhp-diff-sel option { background: #0d091e; color: var(--text); }
-/* HP 내용 */
+/* HP ?댁슜 */
 .bhp-diff { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
 .bhp-phase { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 3px 0; color: var(--text-sub); }
 .bhp-phase__val { font-weight: 900; color: var(--text); text-align: right; }
@@ -964,7 +964,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .force-arc { background: rgba(96,165,250,.15); color: #60a5fa; }
 .force-auth { background: rgba(157,108,245,.16); color: #9d6cf5; }
 
-/* ── FORCE ── */
+/* ?? FORCE ?? */
 .force-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .force-section-label { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--text-sub); margin-bottom: 10px; }
 .boost-ok { color: var(--accent); font-weight: 800; }
@@ -976,11 +976,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sym-card .inp { margin-top: 4px; }
 .sym-card__result { margin-top: 6px; font-size: .86rem; font-weight: 700; color: var(--accent); }
 
-/* ── MODAL ── */
+/* ?? MODAL ?? */
 .overlay {
   display: none; position: fixed; inset: 0;
   background: rgba(6,18,30,.7);
-  backdrop-filter: blur(6px);
+  
   z-index: 1000; align-items: center; justify-content: center;
 }
 .overlay.open { display: flex; }
@@ -1029,7 +1029,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .job-item.sel { background: rgba(167,139,250,.15); border-color: var(--primary); color: var(--primary); }
 .job-item img { width: 38px; height: 38px; object-fit: contain; border-radius: 7px; }
 
-/* ── LOOKUP ── */
+/* ?? LOOKUP ?? */
 .lookup-box {
   background: rgba(88,28,135,.12);
   border: 1px solid rgba(167,139,250,.25);
@@ -1061,7 +1061,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .lk-card__meta { font-size: .74rem; color: var(--text-sub); }
 .lk-card__exp { font-size: .72rem; color: var(--text-sub); font-weight: 700; }
 
-/* ── 캐릭터 정보 패널 ── */
+/* ?? 罹먮┃???뺣낫 ?⑤꼸 ?? */
 .ci-empty {
   text-align: center; color: var(--text-sub); padding: 60px;
   font-size: .92rem; background: var(--bg-card);
@@ -1073,7 +1073,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-md);
 }
-/* 금색 테두리 — 활성 캐릭터 강조 */
+/* 湲덉깋 ?뚮몢由????쒖꽦 罹먮┃??媛뺤“ */
 .ci-card--gold { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow-md); }
 .ci-portrait {
   position: relative; width: 100%; aspect-ratio: 3/4;
@@ -1144,18 +1144,18 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-rank-row span { color: var(--text-sub); font-weight: 600; }
 .ci-rank-row b { font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
 
-/* 좌측 카드 하단 랭킹 */
+/* 醫뚯륫 移대뱶 ?섎떒 ??궧 */
 .ci-card__ranks { margin-top: 14px; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
 .ci-ranks-title { font-size: .75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
 .ci-card__ranks .ci-rank-row { padding: 6px 0; font-size: .82rem; }
 
-/* 코디 히스토리 */
+/* 肄붾뵒 ?덉뒪?좊━ */
 .ci-codies { display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 6px; overflow-x: auto; }
 .ci-cody { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
 .ci-cody img { width: 128px; height: 128px; object-fit: contain; background: transparent; border: none; }
 .ci-cody span { font-size: .78rem; color: var(--text-sub); }
 
-/* ── TOAST ── */
+/* ?? TOAST ?? */
 .toast {
   position: fixed; left: 50%; bottom: 32px;
   transform: translateX(-50%) translateY(24px);
@@ -1169,7 +1169,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ── 제네시스 / 데스티니 ── */
+/* ?? ?쒕꽕?쒖뒪 / ?곗뒪?곕땲 ?? */
 .gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .gen-progress{text-align:left}
 .gen-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;padding:5px 0;border-bottom:1px solid var(--border);color:var(--text)}
@@ -1187,7 +1187,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .dot-blue{background:var(--primary)}.dot-purple{background:#9d6cf5}
 .gen-config{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
-/* ── 해방 설정 카드 ── */
+/* ?? ?대갑 ?ㅼ젙 移대뱶 ?? */
 .gen-cfg-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
 .gen-cfg-card{
   display:flex;gap:16px;align-items:center;
@@ -1225,7 +1225,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-cfg-card__desc{font-size:.75rem;color:var(--text-sub);font-weight:600}
 .gen-cfg-card__fields{display:flex;flex-direction:column;gap:8px}
 
-/* gen-switch 토글 */
+/* gen-switch ?좉? */
 .gen-switch{display:flex;align-items:center;gap:8px;font-size:.83rem;cursor:pointer;padding:7px 0;color:var(--text)}
 .gen-switch input{width:15px;height:15px;accent-color:var(--primary)}
 .gen-pass-toggle{gap:12px;padding:0}
@@ -1250,7 +1250,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-boss__toggle{padding:5px 12px;border-radius:var(--radius-pill);font-size:.78rem;font-weight:800;white-space:nowrap;background:var(--bg2);color:var(--text-sub);box-shadow:var(--shadow)}
 .gen-boss__toggle.on{background:var(--success);color:#000}
 
-/* ── 해방 계산기 새 레이아웃 ── */
+/* ?? ?대갑 怨꾩궛湲????덉씠?꾩썐 ?? */
 .gen-main-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
 .gen-left{display:flex;flex-direction:column;gap:14px}
 .gen-inputs{display:flex;flex-direction:column;gap:0}
@@ -1260,7 +1260,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-inp{font-size:.88rem!important;height:38px}
 .gen-pass-field .gen-switch{margin-top:2px}
 
-/* 보스 카드 새 구조 */
+/* 蹂댁뒪 移대뱶 ??援ъ“ */
 .gen-boss__row2{display:flex;align-items:center;gap:6px}
 .gen-boss__diff{flex:1;font-size:.76rem;padding:4px 7px}
 .gen-boss__row3{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:2px}
@@ -1269,7 +1269,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-boss__trace{font-size:.82rem;font-weight:800;color:var(--text-dim)}
 .gen-boss__trace.on{color:var(--success)}
 
-/* 우측 통계 패널 */
+/* ?곗륫 ?듦퀎 ?⑤꼸 */
 .gen-stat-panel{display:flex;flex-direction:column;position:sticky;top:70px}
 .gen-stat2{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;padding:7px 0;border-bottom:1px solid var(--border);color:var(--text-sub)}
 .gen-stat2 b{font-weight:900;color:var(--text);font-size:.88rem}
@@ -1278,7 +1278,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-date-label{font-size:.78rem;font-weight:700;color:var(--text-sub);margin-bottom:6px}
 .gen-date-big{font-size:1.7rem;font-weight:900;color:var(--primary);letter-spacing:.5px}
 
-/* ── 스타포스 내 메소 입력 ── */
+/* ?? ?ㅽ??ъ뒪 ??硫붿냼 ?낅젰 ?? */
 .sf-chart-card { display: flex; flex-direction: column; }
 .sf-chart-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
 .sf-chart-lbl { font-size: .8rem; font-weight: 700; color: var(--text-sub); }
@@ -1298,7 +1298,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-my-result__tag.lucky{background:rgba(34,197,94,.18);color:#4ade80}
 .sf-my-result__tag.unlucky{background:rgba(240,80,96,.15);color:var(--danger)}
 
-/* ── utils ── */
+/* ?? utils ?? */
 .mt8  { margin-top: 8px; }
 .mt16 { margin-top: 16px; }
 .stat-chip {
@@ -1308,7 +1308,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   padding: 4px 13px; font-size: .8rem; font-weight: 700;
 }
 
-/* ── 캐릭터 그리드 (캐릭터 정보 탭) ── */
+/* ?? 罹먮┃??洹몃━??(罹먮┃???뺣낫 ?? ?? */
 .cg-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; padding:8px 0; }
 .cg-card {
   background: rgba(15,10,32,.7);

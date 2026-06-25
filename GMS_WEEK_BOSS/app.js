@@ -183,7 +183,7 @@ function renderCharList() {
   const li = document.createElement('li');
   li.className = 'char-card active';
   const portrait = ch.fetched?.img
-    ? `<img src="${ch.fetched.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg" style="display:none">NO IMAGE</span>`
+    ? `<img src="${proxiedImgSrc(ch.fetched.img)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg" style="display:none">NO IMAGE</span>`
     : `<span class="char-card__noimg">NO IMAGE</span>`;
   const jn = charJobName(ch);
   const world = ch.fetched?.world || '';
@@ -544,6 +544,12 @@ function serverIconSrc(world) {
 }
 function todayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 
+/* Nexon 캐릭터 이미지는 hotlink 차단 → 서버 프록시 경유 */
+function proxiedImgSrc(url) {
+  if (!url) return '';
+  return `/api/char-img?url=${encodeURIComponent(url)}`;
+}
+
 /* 조회 결과를 히스토리에 기록. 같은 날 중복은 최신값으로 갱신. */
 function recordSnapshot(d) {
   const h = loadHist();
@@ -606,7 +612,7 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
     if (ji >= 0) selectedJob = ji;
     box.innerHTML = `
       <div class="lk-card">
-        ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
+        ${j.data.img ? `<img class="lk-card__av" src="${proxiedImgSrc(j.data.img)}" onerror="this.style.display='none'" />` : ''}
         <div class="lk-card__info">
           <div class="lk-card__name">${j.data.name} <span class="lk-card__job">${j.data.job}</span></div>
           <div class="lk-card__meta">Lv.${j.data.level} · ${j.data.region} ${j.data.world} · 전체 ${j.data.rank.toLocaleString()}위</div>
@@ -772,7 +778,7 @@ function renderCharInfo() {
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
     const portrait = f?.img
-      ? `<img src="${f.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('cg-portrait--no')" /><span class="cg-noimg" style="display:none">NO IMAGE</span>`
+      ? `<img src="${proxiedImgSrc(f.img)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('cg-portrait--no')" /><span class="cg-noimg" style="display:none">NO IMAGE</span>`
       : `<span class="cg-noimg">NO IMAGE</span>`;
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);

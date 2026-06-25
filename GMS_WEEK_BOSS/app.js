@@ -173,10 +173,14 @@ function updateCrystalBar() {
 function renderCharList() {
   const ul = document.getElementById('charList');
   ul.innerHTML = '';
+  const labelEl = document.querySelector('.sb-label');
   if (!state.chars.length) {
+    if (labelEl) labelEl.textContent = '캐릭터';
     ul.innerHTML = '<li style="text-align:center;color:var(--text-sub);font-size:.8rem;padding:14px">캐릭터를 추가하세요</li>';
     updateCrystalBar(); return;
   }
+  const activeName = state.chars[state.activeChar ?? 0]?.name || '캐릭터';
+  if (labelEl) labelEl.textContent = activeName;
   const i  = state.activeChar ?? 0;
   const ch = state.chars[i];
   if (!ch) { updateCrystalBar(); return; }
@@ -775,23 +779,27 @@ function renderCharInfo() {
       ? `<img class="ci-portrait__img" src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('ci-portrait--noimg')" />`
       : '';
     const lv = f?.level || ch.level;
-    const exp = '';
+    const headSrc = charJobHeadSrc(ch);
+    const headHtml = headSrc ? `<img class="cg-head-icon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
     const rankRow = f?.rank ? `
       <div class="ci-card__ranks">
         <div class="ci-ranks-title">랭킹 / 정보</div>
-        <div class="ci-rank-row"><span>${jn || ''} Rank in ${region}</span><b>#${f.rank.toLocaleString()}</b></div>
+        <div class="ci-rank-row"><span>Job Rank in ${region}</span><b>#${f.rank.toLocaleString()}</b></div>
       </div>` : '';
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
         <div class="ci-portrait${f?.img ? '' : ' ci-portrait--noimg'}">${portrait}<span class="ci-portrait__ph">NO IMAGE</span></div>
         <div class="ci-card__body" style="padding:10px 12px;gap:6px;">
-          <div>
-            <div class="ci-card__name" style="font-size:1rem;">${ch.name}</div>
-            <div class="ci-card__job">${jn || ''}</div>
+          <div class="ci-card__nameline">
+            <div>
+              <div class="ci-card__name" style="font-size:1rem;">${ch.name}</div>
+              <div class="ci-card__job">${jn || ''}</div>
+            </div>
+            ${headHtml}
           </div>
-          <div class="ci-card__meta">${sIconHtml}<span>${region} ${world}</span><span>Lv.${lv}</span></div>
-          ${exp}
+          <div class="ci-card__meta">${sIconHtml}<span>${region} ${world}</span></div>
+          <div style="color:var(--accent);font-weight:800;font-size:1rem;">Lv.${lv}</div>
         </div>
         ${rankRow}
       </div>`;

@@ -772,8 +772,8 @@ function renderCharInfo() {
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
     const portrait = f?.img
-      ? `<img class="ci-portrait__img" src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('ci-portrait--noimg')" />`
-      : '';
+      ? `<img src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('cg-portrait--no')" /><span class="cg-noimg">NO IMAGE</span>`
+      : `<span class="cg-noimg">NO IMAGE</span>`;
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);
     const headHtml = headSrc ? `<img class="ci-jobicon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
@@ -785,7 +785,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
-        <div class="ci-portrait${f?.img ? '' : ' ci-portrait--noimg'}">${portrait}<span class="ci-portrait__ph">NO IMAGE</span></div>
+        <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
             <div>

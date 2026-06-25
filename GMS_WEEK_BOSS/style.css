@@ -1082,6 +1082,14 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-radius: var(--radius) var(--radius) 0 0;
 }
 .ci-portrait__img { width: 115%; height: 115%; object-fit: contain; object-position: bottom center; margin-bottom: -4px; }
+.cg-char-img { width: 130%; object-fit: contain; object-position: bottom center; display: block; }
+.cg-portrait-box {
+  position: relative; width: 100%; height: 160px;
+  background: url('images/icons/bg.webp') center/cover no-repeat, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
+  display: flex; align-items: flex-end; justify-content: center;
+  overflow: hidden; border-radius: var(--radius) var(--radius) 0 0;
+  flex-shrink: 0;
+}
 .ci-portrait__ph { display: none; color: var(--text-dim); font-size: .86rem; font-weight: 800; letter-spacing: 1px; }
 .ci-portrait--noimg .ci-portrait__ph { display: block; }
 .ci-card__body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }

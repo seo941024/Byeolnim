@@ -221,7 +221,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   padding: 12px 14px 8px;
 }
 .sb-label {
-  font-size: 1.1rem; font-weight: 900;
+  font-size: 1.4rem; font-weight: 900;
   color: var(--text);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
   max-width: 140px;

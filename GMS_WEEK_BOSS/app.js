@@ -64,9 +64,17 @@ function navigateTo(sec) {
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {
-  btn.addEventListener('click', () => navigateTo(btn.dataset.sec));
+  btn.addEventListener('click', () => { navigateTo(btn.dataset.sec); closeSidebar(); });
 });
 document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
+
+/* ── 모바일 사이드바 드로어 토글 ── */
+function openSidebar()  { document.body.classList.add('sidebar-open'); }
+function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+document.getElementById('btnHamburger')?.addEventListener('click', () => {
+  document.body.classList.toggle('sidebar-open');
+});
+document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
 
 /* ── 유틸 ── */
 function fmtMeso(n) {

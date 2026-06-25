@@ -1341,3 +1341,63 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cg-rank { font-size:.75rem; font-weight:700; color:var(--accent); margin-top:2px; }
 .cg-btns { display:flex; gap:5px; padding:6px 10px 9px; margin-top:auto; }
 .cg-head-icon { width:52px; height:52px; object-fit:contain; flex-shrink:0; }
+
+/* ── 햄버거 / 드로어 오버레이 (기본: 데스크탑에선 숨김) ── */
+.hamburger { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 6px; border-radius: 8px; flex-shrink: 0; }
+.hamburger span { display: block; height: 2px; width: 100%; background: #c4b5fd; border-radius: 2px; transition: .25s; }
+body.sidebar-open .hamburger span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
+body.sidebar-open .hamburger span:nth-child(2) { opacity: 0; }
+body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
+.sidebar-overlay { display: none; }
+
+/* ── 모바일/저성능 환경: 무한 애니메이션·다중 글로우 끄기 (버벅임 방지) ── */
+@media (hover:none), (max-width:768px), (prefers-reduced-motion:reduce) {
+  .char-card.active, .cg-card--active { animation: none; }
+  .sb-nav__item.active, .gen-cfg-card--pass.on { animation: none; }
+  /* 그림자는 단일 레이어로 단순화해 매 프레임 페인트 비용 절감 */
+  .char-card.active, .cg-card--active { box-shadow: 0 0 0 1px #f5c842, 0 2px 10px rgba(0,0,0,.5); }
+}
+
+/* ══════════════ 모바일 레이아웃 (≤768px) ══════════════ */
+@media (max-width: 768px) {
+  .hamburger { display: flex; }
+  .header { padding: 0 14px; gap: 10px; }
+  .header__title { font-size: .9rem; }
+  .header__center { gap: 6px; }
+  .header__rlabel { display: none; }
+  .header__timer { font-size: .76rem; padding: 4px 10px; }
+  .header__right .hbtn { padding: 6px 10px; font-size: .72rem; }
+
+  /* 그리드 해제 → 콘텐츠 전체폭 */
+  .app { display: block; min-width: 0; }
+  .content { padding: 14px; min-height: 0; }
+
+  /* 사이드바 = 좌측 슬라이드 드로어 */
+  .sidebar {
+    position: fixed; top: 60px; left: 0; z-index: 90;
+    width: 80vw; max-width: 300px; height: calc(100vh - 60px);
+    transform: translateX(-100%);
+    transition: transform .28s ease;
+  }
+  body.sidebar-open .sidebar { transform: translateX(0); }
+
+  /* 드로어 배경 오버레이 */
+  .sidebar-overlay {
+    display: block; position: fixed; inset: 60px 0 0 0; z-index: 80;
+    background: rgba(0,0,0,.55); opacity: 0; pointer-events: none;
+    transition: opacity .28s ease;
+  }
+  body.sidebar-open .sidebar-overlay { opacity: 1; pointer-events: auto; }
+
+  /* 캐릭터 그리드 5열 → 2열 */
+  .cg-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+  /* 넓은 테이블은 가로 스크롤 허용 */
+  .boss-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .boss-table { min-width: 560px; }
+}
+
+/* 아주 좁은 화면: 캐릭터 그리드 1열 */
+@media (max-width: 420px) {
+  .cg-grid { grid-template-columns: 1fr; }
+}

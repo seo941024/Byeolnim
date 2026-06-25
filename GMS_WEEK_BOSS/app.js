@@ -593,7 +593,7 @@ function recordSnapshot(d) {
 /* 히스토리 HTML (경험치 변화 + 코디 썸네일) */
 function renderHistHtml(d) {
   const arr = (loadHist()[histKeyOf(d)] || []).slice().reverse();   // 최신순
-  if (arr.length <= 1) return '<div class="hist-empty">아직 기록이 1개뿐입니다. 다음에 다시 조회하면 변화가 누적됩니다.</div>';
+  if (arr.length <= 1) return '';
   const expRows = arr.map((s, i) => {
     const prev = arr[i + 1];
     let delta = '';

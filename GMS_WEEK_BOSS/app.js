@@ -183,7 +183,7 @@ function renderCharList() {
   const li = document.createElement('li');
   li.className = 'char-card active';
   const portrait = ch.fetched?.img
-    ? `<img src="${ch.fetched.img}" onerror="this.style.display='none';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg">NO IMAGE</span>`
+    ? `<img src="${ch.fetched.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg" style="display:none">NO IMAGE</span>`
     : `<span class="char-card__noimg">NO IMAGE</span>`;
   const jn = charJobName(ch);
   const world = ch.fetched?.world || '';
@@ -772,7 +772,7 @@ function renderCharInfo() {
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
     const portrait = f?.img
-      ? `<img src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('cg-portrait--no')" /><span class="cg-noimg">NO IMAGE</span>`
+      ? `<img src="${f.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex';this.parentElement.classList.add('cg-portrait--no')" /><span class="cg-noimg" style="display:none">NO IMAGE</span>`
       : `<span class="cg-noimg">NO IMAGE</span>`;
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);

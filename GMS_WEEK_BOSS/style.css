@@ -1293,3 +1293,20 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-radius: var(--radius-pill);
   padding: 4px 13px; font-size: .8rem; font-weight: 700;
 }
+
+/* ── 캐릭터 그리드 (캐릭터 정보 탭) ── */
+.cg-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:16px; padding:8px 0; }
+.cg-card { background:var(--bg2); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden; cursor:pointer; transition:border-color .15s; display:flex; flex-direction:column; }
+.cg-card:hover { border-color:var(--accent); }
+.cg-card--active { border-color:var(--accent); box-shadow:0 0 0 2px rgba(147,112,219,.25); }
+.cg-portrait { width:100%; aspect-ratio:1/1; background:var(--bg3); display:flex; align-items:center; justify-content:center; overflow:hidden; position:relative; }
+.cg-portrait img { width:100%; height:100%; object-fit:contain; }
+.cg-portrait--no .cg-noimg { display:flex; }
+.cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.75rem; color:var(--text-sub); }
+.cg-body { padding:10px 12px 4px; flex:1; }
+.cg-name { font-weight:700; font-size:.95rem; }
+.cg-job { font-size:.78rem; color:var(--text-sub); margin-top:2px; }
+.cg-meta { font-size:.75rem; color:var(--text-sub); margin-top:4px; display:flex; align-items:center; gap:4px; }
+.cg-meta img { width:14px; height:14px; object-fit:contain; }
+.cg-rank { font-size:.8rem; font-weight:700; color:var(--accent); margin-top:4px; }
+.cg-btns { display:flex; gap:6px; padding:8px 12px 10px; }

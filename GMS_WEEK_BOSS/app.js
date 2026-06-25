@@ -169,74 +169,42 @@ function updateCrystalBar() {
   if (elM) elM.textContent = fmtMeso(monthTotal);
 }
 
-/* ── 캐릭터 목록 렌더 ── */
+/* ── 캐릭터 목록 렌더 (사이드바: active 1개만) ── */
 function renderCharList() {
   const ul = document.getElementById('charList');
   ul.innerHTML = '';
   if (!state.chars.length) {
     ul.innerHTML = '<li style="text-align:center;color:var(--text-sub);font-size:.8rem;padding:14px">캐릭터를 추가하세요</li>';
+    updateCrystalBar(); return;
   }
-  state.chars.forEach((ch, i) => {
-    const job = JOB_LIST[ch.jobIdx];
-    const li = document.createElement('li');
-    li.className = 'char-card' + (state.activeChar === i ? ' active' : '');
-    // 위: 넓은 캐릭터 이미지 박스 (조회된 캐릭터 사진 / 없으면 NO IMAGE)
-    const portrait = ch.fetched?.img
-      ? `<img src="${ch.fetched.img}" onerror="this.style.display='none';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg">NO IMAGE</span>`
-      : `<span class="char-card__noimg">NO IMAGE</span>`;
-    if (!ch.fetched?.img) {} // 직접 등록은 항상 NO IMAGE
-    // 아래 아바타: 직업 기본 사진
-    const iconSrc = charJobHeadSrc(ch) || charJobIconSrc(ch);
-    const avatar = iconSrc
-      ? `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">JOB</span>`
-      : '<span class="noimg">JOB</span>';
-    const jn = charJobName(ch);
-    const world = ch.fetched?.world || '';
-    const sIcon = world ? serverIconSrc(world) : '';
-    const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
-    li.innerHTML = `
-      <div class="char-card__inner">
-        <div class="char-card__txt">
-          <div class="char-card__name">${ch.name}</div>
-          <div class="char-card__lv">Lv.${ch.level}</div>
-          ${world ? `<div class="char-card__world-line">${sIconHtml}${world}</div>` : ''}
-          ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
-          <div class="char-card__btns">
-            <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
-            <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
-          </div>
+  const i  = state.activeChar ?? 0;
+  const ch = state.chars[i];
+  if (!ch) { updateCrystalBar(); return; }
+  const li = document.createElement('li');
+  li.className = 'char-card active';
+  const portrait = ch.fetched?.img
+    ? `<img src="${ch.fetched.img}" onerror="this.style.display='none';this.parentElement.classList.add('char-card__portrait--no')" /><span class="char-card__noimg">NO IMAGE</span>`
+    : `<span class="char-card__noimg">NO IMAGE</span>`;
+  const jn = charJobName(ch);
+  const world = ch.fetched?.world || '';
+  const sIcon = world ? serverIconSrc(world) : '';
+  const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
+  li.innerHTML = `
+    <div class="char-card__inner">
+      <div class="char-card__txt">
+        <div class="char-card__name">${ch.name}</div>
+        <div class="char-card__lv">Lv.${ch.level}</div>
+        ${world ? `<div class="char-card__world-line">${sIconHtml}${world}</div>` : ''}
+        ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
+        <div class="char-card__btns">
+          <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
+          <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
-        <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
-      </div>`;
-    li.setAttribute('draggable', 'true');
-    li.dataset.idx = i;
-
-    li.addEventListener('dragstart', e => {
-      e.dataTransfer.effectAllowed = 'move';
-      e.dataTransfer.setData('text/plain', i);
-      li.classList.add('dragging');
-    });
-    li.addEventListener('dragend', () => li.classList.remove('dragging'));
-    li.addEventListener('dragover', e => { e.preventDefault(); li.classList.add('drag-over'); });
-    li.addEventListener('dragleave', () => li.classList.remove('drag-over'));
-    li.addEventListener('drop', e => {
-      e.preventDefault();
-      li.classList.remove('drag-over');
-      const from = parseInt(e.dataTransfer.getData('text/plain'));
-      const to   = i;
-      if (from === to) return;
-      const moved = state.chars.splice(from, 1)[0];
-      state.chars.splice(to, 0, moved);
-      if (state.activeChar === from) state.activeChar = to;
-      else if (state.activeChar > from && state.activeChar <= to) state.activeChar--;
-      else if (state.activeChar < from && state.activeChar >= to) state.activeChar++;
-      save();
-      renderCharList();
-    });
-
-    li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
-    ul.appendChild(li);
-  });
+      </div>
+      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
+    </div>`;
+  li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
+  ul.appendChild(li);
   updateCrystalBar();
 }
 
@@ -789,138 +757,49 @@ function fmtExp(n) {
 function renderCharInfo() {
   const box = document.getElementById('charInfoBody');
   if (!box) return;
-  const ch = state.chars[state.activeChar];
-  if (!ch) {
-    box.innerHTML = '<div class="ci-empty">왼쪽에서 캐릭터를 선택하거나 추가하세요.</div>';
+  if (charExpChart) { charExpChart.destroy(); charExpChart = null; }
+
+  if (!state.chars.length) {
+    box.innerHTML = '<div class="ci-empty">캐릭터를 추가하세요.</div>';
     return;
   }
-  const f   = ch.fetched;
-  const job = JOB_LIST[ch.jobIdx];
-  const arr = f ? (loadHist()[histKeyOf(f)] || []) : [];
 
-  // 캐릭터 이미지: 조회된 경우 캐릭터 이미지, 직접 등록은 no_image.png
-  const bigImg = f?.img
-    ? `<img class="ci-portrait__img" src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('ci-portrait--noimg')" />`
-    : `<img class="ci-portrait__img" src="images/no_image.png" onerror="this.style.display='none';this.parentElement.classList.add('ci-portrait--noimg')" />`;
-
-  // 직업 아이콘/이름 (서버 조회 시 nexon 영문명 그대로 사용)
-  const _icon = charJobHeadSrc(ch) || charJobIconSrc(ch);
-  const jobIcon = _icon
-    ? `<img class="ci-jobicon" src="${_icon}" onerror="this.style.display='none'" />`
-    : '';
-  const jobName = charJobName(ch);
-  const world   = f?.world || '';
-  const region  = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
-
-  // 서버 아이콘 (사용자가 png 채워넣을 자리)
-  const _serverIcon = serverIconSrc(world);
-  const serverIcon = _serverIcon
-    ? `<img class="ci-servericon" src="${_serverIcon}" onerror="this.style.display='none'" />`
-    : '';
-
-  const expPct = arr.length ? '' : '';   // 진행도(소수 %)는 exp만 알면 계산 불가 → 생략
-
-  // 경험치 평균 4종
-  const avgs = [
-    { lbl:'7일 평균',  v: expDailyAvg(arr, 7)  },
-    { lbl:'14일 평균', v: expDailyAvg(arr, 14) },
-    { lbl:'30일 평균', v: expDailyAvg(arr, 30) },
-    { lbl:'90일 평균', v: expDailyAvg(arr, 90) },
-  ];
-  const avgCards = avgs.map((a,i) =>
-    `<div class="ci-avg${i===0?' ci-avg--hl':''}">
-       <div class="ci-avg__lbl">${a.lbl}</div>
-       <div class="ci-avg__val">${fmtExp(a.v)}</div>
-       <div class="ci-avg__sub">/ 일</div>
-     </div>`).join('');
-
-  // 코디 히스토리 (오래된 순 → 최신 순: arr은 이미 오래된순 정렬)
-  const codiesHtml = arr.filter(s => s.img).slice(-5).map(s =>
-    `<div class="ci-cody"><img src="${s.img}" onerror="this.style.display='none'" /><span>${s.date.slice(5)}</span></div>`
-  ).join('');
-
-  // 랭킹 (가진 데이터: 전체 GMS 랭킹, 레지온)
-  const rankRows = f ? `
-    <div class="ci-rank-row"><span>${jobName} Rank in ${region}</span><b>${f.rank ? '#'+f.rank.toLocaleString() : '—'}</b></div>
-  ` : '<div class="ci-rank-row"><span class="ci-dim">No ranking data — Edit character → Lookup</span></div>';
-
-  box.innerHTML = `
-    <div class="ci-layout">
-      <!-- 좌측 큰 캐릭터 카드 -->
-      <div class="ci-card">
-        <div class="ci-portrait">${bigImg}<span class="ci-portrait__ph">NO IMAGE</span></div>
-        <div class="ci-card__body">
-          <div class="ci-card__nameline">
-            <div>
-              <div class="ci-card__name">${ch.name}</div>
-              <div class="ci-card__job">${jobName}</div>
-            </div>
-            ${jobIcon}
-          </div>
-          <div class="ci-card__meta">
-            <span class="ci-lv">Lv.${ch.level}</span>
-            <span class="ci-server">${serverIcon}${region} ${world}</span>
-          </div>
-          ${f ? `<div class="ci-card__exp">누적 EXP ${Number(f.exp).toLocaleString()}</div>` : ''}
+  const cards = state.chars.map((ch, i) => {
+    const f = ch.fetched;
+    const jn = charJobName(ch);
+    const world = f?.world || '';
+    const region = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
+    const sIcon = world ? serverIconSrc(world) : '';
+    const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
+    const portrait = f?.img
+      ? `<img src="${f.img}" onerror="this.style.display='none';this.parentElement.classList.add('cg-portrait--no')" />`
+      : '';
+    const rank = f?.rank ? `<div class="cg-rank">#${f.rank.toLocaleString()}</div>` : '';
+    const isActive = i === state.activeChar;
+    return `
+      <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
+        <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portrait}<span class="cg-noimg">NO IMAGE</span></div>
+        <div class="cg-body">
+          <div class="cg-name">${ch.name}</div>
+          <div class="cg-job">${jn}</div>
+          <div class="cg-meta">${sIconHtml}${world ? world + ' · ' : ''}Lv.${ch.level}</div>
+          ${rank}
         </div>
-        <div class="ci-card__ranks">
-          <div class="ci-ranks-title">랭킹 / 정보</div>
-          ${rankRows}
+        <div class="cg-btns">
+          <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
+          <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
-      </div>
+      </div>`;
+  }).join('');
 
-      <!-- 우측 -->
-      <div class="ci-main">
-        <div class="ci-panel">
-          <div class="ci-panel__title">코디 히스토리</div>
-          <div class="ci-codies">${codiesHtml || '<span class="ci-dim">코디 기록 없음</span>'}</div>
-        </div>
+  box.innerHTML = `<div class="cg-grid">${cards}</div>`;
 
-        <div class="ci-panel">
-          <div class="ci-panel__head">
-            <div>
-              <div class="ci-panel__title">경험치 추이</div>
-              <div class="ci-panel__sub">조회할 때마다 스냅샷이 쌓여 일평균이 계산됩니다.</div>
-            </div>
-          </div>
-          <div class="ci-avgs">${avgCards}</div>
-          <div class="ci-chart-wrap"><canvas id="ciExpChart"></canvas></div>
-        </div>
-      </div>
-    </div>`;
-
-  // 차트 (일별 EXP 증가량)
-  if (charExpChart) { charExpChart.destroy(); charExpChart = null; }
-  if (arr.length >= 2 && window.Chart) {
-    const labels = [], data = [];
-    for (let i = 1; i < arr.length; i++) {
-      labels.push(arr[i].date.slice(5));
-      data.push(Math.max(0, arr[i].exp - arr[i-1].exp));
-    }
-    const ctx = document.getElementById('ciExpChart');
-    const maxVal = Math.max(...data);
-    charExpChart = new Chart(ctx, {
-      type: 'bar',
-      data: { labels, datasets: [{ data, backgroundColor: 'rgb(255, 255, 255)', borderRadius: 4 }] },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { legend: { display:false }, tooltip: { callbacks: { label: c => fmtExp(c.parsed.y) + ' EXP' } } },
-        scales: {
-          y: {
-            ticks: { callback: v => fmtExp(v), color: 'rgba(200,190,240,.6)', font: { size: 10 } },
-            grid: {
-              color: ctx2 => ctx2.tick?.value === 0 ? 'rgba(255,255,255,.4)' : 'rgba(255,255,255,.04)',
-            },
-            max: maxVal * 1.05,
-          },
-          x: { grid: { display:false }, ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } } },
-        },
-      },
+  box.querySelectorAll('.cg-card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('[data-action]')) return;
+      selectChar(parseInt(card.dataset.ci));
     });
-  } else {
-    const wrap = box.querySelector('.ci-chart-wrap');
-    if (wrap) wrap.innerHTML = '<div class="ci-dim" style="text-align:center;padding:40px">조회 기록이 2회 이상 쌓이면 일별 경험치 그래프가 표시됩니다.</div>';
-  }
+  });
 }
 
 /* ── 폰트 선택 ── */

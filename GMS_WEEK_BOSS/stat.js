@@ -3,7 +3,7 @@
 ═══════════════════════════════════════════════ */
 
 const STAT_JOB_TYPES = [
-  { label: 'STR/DEX — 전사 / 해적 일부', stat: ['STR','DEX'],       third: 'ATK'  },
+  { label: 'STR/DEX — 전사 / 해적',      stat: ['STR','DEX'],       third: 'ATK'  },
   { label: 'DEX/STR — 궁수 / 해적',      stat: ['DEX','STR'],       third: 'ATK'  },
   { label: 'INT/LUK — 마법사',            stat: ['INT','LUK'],       third: 'MATK' },
   { label: 'LUK/DEX — 도적',              stat: ['LUK','DEX'],       third: 'ATK'  },
@@ -53,7 +53,7 @@ function buildFields(jtIdx, parsed) {
   const rows = [];
   const statKeys = jt.stat.slice(0, 3);
   statKeys.forEach((s, i) => {
-    rows.push({ label: `${s} 기본수치`,  key: s,    idx: 3+i*3, note: '합산값 (% 분리 불가)' });
+    rows.push({ label: `${s} 기본수치`,  key: s,    idx: 3+i*3, note: '합산값' });
     rows.push({ label: `${s} % 수치`,   key: null,  idx: 4+i*3, val: '0', note: '수동 입력' });
     rows.push({ label: `${s} % 미적용`, key: null,  idx: 5+i*3, val: '0', note: '수동 입력' });
   });
@@ -73,7 +73,7 @@ function buildFields(jtIdx, parsed) {
     { label: '상태이상 추가뎀%',   key: 'ADD_STATUS',  idx: 27 },
     { label: '소환수 지속%',        key: 'SUMMONS',     idx: 28 },
     { label: '아케인 포스',         key: 'ARCANE',      idx: 29 },
-    { label: '어센틱/세이크리드 포스', key: 'SACRED',   idx: 30 },
+    { label: '어센틱 포스',            key: 'SACRED',   idx: 30 },
   ];
   return [...rows, ...direct].map(f => ({
     ...f,
@@ -124,21 +124,21 @@ function initStatOCR() {
         </div>
 
         <div id="statPanelOcr">
-          <div class="card__title">STAT 창 스크린샷</div>
+          <div class="card__title">전투력 창 캡쳐</div>
           <div class="stat-paste-zone" id="statPasteZone" tabindex="0">
-            <p>여기에 스크린샷 <b>Ctrl+V</b> 붙여넣기</p>
+            <p>스크린샷 <b>Ctrl+V</b> 붙여넣기</p>
             <p style="font-size:.75rem;color:var(--text-sub);margin-top:4px">또는 클릭하여 파일 선택</p>
             <input type="file" id="statFileInput" accept="image/*" style="display:none"/>
           </div>
           <div id="statCropWrap" style="display:none;margin-top:8px">
-            <p style="font-size:.78rem;color:#fbbf24;margin-bottom:6px">📌 STAT 창 영역을 드래그로 선택하세요</p>
+            <p style="font-size:.78rem;color:#fbbf24;margin-bottom:6px">이미지에서 STAT 창 부분만 드래그해서 선택하세요</p>
             <div style="position:relative;display:inline-block;max-width:100%">
               <canvas id="statPreviewCanvas" style="max-width:100%;border-radius:8px;cursor:crosshair;display:block"></canvas>
               <canvas id="statOverlayCanvas" style="position:absolute;top:0;left:0;max-width:100%;border-radius:8px;cursor:crosshair;pointer-events:none"></canvas>
             </div>
             <div style="margin-top:6px;font-size:.75rem;color:var(--text-sub)" id="statCropInfo">선택 영역 없음</div>
           </div>
-          <button class="sbtn sbtn--primary w100" id="statOcrBtn" style="margin-top:10px" disabled>OCR 실행</button>
+          <button class="sbtn sbtn--primary w100" id="statOcrBtn" style="margin-top:10px" disabled>정보값 자동 입력</button>
           <div id="statOcrStatus" style="font-size:.78rem;color:var(--text-sub);margin-top:6px;text-align:center"></div>
         </div>
 
@@ -148,9 +148,9 @@ function initStatOCR() {
         </div>
 
         <div>
-          <button class="sbtn sbtn--primary w100" id="statCopyBtn" disabled>📋 콘솔코드 복사</button>
+          <button class="sbtn sbtn--primary w100" id="statCopyBtn" disabled>콘솔코드 복사</button>
           <p style="font-size:.72rem;color:var(--text-sub);margin-top:6px;line-height:1.6">
-            복사 후 <a href="https://maplescouter.com/ko/input" target="_blank" style="color:var(--primary)">maplescouter 직접입력</a> 페이지에서<br>F12 → 콘솔 탭에 붙여넣고 Enter
+            복사 후 <a href="https://maplescouter.com/ko/input" target="_blank" style="color:var(--primary)">환산주스탯</a> 페이지에서<br>F12 &gt; Console 탭 클릭 후 붙여넣기 &gt; Enter
           </p>
         </div>
       </div>
@@ -371,11 +371,15 @@ function initStatOCR() {
     _jtIdx  = parseInt(document.getElementById('statJobType').value);
     _fields = buildFields(_jtIdx, parsed);
     const tbody = _fields.map((f,i) => {
+      const isManual = f.note === '수동 입력';
+      const displayVal = isManual ? '' : (f.val || '');
       return `
       <tr>
-        <td class="stat-lbl">${f.label}${f.note?`<br><span class="stat-note">${f.note}</span>`:''}</td>
-        <td><input class="inp stat-val-inp" data-i="${i}" value="${f.val||''}" placeholder="—"/></td>
-        <td class="stat-idx">[${f.idx}]</td>
+        <td class="stat-lbl">${f.label}</td>
+        <td>${isManual
+          ? `<span style="font-size:.75rem;color:var(--text-sub)">수동 입력</span>`
+          : `<input class="inp stat-val-inp" data-i="${i}" value="${displayVal}" placeholder="—"/>`
+        }</td>
       </tr>`;
     }).join('');
     document.getElementById('statResultTable').innerHTML = `
@@ -383,7 +387,6 @@ function initStatOCR() {
         <thead><tr>
           <th style="text-align:left;padding:6px 8px;font-size:.78rem;color:var(--text-sub);border-bottom:1px solid var(--border)">필드</th>
           <th style="text-align:left;padding:6px 8px;font-size:.78rem;color:var(--text-sub);border-bottom:1px solid var(--border)">값</th>
-          <th style="text-align:left;padding:6px 8px;font-size:.78rem;color:var(--text-sub);border-bottom:1px solid var(--border)">인덱스</th>
         </tr></thead>
         <tbody>${tbody}</tbody>
       </table>`;

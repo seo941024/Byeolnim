@@ -354,9 +354,15 @@ function initAddOption() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">추옵 시뮬레이터</h2></div>
-    <div class="sf-layout">
 
-      <!-- 좌측: 설정 -->
+    <!-- 탭 -->
+    <div class="sf-tab-group" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
+      <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
+      <button class="sf-tab" data-tab="score">점수 계산기</button>
+    </div>
+
+    <!-- 공통 설정 -->
+    <div class="sf-layout" id="flameCommonSettings">
       <div class="card" style="display:flex;flex-direction:column;gap:16px">
 
         <div>
@@ -387,37 +393,41 @@ function initAddOption() {
           </div>
         </div>
 
-        <div>
+        <!-- 탭1 전용: 목표 옵션 -->
+        <div id="flameTabSim">
           <div class="card__title">목표 옵션</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
             ${goalRows}
           </div>
+          <button class="sbtn sbtn--ghost w100" id="flameBtnSim" style="margin-top:12px">시뮬레이션</button>
         </div>
 
-        <button class="sbtn sbtn--ghost w100" id="flameBtnSim">시뮬레이션</button>
+        <!-- 탭2 전용: 목표 점수 -->
+        <div id="flameTabScore" style="display:none">
+          <div class="card__title">목표 점수</div>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯(최고값) · 공/마력×4 합산</p>
+          <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 점수 (예: 142)" style="width:100%;margin-bottom:10px" />
+          <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
+        </div>
+
       </div>
 
       <!-- 우측: 결과 -->
       <div class="sf-right" style="display:flex;flex-direction:column;gap:16px">
 
-        <div class="card">
+        <div class="card" id="flameStatTableCard">
           <div class="card__title">티어별 스탯 참조</div>
           <div id="flameStatTable" style="margin-top:10px;overflow-x:auto"></div>
         </div>
 
-        <div class="card">
+        <div class="card" id="flameSimResultCard">
           <div class="card__title">시뮬레이션 결과</div>
           <div id="flameSimResult" style="margin-top:10px"><p class="empty">시뮬레이션 버튼을 눌러주세요.</p></div>
         </div>
 
-        <div class="card">
-          <div class="card__title">추옵 점수 시뮬레이션</div>
-          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯(최고값) · 공/마력×4 합산 점수 기준</p>
-          <div style="display:flex;gap:8px;align-items:center">
-            <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 점수 (예: 142)" style="flex:1" />
-            <button class="sbtn sbtn--ghost" id="flameBtnScore">계산</button>
-          </div>
-          <div id="flameScoreResult" style="margin-top:12px;font-size:.85rem;color:var(--text-sub)"></div>
+        <div class="card" id="flameScoreResultCard" style="display:none">
+          <div class="card__title">점수 계산 결과</div>
+          <div id="flameScoreResult" style="margin-top:10px"><p class="empty">목표 점수를 입력하고 계산하세요.</p></div>
         </div>
 
       </div>
@@ -447,6 +457,19 @@ function initAddOption() {
   document.getElementById('flameBoss').addEventListener('change', refresh);
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
+
+  sec.querySelectorAll('.sf-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const isSim = tab.dataset.tab === 'sim';
+      document.getElementById('flameTabSim').style.display        = isSim ? '' : 'none';
+      document.getElementById('flameTabScore').style.display      = isSim ? 'none' : '';
+      document.getElementById('flameStatTableCard').style.display = isSim ? '' : 'none';
+      document.getElementById('flameSimResultCard').style.display  = isSim ? '' : 'none';
+      document.getElementById('flameScoreResultCard').style.display = isSim ? 'none' : '';
+    });
+  });
 
   refresh();
 }

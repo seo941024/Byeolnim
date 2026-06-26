@@ -304,13 +304,15 @@ function initStatOCR() {
     ctx.imageSmoothingEnabled = false;
     ctx.drawImage(_img, srcX, srcY, srcW, srcH, 0, 0, ocrCanvas.width, ocrCanvas.height);
 
-    // 반전: 흰 글씨 → 검정 (Tesseract는 밝은 배경에 어두운 글씨를 더 잘 읽음)
+    // 전처리: 그레이스케일 → 반전 → 강한 이진화 (순수 흑백)
     const imgData = ctx.getImageData(0, 0, ocrCanvas.width, ocrCanvas.height);
     const d = imgData.data;
     for (let i = 0; i < d.length; i += 4) {
-      d[i]   = 255 - d[i];
-      d[i+1] = 255 - d[i+1];
-      d[i+2] = 255 - d[i+2];
+      // 그레이스케일
+      const gray = 0.299 * d[i] + 0.587 * d[i+1] + 0.114 * d[i+2];
+      // 반전 후 임계값 이진화 (임계값 110: 흰 글씨 → 검정, 어두운 배경 → 흰색)
+      const bin = (255 - gray) > 110 ? 0 : 255;
+      d[i] = d[i+1] = d[i+2] = bin;
     }
     ctx.putImageData(imgData, 0, 0);
 
@@ -334,7 +336,10 @@ function initStatOCR() {
         logger: m => {
           if (m.status === 'recognizing text')
             status.textContent = `OCR 중... ${Math.round(m.progress*100)}%`;
-        }
+        },
+        tessedit_pageseg_mode: '6',   // 균일한 텍스트 블록
+        tessedit_char_whitelist: '0123456789.%ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz +/-:',
+        preserve_interword_spaces: '1',
       });
 
       _parsed = parseStatWindow(text);

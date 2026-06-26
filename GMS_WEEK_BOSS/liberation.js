@@ -191,7 +191,7 @@ function renderGenesis() {
     </div>`;
 
   // 이벤트
-  document.getElementById('genHeld').addEventListener('change', e => {
+  document.getElementById('genHeld').addEventListener('input', e => {
     genState.held = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
     saveGen(); renderGenesis();
   });

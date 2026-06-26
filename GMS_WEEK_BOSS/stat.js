@@ -14,8 +14,9 @@ const STAT_JOB_TYPES = [
 function parseStatWindow(rawText) {
   // OCR 공통 오류 정규화
   let text = rawText
-    .replace(/(\d+) (\d{2})%/g, '$1.$2%')   // "3 00%" → "3.00%"
-    .replace(/(\d+),(\d{3})/g, '$1$2');       // "1,768" → "1768" (쉼표 제거)
+    .replace(/(\d+) (\d{2})%/g, '$1.$2%')    // "3 00%" → "3.00%"
+    .replace(/(\d+)[,.](\d{3})\b/g, '$1$2')  // "1,877" / "1.877" → "1877"
+    .replace(/(\d+) (\d{3})\b/g, '$1$2');    // "1 877" → "1877"
 
   const get = (re) => { const m = text.match(re); return m ? m[1].replace(/,/g,'') : ''; };
   return {

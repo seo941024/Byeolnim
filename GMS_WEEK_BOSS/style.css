@@ -1526,4 +1526,5 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .stat-note { font-size: .7rem; color: var(--text-sub); font-weight: 400; }
 .stat-idx { padding: 4px 8px; font-size: .7rem; color: var(--text-sub); vertical-align: middle; }
 .stat-val-inp { width: 120px; padding: 4px 8px; font-size: .82rem; }
+.stat-warn { border-color: #f87171 !important; background: rgba(248,113,113,.08) !important; }
 tbody tr:hover { background: rgba(139,92,246,.05); }

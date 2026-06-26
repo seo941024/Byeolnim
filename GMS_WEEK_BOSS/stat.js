@@ -11,7 +11,12 @@ const STAT_JOB_TYPES = [
   { label: 'HP — 데몬어벤져',              stat: ['HP'],              third: 'ATK'  },
 ];
 
-function parseStatWindow(text) {
+function parseStatWindow(rawText) {
+  // OCR 공통 오류 정규화
+  let text = rawText
+    .replace(/(\d+) (\d{2})%/g, '$1.$2%')   // "3 00%" → "3.00%"
+    .replace(/(\d+),(\d{3})/g, '$1$2');       // "1,768" → "1768" (쉼표 제거)
+
   const get = (re) => { const m = text.match(re); return m ? m[1].replace(/,/g,'') : ''; };
   return {
     level:        get(/Lv[\. ]+(\d+)/i),
@@ -216,20 +221,23 @@ function initStatOCR() {
       document.getElementById('statOcrBtn').disabled = false;
       document.getElementById('statOcrStatus').textContent = '영역을 드래그해서 STAT 창만 선택 후 OCR 실행';
       URL.revokeObjectURL(url);
-      initCropDrag(canvas, overlay, img.naturalWidth / dispW);
+      initCropDrag(canvas, overlay);
     };
     img.src = url;
   }
 
   /* 크롭 드래그 */
-  function initCropDrag(canvas, overlay, pixelRatio) {
+  function initCropDrag(canvas, overlay) {
     _dragging = false; _dragStart = null; _crop = null;
 
     function getPos(e) {
       const r = canvas.getBoundingClientRect();
+      // 실제 표시 크기 대비 canvas 픽셀 크기 비율을 매번 계산
+      const scaleX = canvas.width  / r.width;
+      const scaleY = canvas.height / r.height;
       return {
-        x: Math.round((e.clientX - r.left) * pixelRatio),
-        y: Math.round((e.clientY - r.top)  * pixelRatio),
+        x: Math.round((e.clientX - r.left) * scaleX),
+        y: Math.round((e.clientY - r.top)  * scaleY),
       };
     }
 
@@ -282,19 +290,33 @@ function initStatOCR() {
     const status = document.getElementById('statOcrStatus');
     btn.disabled = true;
 
-    // 크롭 영역이 있으면 해당 부분만, 없으면 전체
-    let ocrCanvas;
-    if (_crop && _crop.w > 10 && _crop.h > 10) {
-      ocrCanvas = document.createElement('canvas');
-      ocrCanvas.width  = _crop.w;
-      ocrCanvas.height = _crop.h;
-      ocrCanvas.getContext('2d').drawImage(
-        _img, _crop.x, _crop.y, _crop.w, _crop.h, 0, 0, _crop.w, _crop.h
-      );
-      status.textContent = `선택 영역(${_crop.w}×${_crop.h}) OCR 중...`;
-    } else {
-      ocrCanvas = document.getElementById('statPreviewCanvas');
-      status.textContent = '전체 이미지 OCR 중... (STAT 창 영역 드래그 선택 권장)';
+    // 크롭 영역 추출 → 3배 업스케일 + 반전 이진화 전처리
+    const srcW = (_crop && _crop.w > 10) ? _crop.w : _img.naturalWidth;
+    const srcH = (_crop && _crop.h > 10) ? _crop.h : _img.naturalHeight;
+    const srcX = (_crop && _crop.w > 10) ? _crop.x : 0;
+    const srcY = (_crop && _crop.h > 10) ? _crop.y : 0;
+
+    const SCALE = 3;
+    const ocrCanvas = document.createElement('canvas');
+    ocrCanvas.width  = srcW * SCALE;
+    ocrCanvas.height = srcH * SCALE;
+    const ctx = ocrCanvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(_img, srcX, srcY, srcW, srcH, 0, 0, ocrCanvas.width, ocrCanvas.height);
+
+    // 반전: 흰 글씨 → 검정 (Tesseract는 밝은 배경에 어두운 글씨를 더 잘 읽음)
+    const imgData = ctx.getImageData(0, 0, ocrCanvas.width, ocrCanvas.height);
+    const d = imgData.data;
+    for (let i = 0; i < d.length; i += 4) {
+      d[i]   = 255 - d[i];
+      d[i+1] = 255 - d[i+1];
+      d[i+2] = 255 - d[i+2];
+    }
+    ctx.putImageData(imgData, 0, 0);
+
+    status.textContent = `전처리 완료 (${ocrCanvas.width}×${ocrCanvas.height}) — OCR 중...`;
+    if (_crop && _crop.w > 10) {
+      status.textContent = `선택 영역 3배 업스케일 — OCR 중...`;
     }
 
     try {
@@ -325,17 +347,29 @@ function initStatOCR() {
     }
   });
 
+  // 필드별 합리적 최대값 (초과 시 경고)
+  const FIELD_MAX = {
+    'DAMAGE':13,'FINAL_DAMAGE':200,'IGNORE_DEF':100,'NORMAL_DMG':100,
+    'CRIT_RATE':100,'BUFF_DUR':100,'CD_NOT':100,'IGNORE_ELEM':100,
+    'ADD_STATUS':100,'SUMMONS':100,'CD_SEC':10,'CD_PCT':100,
+  };
+
   /* 테이블 렌더링 */
   function renderTable(parsed) {
     _parsed = parsed;
     _jtIdx  = parseInt(document.getElementById('statJobType').value);
     _fields = buildFields(_jtIdx, parsed);
-    const tbody = _fields.map((f,i) => `
+    const tbody = _fields.map((f,i) => {
+      const v = parseFloat(f.val);
+      const warn = f.key && FIELD_MAX[f.key] && !isNaN(v) && v > FIELD_MAX[f.key];
+      return `
       <tr>
         <td class="stat-lbl">${f.label}${f.note?`<br><span class="stat-note">${f.note}</span>`:''}</td>
-        <td><input class="inp stat-val-inp" data-i="${i}" value="${f.val||''}" placeholder="—"/></td>
+        <td><input class="inp stat-val-inp${warn?' stat-warn':''}" data-i="${i}" value="${f.val||''}" placeholder="—"
+          title="${warn?'⚠ 값이 비정상적으로 큽니다. 직접 수정해주세요.':''}"/>${warn?'<span style="color:#f87171;font-size:.7rem;margin-left:4px">⚠</span>':''}</td>
         <td class="stat-idx">[${f.idx}]</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
     document.getElementById('statResultTable').innerHTML = `
       <table style="width:100%;border-collapse:collapse">
         <thead><tr>

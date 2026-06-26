@@ -219,7 +219,7 @@ function renderGenesis() {
     cb.addEventListener('change', () => {
       const id = cb.dataset.id;
       genState.sel[id] = { ...(genState.sel[id] || {}), cleared: cb.checked };
-      saveGen();
+      saveGen(); renderGenesis();
     });
   });
   panel.querySelectorAll('.gen-boss__diff').forEach(s => {

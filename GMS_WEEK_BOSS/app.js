@@ -297,16 +297,15 @@ function renderBossTable() {
   const mCost = rentalMonthlyCost();
   const weekNet = total - wCost;
   const wEl2 = document.getElementById('weeklyTotal');
-  wEl2.textContent = fmtMeso(Math.abs(weekNet));
-  wEl2.style.color = weekNet < 0 ? 'var(--danger, #f87171)' : '';
-  if (weekNet < 0) wEl2.textContent = '-' + wEl2.textContent;
+  wEl2.textContent = (weekNet < 0 ? '-' : '') + fmtMeso(Math.abs(weekNet));
+  wEl2.style.color = weekNet < 0 ? '#f87171' : 'var(--accent)';
   const resets = thursdaysInMonth();
   const monthEl = document.getElementById('monthlyTotal');
   const monthSubEl = document.getElementById('monthResetCount');
   if (monthEl) {
     const monthNet = charMonthlyMeso(ch) - mCost;
     monthEl.textContent = (monthNet < 0 ? '-' : '') + fmtMeso(Math.abs(monthNet));
-    monthEl.style.color = monthNet < 0 ? 'var(--danger, #f87171)' : '';
+    monthEl.style.color = monthNet < 0 ? '#f87171' : '';
   }
   if (monthSubEl) monthSubEl.textContent = `(주${resets}회 기준)`;
 

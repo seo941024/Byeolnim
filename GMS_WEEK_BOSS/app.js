@@ -487,8 +487,8 @@ function jobIdxFromName(jobName) {
 
 const JOB_ASSET_NAMES = {
   'Dark Knight':'DarkNight',
-  'Arch Mage (Fire, Poison)':'Arch_Mage(F,P)',
-  'Arch Mage (Ice, Lightning)':'Arch_Mage(I,L)',
+  'Arch Mage (Fire, Poison)':'Arch_MageFP',
+  'Arch Mage (Ice, Lightning)':'Arch_MageIL',
   'Bowmaster':'BowMaster',
   'Pathfinder':'PathFinder',
   'Night Lord':'NightLord',
@@ -512,8 +512,8 @@ const JOB_ASSET_NAMES = {
 };
 const JOB_HEAD_ASSET_NAMES = {
   'Dark Knight':'DarkNight',
-  'Arch Mage (Fire, Poison)':'ArchMage(F,P)',
-  'Arch Mage (Ice, Lightning)':'ArchMage(I,L)',
+  'Arch Mage (Fire, Poison)':'ArchMageFP',
+  'Arch Mage (Ice, Lightning)':'ArchMageIL',
   'Pathfinder':'Pathfinder',
   'Night Lord':'NightLord',
   'Dual Blade':'DualBlade',
@@ -543,14 +543,27 @@ const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'p
 function charJobName(ch) {
   return ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name || '';
 }
+function _resolveAsset(en, ...maps) {
+  if (!en) return null;
+  for (const map of maps) {
+    if (map[en]) return map[en];
+  }
+  // 정규화 매칭 (대소문자·공백·특수문자 무시)
+  const norm = en.toLowerCase().replace(/[^a-z]/g, '');
+  for (const map of maps) {
+    const key = Object.keys(map).find(k => k.toLowerCase().replace(/[^a-z]/g, '') === norm);
+    if (key) return map[key];
+  }
+  return en.replace(/\s+/g, '');
+}
 function charJobIconSrc(ch) {
   const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
-  const asset = JOB_ASSET_NAMES[en] || en?.replace(/\s+/g, '');
+  const asset = _resolveAsset(en, JOB_ASSET_NAMES);
   return asset ? `images/jobs/${asset}.webp` : '';
 }
 function charJobHeadSrc(ch) {
   const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
-  const asset = JOB_HEAD_ASSET_NAMES[en] || JOB_ASSET_NAMES[en] || en?.replace(/\s+/g, '');
+  const asset = _resolveAsset(en, JOB_HEAD_ASSET_NAMES, JOB_ASSET_NAMES);
   return asset ? `images/jobs/Head/${asset}.webp` : '';
 }
 function serverIconSrc(world) {

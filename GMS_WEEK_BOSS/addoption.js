@@ -170,6 +170,17 @@ function _runSim(N, flameKey, level, isBoss, isWeapon, goals) {
   return counts;
 }
 
+function _isGoalPossible(flameKey, goals) {
+  const { prob } = FLAME_TYPES[flameKey];
+  return goals.every(g => {
+    if (!g.opt || g.opt === 'none') return true;
+    const minOldTier = 6 - g.minTier; // minTier 1(7추)→oldT5, 5(3추)→oldT1
+    // 해당 tier 이상의 확률 합이 0이면 불가능
+    const possible = prob.slice(minOldTier - 1).some(p => p > 0);
+    return possible;
+  });
+}
+
 function flameSimulate() {
   const flameKey = _flameGetFlameKey();
   const level    = _flameGetLevel();
@@ -180,6 +191,11 @@ function flameSimulate() {
 
   if (!goals.length) {
     resEl.innerHTML = '<p class="empty">목표 옵션을 설정하세요.</p>';
+    return;
+  }
+
+  if (!_isGoalPossible(flameKey, goals)) {
+    resEl.innerHTML = '<p class="empty" style="color:#f87171">선택한 불꽃으로는 달성 불가능한 목표입니다.</p>';
     return;
   }
 

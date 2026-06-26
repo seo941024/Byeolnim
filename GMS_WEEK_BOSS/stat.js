@@ -352,6 +352,7 @@ function initStatOCR() {
       });
       const { data: { text } } = await worker.recognize(ocrCanvas);
       await worker.terminate();
+      console.log('[OCR RAW]', text);
 
       _parsed = parseStatWindow(text);
       renderTable(_parsed);

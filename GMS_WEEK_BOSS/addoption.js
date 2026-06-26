@@ -107,12 +107,28 @@ function flameGetGoals() {
 function flameRefreshOptionSelects() {
   const isWeapon = _flameGetIsWeapon();
   const display = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
+  const { prob } = FLAME_TYPES[_flameGetFlameKey()];
+
   for (let i = 1; i <= 4; i++) {
     const sel = document.getElementById(`flameGoalOpt${i}`);
     if (!sel) continue;
     const cur = sel.value;
     sel.innerHTML = `<option value="none">— 없음 —</option>` +
       display.map(o => `<option value="${o}"${o===cur?' selected':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
+
+    // 해당 불꽃에서 나올 수 없는 티어 비활성화
+    const tierSel = document.getElementById(`flameGoalTier${i}`);
+    if (!tierSel) continue;
+    // value 1=7추(oldT5) ~ 5=3추(oldT1), 정확히 그 티어 확률이 0이면 disabled
+    Array.from(tierSel.options).forEach(opt => {
+      const oldTier = 6 - parseInt(opt.value); // value1→5, value5→1
+      opt.disabled = prob[oldTier - 1] === 0;
+    });
+    // 현재 선택값이 disabled면 첫 번째 가능한 값으로 이동
+    if (tierSel.options[tierSel.selectedIndex]?.disabled) {
+      const first = Array.from(tierSel.options).find(o => !o.disabled);
+      if (first) tierSel.value = first.value;
+    }
   }
 }
 

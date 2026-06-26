@@ -488,7 +488,9 @@ function jobIdxFromName(jobName) {
 const JOB_ASSET_NAMES = {
   'Dark Knight':'DarkNight',
   'Arch Mage (Fire, Poison)':'Arch_MageFP',
+  'Arch Mage (F/P)':'Arch_MageFP',
   'Arch Mage (Ice, Lightning)':'Arch_MageIL',
+  'Arch Mage (I/L)':'Arch_MageIL',
   'Bowmaster':'BowMaster',
   'Pathfinder':'PathFinder',
   'Night Lord':'NightLord',
@@ -513,7 +515,9 @@ const JOB_ASSET_NAMES = {
 const JOB_HEAD_ASSET_NAMES = {
   'Dark Knight':'DarkNight',
   'Arch Mage (Fire, Poison)':'ArchMageFP',
+  'Arch Mage (F/P)':'ArchMageFP',
   'Arch Mage (Ice, Lightning)':'ArchMageIL',
+  'Arch Mage (I/L)':'ArchMageIL',
   'Pathfinder':'Pathfinder',
   'Night Lord':'NightLord',
   'Dual Blade':'DualBlade',

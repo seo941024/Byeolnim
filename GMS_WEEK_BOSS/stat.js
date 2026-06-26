@@ -14,9 +14,10 @@ const STAT_JOB_TYPES = [
 function parseStatWindow(rawText) {
   // OCR 공통 오류 정규화
   let text = rawText
-    .replace(/(\d+) (\d{2})%/g, '$1.$2%')    // "3 00%" → "3.00%"
-    .replace(/(\d+)[,.](\d{3})\b/g, '$1$2')  // "1,877" / "1.877" → "1877"
-    .replace(/(\d+) (\d{3})\b/g, '$1$2');    // "1 877" → "1877"
+    .replace(/(\d+) (\d{2})%/g, '$1.$2%')       // "3 00%" → "3.00%"
+    .replace(/(\d+)[,.](\d{3})\b/g, '$1$2')     // "1,877" / "1.877" → "1877"
+    .replace(/(\d+) (\d{3})\b/g, '$1$2')        // "1 877" → "1877"
+    .replace(/sec\s*\/\s*[GOo]%/gi, 'sec/6%');  // "sec/G%" → "sec/6%" (OCR 오인식)
 
   const get = (re) => { const m = text.match(re); return m ? m[1].replace(/[,\s]/g,'') : ''; };
   return {
@@ -36,7 +37,7 @@ function parseStatWindow(rawText) {
     CRIT_RATE:    get(/CRITICAL RATE\s+[^\d]*([\d.]+)%/),
     CRIT_DMG:     get(/CRITICAL DAMAGE\s+([\d.]+)%/),
     CD_SEC:       get(/COOLDOWN REDUCTION\s+([\d.]+)\s*sec/i),
-    CD_PCT:       get(/COOLDOWN REDUCTION\s+[\d.]+ sec \/ ([\d.]+)%/i),
+    CD_PCT:       get(/COOLDOWN REDUCTION\s+[\d.]+\s*sec\s*\/\s*([\d.]+)%/i),
     BUFF_DUR:     get(/BUFF DURATION\s+([\d.]+)%/),
     CD_NOT:       get(/COOLDOWN NOT APPLIED\s+([\d.]+)%/),
     IGNORE_ELEM:  get(/IGNORE ELEMENTAL RESISTANCE\s+([\d.]+)%/),
@@ -366,7 +367,7 @@ function initStatOCR() {
 
   // 필드별 합리적 최대값 (초과 시 경고)
   const FIELD_MAX = {
-    'DAMAGE':13,'FINAL_DAMAGE':200,'IGNORE_DEF':100,'NORMAL_DMG':100,
+    'DAMAGE':300,'FINAL_DAMAGE':200,'IGNORE_DEF':100,'NORMAL_DMG':100,
     'CRIT_RATE':200,'BUFF_DUR':200,'CD_NOT':100,'IGNORE_ELEM':100,
     'ADD_STATUS':100,'SUMMONS':100,'CD_SEC':10,'CD_PCT':100,
   };

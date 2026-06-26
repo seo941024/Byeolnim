@@ -1487,3 +1487,12 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 @media (max-width: 420px) {
   .cg-grid { grid-template-columns: 1fr; }
 }
+
+/* ═══ 추옵 시뮬레이터 ═══ */
+.flame-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+.flame-tbl th { padding: 6px 10px; background: var(--bg3); color: var(--text-sub); font-weight: 600; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
+.flame-tbl td { padding: 5px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.05); }
+.flame-tbl .flame-opt-lbl { text-align: left; color: var(--text); font-weight: 500; }
+.flame-tbl .flame-avg { color: #fbbf24; font-weight: 600; }
+.flame-t--zero { color: var(--text-sub); opacity: .35; }
+.flame-th-prob { font-size: .72rem; font-weight: 400; color: var(--text-sub); }

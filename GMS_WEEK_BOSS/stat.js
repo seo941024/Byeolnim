@@ -43,6 +43,8 @@ function parseStatWindow(rawText) {
     IGNORE_ELEM:  get(/IGNORE ELEMENTAL RESISTANCE\s+([\d.]+)%/),
     ADD_STATUS:   get(/ADDITIONAL STATUS DAMAGE\s+([\d.]+)%/),
     SUMMONS:      get(/SUMMONS DURATION INCREASE\s+([\d.]+)%/),
+    ARCANE:       get(/ARCANE POWER\s+[^\d]*([\d]+)/),
+    SACRED:       get(/SACRED POWER\s+[^\d]*([\d]+)/),
   };
 }
 
@@ -56,12 +58,9 @@ function buildFields(jtIdx, parsed) {
     rows.push({ label: `${s} % 미적용`, key: null,  idx: 5+i*3, val: '0', note: '수동 입력' });
   });
   const direct = [
-    { label: '기본 스공',           key: null,          idx: 12, val: '',  note: '수동 입력' },
     { label: '데미지%',             key: 'DAMAGE',      idx: 13 },
-    { label: '최종 데미지%',        key: 'FINAL_DAMAGE',idx: 14 },
     { label: '보스 데미지%',        key: 'BOSS_DAMAGE', idx: 15 },
     { label: '방어율 무시%',        key: 'IGNORE_DEF',  idx: 16 },
-    { label: '일반 데미지%',        key: 'NORMAL_DMG',  idx: 17 },
     { label: '공격력',              key: 'ATK',         idx: 18 },
     { label: '크리티컬 확률%',      key: 'CRIT_RATE',   idx: 19 },
     { label: '마력',                key: 'MATK',        idx: 20 },
@@ -73,8 +72,8 @@ function buildFields(jtIdx, parsed) {
     { label: '속성 내성 무시%',     key: 'IGNORE_ELEM', idx: 26 },
     { label: '상태이상 추가뎀%',   key: 'ADD_STATUS',  idx: 27 },
     { label: '소환수 지속%',        key: 'SUMMONS',     idx: 28 },
-    { label: '아케인 포스',         key: null,          idx: 29, val: '', note: '수동 입력' },
-    { label: '어센틱/세이크리드 포스', key: null,       idx: 30, val: '', note: '수동 입력' },
+    { label: '아케인 포스',         key: 'ARCANE',      idx: 29 },
+    { label: '어센틱/세이크리드 포스', key: 'SACRED',   idx: 30 },
   ];
   return [...rows, ...direct].map(f => ({
     ...f,

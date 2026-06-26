@@ -1386,10 +1386,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* 버스 패널 난이도 셀렉트 */
 .bus-diff-sel {
-  background: rgba(255,255,255,.06); border: 1px solid rgba(139,92,246,.3);
+  background: #1a1035; border: 1px solid rgba(139,92,246,.3);
   color: var(--text); border-radius: 6px; padding: 3px 8px; font-size: .78rem;
   font-family: inherit; cursor: pointer;
 }
+.bus-diff-sel option { background: #1a1035; color: var(--text); }
 
 /* 버스 패널 제거 버튼 */
 .bus-remove {

@@ -1513,3 +1513,17 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .flame-t--zero { color: var(--text-sub); opacity: .35; }
 .flame-th-prob { font-size: .72rem; font-weight: 400; color: var(--text-sub); }
 .flame-type-icon { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
+
+/* ── 환산주스탯 ── */
+.stat-paste-zone {
+  border: 2px dashed rgba(139,92,246,.4); border-radius: 12px;
+  padding: 32px 16px; text-align: center; cursor: pointer;
+  color: var(--text-sub); font-size: .85rem; transition: .2s;
+  margin-top: 8px;
+}
+.stat-paste-zone:hover { border-color: var(--primary); color: var(--text); background: rgba(139,92,246,.06); }
+.stat-lbl { padding: 6px 8px; font-size: .82rem; color: var(--text); vertical-align: middle; white-space: nowrap; }
+.stat-note { font-size: .7rem; color: var(--text-sub); font-weight: 400; }
+.stat-idx { padding: 4px 8px; font-size: .7rem; color: var(--text-sub); vertical-align: middle; }
+.stat-val-inp { width: 120px; padding: 4px 8px; font-size: .82rem; }
+tbody tr:hover { background: rgba(139,92,246,.05); }

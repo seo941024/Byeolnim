@@ -295,11 +295,19 @@ function renderBossTable() {
 
   const wCost = rentalWeeklyCost();
   const mCost = rentalMonthlyCost();
-  document.getElementById('weeklyTotal').textContent = fmtMeso(Math.max(0, total - wCost));
+  const weekNet = total - wCost;
+  const wEl2 = document.getElementById('weeklyTotal');
+  wEl2.textContent = fmtMeso(Math.abs(weekNet));
+  wEl2.style.color = weekNet < 0 ? 'var(--danger, #f87171)' : '';
+  if (weekNet < 0) wEl2.textContent = '-' + wEl2.textContent;
   const resets = thursdaysInMonth();
   const monthEl = document.getElementById('monthlyTotal');
   const monthSubEl = document.getElementById('monthResetCount');
-  if (monthEl) monthEl.textContent = fmtMeso(Math.max(0, charMonthlyMeso(ch) - mCost));
+  if (monthEl) {
+    const monthNet = charMonthlyMeso(ch) - mCost;
+    monthEl.textContent = (monthNet < 0 ? '-' : '') + fmtMeso(Math.abs(monthNet));
+    monthEl.style.color = monthNet < 0 ? 'var(--danger, #f87171)' : '';
+  }
   if (monthSubEl) monthSubEl.textContent = `(주${resets}회 기준)`;
 
   // 난이도 dpill 클릭 → 토글

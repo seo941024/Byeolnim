@@ -759,7 +759,8 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-res-val.big { font-size: 1.2rem; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
 
 /* ?? ?ㅽ??ъ뒪 ?좉? 洹몃９ ?? */
-.sf-tabs { display: flex; gap: 0; margin-bottom: 16px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border); width: fit-content; }
+.sec-sep { border: none; border-top: 1.5px solid var(--border); margin: 0 0 20px; }
+.sf-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border); width: fit-content; }
 .sf-tab { padding: 10px 28px; font-size: .9rem; font-weight: 700; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all .15s; }
 .sf-tab:last-child { border-right: none; }
 .sf-tab.active { background: var(--primary); color: #fff; }

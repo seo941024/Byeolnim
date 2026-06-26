@@ -207,11 +207,13 @@
 
     <!-- ══════ 스타포스 시뮬레이터 ══════ -->
     <section class="sec" id="sec-starforce">
+      <div class="sec-head"><h2 class="sec-title">스타포스 시뮬레이터</h2></div>
       <!-- 탭 -->
       <div class="sf-tabs">
         <button class="sf-tab active" data-sftab="expected">기댓값 계산기</button>
         <button class="sf-tab" data-sftab="simulate">강화 시뮬레이터</button>
       </div>
+      <hr class="sec-sep" />
 
       <!-- 공유 설정 + 우측 콘텐츠 -->
       <div class="sf-layout">
@@ -250,7 +252,7 @@
             <button class="sbtn sbtn--ghost w100" id="sfBtnExpected">기댓값 계산</button>
           </div>
           <!-- 강화 버튼 -->
-          <div id="sfBtnWrapSimulate" style="display:none;display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <div id="sfBtnWrapSimulate" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
             <button class="sbtn sbtn--primary" id="sfBtn1">강화 1회</button>
             <button class="sbtn sbtn--primary" id="sfBtnAuto">자동 강화</button>
             <button class="sbtn sbtn--ghost" id="sfBtnReset" style="grid-column:1/-1">초기화</button>

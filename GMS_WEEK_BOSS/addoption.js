@@ -208,12 +208,24 @@ function flameRefreshOptionSelects() {
   const { prob }  = FLAME_TYPES[_flameGetFlameKey()];
   const gradeOffset = isBoss ? 2 : 0; // 보스=3추~7추, 비보스=1추~5추
 
+  // 다른 셀렉트에서 선택된 옵션 수집 (중복 비활성화용)
+  const getOtherSelected = (me) => {
+    const vals = new Set();
+    for (let j = 1; j <= 4; j++) {
+      if (j === me) continue;
+      const v = document.getElementById(`flameGoalOpt${j}`)?.value;
+      if (v && v !== 'none') vals.add(v);
+    }
+    return vals;
+  };
+
   for (let i = 1; i <= 4; i++) {
     const sel = document.getElementById(`flameGoalOpt${i}`);
     if (!sel) continue;
     const cur = sel.value;
+    const others = getOtherSelected(i);
     sel.innerHTML = `<option value="none">— 없음 —</option>` +
-      display.map(o => `<option value="${o}"${o===cur?' selected':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
+      display.map(o => `<option value="${o}"${o===cur?' selected':''}${others.has(o)?' disabled':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
 
     const tierSel = document.getElementById(`flameGoalTier${i}`);
     if (!tierSel) continue;
@@ -392,10 +404,11 @@ function initAddOption() {
     <div class="sec-head"><h2 class="sec-title">추옵 시뮬레이터</h2></div>
 
     <!-- 탭 -->
-    <div class="sf-tab-group" style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:20px">
+    <div class="sf-tabs">
       <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
       <button class="sf-tab" data-tab="score">점수 계산기</button>
     </div>
+    <hr class="sec-sep" />
 
     <!-- 공통 설정 -->
     <div class="sf-layout" id="flameCommonSettings">
@@ -491,6 +504,12 @@ function initAddOption() {
     if (!isNaN(v) && v > 250) levelEl.value = 250;
   });
   document.getElementById('flameBoss').addEventListener('change', refresh);
+
+  // 목표 옵션 변경 시 다른 셀렉트에서 해당 옵션 비활성화 갱신
+  for (let i = 1; i <= 4; i++) {
+    document.getElementById(`flameGoalOpt${i}`)?.addEventListener('change', flameRefreshOptionSelects);
+  }
+
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
 

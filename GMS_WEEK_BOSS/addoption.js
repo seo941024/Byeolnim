@@ -85,6 +85,70 @@ function checkGoals(lines, goals) {
   });
 }
 
+/* 추옵 점수 계산 */
+function calcFlameScore(lines) {
+  const stat = { STR:0, DEX:0, INT:0, LUK:0 };
+  let extra = 0;
+  for (const l of lines) {
+    const v = l.val;
+    switch (l.opt) {
+      case 'ALL%':      extra += v * 10; break;
+      case 'ATTACK':
+      case 'MAGIC ATK': extra += v * 4;  break;
+      case 'STR':       stat.STR += v; break;
+      case 'DEX':       stat.DEX += v; break;
+      case 'INT':       stat.INT += v; break;
+      case 'LUK':       stat.LUK += v; break;
+      case 'STR+DEX':   stat.STR += v; stat.DEX += v; break;
+      case 'STR+INT':   stat.STR += v; stat.INT += v; break;
+      case 'STR+LUK':   stat.STR += v; stat.LUK += v; break;
+      case 'DEX+INT':   stat.DEX += v; stat.INT += v; break;
+      case 'DEX+LUK':   stat.DEX += v; stat.LUK += v; break;
+      case 'INT+LUK':   stat.INT += v; stat.LUK += v; break;
+      // HP, MP, 방어력, 착용레벨감소 → 0
+    }
+  }
+  const bestStat = Math.max(stat.STR, stat.DEX, stat.INT, stat.LUK);
+  return bestStat + extra;
+}
+
+let _flameScoreRunning = false;
+
+function flameScoreSim() {
+  if (_flameScoreRunning) return;
+  const flameKey  = _flameGetFlameKey();
+  const level     = _flameGetLevel();
+  const isBoss    = _flameGetIsBoss();
+  const isWeapon  = false; // 장비 기준
+  const target    = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
+  const resEl     = document.getElementById('flameScoreResult');
+  if (!target || target <= 0) { resEl.textContent = '목표 점수를 입력하세요.'; return; }
+
+  _flameScoreRunning = true;
+  resEl.textContent = '계산 중...';
+
+  setTimeout(() => {
+    try {
+      const M = 100_000;
+      let k = 0;
+      for (let i = 0; i < M; i++) {
+        if (calcFlameScore(rollFlame(flameKey, level, isBoss, isWeapon)) >= target) k++;
+      }
+      const pct = (k / M * 100).toFixed(4);
+      resEl.innerHTML = `
+        <div class="sf-res-item"><span class="sf-res-label">시뮬레이션 횟수</span><span class="sf-res-val">${M.toLocaleString()}회</span></div>
+        <div class="sf-res-item"><span class="sf-res-label">성공 횟수</span><span class="sf-res-val">${k.toLocaleString()}회</span></div>
+        <div class="sf-res-item" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
+          <span class="sf-res-label">달성 확률</span>
+          <span class="sf-res-val" style="color:var(--accent);font-size:1.1rem">${pct}%</span>
+        </div>
+        <p style="font-size:.73rem;color:var(--text-sub);margin-top:8px">목표 점수 ${target} 이상 달성 시 성공으로 처리</p>`;
+    } finally {
+      _flameScoreRunning = false;
+    }
+  }, 0);
+}
+
 let _flameChart = null;
 let _flameSimWorker = null;
 let _flameRunning = false;
@@ -346,6 +410,16 @@ function initAddOption() {
           <div id="flameSimResult" style="margin-top:10px"><p class="empty">시뮬레이션 버튼을 눌러주세요.</p></div>
         </div>
 
+        <div class="card">
+          <div class="card__title">추옵 점수 시뮬레이션</div>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯(최고값) · 공/마력×4 합산 점수 기준</p>
+          <div style="display:flex;gap:8px;align-items:center">
+            <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 점수 (예: 142)" style="flex:1" />
+            <button class="sbtn sbtn--ghost" id="flameBtnScore">계산</button>
+          </div>
+          <div id="flameScoreResult" style="margin-top:12px;font-size:.85rem;color:var(--text-sub)"></div>
+        </div>
+
       </div>
     </div>`;
 
@@ -372,6 +446,7 @@ function initAddOption() {
   });
   document.getElementById('flameBoss').addEventListener('change', refresh);
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
+  document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
 
   refresh();
 }

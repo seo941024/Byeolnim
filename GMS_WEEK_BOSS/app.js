@@ -4,7 +4,6 @@
 
 /* ── state ── */
 let state = { chars: [], activeChar: -1, region: 'na' };
-const MAX_CHARS = 20;
 const STORAGE_KEY = 'gms_boss_v2';
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }

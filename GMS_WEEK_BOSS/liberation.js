@@ -175,12 +175,11 @@ function renderGenesis() {
         <div class="lib-pct" style="margin-bottom:14px">${pct}% · ${fmtTrace(totalSpent)} / ${fmtTrace(GENESIS_TARGET)}</div>
 
         <div class="gen-stat2"><span>필요 흔적</span><b>${fmtTrace(GENESIS_TARGET)}</b></div>
-        <div class="gen-stat2"><span>퀘스트 소모</span><b>${fmtTrace(questCum)}</b></div>
         <div class="gen-stat2"><span>보유 흔적</span><b>${fmtTrace(held)}</b></div>
         <div class="gen-stat2"><span>누적 진행</span><b>${fmtTrace(totalSpent)}</b></div>
         <div class="gen-stat2"><span>남은 흔적</span><b>${fmtTrace(remaining)}</b></div>
         <div class="gen-stat2-div"></div>
-        <div class="gen-stat2"><span>주간 흔적</span><b>${fmtTrace(weekly)}</b></div>
+        <div class="gen-stat2"><span>주간 흔적</span><b>${fmtTrace(weeklyFirst)}</b></div>
         <div class="gen-stat2-div"></div>
         <div class="gen-stat2"><span>남은 기간</span><b>${durationStr}</b></div>
 

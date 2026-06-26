@@ -113,40 +113,68 @@ function calcFlameScore(lines) {
 }
 
 let _flameScoreRunning = false;
+let _flameScoreCounts = null; // 마지막 시뮬 결과 캐싱
 
 function flameScoreSim() {
   if (_flameScoreRunning) return;
-  const flameKey  = _flameGetFlameKey();
-  const level     = _flameGetLevel();
-  const isBoss    = _flameGetIsBoss();
-  const isWeapon  = false; // 장비 기준
-  const target    = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
-  const resEl     = document.getElementById('flameScoreResult');
-  if (!target || target <= 0) { resEl.textContent = '목표 점수를 입력하세요.'; return; }
+  const flameKey = _flameGetFlameKey();
+  const level    = _flameGetLevel();
+  const isBoss   = _flameGetIsBoss();
+  const target   = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
+  const resEl    = document.getElementById('flameScoreResult');
+  if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 점수를 입력하세요.</p>'; return; }
 
   _flameScoreRunning = true;
-  resEl.textContent = '계산 중...';
+  resEl.innerHTML = '<p class="empty">계산 중...</p>';
 
   setTimeout(() => {
     try {
-      const M = 100_000;
-      let k = 0;
+      const M = 30_000;
+      const MAX = 500_000;
+      const counts = [];
       for (let i = 0; i < M; i++) {
-        if (calcFlameScore(rollFlame(flameKey, level, isBoss, isWeapon)) >= target) k++;
+        let a = 0;
+        while (++a < MAX) {
+          if (calcFlameScore(rollFlame(flameKey, level, isBoss, false)) >= target) break;
+        }
+        counts.push(a);
       }
-      const pct = (k / M * 100).toFixed(4);
-      resEl.innerHTML = `
-        <div class="sf-res-item"><span class="sf-res-label">시뮬레이션 횟수</span><span class="sf-res-val">${M.toLocaleString()}회</span></div>
-        <div class="sf-res-item"><span class="sf-res-label">성공 횟수</span><span class="sf-res-val">${k.toLocaleString()}회</span></div>
-        <div class="sf-res-item" style="margin-top:8px;border-top:1px solid var(--border);padding-top:8px">
-          <span class="sf-res-label">달성 확률</span>
-          <span class="sf-res-val" style="color:var(--accent);font-size:1.1rem">${pct}%</span>
-        </div>
-        <p style="font-size:.73rem;color:var(--text-sub);margin-top:8px">목표 점수 ${target} 이상 달성 시 성공으로 처리</p>`;
+      counts.sort((a, b) => a - b);
+      _flameScoreCounts = counts;
+      flameScoreRenderResult(counts, M);
     } finally {
       _flameScoreRunning = false;
     }
   }, 0);
+}
+
+function flameScoreRenderResult(counts, M) {
+  const resEl = document.getElementById('flameScoreResult');
+  const mean  = Math.round(counts.reduce((s, c) => s + c, 0) / M);
+  const pctEl = document.getElementById('flameScorePct');
+  const pct   = pctEl ? parseInt(pctEl.value) || 60 : 60;
+  const idx   = Math.min(Math.floor(M * pct / 100), M - 1);
+  const pctVal = counts[idx];
+
+  resEl.innerHTML = `
+    <div class="sf-res-item" style="margin-bottom:8px">
+      <span class="sf-res-label">평균 기댓값</span>
+      <span class="sf-res-val" style="color:var(--accent);font-size:1.05rem">${mean.toLocaleString()}개</span>
+    </div>
+    <div class="sf-res-item">
+      <span class="sf-res-label" style="display:flex;align-items:center;gap:6px">
+        상위 <input id="flameScorePctInput" type="number" value="${pct}" min="1" max="99"
+          style="width:52px;padding:2px 6px;font-size:.85rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:center" /> %
+      </span>
+      <span class="sf-res-val" id="flameScorePctVal">${pctVal.toLocaleString()}개</span>
+    </div>
+    <p style="font-size:.72rem;color:var(--text-sub);margin-top:10px">시뮬레이션 ${M.toLocaleString()}회 기반 / 목표 점수 ${document.getElementById('flameScoreTarget')?.value} 이상</p>`;
+
+  document.getElementById('flameScorePctInput')?.addEventListener('input', e => {
+    const v = Math.max(1, Math.min(99, parseInt(e.target.value) || 60));
+    const i = Math.min(Math.floor(M * v / 100), M - 1);
+    document.getElementById('flameScorePctVal').textContent = counts[i].toLocaleString() + '개';
+  });
 }
 
 let _flameChart = null;
@@ -405,7 +433,7 @@ function initAddOption() {
         <!-- 탭2 전용: 목표 점수 -->
         <div id="flameTabScore" style="display:none">
           <div class="card__title">목표 점수</div>
-          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯(최고값) · 공/마력×4 합산</p>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯 최고값 · 공/마력×4 합산 (장비 전용)</p>
           <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 점수 (예: 142)" style="width:100%;margin-bottom:10px" />
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
         </div>
@@ -463,9 +491,10 @@ function initAddOption() {
       sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const isSim = tab.dataset.tab === 'sim';
-      document.getElementById('flameTabSim').style.display        = isSim ? '' : 'none';
-      document.getElementById('flameTabScore').style.display      = isSim ? 'none' : '';
-      document.getElementById('flameStatTableCard').style.display = isSim ? '' : 'none';
+      document.getElementById('flameEquipGroup').closest('div').style.display = isSim ? '' : 'none';
+      document.getElementById('flameTabSim').style.display         = isSim ? '' : 'none';
+      document.getElementById('flameTabScore').style.display       = isSim ? 'none' : '';
+      document.getElementById('flameStatTableCard').style.display  = isSim ? '' : 'none';
       document.getElementById('flameSimResultCard').style.display  = isSim ? '' : 'none';
       document.getElementById('flameScoreResultCard').style.display = isSim ? 'none' : '';
     });

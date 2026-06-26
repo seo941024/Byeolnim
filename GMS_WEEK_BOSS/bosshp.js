@@ -3,6 +3,8 @@
 ═══════════════════════════════════════════════ */
 const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '카오스':'chaos', '익스트림':'extreme' };
 const bossHPActiveDiffs = {};
+const busChecked = new Set(); // 버스 참조에 추가된 보스명
+const busDiffs   = {};        // 버스 패널 전용 난이도 선택
 
 function parseBossHpValue(value) {
   if (value == null || value === '' || value === '—') return 0;
@@ -27,10 +29,75 @@ function fmtBossHpEok(eok) {
   return `${fmt(eok * 100)}M`;
 }
 
+/* 버스 패널만 다시 그리기 (카드 전체 재렌더 없이) */
+function renderBusPanel(groups) {
+  const busEl = document.getElementById('busTable');
+  if (!busEl) return;
+
+  const checked = groups.filter(b => busChecked.has(b.name));
+
+  if (checked.length === 0) {
+    busEl.innerHTML = '<div class="bus-empty">보스 카드의 <b>+</b> 버튼으로 추가하세요</div>';
+    return;
+  }
+
+  busEl.innerHTML = `<table class="bus-tbl">
+    <thead>
+      <tr>
+        <th>보스</th>
+        <th>난이도</th>
+        <th class="bus-pct5">5% 최소 딜</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      ${checked.map(boss => {
+        const activeDiff = busDiffs[boss.name] || bossHPActiveDiffs[boss.name] || boss.diffs[0]?.diff;
+        busDiffs[boss.name] = activeDiff;
+        const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
+        const hp5 = parseBossHpValue(active.hp) * 0.05;
+
+        const diffOpts = boss.diffs.map(d => {
+          const eng = DIFF_KR_TO_ENG[d.diff] || 'normal';
+          const meta = DIFF_META[eng] || { label: d.diff };
+          return `<option value="${d.diff}"${d.diff === activeDiff ? ' selected' : ''}>${meta.label}</option>`;
+        }).join('');
+
+        const imgHtml = boss.img
+          ? `<img src="${boss.img}" class="bus-boss-img" onerror="this.style.display='none'" />`
+          : '';
+
+        return `<tr data-bus-boss="${boss.name}">
+          <td class="bus-boss-name">${imgHtml}<span>${boss.name}</span></td>
+          <td><select class="bus-diff-sel" data-boss="${boss.name}">${diffOpts}</select></td>
+          <td class="bus-pct5"><b>${hp5 > 0 ? fmtBossHpEok(hp5) : '—'}</b></td>
+          <td><button class="bus-remove" data-boss="${boss.name}" title="제거">✕</button></td>
+        </tr>`;
+      }).join('')}
+    </tbody>
+  </table>`;
+
+  busEl.querySelectorAll('.bus-diff-sel').forEach(sel => {
+    sel.addEventListener('change', () => {
+      busDiffs[sel.dataset.boss] = sel.value;
+      renderBusPanel(groups);
+    });
+  });
+
+  busEl.querySelectorAll('.bus-remove').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.boss;
+      busChecked.delete(name);
+      // 카드 토글 아이콘 업데이트
+      document.querySelector(`.bus-toggle[data-boss="${name}"]`)?.classList.remove('on');
+      renderBusPanel(groups);
+    });
+  });
+}
+
 function renderBossHPTable() {
   const norm = s => s.replace(/\s/g, '');
 
-  // 보스명으로 그룹화 (BOSS_HP_TABLE 순서 유지)
   const groups = [];
   const seen   = {};
   BOSS_HP_TABLE.forEach(b => {
@@ -41,11 +108,12 @@ function renderBossHPTable() {
     seen[b.name].diffs.push(b);
   });
 
-  // BOSS_DATA 에서 이미지·월간 여부 매핑
   BOSS_DATA.forEach(bd => {
     const key = Object.keys(seen).find(k => norm(k) === norm(bd.name));
     if (key) { seen[key].img = bd.img; seen[key].monthly = !!bd.monthly; }
   });
+
+  renderBusPanel(groups);
 
   const container = document.getElementById('bossHPCards');
   container.innerHTML = groups.map(boss => {
@@ -64,7 +132,6 @@ function renderBossHPTable() {
       ? `<span class="force ${active.ftype === 'auth' ? 'force-auth' : 'force-arc'}"><img src="images/icons/${active.ftype === 'auth' ? 'auth' : 'arc'}.png" class="force-icon" />${active.force}</span>`
       : '';
 
-    // 난이도 select
     const diffOpts = boss.diffs.map(d => {
       const eng = DIFF_KR_TO_ENG[d.diff] || 'normal';
       const meta = DIFF_META[eng] || { label: d.diff };
@@ -72,7 +139,6 @@ function renderBossHPTable() {
     }).join('');
     const diffSel = `<select class="bhp-diff-sel" data-boss="${boss.name}">${diffOpts}</select>`;
 
-    // 선택된 난이도 pill
     const activePill = `<div class="bhp-active-diff"><span class="dpill ${activeMeta.cls} sel"><span class="dpill__t">${activeMeta.label}</span></span></div>`;
 
     const phases = (BOSS_HP_PHASES[boss.name + '_' + active.diff] || []);
@@ -95,11 +161,16 @@ function renderBossHPTable() {
         <div class="bhp-tr"><span class="bhp-tr__pct">5%</span><span class="bhp-tr__dot--5">●</span><span class="bhp-tr__val">${fmtBossHpEok(totalHpEok * 0.05)}</span></div>
       </div>` : '';
 
+    const isOn = busChecked.has(boss.name);
+
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
       <div class="bhp-card__img">${imgHtml}</div>
       <div class="bhp-card__body">
         <div class="bhp-card__top">
-          <div class="bhp-card__name">${active.nameOverride || boss.name}</div>
+          <div class="bhp-name-row">
+            <div class="bhp-card__name">${active.nameOverride || boss.name}</div>
+            <button class="bus-toggle${isOn ? ' on' : ''}" data-boss="${boss.name}" title="버스 참조에 추가">${isOn ? '✓' : '+'}</button>
+          </div>
           <div class="bhp-card__info">
             <span class="bhp-lv">Lv.${active.lv ?? '—'}</span>
             ${forceEl}
@@ -114,26 +185,6 @@ function renderBossHPTable() {
     </div>`;
   }).join('');
 
-  // 5% 빠른 참조 테이블 렌더
-  const busEl = document.getElementById('busTable');
-  if (busEl) {
-    busEl.innerHTML = `<table class="bus-tbl">
-      <thead><tr><th>보스</th><th>난이도</th><th class="bus-pct5">5% (최소 딜)</th></tr></thead>
-      <tbody>${groups.map(boss => {
-        const active = boss.diffs.find(d => d.diff === bossHPActiveDiffs[boss.name]) || boss.diffs[0];
-        const hp5 = parseBossHpValue(active.hp) * 0.05;
-        const engDiff = DIFF_KR_TO_ENG[active.diff] || 'normal';
-        const meta = DIFF_META[engDiff] || { label: active.diff, cls: 'diff-normal' };
-        const imgHtml = boss.img ? `<img src="${boss.img}" class="bus-boss-img" onerror="this.style.display='none'" />` : '';
-        return `<tr>
-          <td class="bus-boss-name">${imgHtml}<span>${boss.name}</span></td>
-          <td><span class="dpill ${meta.cls} sel"><span class="dpill__t">${meta.label}</span></span></td>
-          <td class="bus-pct5"><b>${hp5 > 0 ? fmtBossHpEok(hp5) : '—'}</b></td>
-        </tr>`;
-      }).join('')}</tbody>
-    </table>`;
-  }
-
   container.querySelectorAll('.bhp-diff-sel').forEach(sel => {
     sel.addEventListener('change', () => {
       bossHPActiveDiffs[sel.dataset.boss] = sel.value;
@@ -141,7 +192,22 @@ function renderBossHPTable() {
     });
   });
 
-  // 모든 카드 높이를 최대 카드 기준으로 통일
+  container.querySelectorAll('.bus-toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.boss;
+      if (busChecked.has(name)) {
+        busChecked.delete(name);
+        btn.classList.remove('on');
+        btn.textContent = '+';
+      } else {
+        busChecked.add(name);
+        btn.classList.add('on');
+        btn.textContent = '✓';
+      }
+      renderBusPanel(groups);
+    });
+  });
+
   requestAnimationFrame(() => {
     const cards = container.querySelectorAll('.bhp-card');
     let maxH = 0;

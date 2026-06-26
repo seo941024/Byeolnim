@@ -1359,10 +1359,16 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bus-panel__title { font-size: .95rem; font-weight: 800; color: var(--accent); }
 .bus-panel__sub   { font-size: .75rem; color: var(--text-sub); }
 .bus-table-wrap   { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.bus-tbl {
-  width: 100%; border-collapse: collapse;
-  font-size: .82rem;
+
+/* 빈 상태 */
+.bus-empty {
+  padding: 20px 18px;
+  color: var(--text-sub); font-size: .82rem; text-align: center;
 }
+.bus-empty b { color: var(--text); }
+
+/* 테이블 */
+.bus-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .bus-tbl thead tr { background: rgba(255,255,255,.03); }
 .bus-tbl th {
   padding: 8px 14px; text-align: left;
@@ -1370,17 +1376,48 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   color: var(--text-sub); letter-spacing: .4px;
   border-bottom: 1px solid rgba(139,92,246,.15);
 }
-.bus-tbl td {
-  padding: 7px 14px;
-  border-bottom: 1px solid rgba(255,255,255,.04);
-  vertical-align: middle;
-}
+.bus-tbl td { padding: 7px 14px; border-bottom: 1px solid rgba(255,255,255,.04); vertical-align: middle; }
 .bus-tbl tr:last-child td { border-bottom: none; }
 .bus-tbl tr:hover td { background: rgba(255,255,255,.03); }
-.bus-boss-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
-.bus-boss-img  { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
-.bus-pct5 { text-align: right; color: #f87171; font-variant-numeric: tabular-nums; }
+.bus-boss-name { display: flex; align-items: center; gap: 8px; font-weight: 600; white-space: nowrap; }
+.bus-boss-img  { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; flex-shrink: 0; }
+.bus-pct5 { text-align: right; color: #f87171; font-variant-numeric: tabular-nums; font-size: .9rem; }
 .bus-tbl th.bus-pct5 { text-align: right; }
+
+/* 버스 패널 난이도 셀렉트 */
+.bus-diff-sel {
+  background: rgba(255,255,255,.06); border: 1px solid rgba(139,92,246,.3);
+  color: var(--text); border-radius: 6px; padding: 3px 8px; font-size: .78rem;
+  font-family: inherit; cursor: pointer;
+}
+
+/* 버스 패널 제거 버튼 */
+.bus-remove {
+  color: var(--text-sub); font-size: .8rem; padding: 2px 7px;
+  border: 1px solid rgba(255,255,255,.1); border-radius: 5px;
+  transition: color .15s, border-color .15s;
+}
+.bus-remove:hover { color: #f87171; border-color: #f87171; }
+
+/* 보스 카드 이름줄 (이름 + 토글 버튼) */
+.bhp-name-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 6px;
+  margin-bottom: 2px;
+}
+
+/* 버스 토글 버튼 (보스 카드 우측) */
+.bus-toggle {
+  flex-shrink: 0;
+  width: 24px; height: 24px; border-radius: 50%;
+  font-size: .8rem; font-weight: 800; line-height: 1;
+  border: 1.5px solid rgba(139,92,246,.4);
+  color: var(--text-sub);
+  background: rgba(139,92,246,.08);
+  transition: background .18s, border-color .18s, color .18s;
+  display: flex; align-items: center; justify-content: center;
+}
+.bus-toggle:hover { border-color: var(--primary); color: var(--text); background: rgba(139,92,246,.2); }
+.bus-toggle.on { background: rgba(139,92,246,.35); border-color: var(--primary); color: #fff; }
 
 /* ── 햄버거 / 드로어 오버레이 (기본: 데스크탑에선 숨김) ── */
 .hamburger { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 6px; border-radius: 8px; flex-shrink: 0; }

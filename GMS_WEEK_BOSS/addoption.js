@@ -90,7 +90,7 @@ function _flameGetIsWeapon(){ return document.querySelector('#flameEquipGroup .s
 
 function flameGetGoals() {
   const goals = [];
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 4; i++) {
     const opt = document.getElementById(`flameGoalOpt${i}`)?.value;
     const tier = parseInt(document.getElementById(`flameGoalTier${i}`)?.value) || 1;
     if (opt && opt !== 'none') goals.push({ opt, minTier: tier });
@@ -101,7 +101,7 @@ function flameGetGoals() {
 function flameRefreshOptionSelects() {
   const isWeapon = _flameGetIsWeapon();
   const pool = isWeapon ? FLAME_OPTIONS_WEAPON : FLAME_OPTIONS_ARMOR;
-  for (let i = 1; i <= 3; i++) {
+  for (let i = 1; i <= 4; i++) {
     const sel = document.getElementById(`flameGoalOpt${i}`);
     if (!sel) continue;
     const cur = sel.value;
@@ -233,7 +233,7 @@ function initAddOption() {
     </button>`
   ).join('');
 
-  const goalRows = [1,2,3].map(i => `
+  const goalRows = [1,2,3,4].map(i => `
     <div class="form-grid" style="grid-template-columns:1fr auto;gap:8px;align-items:center">
       <select class="sel" id="flameGoalOpt${i}"><option value="none">— 없음 —</option></select>
       <div style="display:flex;align-items:center;gap:6px">
@@ -280,7 +280,7 @@ function initAddOption() {
         </div>
 
         <div>
-          <div class="card__title">목표 옵션 <span style="font-size:.75rem;font-weight:400;color:var(--text-sub)">(최대 3개)</span></div>
+          <div class="card__title">목표 옵션 <span style="font-size:.75rem;font-weight:400;color:var(--text-sub)">(최대 4개)</span></div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
             ${goalRows}
           </div>

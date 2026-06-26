@@ -332,7 +332,7 @@ function initStatOCR() {
         status.textContent = 'Tesseract 엔진 다운로드 중...';
         await new Promise((res,rej)=>{
           const s = document.createElement('script');
-          s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+          s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
           s.onload = res; s.onerror = rej;
           document.head.appendChild(s);
         });

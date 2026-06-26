@@ -29,7 +29,7 @@ function flameStatValue(option, tier, level, isBoss) {
   const w = isBoss ? 2 : 0;
   const t = tier; // 1-5
   if (['STR','DEX','INT','LUK'].includes(option))
-    return (Math.floor(level / 20) + 1) * (t + w);
+    return (level < 250 ? Math.floor(level / 20) + 1 : 12) * (t + w);
   if (['STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK'].includes(option))
     return (Math.floor(level / 40) + 1) * (t + w);
   if (['ALL%','ATTACK','MAGIC ATK','데미지%'].includes(option))
@@ -37,7 +37,7 @@ function flameStatValue(option, tier, level, isBoss) {
   if (option === '보공%')
     return (t + w) * 2;
   if (option === 'HP')
-    return Math.floor(level / 10) * 30 * (t + w);
+    return (level < 250 ? Math.floor(level / 10) * 10 * 3 : 700) * (t + w);
   return 0;
 }
 

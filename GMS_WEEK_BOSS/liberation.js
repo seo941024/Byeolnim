@@ -223,15 +223,14 @@ function renderGenesis() {
 
   // 이벤트
   const genHeldEl = document.getElementById('genHeld');
-  genHeldEl.addEventListener('input', e => {
+  const applyHeld = e => {
     const val = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
     genState.held = val;
+    if (parseInt(e.target.value) !== val) e.target.value = val;
     saveGen(); updateGenStats();
-  });
-  genHeldEl.addEventListener('change', e => {
-    genState.held = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
-    saveGen(); updateGenStats();
-  });
+  };
+  genHeldEl.addEventListener('input', applyHeld);
+  genHeldEl.addEventListener('change', applyHeld);
   document.getElementById('genPass').addEventListener('change', e => {
     genState.pass = e.target.checked; saveGen(); renderGenesis();
   });

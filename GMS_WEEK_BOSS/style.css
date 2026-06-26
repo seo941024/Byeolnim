@@ -1342,6 +1342,46 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cg-btns { display:flex; gap:5px; padding:6px 10px 9px; margin-top:auto; }
 .cg-head-icon { width:52px; height:52px; object-fit:contain; flex-shrink:0; }
 
+/* ── 버스 5% 참조 패널 ── */
+.bus-panel {
+  background: rgba(15,10,32,.7);
+  border: 1px solid rgba(139,92,246,.25);
+  border-radius: var(--radius);
+  margin-bottom: 20px;
+  overflow: hidden;
+}
+.bus-panel__head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 18px;
+  background: rgba(139,92,246,.1);
+  border-bottom: 1px solid rgba(139,92,246,.15);
+}
+.bus-panel__title { font-size: .95rem; font-weight: 800; color: var(--accent); }
+.bus-panel__sub   { font-size: .75rem; color: var(--text-sub); }
+.bus-table-wrap   { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.bus-tbl {
+  width: 100%; border-collapse: collapse;
+  font-size: .82rem;
+}
+.bus-tbl thead tr { background: rgba(255,255,255,.03); }
+.bus-tbl th {
+  padding: 8px 14px; text-align: left;
+  font-size: .73rem; font-weight: 700;
+  color: var(--text-sub); letter-spacing: .4px;
+  border-bottom: 1px solid rgba(139,92,246,.15);
+}
+.bus-tbl td {
+  padding: 7px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: middle;
+}
+.bus-tbl tr:last-child td { border-bottom: none; }
+.bus-tbl tr:hover td { background: rgba(255,255,255,.03); }
+.bus-boss-name { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.bus-boss-img  { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
+.bus-pct5 { text-align: right; color: #f87171; font-variant-numeric: tabular-nums; }
+.bus-tbl th.bus-pct5 { text-align: right; }
+
 /* ── 햄버거 / 드로어 오버레이 (기본: 데스크탑에선 숨김) ── */
 .hamburger { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 6px; border-radius: 8px; flex-shrink: 0; }
 .hamburger span { display: block; height: 2px; width: 100%; background: #c4b5fd; border-radius: 2px; transition: .25s; }

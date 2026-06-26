@@ -114,6 +114,26 @@ function renderBossHPTable() {
     </div>`;
   }).join('');
 
+  // 5% 빠른 참조 테이블 렌더
+  const busEl = document.getElementById('busTable');
+  if (busEl) {
+    busEl.innerHTML = `<table class="bus-tbl">
+      <thead><tr><th>보스</th><th>난이도</th><th class="bus-pct5">5% (최소 딜)</th></tr></thead>
+      <tbody>${groups.map(boss => {
+        const active = boss.diffs.find(d => d.diff === bossHPActiveDiffs[boss.name]) || boss.diffs[0];
+        const hp5 = parseBossHpValue(active.hp) * 0.05;
+        const engDiff = DIFF_KR_TO_ENG[active.diff] || 'normal';
+        const meta = DIFF_META[engDiff] || { label: active.diff, cls: 'diff-normal' };
+        const imgHtml = boss.img ? `<img src="${boss.img}" class="bus-boss-img" onerror="this.style.display='none'" />` : '';
+        return `<tr>
+          <td class="bus-boss-name">${imgHtml}<span>${boss.name}</span></td>
+          <td><span class="dpill ${meta.cls} sel"><span class="dpill__t">${meta.label}</span></span></td>
+          <td class="bus-pct5"><b>${hp5 > 0 ? fmtBossHpEok(hp5) : '—'}</b></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>`;
+  }
+
   container.querySelectorAll('.bhp-diff-sel').forEach(sel => {
     sel.addEventListener('change', () => {
       bossHPActiveDiffs[sel.dataset.boss] = sel.value;

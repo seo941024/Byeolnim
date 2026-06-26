@@ -116,7 +116,7 @@ function renderGenesis() {
           <div class="gen-boss__row3">
             <label class="gen-boss__ck">
               <input type="checkbox" class="gen-boss__cb" data-id="${id}" ${cleared?'checked':''}/>
-              <span>금주 격파</span>
+              <span>${id === 'blackmage' ? '금월 격파' : '금주 격파'}</span>
             </label>
             <span class="gen-boss__trace ${active?'on':''}">+${fmtTrace(yld)}</span>
           </div>

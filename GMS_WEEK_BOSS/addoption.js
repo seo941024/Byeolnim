@@ -129,51 +129,54 @@ function flameScoreSim() {
 
   setTimeout(() => {
     try {
-      const M = 30_000;
-      const MAX = 500_000;
-      const counts = [];
-      for (let i = 0; i < M; i++) {
-        let a = 0;
-        while (++a < MAX) {
-          if (calcFlameScore(rollFlame(flameKey, level, isBoss, false)) >= target) break;
-        }
-        counts.push(a);
+      // 단순 확률 추정: N회 단일 롤 → 성공 횟수 카운트
+      const N = 200_000;
+      let k = 0;
+      for (let i = 0; i < N; i++) {
+        if (calcFlameScore(rollFlame(flameKey, level, isBoss, false)) >= target) k++;
       }
-      counts.sort((a, b) => a - b);
-      _flameScoreCounts = counts;
-      flameScoreRenderResult(counts, M);
+      _flameScoreCounts = { k, N, p: k / N };
+      flameScoreRenderResult({ k, N, p: k / N });
     } finally {
       _flameScoreRunning = false;
     }
   }, 0);
 }
 
-function flameScoreRenderResult(counts, M) {
-  const resEl = document.getElementById('flameScoreResult');
-  const mean  = Math.round(counts.reduce((s, c) => s + c, 0) / M);
-  const pctEl = document.getElementById('flameScorePct');
-  const pct   = pctEl ? parseInt(pctEl.value) || 60 : 60;
-  const idx   = Math.min(Math.floor(M * pct / 100), M - 1);
-  const pctVal = counts[idx];
+function flameScoreRenderResult({ k, N, p }) {
+  const resEl  = document.getElementById('flameScoreResult');
+  const target = document.getElementById('flameScoreTarget')?.value || '';
+
+  // p=0 이면 달성 불가
+  if (k === 0) {
+    resEl.innerHTML = `<p class="empty" style="color:#f87171">목표 점수 달성 확률이 너무 낮아 계산이 불가합니다.</p>`;
+    return;
+  }
+
+  // 기하분포: 평균 기댓값 = 1/p, 상위 n% 시 필요 횟수 = ceil(log(1-n/100)/log(1-p))
+  const mean = Math.round(1 / p);
+  const calcPctVal = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
+  const defaultPct = 60;
 
   resEl.innerHTML = `
-    <div class="sf-res-item" style="margin-bottom:8px">
+    <div class="sf-res-item" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
       <span class="sf-res-label">평균 기댓값</span>
-      <span class="sf-res-val" style="color:var(--accent);font-size:1.05rem">${mean.toLocaleString()}개</span>
+      <span class="sf-res-val" style="color:var(--accent);font-size:1.1rem">${mean.toLocaleString()}개</span>
     </div>
     <div class="sf-res-item">
-      <span class="sf-res-label" style="display:flex;align-items:center;gap:6px">
-        상위 <input id="flameScorePctInput" type="number" value="${pct}" min="1" max="99"
-          style="width:52px;padding:2px 6px;font-size:.85rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:center" /> %
+      <span class="sf-res-label" style="display:flex;align-items:center;gap:5px">
+        상위 <input id="flameScorePctInput" type="number" value="${defaultPct}" min="1" max="99"
+          style="width:50px;padding:2px 6px;font-size:.85rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:center" /> %
       </span>
-      <span class="sf-res-val" id="flameScorePctVal">${pctVal.toLocaleString()}개</span>
+      <span class="sf-res-val" id="flameScorePctVal">${calcPctVal(defaultPct).toLocaleString()}개</span>
     </div>
-    <p style="font-size:.72rem;color:var(--text-sub);margin-top:10px">시뮬레이션 ${M.toLocaleString()}회 기반 / 목표 점수 ${document.getElementById('flameScoreTarget')?.value} 이상</p>`;
+    <p style="font-size:.72rem;color:var(--text-sub);margin-top:10px">
+      ${N.toLocaleString()}회 시뮬 기준 달성 확률 ${(p*100).toFixed(4)}% / 목표 점수 ${target} 이상
+    </p>`;
 
   document.getElementById('flameScorePctInput')?.addEventListener('input', e => {
-    const v = Math.max(1, Math.min(99, parseInt(e.target.value) || 60));
-    const i = Math.min(Math.floor(M * v / 100), M - 1);
-    document.getElementById('flameScorePctVal').textContent = counts[i].toLocaleString() + '개';
+    const v = Math.max(1, Math.min(99, parseInt(e.target.value) || defaultPct));
+    document.getElementById('flameScorePctVal').textContent = calcPctVal(v).toLocaleString() + '개';
   });
 }
 

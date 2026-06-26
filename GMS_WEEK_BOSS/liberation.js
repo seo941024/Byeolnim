@@ -31,29 +31,37 @@ const QUEST_BOSS_IMG = {
 
 function genTraceSums() {
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
-  let weekly = 0;
+  let weekly = 0, weeklyFirst = 0;
   for (const id in TRACE_YIELD) {
     if (id === 'blackmage') continue;
     const sel  = genState.sel[id] || {};
     const diff = sel.diff || 'none';
     if (diff === 'none') continue;
     const party = Math.max(1, sel.party || 1);
-    weekly += Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
+    const yld = Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
+    weekly += yld;
+    if (!sel.cleared) weeklyFirst += yld; // 금주 격파한 보스는 1주차 제외
   }
-  return { weekly, mult };
+  return { weekly, weeklyFirst, mult };
 }
 
 function renderGenesis() {
   const panel = document.getElementById('lib-genesis');
-  const { weekly, mult } = genTraceSums();
-  const avgPerWeek = weekly;
+  const { weekly, weeklyFirst, mult } = genTraceSums();
 
   const held       = Math.max(0, genState.held);
   const questCum   = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
   const totalSpent = questCum + held;
   const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
   const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
-  const weeksLeft = avgPerWeek > 0 ? Math.ceil(remaining / avgPerWeek) : Infinity;
+
+  // 금주 격파한 보스는 1주차 수입에서 제외
+  const weeksLeft = (() => {
+    if (weekly <= 0) return Infinity;
+    if (remaining <= 0) return 0;
+    if (remaining <= weeklyFirst) return 1;
+    return 1 + Math.ceil((remaining - weeklyFirst) / weekly);
+  })();
   const daysLeft  = isFinite(weeksLeft) ? weeksLeft * 7 : null;
 
   const startDate = genState.startDate || nextThursday();

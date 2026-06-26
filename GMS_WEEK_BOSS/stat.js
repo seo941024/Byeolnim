@@ -18,17 +18,17 @@ function parseStatWindow(rawText) {
     .replace(/(\d+)[,.](\d{3})\b/g, '$1$2')  // "1,877" / "1.877" → "1877"
     .replace(/(\d+) (\d{3})\b/g, '$1$2');    // "1 877" → "1877"
 
-  const get = (re) => { const m = text.match(re); return m ? m[1].replace(/,/g,'') : ''; };
+  const get = (re) => { const m = text.match(re); return m ? m[1].replace(/[,\s]/g,'') : ''; };
   return {
     level:        get(/Lv[\. ]+(\d+)/i),
-    STR:          get(/\bSTR\b\s+([\d,]+)/),
-    DEX:          get(/\bDEX\b\s+([\d,]+)/),
-    INT:          get(/\bINT\b\s+([\d,]+)/),
-    LUK:          get(/\bLUK\b\s+([\d,]+)/),
-    HP:           get(/\bHP\b\s+([\d,]+)/),
-    ATK:          get(/ATTACK POWER\s+[^\d]*([\d,]+)/),
-    MATK:         get(/MAGIC ATT\s+([\d,]+)/),
-    DAMAGE:       get(/(?<![A-Z ])DAMAGE\s+[^\d]*([\d.]+)%/),
+    STR:          get(/\bSTR\b\s+([\d, ]+)/),
+    DEX:          get(/\bDEX\b\s+([\d, ]+)/),
+    INT:          get(/\bINT\b\s+([\d, ]+)/),
+    LUK:          get(/\bLUK\b\s+([\d, ]+)/),
+    HP:           get(/\bHP\b\s+([\d, ]+)/),
+    ATK:          get(/ATTACK POWER\s+[^\d\n]*([\d, ]+)/),
+    MATK:         get(/MAGIC ATT\s+([\d, ]+)/),
+    DAMAGE:       get(/(?<!BOSS |FINAL |NORMAL ENEMY |CRITICAL )DAMAGE\s+[^\d%\n]*([\d.]+)%/),
     BOSS_DAMAGE:  get(/BOSS DAMAGE\s+([\d.]+)%/),
     FINAL_DAMAGE: get(/FINAL DAMAGE\s+([\d.]+)%/),
     IGNORE_DEF:   get(/IGNORE DEFENSE\s+([\d.]+)%/),

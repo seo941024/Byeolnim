@@ -75,8 +75,8 @@ function renderAllHexaLists() {
 
   // 공용 코어 아이콘 — 3번째부터는 직업 폴더 이미지 13번 사용
   const commonIcoFull = [
-    'images/skill/Common/sol_janus.webp',
-    'images/skill/Common/sol_hecate.webp',
+    'images/skill/Common/sol_janus.png',
+    'images/skill/Common/sol_hecate.png',
     ...jd.common.slice(2).map((_, i) => ico(15 + i)),
   ];
 
@@ -124,8 +124,8 @@ document.getElementById('hxCalc').addEventListener('click', () => {
   const enough  = haveSE >= totalSE;
   const enoughF = haveSEF >= totalSEF;
   const res = document.getElementById('hxResult');
-  const SE_ICON  = `<img src="images/skill/Common/sol_erda.webp"  class="hx-res-icon" alt="">`;
-  const SEF_ICON = `<img src="images/skill/Common/fragment.webp" class="hx-res-icon" alt="">`;
+  const SE_ICON  = `<img src="images/skill/Common/sol_erda.png"  class="hx-res-icon" alt="">`;
+  const SEF_ICON = `<img src="images/skill/Common/fragment.png" class="hx-res-icon" alt="">`;
   res.innerHTML = `
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON}${totalAllSE.toLocaleString()} 개</span></div>
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다 조각</span><span class="rv">${SEF_ICON}${totalAllSEF.toLocaleString()} 개</span></div>

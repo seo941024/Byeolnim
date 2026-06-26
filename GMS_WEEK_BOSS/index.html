@@ -20,11 +20,14 @@
     <span class="header__timer" id="resetTimer">--일 --:--:--</span>
   </div>
   <div class="header__right">
-    <select class="font-sel" id="fontSel" title="폰트 선택">
-      <option value="NEXON_Gothic">NEXON</option>
-      <option value="Maple">Maple</option>
-      <option value="8bit">8bit</option>
-    </select>
+    <div class="font-dd" id="fontDd">
+      <button class="font-dd__btn" id="fontDdBtn"><span id="fontDdLabel">NEXON</span></button>
+      <div class="font-dd__menu" id="fontDdMenu">
+        <button class="font-dd__item" data-font="NEXON_Gothic" style="font-family:'NEXON_Gothic',sans-serif">NEXON</button>
+        <button class="font-dd__item" data-font="Maple"        style="font-family:'Maple',sans-serif">Maple</button>
+        <button class="font-dd__item" data-font="8bit"         style="font-family:'8bit',sans-serif">8bit</button>
+      </div>
+    </div>
     <button class="hbtn" id="btnExport">내보내기</button>
     <button class="hbtn" id="btnImport">불러오기</button>
     <input type="file" id="fileImport" accept=".json" style="display:none" />

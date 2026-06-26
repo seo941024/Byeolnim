@@ -880,13 +880,32 @@ function renderCharInfo() {
 
 /* ── 폰트 선택 ── */
 const FONT_KEY = 'gms_font';
-const fontSel = document.getElementById('fontSel');
+const fontDdBtn  = document.getElementById('fontDdBtn');
+const fontDdMenu = document.getElementById('fontDdMenu');
+const fontDdLabel = document.getElementById('fontDdLabel');
+
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
   localStorage.setItem(FONT_KEY, name);
-  fontSel.value = name;
+  const active = fontDdMenu.querySelector(`[data-font="${name}"]`);
+  if (active) {
+    fontDdLabel.textContent = active.textContent;
+    fontDdLabel.style.fontFamily = active.style.fontFamily;
+    fontDdMenu.querySelectorAll('.font-dd__item').forEach(b => b.classList.toggle('active', b === active));
+  }
 }
-fontSel.addEventListener('change', () => applyFont(fontSel.value));
+
+fontDdBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  fontDdMenu.classList.toggle('open');
+});
+fontDdMenu.querySelectorAll('.font-dd__item').forEach(btn => {
+  btn.addEventListener('click', () => {
+    applyFont(btn.dataset.font);
+    fontDdMenu.classList.remove('open');
+  });
+});
+document.addEventListener('click', () => fontDdMenu.classList.remove('open'));
 
 /* ── 초기화 ── */
 load();

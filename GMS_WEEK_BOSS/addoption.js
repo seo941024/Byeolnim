@@ -233,18 +233,16 @@ function flameSimulate() {
     let counts = _runSim(N_INIT, flameKey, level, isBoss, isWeapon, goals);
     let N = N_INIT;
 
-    const successRate = counts.filter(c => c < 2_000_000).length / N_INIT;
-
-    // 달성률 1% 미만 → 사실상 불가능으로 처리
-    if (successRate < 0.01) {
-      resEl.innerHTML = `<p class="empty" style="color:#f87171">목표 달성 확률이 너무 낮습니다. (${(successRate*100).toFixed(2)}% 미만)</p>`;
-      return;
-    }
-
     // 달성률 50% 미만이면 100만회로 확장
-    if (successRate < 0.5) {
+    if (counts.filter(c => c < 2_000_000).length < N_INIT * 0.5) {
       counts = _runSim(1_000_000, flameKey, level, isBoss, isWeapon, goals);
       N = 1_000_000;
+    }
+
+    // 100만회 돌려도 성공 0이면 사실상 불가
+    if (counts.filter(c => c < 2_000_000).length === 0) {
+      resEl.innerHTML = `<p class="empty" style="color:#f87171">목표 달성 확률이 너무 낮아 시뮬레이션이 불가합니다.</p>`;
+      return;
     }
 
     counts.sort((a, b) => a - b);

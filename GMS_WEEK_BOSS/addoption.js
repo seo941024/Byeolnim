@@ -8,14 +8,20 @@ const FLAME_TYPES = {
   ABYSS:    { label: '심환불', img: 'images/icons/flame_abyss.png',    prob: [0.00, 0.00, 0.63, 0.34, 0.03] },
 };
 
-const FLAME_OPTIONS_ARMOR  = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','ATTACK','MAGIC ATK','ALL%'];
-const FLAME_OPTIONS_WEAPON = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','ATTACK','MAGIC ATK','ALL%','보공%','데미지%'];
+// 시뮬레이션 풀 (전체 17개 / 무기 19개) — MP·방어력·착용레벨감소 포함
+const FLAME_OPTIONS_ARMOR  = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','MP','방어력','착용레벨감소','ATTACK','MAGIC ATK','ALL%'];
+const FLAME_OPTIONS_WEAPON = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','MP','방어력','착용레벨감소','ATTACK','MAGIC ATK','ALL%','보공%','데미지%'];
+
+// 스탯 테이블엔 의미있는 옵션만 표시 (0값 옵션 제외)
+const FLAME_DISPLAY_ARMOR  = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','ATTACK','MAGIC ATK','ALL%'];
+const FLAME_DISPLAY_WEAPON = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','ATTACK','MAGIC ATK','ALL%','보공%','데미지%'];
 
 const FLAME_OPTION_LABELS = {
   'STR':'STR', 'DEX':'DEX', 'INT':'INT', 'LUK':'LUK',
   'STR+DEX':'STR+DEX', 'STR+INT':'STR+INT', 'STR+LUK':'STR+LUK',
   'DEX+INT':'DEX+INT', 'DEX+LUK':'DEX+LUK', 'INT+LUK':'INT+LUK',
-  'HP':'HP', 'ATTACK':'공격력', 'MAGIC ATK':'마력',
+  'HP':'HP', 'MP':'MP', '방어력':'방어력', '착용레벨감소':'착용레벨감소',
+  'ATTACK':'공격력', 'MAGIC ATK':'마력',
   'ALL%':'올스탯%', '보공%':'보스데미지%', '데미지%':'데미지%',
 };
 
@@ -100,13 +106,13 @@ function flameGetGoals() {
 
 function flameRefreshOptionSelects() {
   const isWeapon = _flameGetIsWeapon();
-  const pool = isWeapon ? FLAME_OPTIONS_WEAPON : FLAME_OPTIONS_ARMOR;
+  const display = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
   for (let i = 1; i <= 4; i++) {
     const sel = document.getElementById(`flameGoalOpt${i}`);
     if (!sel) continue;
     const cur = sel.value;
     sel.innerHTML = `<option value="none">— 없음 —</option>` +
-      pool.map(o => `<option value="${o}"${o===cur?' selected':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
+      display.map(o => `<option value="${o}"${o===cur?' selected':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
   }
 }
 
@@ -115,11 +121,11 @@ function flameBuildStatTable() {
   const level    = _flameGetLevel();
   const isBoss   = _flameGetIsBoss();
   const isWeapon = _flameGetIsWeapon();
-  const pool = isWeapon ? FLAME_OPTIONS_WEAPON : FLAME_OPTIONS_ARMOR;
+  const display = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
   const { prob } = FLAME_TYPES[flameKey];
 
   // 단계 1=최고(old T5) ~ 단계 5=최저(old T1), 역순 표시
-  const rows = pool.map(opt => {
+  const rows = display.map(opt => {
     const vals = [5,4,3,2,1].map(t => {
       const v = flameStatValue(opt, t, level, isBoss);
       const unit = ['ALL%','보공%','데미지%'].includes(opt) ? '%' : '';

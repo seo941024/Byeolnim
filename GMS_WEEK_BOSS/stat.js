@@ -324,14 +324,14 @@ function initStatOCR() {
     }
     ctx.putImageData(imgData, 0, 0);
 
-    status.textContent = `전처리 완료 (${ocrCanvas.width}×${ocrCanvas.height}) — OCR 중...`;
+    status.textContent = `이미지 분석 중...`;
     if (_crop && _crop.w > 10) {
-      status.textContent = `선택 영역 3배 업스케일 — OCR 중...`;
+      status.textContent = `선택 영역 분석 중...`;
     }
 
     try {
       if (!window.Tesseract) {
-        status.textContent = 'Tesseract 엔진 다운로드 중...';
+        status.textContent = '인식 엔진 로딩 중...';
         await new Promise((res,rej)=>{
           const s = document.createElement('script');
           s.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';
@@ -344,7 +344,7 @@ function initStatOCR() {
       const worker = await Tesseract.createWorker('eng', 1, {
         logger: m => {
           if (m.status === 'recognizing text')
-            status.textContent = `OCR 중... ${Math.round(m.progress*100)}%`;
+            status.textContent = `텍스트 인식 중... ${Math.round(m.progress*100)}%`;
         },
       });
       await worker.setParameters({
@@ -357,9 +357,9 @@ function initStatOCR() {
 
       _parsed = parseStatWindow(text);
       renderTable(_parsed);
-      status.textContent = '✅ OCR 완료 — 값을 확인·수정 후 콘솔코드를 복사하세요.';
+      status.textContent = '✅ 완료 — 값을 확인·수정 후 콘솔코드를 복사하세요.';
     } catch(e) {
-      status.textContent = '❌ OCR 오류: ' + e.message;
+      status.textContent = '❌ 오류: ' + e.message;
     } finally {
       btn.disabled = false;
     }

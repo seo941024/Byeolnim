@@ -389,6 +389,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="starforce"]  .sb-nav__icon { width: 25px; height: 25px; }
 .sb-nav__item[data-sec="cube"]       .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="bosshp"]     .sb-nav__icon { width: 26px; height: 26px; }
+.sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 26px; height: 26px; }
 /* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:#8b5cf6;top:3px}

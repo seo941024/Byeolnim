@@ -149,7 +149,7 @@ function initStatOCR() {
 
         <div>
           <button class="sbtn sbtn--primary w100" id="statCopyBtn" disabled>콘솔코드 복사</button>
-          <p style="font-size:.72rem;color:var(--text-sub);margin-top:6px;line-height:1.6">
+          <p style="font-size:.85rem;color:var(--text-sub);margin-top:6px;line-height:1.8">
             복사 후 <a href="https://maplescouter.com/ko/input" target="_blank" style="color:var(--primary)">환산주스탯</a> 페이지에서<br>F12 &gt; Console 탭 클릭 후 붙여넣기 &gt; Enter
           </p>
         </div>

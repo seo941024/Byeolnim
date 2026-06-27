@@ -463,8 +463,6 @@
   </div>
 </div>
 
-<canvas id="starCanvas"></canvas>
-
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="data.js"></script>
 <script src="cube_data.js"></script>
@@ -477,43 +475,5 @@
 <script src="addoption.js"></script>
 <script src="stat.js"></script>
 <script src="bosshp.js"></script>
-<script>
-(function(){
-  const cvs=document.getElementById('starCanvas');
-  const ctx=cvs.getContext('2d');
-  let stars=[];
-  function resize(){cvs.width=innerWidth;cvs.height=innerHeight;}
-  function init(){
-    const n=Math.floor(cvs.width*cvs.height/8000); // 훨씬 적은 별
-    stars=Array.from({length:n},(_,i)=>{
-      const big=i<n*0.08;
-      return {
-        x:Math.random()*cvs.width, y:Math.random()*cvs.height,
-        r:big?Math.random()*1.4+0.8:Math.random()*0.8+0.3,
-        a:Math.random(), da:(Math.random()-.5)*(big?.003:.006),
-        minA:big?.2:.04, maxA:big?.7:.55,
-        color:Math.random()>.7?'#f6c744':'#ffffff'
-      };
-    });
-  }
-  function draw(){
-    ctx.clearRect(0,0,cvs.width,cvs.height);
-    ctx.filter='blur(0.7px)'; // 별 자체를 흐리게
-    stars.forEach(s=>{
-      s.a+=s.da;
-      if(s.a>=s.maxA){s.a=s.maxA;s.da=-Math.abs(s.da);}
-      if(s.a<=s.minA){s.a=s.minA;s.da=Math.abs(s.da);}
-      ctx.globalAlpha=s.a;
-      ctx.fillStyle=s.color;
-      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);ctx.fill();
-    });
-    ctx.filter='none';
-    ctx.globalAlpha=1;
-    requestAnimationFrame(draw);
-  }
-  resize();init();draw();
-  window.addEventListener('resize',()=>{resize();init();});
-})();
-</script>
 </body>
 </html>

@@ -168,6 +168,8 @@ function initStatOCR() {
     sec.querySelector('#statTabOcr').classList.add('active');
     document.getElementById('statPanelOcr').style.display = '';
     document.getElementById('statPanelManual').style.display = 'none';
+    document.getElementById('statResultTable').innerHTML = '<p class="empty">OCR 실행 또는 수동 입력을 시작하세요.</p>';
+    document.getElementById('statCopyBtn').disabled = true;
   });
   sec.querySelector('#statTabManual').addEventListener('click', () => {
     sec.querySelectorAll('.sf-tab').forEach(t=>t.classList.remove('active'));

@@ -105,7 +105,6 @@ function initStatOCR() {
   let _img = null;
   let _crop = null;
   let _dragging = false, _dragStart = null;
-  let _worker = null;
 
   const jobOpts = STAT_JOB_TYPES.map((jt,i)=>`<option value="${i}">${jt.label}</option>`).join('');
 
@@ -355,7 +354,9 @@ function initStatOCR() {
       const { data: { text } } = await worker.recognize(ocrCanvas);
       await worker.terminate();
 
+      console.log('[OCR RAW]', text);
       _parsed = parseStatWindow(text);
+      console.log('[OCR PARSED]', _parsed);
       renderTable(_parsed);
       status.textContent = '✅ 완료 — 값을 확인·수정 후 콘솔코드를 복사하세요.';
     } catch(e) {

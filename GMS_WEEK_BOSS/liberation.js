@@ -3,13 +3,13 @@
 ═══════════════════════════════════════════════ */
 function nextThursday(from) {
   const d = new Date(from || new Date());
-  const diff = (4 - d.getDay() + 7) % 7;
+  const diff = (4 - d.getDay() + 7) % 7 || 7;
   d.setDate(d.getDate() + diff);
-  return d.toISOString().slice(0, 10);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 
 const genState = (() => {
-  const def = { quest:0, held:0, pass:false, party:1, sel:{}, startDate: nextThursday() };
+  const def = { quest:0, held:0, pass:false, sel:{}, startDate: nextThursday() };
   try { return Object.assign(def, JSON.parse(localStorage.getItem('lib_genesis_v2') || '{}')); }
   catch { return def; }
 })();
@@ -29,105 +29,137 @@ const QUEST_BOSS_IMG = {
   '진 힐라':   'images/bosses/jinhilla.webp',
 };
 
-function genTraceSums() {
+/* ─── 계산 로직 ─── */
+function calcBossTraces() {
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
-  let weekly = 0, weeklyFirst = 0;
+  const rows = [];
+  let weeklyTotal = 0, monthlyTotal = 0;
+
   for (const id in TRACE_YIELD) {
-    const sel  = genState.sel[id] || {};
-    const diff = sel.diff || 'none';
+    const sel   = genState.sel[id] || {};
+    const diff  = sel.diff || 'none';
     if (diff === 'none') continue;
     const party = Math.max(1, sel.party || 1);
-    const raw = Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
-    // 검마는 월간 보스 → 주간 환산 (÷4)
-    const yld = id === 'blackmage' ? Math.floor(raw / 4) : raw;
-    weekly += yld;
-    if (!sel.cleared) weeklyFirst += yld;
+    const raw   = Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
+    const isMonthly = id === 'blackmage';
+    const weekly = isMonthly ? 0 : (sel.cleared ? 0 : raw);
+    const weeklyFull = isMonthly ? 0 : raw;
+    const monthly = isMonthly ? (sel.cleared ? 0 : raw) : 0;
+    const monthlyFull = isMonthly ? raw : 0;
+
+    rows.push({ id, name: bossInfo(id).name, diff, raw, isMonthly, cleared: !!sel.cleared });
+    if (!sel.cleared) {
+      weeklyTotal  += isMonthly ? 0 : raw;
+      monthlyTotal += isMonthly ? raw : 0;
+    }
   }
-  return { weekly, weeklyFirst, mult };
+  return { rows, weeklyTotal, monthlyTotal };
 }
 
-function updateGenStats() {
-  const { weekly, weeklyFirst } = genTraceSums();
-  const held       = Math.max(0, genState.held);
-  const questCum   = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
-  const totalSpent = questCum + held;
-  const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
-  const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
-  const weeksLeft  = weekly <= 0 ? Infinity : remaining <= 0 ? 0 : remaining <= weeklyFirst ? 1 : 1 + Math.ceil((remaining - weeklyFirst) / weekly);
-  const daysLeft   = isFinite(weeksLeft) ? weeksLeft * 7 : null;
-  const durationStr = daysLeft != null ? `${daysLeft}일` : '—';
+function calcResult() {
+  const { rows, weeklyTotal, monthlyTotal } = calcBossTraces();
+  const mult = genState.pass ? GENESIS_PASS_MULT : 1;
 
-  const startDate = genState.startDate || nextThursday();
-  const targetDate = (() => {
-    if (!isFinite(weeksLeft)) return '—';
-    const d = new Date(startDate);
-    const daysToThu = (4 - d.getDay() + 7) % 7;
-    d.setDate(d.getDate() + daysToThu + weeksLeft * 7);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  })();
-
-  const $ = id => document.getElementById(id);
-  const fill = $('genProgressFill'); if (fill) fill.style.width = pct + '%';
-  const pctEl = $('genPctText'); if (pctEl) pctEl.textContent = `${pct}% · ${fmtTrace(totalSpent)} / ${fmtTrace(GENESIS_TARGET)}`;
-  const sh = $('genStatHeld'); if (sh) sh.textContent = fmtTrace(held);
-  const ss = $('genStatSpent'); if (ss) ss.textContent = fmtTrace(totalSpent);
-  const sr = $('genStatRemaining'); if (sr) sr.textContent = fmtTrace(remaining);
-  const sw = $('genStatWeekly'); if (sw) sw.textContent = fmtTrace(weeklyFirst);
-  const sd = $('genStatDuration'); if (sd) sd.textContent = durationStr;
-  const sdt = $('genStatDate'); if (sdt) sdt.textContent = targetDate;
-}
-
-function renderGenesis() {
-  const panel = document.getElementById('lib-genesis');
-  const { weekly, weeklyFirst, mult } = genTraceSums();
-
-  const held       = Math.max(0, genState.held);
-  const questCum   = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
+  const held      = Math.max(0, genState.held);
+  const questCum  = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
   const totalSpent = questCum + held;
   const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
   const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
 
-  // 금주 격파한 보스는 1주차 수입에서 제외
-  const weeksLeft = (() => {
-    if (weekly <= 0) return Infinity;
-    if (remaining <= 0) return 0;
-    if (remaining <= weeklyFirst) return 1;
-    return 1 + Math.ceil((remaining - weeklyFirst) / weekly);
-  })();
-  const daysLeft  = isFinite(weeksLeft) ? weeksLeft * 7 : null;
+  // 일 단위 계산: 주간 + 월간(÷4 주 환산) 합산
+  const effectiveWeekly = weeklyTotal + monthlyTotal / 4;
+  let daysLeft = null, targetDateStr = '—';
 
-  const startDate = genState.startDate || nextThursday();
-  const targetDate = (() => {
-    if (!isFinite(weeksLeft)) return '—';
-    const d = new Date(startDate);
-    const daysToThu = (4 - d.getDay() + 7) % 7;
-    d.setDate(d.getDate() + daysToThu);
-    d.setDate(d.getDate() + weeksLeft * 7);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-  })();
+  if (remaining <= 0) {
+    daysLeft = 0;
+    targetDateStr = '이미 달성!';
+  } else if (effectiveWeekly > 0) {
+    daysLeft = Math.ceil(remaining / (effectiveWeekly / 7));
+    const start = new Date(genState.startDate || nextThursday());
+    start.setDate(start.getDate() + daysLeft);
+    targetDateStr = `${start.getFullYear()}년 ${String(start.getMonth()+1).padStart(2,'0')}월 ${String(start.getDate()).padStart(2,'0')}일`;
+  }
 
-  const durationStr = daysLeft != null
-    ? `${daysLeft}일`
+  const weeksStr = daysLeft != null
+    ? `${(daysLeft / 7).toFixed(1)}주 (${daysLeft}일)`
     : '—';
 
-  // 퀘스트 select 옵션
+  return { rows, weeklyTotal, monthlyTotal, mult, held, questCum, totalSpent, remaining, pct, daysLeft, weeksStr, targetDateStr };
+}
+
+/* ─── 결과 패널 렌더링 ─── */
+function renderResult() {
+  const panel = document.getElementById('genResultPanel');
+  if (!panel) return;
+  const r = calcResult();
+
+  if (r.rows.length === 0) {
+    panel.innerHTML = `<p style="color:var(--text-sub);font-size:.85rem;text-align:center;padding:24px 0">보스를 선택하면 계산 결과가 표시됩니다.</p>`;
+    return;
+  }
+
+  const bossRows = r.rows.map(row => {
+    const isMonthly = row.isMonthly;
+    const unit = isMonthly ? '/월' : '/주';
+    const dimmed = row.cleared ? ' style="opacity:.4"' : '';
+    return `<div class="gen-res-row"${dimmed}>
+      <span class="gen-res-name">${row.name} 획득 흔적</span>
+      <b class="gen-res-val">${fmtTrace(row.raw)}${unit}</b>
+    </div>`;
+  }).join('');
+
+  const weeklyLine = r.weeklyTotal > 0 ? `${fmtTrace(r.weeklyTotal)}/주` : '';
+  const monthlyLine = r.monthlyTotal > 0 ? `+ ${fmtTrace(r.monthlyTotal)}/월` : '';
+
+  panel.innerHTML = `
+    <div class="gen-res-section">
+      ${bossRows}
+    </div>
+    <div class="gen-res-divider"></div>
+    <div class="gen-res-row gen-res-total">
+      <span>총 획득 흔적</span>
+      <b>${[weeklyLine, monthlyLine].filter(Boolean).join(' ')}</b>
+    </div>
+    <div class="gen-res-row">
+      <span>획득 / 요구 흔적</span>
+      <b>${fmtTrace(r.totalSpent)} / ${fmtTrace(GENESIS_TARGET)}</b>
+    </div>
+    <div class="gen-res-divider"></div>
+    <div class="lib-progress" style="margin:8px 0 4px"><div class="lib-progress__fill" style="width:${r.pct}%"></div></div>
+    <div class="lib-pct" style="margin-bottom:12px">${r.pct}% · ${fmtTrace(r.totalSpent)} / ${fmtTrace(GENESIS_TARGET)}</div>
+    <div class="gen-res-row gen-res-accent">
+      <span>예상 해방 기간</span>
+      <b>${r.weeksStr}</b>
+    </div>
+    <div class="gen-date-wrap">
+      <div class="gen-date-label">예상 해방 날짜</div>
+      <div class="gen-date-big">${r.targetDateStr}</div>
+    </div>`;
+}
+
+/* ─── 메인 렌더 ─── */
+function renderGenesis() {
+  const panel = document.getElementById('lib-genesis');
+
   const questOpts = GENESIS_QUESTS.map((qq, i) =>
     `<option value="${i}" ${i===genState.quest?'selected':''}>${qq.name}</option>`
   ).join('');
 
-  // 보스 카드
+  const mult = genState.pass ? GENESIS_PASS_MULT : 1;
+
   const bossCards = Object.keys(TRACE_YIELD).map(id => {
     const info  = bossInfo(id);
     const sel   = genState.sel[id] || {};
-    const diff  = sel.diff  || 'none';
+    const diff  = sel.diff || 'none';
     const party = Math.max(1, sel.party || 1);
     const cleared = !!sel.cleared;
     const yld   = diff === 'none' ? 0 : Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
     const active = diff !== 'none';
+    const isMonthly = id === 'blackmage';
 
-    const diffOpts = ['none', ...Object.keys(TRACE_YIELD[id])].map(d => {
-      return `<option value="${d}" ${diff===d?'selected':''}>${DIFF_META[d]?.label || d}</option>`;
-    }).join('');
+    const diffOpts = ['none', ...Object.keys(TRACE_YIELD[id])].map(d =>
+      `<option value="${d}" ${diff===d?'selected':''}>${DIFF_META[d]?.label || d}</option>`
+    ).join('');
 
     return `
       <div class="gen-boss ${active?'on':''}" data-id="${id}">
@@ -147,7 +179,7 @@ function renderGenesis() {
           <div class="gen-boss__row3">
             <label class="gen-boss__ck">
               <input type="checkbox" class="gen-boss__cb" data-id="${id}" ${cleared?'checked':''}/>
-              <span>${id === 'blackmage' ? '금월 격파' : '금주 격파'}</span>
+              <span>${isMonthly ? '금월 격파' : '이번주'}</span>
             </label>
             <span class="gen-boss__trace ${active?'on':''}">+${fmtTrace(yld)}</span>
           </div>
@@ -155,7 +187,8 @@ function renderGenesis() {
       </div>`;
   }).join('');
 
-  const clearedCount = Object.values(genState.sel).filter(s => s && s.on).length;
+  const held = Math.max(0, genState.held);
+  const startDate = genState.startDate || nextThursday();
 
   panel.innerHTML = `
     <div class="gen-main-layout">
@@ -195,51 +228,45 @@ function renderGenesis() {
         </div>
 
         <div class="card">
-          <div class="card__title">보스 / 난이도 <span class="gen-cleared">${clearedCount}개 선택</span></div>
+          <div class="card__title">주간 보스 설정</div>
           <div class="gen-bosses">${bossCards}</div>
         </div>
+
+        <button class="sbtn sbtn--primary w100" id="genCalcBtn" style="margin-top:4px;padding:14px;font-size:1rem;font-weight:700">계산하기</button>
       </div>
 
-      <!-- 우측: 통계 패널 -->
+      <!-- 우측: 계산 결과 -->
       <div class="card gen-stat-panel">
-        <div class="lib-progress" style="margin-bottom:6px"><div class="lib-progress__fill" id="genProgressFill" style="width:${pct}%"></div></div>
-        <div class="lib-pct" id="genPctText" style="margin-bottom:14px">${pct}% · ${fmtTrace(totalSpent)} / ${fmtTrace(GENESIS_TARGET)}</div>
-
-        <div class="gen-stat2"><span>필요 흔적</span><b>${fmtTrace(GENESIS_TARGET)}</b></div>
-        <div class="gen-stat2"><span>보유 흔적</span><b id="genStatHeld">${fmtTrace(held)}</b></div>
-        <div class="gen-stat2"><span>누적 진행</span><b id="genStatSpent">${fmtTrace(totalSpent)}</b></div>
-        <div class="gen-stat2"><span>남은 흔적</span><b id="genStatRemaining">${fmtTrace(remaining)}</b></div>
-        <div class="gen-stat2-div"></div>
-        <div class="gen-stat2"><span>주간 흔적</span><b id="genStatWeekly">${fmtTrace(weeklyFirst)}</b></div>
-        <div class="gen-stat2-div"></div>
-        <div class="gen-stat2"><span>남은 기간</span><b id="genStatDuration">${durationStr}</b></div>
-
-        <div class="gen-date-wrap">
-          <div class="gen-date-label">예상 해방 날짜</div>
-          <div class="gen-date-big" id="genStatDate">${targetDate}</div>
-        </div>
+        <div class="card__title" style="margin-bottom:12px">계산 결과</div>
+        <div id="genResultPanel"><p style="color:var(--text-sub);font-size:.85rem;text-align:center;padding:24px 0">보스를 선택 후 계산하기를 눌러주세요.</p></div>
       </div>
     </div>`;
 
-  // 이벤트
+  /* 이벤트 — 상태 저장만, 자동 계산 없음 */
   const genHeldEl = document.getElementById('genHeld');
   const applyHeld = e => {
     const val = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
     genState.held = val;
     if (parseInt(e.target.value) !== val) e.target.value = val;
-    saveGen(); updateGenStats();
+    saveGen();
   };
   genHeldEl.addEventListener('input', applyHeld);
   genHeldEl.addEventListener('change', applyHeld);
+
   document.getElementById('genPass').addEventListener('change', e => {
-    genState.pass = e.target.checked; saveGen(); renderGenesis();
+    genState.pass = e.target.checked;
+    saveGen();
+    renderGenesis(); // 패스 ON/OFF는 흔적량 표시에 바로 반영
   });
   document.getElementById('genStartDate').addEventListener('change', e => {
-    genState.startDate = e.target.value || nextThursday(); saveGen(); renderGenesis();
+    genState.startDate = e.target.value || nextThursday();
+    saveGen();
   });
   document.getElementById('genQuestSel').addEventListener('change', e => {
-    genState.quest = parseInt(e.target.value); saveGen(); renderGenesis();
+    genState.quest = parseInt(e.target.value);
+    saveGen();
   });
+
   panel.querySelectorAll('.gen-boss__party').forEach(ps => {
     const id = ps.dataset.id;
     ps.querySelector('.pm').addEventListener('click', () => {
@@ -255,16 +282,19 @@ function renderGenesis() {
     cb.addEventListener('change', () => {
       const id = cb.dataset.id;
       genState.sel[id] = { ...(genState.sel[id] || {}), cleared: cb.checked };
-      saveGen(); renderGenesis();
+      saveGen();
     });
   });
   panel.querySelectorAll('.gen-boss__diff').forEach(s => {
     s.addEventListener('change', () => {
       const id = s.dataset.id;
       genState.sel[id] = { ...(genState.sel[id] || {}), diff: s.value };
-      saveGen(); renderGenesis();
+      saveGen();
+      renderGenesis();
     });
   });
+
+  document.getElementById('genCalcBtn').addEventListener('click', renderResult);
 }
 
 function renderDestiny() {
@@ -288,4 +318,3 @@ document.querySelectorAll('.lib-tab').forEach(tab => {
 
 renderGenesis();
 renderDestiny();
-

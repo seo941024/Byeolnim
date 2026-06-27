@@ -1294,6 +1294,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-date-wrap{margin-top:20px;text-align:center;background:var(--bg3);border-radius:var(--radius-sm);padding:14px 12px}
 .gen-date-label{font-size:.78rem;font-weight:700;color:var(--text-sub);margin-bottom:6px}
 .gen-date-big{font-size:1.7rem;font-weight:900;color:var(--primary);letter-spacing:.5px}
+.gen-res-row{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;padding:7px 0;border-bottom:1px solid var(--border);color:var(--text-sub)}
+.gen-res-row b,.gen-res-val{font-weight:900;color:var(--text);font-size:.88rem}
+.gen-res-total{color:var(--text)!important;font-size:.88rem!important}
+.gen-res-total b{color:var(--primary)!important;font-size:.95rem!important}
+.gen-res-accent b{color:#fbbf24!important}
+.gen-res-divider{height:10px}
+.gen-res-section{}
 
 /* ?? ?ㅽ??ъ뒪 ??硫붿냼 ?낅젰 ?? */
 .sf-chart-card { display: flex; flex-direction: column; }

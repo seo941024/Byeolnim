@@ -260,7 +260,29 @@ function renderGenesis() {
       </div>
     </div>`;
 
-  /* 이벤트 — 상태 저장만, 자동 계산 없음 */
+  /* 보스 카드 부분 업데이트 (전체 재렌더 없이) */
+  function updateBossCard(id) {
+    const card = panel.querySelector(`.gen-boss[data-id="${id}"]`);
+    if (!card) return;
+    const mult = genState.pass ? GENESIS_PASS_MULT : 1;
+    const sel  = genState.sel[id] || {};
+    const diff = sel.diff || 'none';
+    const party = Math.max(1, sel.party || 1);
+    const active = diff !== 'none';
+    const yld = active ? Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party) : 0;
+
+    card.classList.toggle('on', active);
+    const traceEl = card.querySelector('.gen-boss__trace');
+    traceEl.textContent = `+${fmtTrace(yld)}`;
+    traceEl.classList.toggle('on', active);
+    const pm = card.querySelector('.pm');
+    const pp = card.querySelector('.pp');
+    pm.disabled = party <= 1;
+    pp.disabled = party >= 6;
+    card.querySelector('.party-stepper__val').textContent = party;
+  }
+
+  /* 이벤트 */
   const genHeldEl = document.getElementById('genHeld');
   const applyHeld = e => {
     const val = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
@@ -274,7 +296,12 @@ function renderGenesis() {
   document.getElementById('genPass').addEventListener('change', e => {
     genState.pass = e.target.checked;
     saveGen();
-    renderGenesis(); // 패스 ON/OFF는 흔적량 표시에 바로 반영
+    // 패스 ON/OFF: 흔적량만 업데이트
+    const lbl = document.querySelector('.gen-switch__label');
+    if (lbl) lbl.textContent = genState.pass ? 'ON' : 'OFF';
+    const passCard = document.querySelector('.gen-cfg-card--pass');
+    if (passCard) passCard.classList.toggle('on', genState.pass);
+    Object.keys(TRACE_YIELD).forEach(id => updateBossCard(id));
   });
   document.getElementById('genStartDate').addEventListener('change', e => {
     genState.startDate = e.target.value || nextThursday();
@@ -289,11 +316,17 @@ function renderGenesis() {
     const id = ps.dataset.id;
     ps.querySelector('.pm').addEventListener('click', () => {
       const cur = genState.sel[id] || {};
-      if ((cur.party||1) > 1) { genState.sel[id] = { ...cur, party:(cur.party||1)-1 }; saveGen(); renderGenesis(); }
+      if ((cur.party||1) > 1) {
+        genState.sel[id] = { ...cur, party:(cur.party||1)-1 };
+        saveGen(); updateBossCard(id);
+      }
     });
     ps.querySelector('.pp').addEventListener('click', () => {
       const cur = genState.sel[id] || {};
-      if ((cur.party||1) < 6) { genState.sel[id] = { ...cur, party:(cur.party||1)+1 }; saveGen(); renderGenesis(); }
+      if ((cur.party||1) < 6) {
+        genState.sel[id] = { ...cur, party:(cur.party||1)+1 };
+        saveGen(); updateBossCard(id);
+      }
     });
   });
   panel.querySelectorAll('.gen-boss__cb').forEach(cb => {
@@ -307,8 +340,7 @@ function renderGenesis() {
     s.addEventListener('change', () => {
       const id = s.dataset.id;
       genState.sel[id] = { ...(genState.sel[id] || {}), diff: s.value };
-      saveGen();
-      renderGenesis();
+      saveGen(); updateBossCard(id);
     });
   });
 

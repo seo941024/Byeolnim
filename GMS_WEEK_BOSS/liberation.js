@@ -33,7 +33,9 @@ const QUEST_BOSS_IMG = {
 function calcBossTraces() {
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
   const rows = [];
-  let weeklyTotal = 0, monthlyTotal = 0;
+  // thisWeek: 이번 주 수입 (cleared 제외)
+  // fullWeek: 다음 주부터 수입 (cleared 포함, 매주 받을 수 있음)
+  let thisWeekly = 0, fullWeekly = 0, thisMonthly = 0, fullMonthly = 0;
 
   for (const id in TRACE_YIELD) {
     const sel   = genState.sel[id] || {};
@@ -42,22 +44,21 @@ function calcBossTraces() {
     const party = Math.max(1, sel.party || 1);
     const raw   = Math.floor((TRACE_YIELD[id][diff] || 0) * mult / party);
     const isMonthly = id === 'blackmage';
-    const weekly = isMonthly ? 0 : (sel.cleared ? 0 : raw);
-    const weeklyFull = isMonthly ? 0 : raw;
-    const monthly = isMonthly ? (sel.cleared ? 0 : raw) : 0;
-    const monthlyFull = isMonthly ? raw : 0;
 
     rows.push({ id, name: bossInfo(id).name, diff, raw, isMonthly, cleared: !!sel.cleared });
-    if (!sel.cleared) {
-      weeklyTotal  += isMonthly ? 0 : raw;
-      monthlyTotal += isMonthly ? raw : 0;
+    if (isMonthly) {
+      fullMonthly += raw;
+      if (!sel.cleared) thisMonthly += raw;
+    } else {
+      fullWeekly += raw;
+      if (!sel.cleared) thisWeekly += raw;
     }
   }
-  return { rows, weeklyTotal, monthlyTotal };
+  return { rows, thisWeekly, fullWeekly, thisMonthly, fullMonthly };
 }
 
 function calcResult() {
-  const { rows, weeklyTotal, monthlyTotal } = calcBossTraces();
+  const { rows, thisWeekly, fullWeekly, thisMonthly, fullMonthly } = calcBossTraces();
   const mult = genState.pass ? GENESIS_PASS_MULT : 1;
 
   const held      = Math.max(0, genState.held);
@@ -66,15 +67,20 @@ function calcResult() {
   const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
   const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
 
-  // 일 단위 계산: 주간 + 월간(÷4 주 환산) 합산
-  const effectiveWeekly = weeklyTotal + monthlyTotal / 4;
+  // 이번 주 수입 (cleared 제외) / 다음 주부터 수입 (매주 full)
+  const effectiveThis = thisWeekly + thisMonthly / 4;
+  const effectiveFull = fullWeekly + fullMonthly / 4;
+
   let daysLeft = null, targetDateStr = '—';
 
   if (remaining <= 0) {
     daysLeft = 0;
     targetDateStr = '이미 달성!';
-  } else if (effectiveWeekly > 0) {
-    daysLeft = Math.ceil(remaining / (effectiveWeekly / 7));
+  } else if (effectiveFull > 0) {
+    // 1주차: 이번 주 수입으로 얼마나 채우는지
+    const afterWeek1 = Math.max(0, remaining - effectiveThis);
+    const extraWeeks = afterWeek1 <= 0 ? 0 : Math.ceil(afterWeek1 / effectiveFull);
+    daysLeft = (1 + extraWeeks) * 7;
     const start = new Date(genState.startDate || nextThursday());
     start.setDate(start.getDate() + daysLeft);
     targetDateStr = `${start.getFullYear()}년 ${String(start.getMonth()+1).padStart(2,'0')}월 ${String(start.getDate()).padStart(2,'0')}일`;
@@ -84,7 +90,7 @@ function calcResult() {
     ? `${(daysLeft / 7).toFixed(1)}주 (${daysLeft}일)`
     : '—';
 
-  return { rows, weeklyTotal, monthlyTotal, mult, held, questCum, totalSpent, remaining, pct, daysLeft, weeksStr, targetDateStr };
+  return { rows, weeklyTotal: thisWeekly, monthlyTotal: thisMonthly, fullWeekly, fullMonthly, mult, held, questCum, totalSpent, remaining, pct, daysLeft, weeksStr, targetDateStr };
 }
 
 /* ─── 결과 패널 렌더링 ─── */
@@ -108,8 +114,8 @@ function renderResult() {
     </div>`;
   }).join('');
 
-  const weeklyLine = r.weeklyTotal > 0 ? `${fmtTrace(r.weeklyTotal)}/주` : '';
-  const monthlyLine = r.monthlyTotal > 0 ? `+ ${fmtTrace(r.monthlyTotal)}/월` : '';
+  const weeklyLine = r.fullWeekly > 0 ? `${fmtTrace(r.fullWeekly)}/주` : '';
+  const monthlyLine = r.fullMonthly > 0 ? `+ ${fmtTrace(r.fullMonthly)}/월` : '';
 
   panel.innerHTML = `
     <div class="gen-res-section">

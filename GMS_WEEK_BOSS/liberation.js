@@ -67,7 +67,6 @@ function calcResult() {
   const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
   const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
 
-  // 검은마법사는 월 1회 — 1주차에 thisMonthly 전액, 이후 매 4주마다 fullMonthly
   // 1주차: 이번주 주간보스 + 이번달 검마(미격파 시)
   const week1income = thisWeekly + thisMonthly;
 
@@ -77,20 +76,26 @@ function calcResult() {
     daysLeft = 0;
     targetDateStr = '이미 달성!';
   } else if (fullWeekly > 0 || fullMonthly > 0) {
+    // 몇 번의 목요일 리셋이 필요한지 계산
     const afterWeek1 = Math.max(0, remaining - week1income);
-    if (afterWeek1 <= 0) {
-      // 이번 주 안에 해방
-      daysLeft = 7;
-    } else {
-      // 2주차부터: 주간보스만 (검마는 4주 후 다시)
-      // 단순화: 주당 fullWeekly + fullMonthly/4 사용
-      const weeklyRate = fullWeekly + fullMonthly / 4;
-      const extraWeeks = Math.ceil(afterWeek1 / weeklyRate);
-      daysLeft = (1 + extraWeeks) * 7;
-    }
-    const start = new Date(genState.startDate || nextThursday());
-    start.setDate(start.getDate() + daysLeft);
-    targetDateStr = `${start.getFullYear()}년 ${String(start.getMonth()+1).padStart(2,'0')}월 ${String(start.getDate()).padStart(2,'0')}일`;
+    const resetsNeeded = afterWeek1 <= 0
+      ? 1
+      : 1 + Math.ceil(afterWeek1 / (fullWeekly + fullMonthly / 4));
+
+    // 시작일에서 첫 목요일 리셋 찾기
+    const startD = new Date(genState.startDate || nextThursday());
+    const daysToFirstReset = (4 - startD.getDay() + 7) % 7 || 7;
+
+    // 해방 날짜 = 첫 리셋 + (resetsNeeded-1)주
+    const libDate = new Date(startD);
+    libDate.setDate(startD.getDate() + daysToFirstReset + (resetsNeeded - 1) * 7);
+
+    // 오늘부터 해방일까지 일수
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    daysLeft = Math.round((libDate - today) / 86400000);
+
+    targetDateStr = `${libDate.getFullYear()}년 ${String(libDate.getMonth()+1).padStart(2,'0')}월 ${String(libDate.getDate()).padStart(2,'0')}일`;
   }
 
   const weeksStr = daysLeft != null

@@ -222,7 +222,7 @@ function initStatOCR() {
       document.getElementById('statPasteZone').style.display = 'none';
       document.getElementById('statCropWrap').style.display  = '';
       document.getElementById('statOcrBtn').disabled = false;
-      document.getElementById('statOcrStatus').textContent = '영역을 드래그해서 STAT 창만 선택 후 OCR 실행';
+      document.getElementById('statOcrStatus').textContent = '드래그로 범위 선택 후 정보값 자동 입력, 또는 바로 클릭';
       URL.revokeObjectURL(url);
       initCropDrag(canvas, overlay);
     };
@@ -354,7 +354,6 @@ function initStatOCR() {
       });
       const { data: { text } } = await worker.recognize(ocrCanvas);
       await worker.terminate();
-      console.log('[OCR RAW]', text);
 
       _parsed = parseStatWindow(text);
       renderTable(_parsed);
@@ -400,7 +399,7 @@ function initStatOCR() {
     navigator.clipboard.writeText(code).then(() => {
       const btn = document.getElementById('statCopyBtn');
       btn.textContent = '✅ 복사됨!';
-      setTimeout(()=>{ btn.textContent = '📋 콘솔코드 복사'; }, 2000);
+      setTimeout(()=>{ btn.textContent = '콘솔코드 복사'; }, 2000);
     });
   });
 }

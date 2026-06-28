@@ -38,8 +38,8 @@ function parseStatWindow(rawText) {
     NORMAL_DMG:   get(/NORMAL ENEMY DAMAGE[^\d\n]*([\d.]+)\s*%/i),
     CRIT_RATE:    get(/CRITICAL RATE[^\d\n]*([\d.]+)\s*%/i),
     CRIT_DMG:     get(/CRITICAL DAMAGE[^\d\n]*([\d.]+)\s*%/i),
-    CD_SEC:       get(/DOWN REDUCTION[^\d\n]*?([0-6])\s*(?:s|5)ec/i),  // 재사용감소 초는 항상 0~6 한 자리
-    CD_PCT:       get(/DOWN REDUCTION[^\/\n]*\/\s*([\d.]+)/i),
+    CD_SEC:       get(/REDUCTION[^\/\n]*?([0-6])/i),       // "/" 앞 첫 0~6 숫자 = 초 (sec 오인식 무관)
+    CD_PCT:       get(/REDUCTION[^\/\n]*\/\s*([\d.]+)/i),  // "/" 뒤 숫자 = %
     BUFF_DUR:     get(/BUFF DURATION[^\d\n]*([\d.]+)\s*%/i),
     CD_NOT:       get(/DOWN [HN]OT APPLIED[^\d\n]*([\d.]+)\s*%/i),
     IGNORE_ELEM:  get(/IGNORE ELEMENTAL RESISTANCE[^\d\n]*([\d.]+)\s*%/i),

@@ -282,16 +282,14 @@ function renderGenesis() {
     card.querySelector('.party-stepper__val').textContent = party;
   }
 
-  /* 이벤트 */
+  /* 이벤트 — 입력은 자유롭게, 바깥 클릭(blur)/Enter 때만 클램프·저장 */
   const genHeldEl = document.getElementById('genHeld');
-  const applyHeld = e => {
+  genHeldEl.addEventListener('change', e => {
     const val = Math.max(0, Math.min(TRACE_HOLD_MAX, parseInt(e.target.value) || 0));
     genState.held = val;
-    if (parseInt(e.target.value) !== val) e.target.value = val;
+    e.target.value = val;
     saveGen();
-  };
-  genHeldEl.addEventListener('input', applyHeld);
-  genHeldEl.addEventListener('change', applyHeld);
+  });
 
   document.getElementById('genPass').addEventListener('change', e => {
     genState.pass = e.target.checked;

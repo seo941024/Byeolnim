@@ -230,7 +230,6 @@ async function initCube() {
   // 부위/레벨 변경 시 옵션 갱신
   ['cubePart','cubeLevel'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', _cubeRefreshGoalOpts);
-    document.getElementById(id)?.addEventListener('input',  _cubeRefreshGoalOpts);
   });
 
   // 데이터 미리 로드 후 옵션 초기화

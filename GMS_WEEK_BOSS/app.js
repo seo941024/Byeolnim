@@ -669,9 +669,9 @@ function renderJobGrid(filter) {
   });
 }
 
-document.getElementById('inpLevel').addEventListener('input', e => {
+document.getElementById('inpLevel').addEventListener('change', e => {
   const v = parseInt(e.target.value);
-  if (!isNaN(v) && v > 300) e.target.value = 300;
+  if (!isNaN(v)) e.target.value = Math.max(1, Math.min(300, v));
 });
 document.getElementById('inpJobSearch').addEventListener('input', e => renderJobGrid(e.target.value));
 document.getElementById('btnAddChar').addEventListener('click', () => {
@@ -916,3 +916,10 @@ renderCharList();
 renderBossTable();
 renderCharInfo();
 
+
+/* 입력칸에서 Enter → blur(=commit). 입력은 바깥 클릭/Enter 전까지 자유롭게. */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type !== 'file') {
+    e.target.blur();
+  }
+});

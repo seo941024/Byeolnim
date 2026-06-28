@@ -499,10 +499,6 @@ function initAddOption() {
     levelEl.value = v;
     refresh();
   });
-  levelEl.addEventListener('input', () => {
-    const v = parseInt(levelEl.value);
-    if (!isNaN(v) && v > 250) levelEl.value = 250;
-  });
   document.getElementById('flameBoss').addEventListener('change', refresh);
 
   // 목표 옵션 변경 시 다른 셀렉트에서 해당 옵션 비활성화 갱신

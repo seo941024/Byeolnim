@@ -41,14 +41,11 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
       <span style="font-size:.75rem;color:var(--text-sub)">목표</span>
       <input class="inp" type="number" value="${sk.tgt}" min="0" max="${sk.max}" data-i="${i}" data-field="tgt" />`;
     div.querySelectorAll('input[data-i]').forEach(inp => {
-      const clampInp = () => {
-        const v = parseInt(inp.value);
-        if (!isNaN(v)) inp.value = Math.max(0, Math.min(sk.max, v));
-      };
-      inp.addEventListener('input', clampInp);
+      // 입력은 자유롭게, blur/Enter(change) 때만 클램프·저장
       inp.addEventListener('change', () => {
-        clampInp();
-        nodes[i][inp.dataset.field] = Math.max(0, Math.min(sk.max, parseInt(inp.value) || 0));
+        const v = Math.max(0, Math.min(sk.max, parseInt(inp.value) || 0));
+        inp.value = v;
+        nodes[i][inp.dataset.field] = v;
         _hxSave(storageKey, nodes);
       });
     });
@@ -158,10 +155,8 @@ renderAllHexaLists();
 (function() {
   const seInp = document.getElementById('hxHaveSE');
   if (!seInp) return;
-  seInp.addEventListener('input', () => {
-    const v = parseInt(seInp.value);
-    if (!isNaN(v) && v > 20) seInp.value = 20;
-    if (!isNaN(v) && v < 0)  seInp.value = 0;
+  seInp.addEventListener('change', () => {
+    seInp.value = Math.max(0, Math.min(20, parseInt(seInp.value) || 0));
   });
 })();
 

@@ -1506,9 +1506,12 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 }
 
 /* ═══ 추옵 시뮬레이터 ═══ */
-.flame-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; }
+/* table-layout:fixed → 값 유무와 관계없이 열 너비 고정 (빈 칸이어도 안 좁아짐) */
+.flame-tbl { width: 100%; border-collapse: collapse; font-size: .82rem; table-layout: fixed; }
 .flame-tbl th { padding: 6px 10px; background: var(--bg3); color: var(--text-sub); font-weight: 600; text-align: center; border-bottom: 1px solid var(--border); white-space: nowrap; }
-.flame-tbl td { padding: 5px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.05); }
+.flame-tbl td { padding: 5px 10px; text-align: center; border-bottom: 1px solid rgba(255,255,255,.05); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 첫 열(스탯명) 고정폭, 나머지 5개 등급열은 남은 폭 균등 분배 */
+.flame-tbl th:first-child, .flame-tbl .flame-opt-lbl { width: 30%; }
 .flame-tbl .flame-opt-lbl { text-align: left; color: var(--text); font-weight: 500; }
 .flame-tbl .flame-avg { color: #fbbf24; font-weight: 600; }
 .flame-t--zero { color: var(--text-sub); opacity: .35; }

@@ -1543,16 +1543,6 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   border-bottom: 1px solid transparent !important;
   border-image: linear-gradient(90deg, transparent, rgba(167,139,250,.5), rgba(246,199,68,.35), transparent) 1 !important;
 }
-.header__timer {
-  position: relative; overflow: hidden;
-}
-.header__timer::after {
-  content: ''; position: absolute; top: 0; left: -60%; width: 40%; height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255,255,255,.28), transparent);
-  transform: skewX(-18deg); animation: sheen 5.5s ease-in-out infinite;
-}
-@keyframes sheen { 0%,100%{transform:translateX(0) skewX(-18deg);opacity:0} 12%{opacity:1} 28%{transform:translateX(420%) skewX(-18deg);opacity:0} }
-
 /* ── 4. 사이드바 글래스 ── */
 .sidebar {
   background: linear-gradient(180deg, rgba(14,9,30,.78), rgba(6,4,16,.7)) !important;
@@ -1569,31 +1559,16 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 .card:hover::after { opacity: 1; }
 
-/* ── 6. 사이드바 nav 활성: background-position 애니 → transform 스윕(컴포지터) ── */
+/* ── 6. 사이드바 nav 활성: 정적 그라디언트 (빛 스윕 제거) ── */
 .sb-nav__item.active {
   animation: none !important;
   background-image: linear-gradient(90deg, rgba(246,199,68,.30), rgba(167,139,250,.26)) !important;
   background-size: auto !important;
-  position: relative; overflow: hidden;
 }
-.sb-nav__item.active::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.16) 50%, transparent 70%);
-  transform: translateX(-100%); animation: navsweep 4s ease-in-out infinite;
-  pointer-events: none;
-}
-@keyframes navsweep { 0%,100%{transform:translateX(-100%)} 55%,70%{transform:translateX(100%)} }
 
-/* ── 7. 제네시스 패스 카드: background-position 애니 → transform 스윕 ── */
+/* ── 7. 제네시스 패스 카드: 빛 스윕 제거 ── */
 .gen-cfg-card--pass.on {
   animation: none !important; background-size: auto !important;
-  position: relative; overflow: hidden;
-}
-.gen-cfg-card--pass.on::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 35%, rgba(255,255,255,.18) 50%, transparent 65%);
-  transform: translateX(-100%); animation: navsweep 4.5s ease-in-out infinite;
-  pointer-events: none;
 }
 
 /* ── 8. 활성 캐릭터 카드: box-shadow 펄스 → opacity 펄스 글로우(컴포지터) ── */
@@ -1610,16 +1585,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 @keyframes glowpulse { 0%,100%{opacity:.32} 50%{opacity:.7} }
 
-/* ── 9. 버튼 클릭감 강화 (hover/active만, 무한 없음) ── */
-.sbtn--primary, .sbtn--add {
-  position: relative; overflow: hidden;
-}
-.sbtn--primary::after, .sbtn--add::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 40%, rgba(255,255,255,.25) 50%, transparent 60%);
-  transform: translateX(-120%); transition: transform .5s ease;
-}
-.sbtn--primary:hover::after, .sbtn--add:hover::after { transform: translateX(120%); }
+/* ── 9. 버튼 클릭 눌림감 (빛 스윕 제거) ── */
 .hbtn:active, .sbtn:active { transform: translateY(1px) scale(.97); }
 
 /* ── 10. 섹션 타이틀 글로우 강화 ── */
@@ -1627,9 +1593,6 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 
 /* ── 11. 저성능/모션축소 환경: 드리프트·스윕 전부 정지 ── */
 @media (hover:none), (max-width:768px), (prefers-reduced-motion:reduce) {
-  .header__timer::after,
-  .sb-nav__item.active::after,
-  .gen-cfg-card--pass.on::after,
   .char-card.active::before,
   .cg-card--active::before { animation: none !important; }
   .header, .sidebar { backdrop-filter: none; -webkit-backdrop-filter: none; }

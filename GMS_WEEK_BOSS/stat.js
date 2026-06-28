@@ -59,13 +59,25 @@ function buildFields(jtIdx, parsed) {
     rows.push({ label: `${s} % 수치`,   key: null,  idx: 4+i*3, val: '', note: '수동 입력' });
     rows.push({ label: `${s} % 미적용`, key: null,  idx: 5+i*3, val: '', note: '수동 입력' });
   });
+
+  // 공격력/마력 그룹 (maplescouter 9·10·11번 = 주/부스탯 다음 칸, 기본스공 전).
+  // INT 직업군(third:'MATK')은 마력, 나머지는 공격력. 기본수치는 OCR값, %는 수동 입력.
+  // 제논(3스탯)은 9·10·11이 3차 스탯이라 충돌 → 그룹 생략.
+  const apRows = [];
+  if (statKeys.length <= 2) {
+    const isMatk = jt.third === 'MATK';
+    const apLabel = isMatk ? '마력' : '공격력';
+    const apKey   = isMatk ? 'MATK' : 'ATK';
+    apRows.push({ label: `${apLabel} 기본수치`, key: apKey, idx: 9,  note: '합산값' });
+    apRows.push({ label: `${apLabel} % 수치`,  key: null,  idx: 10, val: '', note: '수동 입력' });
+    apRows.push({ label: `${apLabel} % 미적용`,key: null,  idx: 11, val: '', note: '수동 입력' });
+  }
+
   const direct = [
     { label: '데미지%',             key: 'DAMAGE',      idx: 13 },
     { label: '보스 데미지%',        key: 'BOSS_DAMAGE', idx: 15 },
     { label: '방어율 무시%',        key: 'IGNORE_DEF',  idx: 16 },
-    { label: '공격력',              key: 'ATK',         idx: 18 },
     { label: '크리티컬 확률%',      key: 'CRIT_RATE',   idx: 19 },
-    { label: '마력',                key: 'MATK',        idx: 20 },
     { label: '크리티컬 데미지%',    key: 'CRIT_DMG',    idx: 21 },
     { label: '재사용 감소(초)',      key: 'CD_SEC',      idx: 22 },
     { label: '재사용 감소(%)',       key: 'CD_PCT',      idx: 23 },
@@ -77,7 +89,8 @@ function buildFields(jtIdx, parsed) {
     { label: '아케인 포스',         key: 'ARCANE',      idx: 29 },
     { label: '어센틱 포스',            key: 'SACRED',   idx: 30 },
   ];
-  return [...rows, ...direct].map(f => ({
+  // 공격력/마력 그룹을 데미지% 바로 위에 배치
+  return [...rows, ...apRows, ...direct].map(f => ({
     ...f,
     val: f.val !== undefined ? f.val : (f.key ? (parsed[f.key] || '') : ''),
   }));

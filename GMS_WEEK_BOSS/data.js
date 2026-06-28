@@ -31,7 +31,7 @@ const BOSS_DATA = [
   { id:'cygnus',     name:'시그너스',            diffs:{easy:45_562_500,normal:72_250_000},                                              maxParty:6, minLevel:140, img:'images/bosses/cygnus.webp' },
   { id:'pinkbean',   name:'핑크빈',              diffs:{chaos:64_000_000},                                                               maxParty:6, minLevel:140, img:'images/bosses/pinkbean.webp' },
   { id:'hilla',      name:'힐라',                diffs:{hard:56_250_000},                                                                maxParty:6, minLevel:120, img:'images/bosses/hilla.webp' },
-  { id:'zakum',      name:'자쿰',                diffs:{chaos:24_000_000},                                                               maxParty:6, minLevel:140, img:'images/bosses/zakum.webp' },
+  { id:'zakum',      name:'자쿰',                diffs:{chaos:81_000_000},                                                               maxParty:6, minLevel:140, img:'images/bosses/zakum.webp' },
 ];
 
 const DIFF_META = {

@@ -4,12 +4,79 @@
 const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 제외)","포스실드, 소울링","방패","모자","상의","한벌옷","하의","신발","장갑","망토","벨트","어깨장식","얼굴장식","눈장식","귀고리","반지","펜던트","기계심장"];
 const CUBE_MESO  = { red: 12_000_000, black: 22_000_000 };
 
+// ── 장인/명장 큐브 (KMS 풀데이터 cube_table.js 기반) ──
+// UI 버튼 data-type → CUBE_TABLE 큐브 키 (등급 상한 기준 매핑: 명장=레전드리, 장인=유니크)
+const _CUBE_TABLE_TYPE = { master: 'ARTISAN', craft: 'MASTER' };
+const _GRADE_ORDER = ['RARE', 'EPIC', 'UNIQUE', 'LEGENDARY'];
+const _GRADE_KR    = { RARE: '레어', EPIC: '에픽', UNIQUE: '유니크', LEGENDARY: '레전드리' };
+// 장인/명장은 이벤트성이라 메소 단가 미정 → null (결과에서 메소 항목 생략)
+function _cubeMeso(type) { return CUBE_MESO[type] != null ? CUBE_MESO[type] : null; }
+function _cubeIsTableType(type) { return type === 'craft' || type === 'master'; }
+
+function _cubeTableAvailLevels(dataCube, part) {
+  const t = window.CUBE_TABLE; if (!t) return [];
+  const set = new Set();
+  for (const k of Object.keys(t.optionTable)) {
+    const [c, p, l] = k.split('|');
+    if (c === dataCube && p === part) set.add(+l);
+  }
+  return [...set].sort((a, b) => a - b);
+}
+function _cubeTableBracket(dataCube, part, lv) {
+  const levels = _cubeTableAvailLevels(dataCube, part);
+  if (!levels.length) return null;
+  let pick = levels[0];
+  for (const L of levels) if (L <= lv) pick = L;
+  return pick;
+}
+function _cubeTableGrades(dataCube) {
+  const t = window.CUBE_TABLE; if (!t) return [];
+  const og = t.optionGrade[dataCube] || {};
+  return _GRADE_ORDER.filter(g => og[g]);
+}
+// (큐브,부위,레벨,목표등급) → 기존 형식 {line1,line2,line3} 분포 합성
+function _cubeTableBuildLines(dataCube, part, lv, grade) {
+  const t = window.CUBE_TABLE; if (!t) return null;
+  const bracket = _cubeTableBracket(dataCube, part, lv);
+  if (bracket == null) return null;
+  const og = (t.optionGrade[dataCube] || {})[grade];
+  if (!og) return null;
+  const gi = _GRADE_ORDER.indexOf(grade);
+  const lowerGrade = gi > 0 ? _GRADE_ORDER[gi - 1] : null;
+  const curOpts = t.optionTable[`${dataCube}|${part}|${bracket}|${grade}`] || [];
+  const lowOpts = lowerGrade ? (t.optionTable[`${dataCube}|${part}|${bracket}|${lowerGrade}`] || []) : [];
+  const build = lineNo => {
+    const g = og.find(o => o.line === lineNo) || { currentGradeProb: 1, lowerGradeProb: 0 };
+    const cp = g.currentGradeProb || 0, lp = g.lowerGradeProb || 0;
+    const out = [];
+    for (const o of curOpts) out.push({ option: o.name, probability: cp * o.probability });
+    if (lp && lowOpts.length) for (const o of lowOpts) out.push({ option: o.name, probability: lp * o.probability });
+    return out;
+  };
+  return { line1: build(1), line2: build(2), line3: build(3) };
+}
+
+// 단일 스탯 %옵션 파싱 — GMS("STR +12%") / KMS("STR : +12%") 양쪽 지원
+function _cubeParsePctStat(s) {
+  const m = /^(STR|DEX|INT|LUK)\s*:?\s*\+(\d+)%$/.exec(s);
+  return m ? { stat: m[1], val: m[2] } : null;
+}
+// 옵션 문자열이 해당 수치의 올스탯인가 (GMS/KMS 표기 모두)
+function _cubeIsAllStat(s, val) {
+  return s === `올스탯 +${val}%` || s === `올스탯 : +${val}%`;
+}
+// 목표 옵션이 굴린 옵션으로 충족되는가 (정확 일치 또는 동일 수치 올스탯)
+function _cubeOptMatch(rolled, goal) {
+  if (rolled === goal) return true;
+  const m = _cubeParsePctStat(goal);
+  return !!(m && _cubeIsAllStat(rolled, m.val));
+}
+
 function _cubeLineProb(lineOpts, option) {
   const total = lineOpts.reduce((s, o) => s + o.probability, 0);
   if (!total) return 0;
-  const m = /^(STR|DEX|INT|LUK) \+(\d+)%$/.exec(option);
   return lineOpts
-    .filter(o => o.option === option || (m && o.option === `올스탯 +${m[2]}%`))
+    .filter(o => _cubeOptMatch(o.option, option))
     .reduce((s, o) => s + o.probability, 0) / total;
 }
 
@@ -111,14 +178,37 @@ function _weightedRandom(options) {
 }
 
 function _cubeGetLineData() {
+  const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
+  const part = document.getElementById('cubePart').value;
+  const lv   = parseInt(document.getElementById('cubeLevel').value);
+  if (!part) return null;
+
+  // 장인/명장: KMS 풀데이터에서 선택 등급 기준 합성
+  if (_cubeIsTableType(type)) {
+    const grade = document.getElementById('cubeGrade')?.value || 'LEGENDARY';
+    return _cubeTableBuildLines(_CUBE_TABLE_TYPE[type], part, lv, grade);
+  }
+
+  // 레드/블랙: 기존 GMS 데이터 (레전드리 고정)
   if (!_cubeData) return null;
-  const type  = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
-  const part  = document.getElementById('cubePart').value;
-  const range = _cubeGetLevelRange(parseInt(document.getElementById('cubeLevel').value));
-  if (!part || !range) return null;
+  const range = _cubeGetLevelRange(lv);
+  if (!range) return null;
   const lineData = _cubeData[type]?.[range]?.[part];
   if (!lineData) return null;
   return _cubeApplyRename(lineData);
+}
+
+// 활성 큐브에 맞춰 등급 드롭다운 채우기 (높은 등급 우선, 레드/블랙은 레전드리 고정)
+function _cubePopulateGrades() {
+  const sel = document.getElementById('cubeGrade');
+  if (!sel) return;
+  const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
+  const grades = _cubeIsTableType(type) ? _cubeTableGrades(_CUBE_TABLE_TYPE[type]) : ['LEGENDARY'];
+  const ordered = grades.slice().reverse();          // 레전드리 → 레어
+  const prev = sel.value;
+  sel.innerHTML = ordered.map(g => `<option value="${g}">${_GRADE_KR[g]}</option>`).join('');
+  sel.value = ordered.includes(prev) ? prev : ordered[0];
+  sel.disabled = ordered.length <= 1;
 }
 
 function _cubeRollOnce(lineData) {
@@ -140,11 +230,10 @@ function _cubeCheckSuccess(rolled, goals) {
   const lines = [rolled.line1, rolled.line2, rolled.line3];
   const used  = [false, false, false];
   for (const opt of goals) {
-    const m = /^(STR|DEX|INT|LUK) \+(\d+)%$/.exec(opt);
     let found = false;
     for (let i = 0; i < 3; i++) {
       if (used[i]) continue;
-      if (lines[i] === opt || (m && lines[i] === `올스탯 +${m[2]}%`)) {
+      if (_cubeOptMatch(lines[i], opt)) {
         used[i] = true; found = true; break;
       }
     }
@@ -158,13 +247,13 @@ function _cubeRenderResults() {
   if (!el) return;
   if (_cubeUseCount === 0) { el.innerHTML = '<p class="empty">결과가 없습니다.</p>'; return; }
   const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
-  const meso = CUBE_MESO[type] || 12_000_000;
+  const meso = _cubeMeso(type);
   const rate  = (_cubeSucc / _cubeUseCount * 100).toFixed(4);
   el.innerHTML = `
     <div class="sf-res-item"><span class="sf-res-label">사용 횟수</span><span class="sf-res-val big">${_cubeUseCount.toLocaleString()}</span></div>
     <div class="sf-res-item"><span class="sf-res-label">성공 횟수</span><span class="sf-res-val" style="color:var(--success)">${_cubeSucc.toLocaleString()}</span></div>
     <div class="sf-res-item"><span class="sf-res-label">성공률</span><span class="sf-res-val">${rate}%</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">소요 메소</span><span class="sf-res-val">${fmtMeso(_cubeUseCount * meso)}</span></div>
+    ${meso != null ? `<div class="sf-res-item"><span class="sf-res-label">소요 메소</span><span class="sf-res-val">${fmtMeso(_cubeUseCount * meso)}</span></div>` : ''}
     ${_cubeSucc > 0 ? `<div class="sf-res-item"><span class="sf-res-label">성공까지 평균 횟수</span><span class="sf-res-val">${Math.round(_cubeUseCount/_cubeSucc).toLocaleString()} 회</span></div>` : ''}`;
 }
 
@@ -221,20 +310,23 @@ async function initCube() {
   // 큐브 타입 버튼
   document.querySelectorAll('.cube-type-btn').forEach(btn => {
     btn.addEventListener('click', () => {
+      if (btn.disabled) return;
       document.querySelectorAll('.cube-type-btn').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      _cubePopulateGrades();
       _cubeRefreshGoalOpts();
     });
   });
 
-  // 부위/레벨 변경 시 옵션 갱신
-  ['cubePart','cubeLevel'].forEach(id => {
+  // 부위/레벨/등급 변경 시 옵션 갱신
+  ['cubePart','cubeLevel','cubeGrade'].forEach(id => {
     document.getElementById(id)?.addEventListener('change', _cubeRefreshGoalOpts);
   });
 
   // 데이터 미리 로드 후 옵션 초기화
   try {
     await _loadCubeData();
+    _cubePopulateGrades();
     _cubeRefreshGoalOpts();
   } catch(e) { console.error('큐브 데이터 로드 실패', e); }
 
@@ -246,18 +338,17 @@ async function initCube() {
     if (!lineData)      { alert('레벨과 부위를 올바르게 설정하세요.'); return; }
 
     const type = document.querySelector('.cube-type-btn.active')?.dataset.type || 'red';
-    const meso = CUBE_MESO[type] || 12_000_000;
+    const meso = _cubeMeso(type);
 
     const el = document.getElementById('cubeResults');
     const pSuccess = _cubeExactP(lineData, goals);
     if (!pSuccess) { el.innerHTML = '<p class="empty">해당 옵션 조합 데이터가 없습니다.</p>'; return; }
     const eCubes   = 1 / pSuccess;
-    const eMeso    = eCubes * meso;
 
     el.innerHTML = `
       <div class="sf-res-item"><span class="sf-res-label">성공 확률</span><span class="sf-res-val big">${(pSuccess * 100).toFixed(4)}%</span></div>
       <div class="sf-res-item"><span class="sf-res-label">기댓값 평균 큐브 수</span><span class="sf-res-val">${Math.ceil(eCubes).toLocaleString()} 개</span></div>
-      <div class="sf-res-item"><span class="sf-res-label">기댓값 평균 메소</span><span class="sf-res-val">${fmtMeso(Math.round(eMeso))}</span></div>
+      ${meso != null ? `<div class="sf-res-item"><span class="sf-res-label">기댓값 평균 메소</span><span class="sf-res-val">${fmtMeso(Math.round(eCubes * meso))}</span></div>` : ''}
       <div class="sf-res-item"><span class="sf-res-label">10% 확률 이내</span><span class="sf-res-val">${Math.ceil(eCubes * 0.105).toLocaleString()} 개</span></div>
       <div class="sf-res-item"><span class="sf-res-label">90% 확률 이내</span><span class="sf-res-val" style="color:var(--danger)">${Math.ceil(eCubes * 2.303).toLocaleString()} 개</span></div>`;
   });

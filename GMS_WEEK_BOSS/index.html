@@ -343,11 +343,11 @@
           <div class="field">
             <label class="field__label">큐브 종류</label>
             <div class="cube-type-grid">
-              <button class="cube-type-btn" data-type="craft" disabled>
+              <button class="cube-type-btn" data-type="craft">
                 <img src="images/icons/Hard.png" alt="">
                 <span>장인의 큐브</span>
               </button>
-              <button class="cube-type-btn" data-type="master" disabled>
+              <button class="cube-type-btn" data-type="master">
                 <img src="images/icons/Solid.png" alt="">
                 <span>명장의 큐브</span>
               </button>
@@ -360,6 +360,11 @@
                 <span>블랙 큐브</span>
               </button>
             </div>
+          </div>
+
+          <div class="field mt16">
+            <label class="field__label">잠재능력 등급</label>
+            <select class="sel cube-form-inp" id="cubeGrade"></select>
           </div>
 
           <div class="form-grid mt16">
@@ -466,6 +471,7 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="data.js"></script>
 <script src="cube_data.js"></script>
+<script src="cube_table.js"></script>
 <script src="starforce.js"></script>
 <script src="app.js"></script>
 <script src="hexa.js"></script>

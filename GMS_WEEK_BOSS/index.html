@@ -361,9 +361,25 @@
             </div>
           </div>
 
+          <div class="form-grid mt16">
+            <div class="field">
+              <label class="field__label">부위</label>
+              <select class="sel" id="cubePart"></select>
+            </div>
+            <div class="field">
+              <label class="field__label">아이템 레벨</label>
+              <input class="inp" id="cubeLevel" type="number" value="200" min="1" max="300" placeholder="아이템 레벨">
+            </div>
+          </div>
+
+          <div class="field mt8">
+            <label class="field__label">잠재능력 등급</label>
+            <select class="sel" id="cubeGrade"></select>
+          </div>
+
           <div class="card__title mt16">목표 옵션</div>
-          <p class="cube-manual-desc">원하는 옵션은 합산해서 적어주세요.<br><span class="cube-manual-ex">(ex.공격력 13%, 10% - 공격력 23%)</span></p>
-          <div id="cubeManualGoals"></div>
+          <p class="cube-manual-desc">옵션이 한 줄에 뜰 확률(%)을 직접 입력하세요.<br>원하는 옵션은 합산해서 적어주세요.<br><span class="cube-manual-ex">(ex.공격력 13%, 10% - 공격력 23%)</span></p>
+          <div id="cubeGoalRows"></div>
           <button class="sbtn sbtn--ghost cube-btn-full mt8" id="cubeAddGoalBtn">+ 목표 옵션 추가</button>
 
           <div class="cube-btns">

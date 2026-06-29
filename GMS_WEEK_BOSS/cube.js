@@ -60,31 +60,51 @@ function _rawOpts(dk, part, lv, grade) {
 // data-type 속성으로 row 동작 분기
 
 function _buildLeftOpts(dk, part, lv, grade) {
-  const opts = _rawOpts(dk, part, lv, grade);
-  if (!opts.length) return '<option>— 데이터 없음 —</option>';
-  const html = [], seenCat = new Set();
-  for (const o of opts) {
-    const p = _parse(o.name);
-    if (p.type==='pct'||p.type==='flat') {
-      if (!seenCat.has(p.cat)) {
-        seenCat.add(p.cat);
-        html.push(`<option value="${p.cat}" data-numeric="1" data-pct="${p.pct?1:0}" data-base="${p.base}">${p.cat}</option>`);
+  const gi = _GRADE_ORDER.indexOf(grade);
+  const lower = gi > 0 ? _GRADE_ORDER[gi-1] : null;
+
+  // 현재 등급 옵션 + 하위 등급 옵션 합산 (2,3번째 줄에서 하위 등급도 나올 수 있음)
+  const curOpts  = _rawOpts(dk, part, lv, grade);
+  const lowOpts  = lower ? _rawOpts(dk, part, lv, lower) : [];
+  if (!curOpts.length && !lowOpts.length) return '<option>— 데이터 없음 —</option>';
+
+  const html = [], seenCat = new Set(), seenUniq = new Set();
+
+  const addOpts = (opts, fromLower) => {
+    for (const o of opts) {
+      const p = _parse(o.name);
+      if (p.type==='pct'||p.type==='flat') {
+        if (!seenCat.has(p.cat)) {
+          seenCat.add(p.cat);
+          const label = fromLower ? `${p.cat} (${_GRADE_KR[lower]})` : p.cat;
+          html.push(`<option value="${p.cat}" data-numeric="1" data-pct="${p.pct?1:0}" data-base="${p.base}" data-lower="${fromLower?lower:''}">${label}</option>`);
+        }
+      } else {
+        if (!seenUniq.has(o.name)) {
+          seenUniq.add(o.name);
+          const disp = _shortDisplay(o.name, p);
+          const label = fromLower ? `${disp} (${_GRADE_KR[lower]})` : disp;
+          html.push(`<option value="${o.name}" data-numeric="0">${label}</option>`);
+        }
       }
-    } else {
-      const disp = _shortDisplay(o.name, p);
-      html.push(`<option value="${o.name}" data-numeric="0">${disp}</option>`);
     }
-  }
+  };
+
+  addOpts(curOpts, false);
+  // 하위 등급에만 있는 옵션 추가
+  addOpts(lowOpts, true);
   return html.join('');
 }
 
 // 값 SELECT HTML (pct/flat 전용)
 function _buildValOpts(dk, part, lv, grade, catOpt) {
-  const cat  = catOpt.value;
-  const base = catOpt.dataset.base||cat.replace(/ %$/,'');
-  const pct  = catOpt.dataset.pct==='1';
-  const adj  = pct && _needAdj(base);
-  const opts = _rawOpts(dk, part, lv, grade).filter(o=>_parse(o.name).cat===cat);
+  const cat      = catOpt.value;
+  const base     = catOpt.dataset.base||cat.replace(/ %$/,'');
+  const pct      = catOpt.dataset.pct==='1';
+  const adj      = pct && _needAdj(base);
+  const lowerGr  = catOpt.dataset.lower||'';
+  const lookupGr = lowerGr || grade;
+  const opts = _rawOpts(dk, part, lv, lookupGr).filter(o=>_parse(o.name).cat===cat);
   return opts
     .sort((a,b)=>_parse(b.name).valNum-_parse(a.name).valNum)
     .map(o=>{ const v=_parse(o.name).valNum; return `<option value="${o.name}">${adj?v+1:v}</option>`; })

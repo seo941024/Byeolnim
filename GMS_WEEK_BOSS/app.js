@@ -946,7 +946,7 @@ load();
 })();
 
 applyRegionUI();
-applyFont(localStorage.getItem(FONT_KEY) || '8bit');
+applyFont(localStorage.getItem(FONT_KEY) || '고딕');
 renderCharList();
 renderBossTable();
 renderCharInfo();

@@ -4,8 +4,8 @@
 
 /* ?? @font-face ?? */
 @font-face {
-  font-family: 'NEXON_Gothic';
-  src: url('font/NEXON_Gothic.ttf') format('truetype');
+  font-family: '고딕';
+  src: url('font/One_Mobile_Title.ttf') format('truetype');
   font-weight: normal; font-style: normal;
 }
 @font-face {
@@ -86,7 +86,7 @@
 
 html { font-size: 17px; }
 body {
-  font-family: 'NEXON_Gothic', 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-family: '고딕', 'Segoe UI', 'Malgun Gothic', sans-serif;
   background: #06040f;
   background-attachment: fixed;
   color: var(--text);

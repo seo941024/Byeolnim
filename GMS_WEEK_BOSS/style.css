@@ -1571,6 +1571,9 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   /* 헥사 노드 이름 줄바꿈 방지 */
   .hx-node-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+  /* form 라벨 줄바꿈 방지 (스타포스 등) */
+  .field__label { font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
   /* 캐릭터 정보: ci-layout 1열, ci-avgs 2열 */
   .ci-layout { grid-template-columns: 1fr; }
   .ci-avgs { grid-template-columns: repeat(2, 1fr); }

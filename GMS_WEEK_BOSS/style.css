@@ -1541,6 +1541,11 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .flame-tbl .flame-opt-lbl { text-align: left; color: var(--text); font-weight: 500; }
 .flame-tbl .flame-avg { color: #fbbf24; font-weight: 600; }
 .flame-t--zero { color: var(--text-sub); opacity: .35; }
+.flame-score-card { padding: 12px 0; border-bottom: 1px solid var(--border); }
+.flame-score-card:last-of-type { border-bottom: none; }
+.flame-score-card__name { font-weight: 700; font-size: .95rem; margin-bottom: 4px; }
+.flame-score-card__prob { font-size: .82rem; color: var(--text-sub); }
+.flame-score-card__mean { font-size: .82rem; color: var(--text-sub); margin-bottom: 2px; }
 .flame-th-prob { font-size: .72rem; font-weight: 400; color: var(--text-sub); }
 .flame-type-icon { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
 

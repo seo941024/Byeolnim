@@ -113,70 +113,90 @@ function calcFlameScore(lines) {
 }
 
 let _flameScoreRunning = false;
-let _flameScoreCounts = null; // 마지막 시뮬 결과 캐싱
 
 function flameScoreSim() {
   if (_flameScoreRunning) return;
-  const flameKey = _flameGetFlameKey();
-  const level    = _flameGetLevel();
-  const isBoss   = _flameGetIsBoss();
-  const target   = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
-  const resEl    = document.getElementById('flameScoreResult');
-  if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 점수를 입력하세요.</p>'; return; }
+  const level  = _flameGetLevel();
+  const isBoss = _flameGetIsBoss();
+  const target = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
+  const resEl  = document.getElementById('flameScoreResult');
+  if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 추옵을 입력하세요.</p>'; return; }
 
   _flameScoreRunning = true;
   resEl.innerHTML = '<p class="empty">계산 중...</p>';
 
   setTimeout(() => {
     try {
-      // 단순 확률 추정: N회 단일 롤 → 성공 횟수 카운트
       const N = 200_000;
-      let k = 0;
-      for (let i = 0; i < N; i++) {
-        if (calcFlameScore(rollFlame(flameKey, level, isBoss, false)) >= target) k++;
-      }
-      _flameScoreCounts = { k, N, p: k / N };
-      flameScoreRenderResult({ k, N, p: k / N });
+      const results = Object.entries(FLAME_TYPES).map(([key, meta]) => {
+        let k = 0;
+        for (let i = 0; i < N; i++) {
+          if (calcFlameScore(rollFlame(key, level, isBoss, false)) >= target) k++;
+        }
+        return { key, meta, k, p: k / N };
+      });
+      _flameScoreRenderResult(results, N, target);
     } finally {
       _flameScoreRunning = false;
     }
   }, 0);
 }
 
-function flameScoreRenderResult({ k, N, p }) {
-  const resEl  = document.getElementById('flameScoreResult');
-  const target = document.getElementById('flameScoreTarget')?.value || '';
+function _flameScoreRenderResult(results, N, target) {
+  const resEl = document.getElementById('flameScoreResult');
+  const FLAME_NAMES = { POWERFUL:'강력한 환생의 불꽃', ETERNAL:'영원한 환생의 불꽃', ABYSS:'심연한 환생의 불꽃' };
 
-  // p=0 이면 달성 불가
-  if (k === 0) {
-    resEl.innerHTML = `<p class="empty" style="color:#f87171">목표 점수 달성 확률이 너무 낮아 계산이 불가합니다.</p>`;
-    return;
-  }
+  const cards = results.map(({ key, meta, k, p }) => {
+    if (k === 0) return `
+      <div class="flame-score-card">
+        <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
+        <p style="font-size:.8rem;color:#f87171;margin:4px 0">달성 확률이 너무 낮아 계산 불가</p>
+      </div>`;
 
-  // 기하분포: 평균 기댓값 = 1/p, 상위 n% 시 필요 횟수 = ceil(log(1-n/100)/log(1-p))
-  const mean = Math.round(1 / p);
-  const calcPctVal = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
-  const defaultPct = 60;
+    const mean     = Math.round(1 / p);
+    const medianPct = Math.round((1 - Math.pow(1 - p, mean)) * 100 * 100) / 100;
+    const pctCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
+    const uid = `fsp_${key}`;
+
+    return `
+      <div class="flame-score-card">
+        <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
+        <div class="flame-score-card__prob">확률: ${(p*100).toFixed(7)}%</div>
+        <div class="flame-score-card__mean">평균 (상위 ${medianPct}%): ${mean.toLocaleString()}회</div>
+        <div class="sf-bidir" style="margin-top:8px">
+          <div class="sf-bidir__field">
+            <label class="sf-bidir__lbl">상위 %</label>
+            <input id="${uid}_pct" class="inp sf-bidir__inp" type="number" min="0.01" max="99.99" step="0.01" placeholder="–" />
+          </div>
+          <div class="sf-bidir__arrow">⇄</div>
+          <div class="sf-bidir__field">
+            <label class="sf-bidir__lbl">회</label>
+            <input id="${uid}_cnt" class="inp sf-bidir__inp" type="number" min="1" placeholder="–" />
+          </div>
+        </div>
+      </div>`;
+  }).join('');
 
   resEl.innerHTML = `
-    <div class="sf-res-item" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
-      <span class="sf-res-label">평균 기댓값</span>
-      <span class="sf-res-val" style="color:var(--accent);font-size:1.1rem">${mean.toLocaleString()}개</span>
-    </div>
-    <div class="sf-res-item">
-      <span class="sf-res-label" style="display:flex;align-items:center;gap:5px">
-        상위 <input id="flameScorePctInput" type="number" value="${defaultPct}" min="1" max="99"
-          style="width:50px;padding:2px 6px;font-size:.85rem;background:var(--bg3);border:1px solid var(--border);border-radius:6px;color:var(--text);text-align:center" /> %
-      </span>
-      <span class="sf-res-val" id="flameScorePctVal">${calcPctVal(defaultPct).toLocaleString()}개</span>
-    </div>
-    <p style="font-size:.72rem;color:var(--text-sub);margin-top:10px">
-      ${N.toLocaleString()}회 시뮬 기준 달성 확률 ${(p*100).toFixed(4)}% / 목표 점수 ${target} 이상
-    </p>`;
+    ${cards}
+    <p style="font-size:.72rem;color:var(--text-sub);margin-top:12px">${N.toLocaleString()}회 시뮬 기준 · 목표 추옵 ${target} 이상</p>`;
 
-  document.getElementById('flameScorePctInput')?.addEventListener('input', e => {
-    const v = Math.max(1, Math.min(99, parseInt(e.target.value) || defaultPct));
-    document.getElementById('flameScorePctVal').textContent = calcPctVal(v).toLocaleString() + '개';
+  // 각 카드 양방향 입력 연결
+  results.forEach(({ key, k, p }) => {
+    if (!k) return;
+    const uid     = `fsp_${key}`;
+    const pctEl   = document.getElementById(`${uid}_pct`);
+    const cntEl   = document.getElementById(`${uid}_cnt`);
+    const pctToCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
+    const countToPct = cnt => (1 - Math.pow(1 - p, cnt)) * 100;
+    pctEl?.addEventListener('input', () => {
+      const v = parseFloat(pctEl.value);
+      if (!isNaN(v) && v > 0 && v < 100) cntEl.value = pctToCount(v);
+    });
+    cntEl?.addEventListener('input', () => {
+      const v = parseInt(cntEl.value);
+      if (!isNaN(v) && v > 0) pctEl.value = countToPct(v).toFixed(4);
+    });
   });
 }
 
@@ -406,7 +426,7 @@ function initAddOption() {
     <!-- 탭 -->
     <div class="sf-tabs">
       <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
-      <button class="sf-tab" data-tab="score">점수 계산기</button>
+      <button class="sf-tab" data-tab="score">추옵 계산기</button>
     </div>
     <hr class="sec-sep" />
 
@@ -451,11 +471,11 @@ function initAddOption() {
           <button class="sbtn sbtn--ghost w100" id="flameBtnSim" style="margin-top:12px">시뮬레이션</button>
         </div>
 
-        <!-- 탭2 전용: 목표 점수 -->
+        <!-- 탭2 전용: 목표 추옵 -->
         <div id="flameTabScore" style="display:none">
-          <div class="card__title">목표 점수</div>
+          <div class="card__title">목표 추옵</div>
           <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯 최고값 · 공/마력×4 합산 (장비 전용)</p>
-          <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 점수 (예: 142)" style="width:100%;margin-bottom:10px" />
+          <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 추옵 (예: 142)" style="width:100%;margin-bottom:10px" />
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
         </div>
 
@@ -475,8 +495,8 @@ function initAddOption() {
         </div>
 
         <div class="card" id="flameScoreResultCard" style="display:none">
-          <div class="card__title">점수 계산 결과</div>
-          <div id="flameScoreResult" style="margin-top:10px"><p class="empty">목표 점수를 입력하고 계산하세요.</p></div>
+          <div class="card__title">추옵 계산 결과</div>
+          <div id="flameScoreResult" style="margin-top:10px"><p class="empty">목표 추옵을 입력하고 계산하세요.</p></div>
         </div>
 
       </div>

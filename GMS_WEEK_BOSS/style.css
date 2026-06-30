@@ -1537,6 +1537,16 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .cube-result-left { flex: none; }
   .modal--cube-result { max-height: 95vh; }
   .modal--cube-result .modal__body { overflow-y: auto; }
+
+  /* 추옵·스타포스·큐브·환산 좌우 → 세로 (2~5) */
+  .sf-layout { grid-template-columns: 1fr !important; }
+
+  /* 보스HP 카드: 5열 → 2열, 글자 자동 축소 (6) */
+  .bhp-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .bhp-card__name { font-size: .9rem; }
+  .bhp-active-diff .dpill { font-size: clamp(.55rem, 3.5vw, 1.3rem); padding: 4px 2px; }
+  .bhp-phase { font-size: .8rem; }
+  .bhp-phase__val { font-size: .88rem; }
 }
 
 /* 아주 좁은 화면: 캐릭터 그리드 1열 */

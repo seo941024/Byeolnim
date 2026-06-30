@@ -872,6 +872,18 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* ?? 蹂댁뒪 ?몃옒而??쒖씠??踰꾪듉 ?? */
 .diff-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .diff-btns .dpill { cursor: pointer; padding: 5px 14px; font-size: .72rem; }
+.boss-diff-wrap { display: flex; align-items: center; gap: 8px; }
+.boss-diff-wrap .dpill { pointer-events: none; padding: 3px 10px; font-size: .7rem; flex-shrink: 0; }
+.boss-diff-sel {
+  appearance: none; -webkit-appearance: none;
+  background: var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 8px center;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  color: var(--text); font-size: .78rem; padding: 5px 28px 5px 10px;
+  cursor: pointer; transition: border-color .15s;
+}
+.boss-diff-sel:hover { border-color: var(--border-hl); }
+.boss-diff-sel:focus { outline: none; border-color: var(--primary); }
+.boss-diff-sel option { background: #0d091e; color: var(--text); }
 
 /* ?? Genesis ?섏뒪???꾩씠肄??? */
 .gen-quest-icons {

@@ -259,12 +259,15 @@ function renderBossTable() {
     const activeDiff = diffs.find(d => ch.checks?.[ck(boss.id, d)]?.on);
     if (activeDiff) { tr.classList.add('done'); }
 
-    const pillsHtml = `<div class="diff-btns" data-boss="${boss.id}">
-      ${diffs.map(d =>
-        `<span class="dpill ${DIFF_META[d].cls} dpill--sm${activeDiff===d?' sel':''}" data-boss="${boss.id}" data-diff="${d}">
-          <span class="dpill__t">${DIFF_META[d].label}</span>
-        </span>`
-      ).join('')}
+    const activeMeta = activeDiff ? DIFF_META[activeDiff] : null;
+    const pillDisplay = activeMeta
+      ? `<span class="dpill ${activeMeta.cls} dpill--sm sel"><span class="dpill__t">${activeMeta.label}</span></span>`
+      : '';
+    const diffOptsHtml = `<option value="">없음</option>` +
+      diffs.map(d => `<option value="${d}"${activeDiff===d?' selected':''}>${DIFF_META[d].label}</option>`).join('');
+    const pillsHtml = `<div class="boss-diff-wrap">
+      ${pillDisplay}
+      <select class="boss-diff-sel" data-boss="${boss.id}">${diffOptsHtml}</select>
     </div>`;
 
     const maxP  = activeDiff ? getMaxParty(boss, activeDiff) : 6;
@@ -314,17 +317,15 @@ function renderBossTable() {
   // 활성 캐릭터의 대여 슬롯·수요일 체크 동기화
   initRentalSlots();
 
-  // 난이도 dpill 클릭 → 토글
-  tb.querySelectorAll('.diff-btns .dpill').forEach(pill => {
-    pill.addEventListener('click', () => {
-      const bossId  = pill.dataset.boss;
-      const diff    = pill.dataset.diff;
-      const boss    = BOSS_DATA.find(b => b.id === bossId);
-      const isActive = ch.checks?.[ck(bossId, diff)]?.on;
+  // 난이도 select → 변경
+  tb.querySelectorAll('.boss-diff-sel').forEach(sel => {
+    sel.addEventListener('change', () => {
+      const bossId = sel.dataset.boss;
+      const diff   = sel.value;
+      const boss   = BOSS_DATA.find(b => b.id === bossId);
       if (!ch.checks) ch.checks = {};
-      // 같은 보스 다른 난이도 해제
       Object.keys(boss.diffs).forEach(d => { ch.checks[ck(bossId,d)] = { on:false, party: ch.checks[ck(bossId,d)]?.party ?? 1 }; });
-      if (!isActive) {
+      if (diff) {
         if (state.chars.reduce((s,c)=>s+countCrystals(c),0) >= MAX_CRYSTALS) {
           showToast(`주간 결정석은 최대 ${MAX_CRYSTALS}개까지 판매 가능합니다.`);
           save(); renderBossTable(); renderCharList(); return;

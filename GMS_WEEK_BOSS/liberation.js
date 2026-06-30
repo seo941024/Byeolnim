@@ -63,8 +63,7 @@ function calcResult() {
 
   const held      = Math.max(0, genState.held);
   const questCum  = (GENESIS_QUESTS[genState.quest] || GENESIS_QUESTS[0]).cum;
-  const earnedThisWeek = (fullWeekly - thisWeekly) + (fullMonthly - thisMonthly);
-  const totalSpent = questCum + held + earnedThisWeek;
+  const totalSpent = questCum + held;
   const remaining  = Math.max(0, GENESIS_TARGET - totalSpent);
   const pct        = Math.min(100, Math.round(totalSpent / GENESIS_TARGET * 100));
 

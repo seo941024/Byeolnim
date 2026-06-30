@@ -1562,6 +1562,18 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .bhp-active-diff .dpill { font-size: clamp(.55rem, 3.5vw, 1.3rem); padding: 4px 2px; }
   .bhp-phase { font-size: .8rem; }
   .bhp-phase__val { font-size: .88rem; }
+
+  /* 보스 패널 헤더: 캐릭터명 + 결정석 + 초기화 줄바꿈 방지 */
+  .boss-panel__head { flex-wrap: wrap; gap: 6px; padding: 10px 14px; }
+  .boss-panel__charname { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
+  .boss-crystal-count .cc-item { font-size: .88rem; }
+
+  /* 헥사 노드 이름 줄바꿈 방지 */
+  .hx-node-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* 캐릭터 정보: ci-layout 1열, ci-avgs 2열 */
+  .ci-layout { grid-template-columns: 1fr; }
+  .ci-avgs { grid-template-columns: repeat(2, 1fr); }
 }
 
 /* 아주 좁은 화면: 캐릭터 그리드 1열 */

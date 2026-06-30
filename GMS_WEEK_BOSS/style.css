@@ -1508,7 +1508,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 @media (max-width: 768px) {
   .hamburger { display: flex; }
   .header { padding: 0 14px; gap: 10px; }
-  .header__title { display: none; }
+  .header__title { font-size: .8rem; }
   .header__rlabel { display: none; }
   .header__center { gap: 6px; }
   .header__rlabel { display: inline; font-size: .68rem; }

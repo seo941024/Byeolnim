@@ -1543,8 +1543,9 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   /* 제네시스/데스티니 2열 → 1열 */
   .gen-main-layout { grid-template-columns: 1fr; }
   .gen-stat-panel { position: static; }
-  .gen-input-row { flex-wrap: wrap; }
-  .gen-input-row .field { min-width: 120px; }
+  .gen-input-row { flex-direction: column; }
+  .gen-input-row .field { flex: none; width: 100%; }
+  .gen-cfg-card { width: 100%; }
   .gen-grid { grid-template-columns: 1fr; }
 
   /* HEXA 2열 → 1열 */

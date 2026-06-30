@@ -540,8 +540,8 @@ function initAddOption() {
       sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const isSim = tab.dataset.tab === 'sim';
-      document.getElementById('flameEquipGroup').closest('div').style.display = isSim ? '' : 'none';
-      document.getElementById('flameTypeGroup').closest('div').style.display  = isSim ? '' : 'none';
+      document.getElementById('flameEquipGroup').parentElement.style.display = isSim ? '' : 'none';
+      document.getElementById('flameTypeGroup').parentElement.style.display  = isSim ? '' : 'none';
       document.getElementById('flameTabSim').style.display         = isSim ? '' : 'none';
       document.getElementById('flameTabScore').style.display       = isSim ? 'none' : '';
       document.getElementById('flameStatTableCard').style.display  = isSim ? '' : 'none';

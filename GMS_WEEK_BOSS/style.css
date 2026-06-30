@@ -547,7 +547,7 @@ tr.done .boss-thumb img { filter: none; }
   display: inline-flex; align-items: center;
   background: rgba(139,92,246,.08);
   border: 1.5px solid rgba(139,92,246,.25);
-  border-radius: var(--radius-pill); padding: 3px; gap: 3px;
+  border-radius: 6px; padding: 3px; gap: 3px;
   box-shadow: 0 0 10px rgba(139,92,246,.1), inset 0 1px 0 rgba(255,255,255,.05);
 }
 .party-stepper button {
@@ -616,7 +616,7 @@ tr.done .boss-thumb img { filter: none; }
 
 /* ?? BUTTONS ?? */
 .sbtn {
-  padding: 9px 20px; border-radius: var(--radius-pill);
+  padding: 9px 20px; border-radius: 6px;
   font-size: .84rem; font-weight: 700; text-align: center;
   transition: transform .18s, box-shadow .18s, filter .18s;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -914,7 +914,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .diff-sel {
   background: rgba(255,255,255,.06);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: 6px;
   padding: 7px 14px;
   color: var(--text); font: inherit; font-size: .8rem; font-weight: 700;
   cursor: pointer; outline: none;
@@ -968,7 +968,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   width: 100%;
   background-color: rgba(255,255,255,.07);
   border: 1px solid var(--border);
-  border-radius: var(--radius-pill);
+  border-radius: 6px;
   padding: 7px 30px 7px 14px;
   color: var(--text);
   font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;

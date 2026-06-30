@@ -1524,6 +1524,19 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   /* 넓은 테이블은 가로 스크롤 허용 */
   .boss-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
   .boss-table { min-width: 560px; }
+
+  /* 제네시스/데스티니 2열 → 1열 */
+  .gen-main-layout { grid-template-columns: 1fr; }
+  .gen-stat-panel { position: static; }
+
+  /* HEXA 2열 → 1열 */
+  .hexa-layout { grid-template-columns: 1fr; }
+
+  /* 큐브 결과 모달: 좌우 분할 → 세로 스택 */
+  .cube-result-body { flex-direction: column; overflow: visible; }
+  .cube-result-left { flex: none; }
+  .modal--cube-result { max-height: 95vh; }
+  .modal--cube-result .modal__body { overflow-y: auto; }
 }
 
 /* 아주 좁은 화면: 캐릭터 그리드 1열 */

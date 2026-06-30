@@ -1735,16 +1735,3 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   .header, .sidebar { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
-/* ═══ 고딕 폰트 보정 — ONE_Mobile_Title은 동일 px에서 더 크게 렌더링됨 ═══ */
-[data-font="고딕"] .header__title { font-size: .88rem; }
-[data-font="고딕"] .header__timer { font-size: .78rem; }
-[data-font="고딕"] .header__rlabel { font-size: .68rem; }
-[data-font="고딕"] .hbtn { font-size: .78rem; padding: 5px 12px; }
-[data-font="고딕"] .sb-label { font-size: .78rem; }
-[data-font="고딕"] .sbtn { font-size: .78rem; }
-[data-font="고딕"] .sec-title { font-size: 1rem; }
-[data-font="고딕"] .card__title { font-size: .88rem; }
-[data-font="고딕"] .field__label { font-size: .72rem; }
-[data-font="고딕"] .boss-table th, [data-font="고딕"] .boss-table td { font-size: .78rem; }
-[data-font="고딕"] .dpill__t { font-size: .68rem; }
-[data-font="고딕"] .boss-diff-sel { font-size: .78rem; }

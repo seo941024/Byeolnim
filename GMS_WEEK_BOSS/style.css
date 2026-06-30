@@ -1543,6 +1543,9 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   /* 제네시스/데스티니 2열 → 1열 */
   .gen-main-layout { grid-template-columns: 1fr; }
   .gen-stat-panel { position: static; }
+  .gen-input-row { flex-wrap: wrap; }
+  .gen-input-row .field { min-width: 120px; }
+  .gen-grid { grid-template-columns: 1fr; }
 
   /* HEXA 2열 → 1열 */
   .hexa-layout { grid-template-columns: 1fr; }
@@ -1573,8 +1576,14 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .boss-panel__charname { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px; }
   .boss-crystal-count .cc-item { font-size: .88rem; }
 
-  /* 헥사 노드 이름 줄바꿈 방지 */
-  .hx-node-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  /* 헥사 노드: 이름 + 입력을 2줄로 */
+  .hexa-support-item {
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto auto;
+  }
+  .hx-node-name { grid-column: 1 / -1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .hexa-support-item span:not(.hx-node-name) { font-size: .72rem; }
+  .hexa-support-item .inp { max-width: 52px; }
 
   /* form 라벨 줄바꿈 방지 (스타포스 등) */
   .field__label { font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }

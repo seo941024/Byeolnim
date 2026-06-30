@@ -822,7 +822,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 큐브 결과 모달 */
 .modal--cube-result { width: min(1000px, 96vw); max-height: 90vh; display: flex; flex-direction: column; }
 .modal--cube-result .modal__body { flex: 1; overflow: hidden; display: flex; flex-direction: column; padding: 16px 20px 20px; }
-.cube-result-body { display: flex; gap: 24px; flex: 1; overflow: hidden; }
+.cube-result-body { display: flex; gap: 24px; flex: 1; overflow: hidden; padding: 16px 20px 20px; }
 .cube-result-left { flex: 0 0 300px; display: flex; flex-direction: column; gap: 4px; }
 .cube-result-left .sf-res-item { padding: 10px 0; }
 .cube-result-right { flex: 1; overflow-y: auto; border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }

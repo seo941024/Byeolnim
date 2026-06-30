@@ -1479,7 +1479,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 /* ══════════════ 모바일 레이아웃 (≤768px) ══════════════ */
 @media (max-width: 768px) {
   .hamburger { display: flex; }
-  #sbBtnSettings { display: inline-flex; }
+  #sbBtnSettings { display: inline-flex; font-size: .76rem; padding: 5px 13px; }
   #headerBtnSettings { display: none; }
   .header { padding: 0 14px; gap: 10px; }
   .header__title { font-size: .8rem; }

@@ -181,14 +181,20 @@ function _flameScoreRenderResult(results, N, target) {
     ${cards}
     <p style="font-size:.72rem;color:var(--text-sub);margin-top:12px">${N.toLocaleString()}회 시뮬 기준 · 목표 추옵 ${target} 이상</p>`;
 
-  // 각 카드 양방향 입력 연결
+  // 각 카드 양방향 입력 연결 + 기본값(평균) 채우기
   results.forEach(({ key, k, p }) => {
     if (!k) return;
-    const uid     = `fsp_${key}`;
-    const pctEl   = document.getElementById(`${uid}_pct`);
-    const cntEl   = document.getElementById(`${uid}_cnt`);
+    const uid        = `fsp_${key}`;
+    const pctEl      = document.getElementById(`${uid}_pct`);
+    const cntEl      = document.getElementById(`${uid}_cnt`);
     const pctToCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
     const countToPct = cnt => (1 - Math.pow(1 - p, cnt)) * 100;
+
+    // 기본값: 평균 횟수 & 해당 백분위
+    const mean = Math.round(1 / p);
+    cntEl.value = mean;
+    pctEl.value = countToPct(mean).toFixed(4);
+
     pctEl?.addEventListener('input', () => {
       const v = parseFloat(pctEl.value);
       if (!isNaN(v) && v > 0 && v < 100) cntEl.value = pctToCount(v);

@@ -627,6 +627,7 @@ tr.done .boss-thumb img { filter: none; }
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid transparent;
 }
+.sbtn--sm { font-size: .76rem !important; padding: 5px 13px !important; }
 .sbtn--add {
   background: var(--grad); color: var(--accent);
   font-size: .76rem; padding: 5px 13px;

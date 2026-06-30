@@ -1718,7 +1718,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   gap: 8px;
 }
 @media (max-width: 768px) {
-  .settings-grid { grid-template-columns: 1fr 1fr; }
+  .settings-grid { grid-template-columns: 1fr; }
 }
 
 /* ── 11. 저성능/모션축소 환경: 드리프트·스윕 전부 정지 ── */

@@ -972,7 +972,7 @@ document.getElementById('btnResetAll').addEventListener('click', () => {
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
   document.body.dataset.font = name;
-  document.documentElement.style.fontSize = name === '고딕' ? '14px' : '';
+  document.documentElement.style.fontSize = name === '고딕' ? '15px' : '';
   localStorage.setItem(FONT_KEY, name);
   document.querySelectorAll('.settings-font-btns [data-font]').forEach(b => {
     b.classList.toggle('sbtn--primary', b.dataset.font === name);

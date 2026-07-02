@@ -88,15 +88,20 @@ document.getElementById('hxCalc').addEventListener('click', () => {
   const haveSEF = parseInt(document.getElementById('hxHaveSEF').value) || 0;
   let totalSE = 0, totalSEF = 0;
 
+  // costTable이 함수면 노드 인덱스별로 다른 테이블 사용 (스킬 노드 1만 무료)
+  const tableFor = (costTable, i) => typeof costTable === 'function' ? costTable(i) : costTable;
+
   function addNodes(nodes, costTable) {
-    nodes.forEach(sk => {
+    nodes.forEach((sk, i) => {
+      const ct  = tableFor(costTable, i);
       const cur = Math.max(0, Math.min(sk.max, sk.cur));
       const tgt = Math.max(cur, Math.min(sk.max, sk.tgt));
-      if (tgt > cur) { const { se, sef } = hexaCumulative(costTable, cur, tgt); totalSE += se; totalSEF += sef; }
+      if (tgt > cur) { const { se, sef } = hexaCumulative(ct, cur, tgt); totalSE += se; totalSEF += sef; }
     });
   }
 
-  addNodes(hxSkill,   HEXA_SKILL_COSTS);
+  const skillTable = i => i === 0 ? HEXA_SKILL1_COSTS : HEXA_SKILL_COSTS;
+  addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
   addNodes(hxBoost,   HEXA_BOOST_COSTS);
   addNodes(hxCommon,  HEXA_COMMON_COSTS);
@@ -106,14 +111,15 @@ document.getElementById('hxCalc').addEventListener('click', () => {
   let usedSE = 0, usedSEF = 0;
   let remainSE = 0, remainSEF = 0;
   function addStats(nodes, costTable) {
-    nodes.forEach(sk => {
+    nodes.forEach((sk, i) => {
+      const ct  = tableFor(costTable, i);
       const cur = Math.max(0, Math.min(sk.max, sk.cur));
-      { const r = hexaCumulative(costTable, 0, sk.max); totalAllSE += r.se; totalAllSEF += r.sef; }
-      { const r = hexaCumulative(costTable, 0, cur);    usedSE   += r.se; usedSEF   += r.sef; }
-      { const r = hexaCumulative(costTable, cur, sk.max); remainSE += r.se; remainSEF += r.sef; }
+      { const r = hexaCumulative(ct, 0, sk.max); totalAllSE += r.se; totalAllSEF += r.sef; }
+      { const r = hexaCumulative(ct, 0, cur);    usedSE   += r.se; usedSEF   += r.sef; }
+      { const r = hexaCumulative(ct, cur, sk.max); remainSE += r.se; remainSEF += r.sef; }
     });
   }
-  addStats(hxSkill,   HEXA_SKILL_COSTS);
+  addStats(hxSkill,   skillTable);
   addStats(hxMastery, HEXA_MASTERY_COSTS);
   addStats(hxBoost,   HEXA_BOOST_COSTS);
   addStats(hxCommon,  HEXA_COMMON_COSTS);

@@ -479,7 +479,7 @@ function initAddOption() {
         <!-- 탭2 전용: 목표 추옵 -->
         <div id="flameTabScore" style="display:none">
           <div class="card__title">목표 추옵</div>
-          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">주스탯 + 올스탯%×10 + 공/마력×4 합산 (장비 전용)</p>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">주스탯 + 올스탯%×10 + 공/마력×4 합산</p>
           <div class="field" style="margin-bottom:10px">
             <label class="field__label">주스탯</label>
             <select class="sel" id="flameScoreMainStat">

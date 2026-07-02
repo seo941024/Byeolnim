@@ -85,31 +85,23 @@ function checkGoals(lines, goals) {
   });
 }
 
-/* 추옵 점수 계산 */
-function calcFlameScore(lines) {
-  const stat = { STR:0, DEX:0, INT:0, LUK:0 };
-  let extra = 0;
+/* 추옵 점수 계산 — 주스탯(main)만 반영. 복합옵션은 주스탯 포함 시 합산 */
+function calcFlameScore(lines, main = 'STR') {
+  let mainStat = 0, extra = 0;
   for (const l of lines) {
     const v = l.val;
-    switch (l.opt) {
-      case 'ALL%':      extra += v * 10; break;
-      case 'ATTACK':
-      case 'MAGIC ATK': extra += v * 4;  break;
-      case 'STR':       stat.STR += v; break;
-      case 'DEX':       stat.DEX += v; break;
-      case 'INT':       stat.INT += v; break;
-      case 'LUK':       stat.LUK += v; break;
-      case 'STR+DEX':   stat.STR += v; stat.DEX += v; break;
-      case 'STR+INT':   stat.STR += v; stat.INT += v; break;
-      case 'STR+LUK':   stat.STR += v; stat.LUK += v; break;
-      case 'DEX+INT':   stat.DEX += v; stat.INT += v; break;
-      case 'DEX+LUK':   stat.DEX += v; stat.LUK += v; break;
-      case 'INT+LUK':   stat.INT += v; stat.LUK += v; break;
-      // HP, MP, 방어력, 착용레벨감소 → 0
+    if (l.opt === main) {
+      mainStat += v;
+    } else if (l.opt.includes('+') && l.opt.split('+').includes(main)) {
+      mainStat += v; // 복합옵션에 주스탯 포함 (예: STR 유저의 STR+DEX)
+    } else if (l.opt === 'ALL%') {
+      extra += v * 10;
+    } else if (l.opt === 'ATTACK' || l.opt === 'MAGIC ATK') {
+      extra += v * 4;
     }
+    // 그 외(다른 단일/복합 스탯, HP, MP, 방어력, 착용레벨감소) → 0
   }
-  const bestStat = Math.max(stat.STR, stat.DEX, stat.INT, stat.LUK);
-  return bestStat + extra;
+  return mainStat + extra;
 }
 
 let _flameScoreRunning = false;
@@ -118,6 +110,7 @@ function flameScoreSim() {
   if (_flameScoreRunning) return;
   const level  = _flameGetLevel();
   const isBoss = _flameGetIsBoss();
+  const main   = document.getElementById('flameScoreMainStat')?.value || 'STR';
   const target = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
   const resEl  = document.getElementById('flameScoreResult');
   if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 추옵을 입력하세요.</p>'; return; }
@@ -131,7 +124,7 @@ function flameScoreSim() {
       const results = Object.entries(FLAME_TYPES).map(([key, meta]) => {
         let k = 0;
         for (let i = 0; i < N; i++) {
-          if (calcFlameScore(rollFlame(key, level, isBoss, false)) >= target) k++;
+          if (calcFlameScore(rollFlame(key, level, isBoss, false), main) >= target) k++;
         }
         return { key, meta, k, p: k / N };
       });
@@ -480,7 +473,16 @@ function initAddOption() {
         <!-- 탭2 전용: 목표 추옵 -->
         <div id="flameTabScore" style="display:none">
           <div class="card__title">목표 추옵</div>
-          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">올스탯%×10 · 단일스탯 최고값 · 공/마력×4 합산 (장비 전용)</p>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">주스탯 + 올스탯%×10 + 공/마력×4 합산 (장비 전용)</p>
+          <div class="field" style="margin-bottom:10px">
+            <label class="field__label">주스탯</label>
+            <select class="sel" id="flameScoreMainStat">
+              <option value="STR">STR</option>
+              <option value="DEX">DEX</option>
+              <option value="INT">INT</option>
+              <option value="LUK">LUK</option>
+            </select>
+          </div>
           <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 추옵 (예: 142)" style="width:100%;margin-bottom:10px" />
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
         </div>

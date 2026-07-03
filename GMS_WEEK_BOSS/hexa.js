@@ -18,7 +18,11 @@ function _hxSave(key, nodes) {
 let hxSkill = (() => {
   const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.hexaSkill) || '[]');
   const defaults = [1, 0];
-  return ['스킬 노드 1', '스킬 노드 2'].map((n, i) => ({ name:n, cur: stored[i]?.cur ?? defaults[i], tgt: stored[i]?.tgt ?? 30, max: 30 }));
+  return ['스킬 노드 1', '스킬 노드 2'].map((n, i) => {
+    let cur = stored[i]?.cur ?? defaults[i];
+    if (i === 0) cur = Math.max(1, cur); // 스킬 노드 1 = 오리진: 6차 전직 시 항상 Lv1 이상
+    return { name:n, cur, tgt: stored[i]?.tgt ?? 30, max: 30 };
+  });
 })();
 let hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, ['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], 30);
 let hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   ['부스트 1','부스트 2','부스트 3','부스트 4'], 30);

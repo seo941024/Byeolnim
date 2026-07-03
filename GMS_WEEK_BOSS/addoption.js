@@ -85,8 +85,10 @@ function checkGoals(lines, goals) {
   });
 }
 
-/* 추옵 점수 계산 — 주스탯(main)만 반영. 복합옵션은 주스탯 포함 시 합산 */
-function calcFlameScore(lines, main = 'STR') {
+/* 추옵 점수 계산 — 주스탯(main)만 반영. 복합옵션은 주스탯 포함 시 합산.
+   allW: 올스탯% 환산 배수(기본 10), atkW: 공/마력 환산 배수(기본 4).
+   레벨·스펙에 따라 효율이 달라 유저가 조정 가능. */
+function calcFlameScore(lines, main = 'STR', allW = 10, atkW = 4) {
   let mainStat = 0, extra = 0;
   for (const l of lines) {
     const v = l.val;
@@ -95,9 +97,9 @@ function calcFlameScore(lines, main = 'STR') {
     } else if (l.opt.includes('+') && l.opt.split('+').includes(main)) {
       mainStat += v; // 복합옵션에 주스탯 포함 (예: STR 유저의 STR+DEX)
     } else if (l.opt === 'ALL%') {
-      extra += v * 10;
+      extra += v * allW;
     } else if (l.opt === 'ATTACK' || l.opt === 'MAGIC ATK') {
-      extra += v * 4;
+      extra += v * atkW;
     }
     // 그 외(다른 단일/복합 스탯, HP, MP, 방어력, 착용레벨감소) → 0
   }
@@ -111,6 +113,8 @@ function flameScoreSim() {
   const level  = _flameGetLevel();
   const isBoss = _flameGetIsBoss();
   const main   = document.getElementById('flameScoreMainStat')?.value || 'STR';
+  const allW   = parseFloat(document.getElementById('flameScoreAllW')?.value) || 10;
+  const atkW   = parseFloat(document.getElementById('flameScoreAtkW')?.value) || 4;
   const target = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
   const resEl  = document.getElementById('flameScoreResult');
   if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 추옵을 입력하세요.</p>'; return; }
@@ -124,7 +128,7 @@ function flameScoreSim() {
       const results = Object.entries(FLAME_TYPES).map(([key, meta]) => {
         let k = 0;
         for (let i = 0; i < N; i++) {
-          if (calcFlameScore(rollFlame(key, level, isBoss, false), main) >= target) k++;
+          if (calcFlameScore(rollFlame(key, level, isBoss, false), main, allW, atkW) >= target) k++;
         }
         return { key, meta, k, p: k / N };
       });
@@ -479,7 +483,7 @@ function initAddOption() {
         <!-- 탭2 전용: 목표 추옵 -->
         <div id="flameTabScore" style="display:none">
           <div class="card__title">목표 추옵</div>
-          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">주스탯 + 올스탯%×10 + 공/마력×4 합산</p>
+          <p style="font-size:.78rem;color:var(--text-sub);margin:6px 0 10px">주스탯 + 올스탯%×환산 + 공/마력×환산 합산. 환산 배수는 레벨·스펙에 따라 조정하세요.</p>
           <div class="field" style="margin-bottom:10px">
             <label class="field__label">주스탯</label>
             <select class="sel" id="flameScoreMainStat">
@@ -488,6 +492,16 @@ function initAddOption() {
               <option value="INT">INT</option>
               <option value="LUK">LUK</option>
             </select>
+          </div>
+          <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+            <div class="field">
+              <label class="field__label">올스탯% 환산</label>
+              <input class="inp" id="flameScoreAllW" type="number" value="10" min="0" step="0.5" />
+            </div>
+            <div class="field">
+              <label class="field__label">공/마력 환산</label>
+              <input class="inp" id="flameScoreAtkW" type="number" value="4" min="0" step="0.5" />
+            </div>
           </div>
           <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 추옵 (예: 142)" style="width:100%;margin-bottom:10px" />
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>

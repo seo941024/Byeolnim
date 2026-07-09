@@ -748,11 +748,18 @@ document.querySelectorAll('.overlay').forEach(ov => {
 });
 
 
-/* ── 내보내기 / 불러오기 ── */
+/* ── 내보내기 / 불러오기 ──
+   보스/캐릭(state)뿐 아니라 해방·헥사·폰트 등 모든 localStorage 키를 함께 백업 */
 document.getElementById('btnExport').addEventListener('click', () => {
+  const extra = {};
+  Object.values(STORAGE_KEYS).forEach(k => {
+    const v = localStorage.getItem(k);
+    if (v != null) extra[k] = v;
+  });
+  const bundle = { _byeolnim: 1, state, extra };
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(state,null,2)],{type:'application/json'}));
-  a.download = `gms_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
+  a.download = `byeolnim_data_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 });
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileImport').click());
@@ -760,8 +767,22 @@ document.getElementById('fileImport').addEventListener('change', e => {
   const file = e.target.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = ev => {
-    try { state = JSON.parse(ev.target.result); save(); renderCharList(); renderBossTable(); showToast('불러오기 완료!'); }
-    catch { showToast('파일 형식이 올바르지 않습니다.'); }
+    try {
+      const data = JSON.parse(ev.target.result);
+      if (data && data._byeolnim) {
+        // 신규 통합 포맷: state + 전 모듈 localStorage 복원
+        if (data.state) { state = data.state; save(); }
+        Object.entries(data.extra || {}).forEach(([k, v]) => {
+          if (typeof v === 'string') localStorage.setItem(k, v);
+        });
+        showToast('불러오기 완료! 새로고침합니다…');
+        setTimeout(() => location.reload(), 600);
+      } else {
+        // 구버전 포맷: state 자체
+        state = data; save();
+        renderCharList(); renderBossTable(); showToast('불러오기 완료!');
+      }
+    } catch { showToast('파일 형식이 올바르지 않습니다.'); }
   };
   reader.readAsText(file);
   e.target.value = '';

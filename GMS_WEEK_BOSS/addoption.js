@@ -8,8 +8,8 @@ const FLAME_TYPES = {
   ABYSS:    { label: '심환불', img: 'images/icons/Abyssal_Rebirth_Flame.png',  prob: [0.00, 0.00, 0.63, 0.34, 0.03] },
 };
 
-// 시뮬레이션 풀 (전체 17개 / 무기 19개) — MP·방어력·착용레벨감소 포함
-const FLAME_OPTIONS_ARMOR  = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','MP','방어력','착용레벨감소','ATTACK','MAGIC ATK','ALL%'];
+// 시뮬레이션 풀 — 넥슨 공식 방어구 옵션 19종(균등): 이동속도·점프력 포함
+const FLAME_OPTIONS_ARMOR  = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','MP','방어력','착용레벨감소','ATTACK','MAGIC ATK','ALL%','이동속도','점프력'];
 const FLAME_OPTIONS_WEAPON = ['STR','DEX','INT','LUK','STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK','HP','MP','방어력','착용레벨감소','ATTACK','MAGIC ATK','ALL%','보공%','데미지%'];
 
 // 스탯 테이블 표시 옵션

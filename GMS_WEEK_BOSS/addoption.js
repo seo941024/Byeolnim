@@ -89,6 +89,7 @@ function checkGoals(lines, goals) {
    allW: 올스탯% 환산 배수(기본 10), atkW: 공/마력 환산 배수(기본 4).
    레벨·스펙에 따라 효율이 달라 유저가 조정 가능. */
 function calcFlameScore(lines, main = 'STR', allW = 10, atkW = 4) {
+  const atkOpt = main === 'INT' ? 'MAGIC ATK' : 'ATTACK'; // 주스탯에 맞는 공격 타입만 반영
   let mainStat = 0, extra = 0;
   for (const l of lines) {
     const v = l.val;
@@ -98,10 +99,10 @@ function calcFlameScore(lines, main = 'STR', allW = 10, atkW = 4) {
       mainStat += v; // 복합옵션에 주스탯 포함 (예: STR 유저의 STR+DEX)
     } else if (l.opt === 'ALL%') {
       extra += v * allW;
-    } else if (l.opt === 'ATTACK' || l.opt === 'MAGIC ATK') {
+    } else if (l.opt === atkOpt) {
       extra += v * atkW;
     }
-    // 그 외(다른 단일/복합 스탯, HP, MP, 방어력, 착용레벨감소) → 0
+    // 그 외(다른 단일/복합 스탯, 반대 공격 타입, HP, MP, 방어력, 착용레벨감소) → 0
   }
   return mainStat + extra;
 }

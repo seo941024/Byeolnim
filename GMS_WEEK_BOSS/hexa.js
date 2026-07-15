@@ -21,7 +21,7 @@ let hxSkill = (() => {
   return ['스킬 노드 1', '스킬 노드 2'].map((n, i) => {
     let cur = stored[i]?.cur ?? defaults[i];
     if (i === 0) cur = Math.max(1, cur); // 스킬 노드 1 = 오리진: 6차 전직 시 항상 Lv1 이상
-    return { name:n, cur, tgt: stored[i]?.tgt ?? 30, max: 30 };
+    return { name:n, cur, tgt: stored[i]?.tgt ?? 30, max: 30, min: i === 0 ? 1 : 0 };
   });
 })();
 let hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, ['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], 30);
@@ -38,16 +38,17 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
     const iconHtml = icons[i]
       ? `<img src="${icons[i]}" class="hx-node-icon" alt="" />`
       : '';
+    const minCur = sk.min ?? 0;
     div.innerHTML = `
       <span class="hx-node-name">${iconHtml}${sk.name}</span>
       <span style="font-size:.75rem;color:var(--text-sub)">현재</span>
-      <input class="inp" type="number" value="${sk.cur}" min="0" max="${sk.max}" data-i="${i}" data-field="cur" />
+      <input class="inp" type="number" value="${sk.cur}" min="${minCur}" max="${sk.max}" data-i="${i}" data-field="cur" />
       <span style="font-size:.75rem;color:var(--text-sub)">목표</span>
-      <input class="inp" type="number" value="${sk.tgt}" min="0" max="${sk.max}" data-i="${i}" data-field="tgt" />`;
+      <input class="inp" type="number" value="${sk.tgt}" min="${minCur}" max="${sk.max}" data-i="${i}" data-field="tgt" />`;
     div.querySelectorAll('input[data-i]').forEach(inp => {
       // 입력은 자유롭게, blur/Enter(change) 때만 클램프·저장
       inp.addEventListener('change', () => {
-        const v = Math.max(0, Math.min(sk.max, parseInt(inp.value) || 0));
+        const v = Math.max(minCur, Math.min(sk.max, parseInt(inp.value) || 0));
         inp.value = v;
         nodes[i][inp.dataset.field] = v;
         _hxSave(storageKey, nodes);

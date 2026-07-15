@@ -113,8 +113,10 @@ function flameScoreSim() {
   const level  = _flameGetLevel();
   const isBoss = _flameGetIsBoss();
   const main   = document.getElementById('flameScoreMainStat')?.value || 'STR';
-  const allW   = parseFloat(document.getElementById('flameScoreAllW')?.value) || 10;
-  const atkW   = parseFloat(document.getElementById('flameScoreAtkW')?.value) || 4;
+  const allWRaw = parseFloat(document.getElementById('flameScoreAllW')?.value);
+  const atkWRaw = parseFloat(document.getElementById('flameScoreAtkW')?.value);
+  const allW   = isNaN(allWRaw) ? 10 : Math.max(0, allWRaw); // 0 입력 허용
+  const atkW   = isNaN(atkWRaw) ? 4  : Math.max(0, atkWRaw);
   const target = parseInt(document.getElementById('flameScoreTarget')?.value) || 0;
   const resEl  = document.getElementById('flameScoreResult');
   if (!target || target <= 0) { resEl.innerHTML = '<p class="empty">목표 추옵을 입력하세요.</p>'; return; }
@@ -147,7 +149,7 @@ function _flameScoreRenderResult(results, N, target) {
     if (k === 0) return `
       <div class="flame-score-card">
         <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
-        <p style="font-size:.8rem;color:#f87171;margin:4px 0">달성 확률이 너무 낮아 계산 불가</p>
+        <p style="font-size:.8rem;color:var(--danger);margin:4px 0">달성 확률이 너무 낮아 계산 불가</p>
       </div>`;
 
     const mean     = Math.round(1 / p);
@@ -202,10 +204,6 @@ function _flameScoreRenderResult(results, N, target) {
     });
   });
 }
-
-let _flameChart = null;
-let _flameSimWorker = null;
-let _flameRunning = false;
 
 function _flameGetFlameKey() {
   return document.querySelector('#flameTypeGroup .sf-toggle.active')?.dataset.val || 'POWERFUL';
@@ -312,20 +310,6 @@ function flameBuildStatTable() {
     </table>`;
 }
 
-function _runSim(N, flameKey, level, isBoss, isWeapon, goals) {
-  const MAX_PER = 2_000_000;
-  const counts = [];
-  for (let i = 0; i < N; i++) {
-    let a = 0;
-    while (a < MAX_PER) {
-      a++;
-      if (checkGoals(rollFlame(flameKey, level, isBoss, isWeapon), goals)) break;
-    }
-    counts.push(a);
-  }
-  return counts;
-}
-
 /* 목표 달성 확률 정확 계산 (조합 기반)
    추옵 4줄은 풀(M개)에서 중복 없이 뽑고, 각 줄의 티어는 독립.
    P = P(목표 옵션 G개가 4줄 안에 모두 존재) × ∏ P(각 목표 티어 조건) */
@@ -370,7 +354,7 @@ function flameSimulate() {
   }
 
   if (!_isGoalPossible(flameKey, goals)) {
-    resEl.innerHTML = '<p class="empty" style="color:#f87171">선택한 불꽃으로는 달성 불가능한 목표입니다.</p>';
+    resEl.innerHTML = '<p class="empty" style="color:var(--danger)">선택한 불꽃으로는 달성 불가능한 목표입니다.</p>';
     return;
   }
 

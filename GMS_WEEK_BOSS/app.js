@@ -550,36 +550,7 @@ const JOB_ASSET_NAMES = {
   'Sia Astelle':'SiaAstelle',
   'Hoyoung':'HoYoung',
 };
-const JOB_HEAD_ASSET_NAMES = {
-  'Dark Knight':'DarkNight',
-  'Arch Mage (Fire, Poison)':'ArchMageFP',
-  'Arch Mage (F/P)':'ArchMageFP',
-  'Arch Mage (Ice, Lightning)':'ArchMageIL',
-  'Arch Mage (I/L)':'ArchMageIL',
-  'Pathfinder':'Pathfinder',
-  'Night Lord':'NightLord',
-  'Dual Blade':'DualBlade',
-  'Buccaneer':'Viper',
-  'Corsair':'Captain',
-  'Cannoneer':'CannonShooter',
-  'Dawn Warrior':'SoulMaster',
-  'Blaze Wizard':'FlameWizard',
-  'Wind Archer':'Windbreaker',
-  'Thunder Breaker':'Striker',
-  'Mihile':'Michile',
-  'Shade':'Eunwol',
-  'Battle Mage':'BattleMage',
-  'Demon Slayer':'DemonSlayer',
-  'Demon Avenger':'DemonAvenger',
-  'Angelic Buster':'AngelicBuster',
-  'Erel Light':'ErelLight',
-  'Sia Astelle':'SiaAstelle',
-  'Hoyoung':'Hoyoung',
-  'Khali':'Khalie',
-  'Kaiser':'Kasier',
-  'Mo Xuan':'Moxuan',
-  'Mikhail':'Michile',
-};
+// (JOB_HEAD_ASSET_NAMES 제거: 헤드 파일명을 전신과 통일해 JOB_ASSET_NAMES 하나로 해석)
 const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'png' };
 
 /* 캐릭터 직업명/아이콘 — 전부 영문명 기준 (name 이 곧 아이콘 파일명) */
@@ -606,7 +577,8 @@ function charJobIconSrc(ch) {
 }
 function charJobHeadSrc(ch) {
   const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
-  const asset = _resolveAsset(en, JOB_HEAD_ASSET_NAMES, JOB_ASSET_NAMES);
+  // 헤드 파일명은 전신과 동일하게 통일됨 → 전신과 같은 매핑 사용
+  const asset = _resolveAsset(en, JOB_ASSET_NAMES);
   return asset ? `images/jobs/Head/${asset}.webp` : '';
 }
 function serverIconSrc(world) {

@@ -17,8 +17,8 @@ function _hxSave(key, nodes) {
 
 let hxSkill = (() => {
   const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.hexaSkill) || '[]');
-  const defaults = [1, 0];
-  return ['스킬 노드 1', '스킬 노드 2'].map((n, i) => {
+  const defaults = [1, 0, 0];
+  return ['스킬 노드 1', '스킬 노드 2', '스킬 노드 3'].map((n, i) => {
     let cur = stored[i]?.cur ?? defaults[i];
     if (i === 0) cur = Math.max(1, cur); // 스킬 노드 1 = 오리진: 6차 전직 시 항상 Lv1 이상
     return { name:n, cur, tgt: stored[i]?.tgt ?? 30, max: 30, min: i === 0 ? 1 : 0 };
@@ -65,7 +65,7 @@ function renderAllHexaLists() {
 
   const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png` : null;
 
-  hxSkill.forEach((n,i)   => { if(jd.skill[i])   n.name = jd.skill[i]; });
+  hxSkill.forEach((n,i)   => { n.name = jd.skill[i] || `스킬 노드 ${i+1}`; });
   hxMastery.forEach((n,i) => { if(jd.mastery[i]) n.name = jd.mastery[i]; });
   hxBoost.forEach((n,i)   => { if(jd.boost[i])   n.name = jd.boost[i]; });
 
@@ -82,7 +82,7 @@ function renderAllHexaLists() {
     ...jd.common.slice(2).map((_, i) => ico(15 + i)),
   ];
 
-  renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   [ico(1), ico(2)]);
+  renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   [ico(1), ico(2), ico(3)]);
   renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, [ico(5), ico(6), ico(7), ico(8)]);
   renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   [ico(9), ico(10), ico(11), ico(12)]);
   renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  commonIcoFull);

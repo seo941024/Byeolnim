@@ -7,12 +7,26 @@ let state = { chars: [], activeChar: -1, region: 'na' };
 const STORAGE_KEY = STORAGE_KEYS.boss;
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
+
+/* 넥슨 약칭 직업명 → 정식 이름 정규화 (HEXA_JOB_DATA 키와 일치) */
+const JOB_NAME_CANON = {
+  'Arch Mage (I/L)': 'Arch Mage (Ice, Lightning)',
+  'Arch Mage (F/P)': 'Arch Mage (Fire, Poison)',
+};
+function canonJobName(name) { return JOB_NAME_CANON[name] || name; }
+
 function load() {
   try { const r = localStorage.getItem(STORAGE_KEY); if (r) state = JSON.parse(r); }
   catch {}
   if (!state.chars) state.chars = [];
   if (state.activeChar === undefined) state.activeChar = -1;
   if (!state.region) state.region = 'na';
+  // 기존 저장 데이터의 약칭 직업명을 정식 이름으로 마이그레이션
+  let migrated = false;
+  state.chars.forEach(c => {
+    if (c.fetched && JOB_NAME_CANON[c.fetched.job]) { c.fetched.job = JOB_NAME_CANON[c.fetched.job]; migrated = true; }
+  });
+  if (migrated) save();
 }
 
 /* ── 서버(NA/EU) 토글 ── */
@@ -651,6 +665,7 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
     const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=${reboot?1:0}&region=${state.region}`);
     const j = await r.json();
     if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
+    j.data.job = canonJobName(j.data.job);  // 약칭 → 정식 이름
     fetchedInfo = j.data;
     recordSnapshot(j.data);                 // 조회 시점 스냅샷 누적
     // 입력란 자동 채우기

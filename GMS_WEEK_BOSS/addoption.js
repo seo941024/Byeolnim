@@ -28,8 +28,9 @@ const FLAME_OPTION_LABELS = {
 function flameStatValue(option, tier, level, isBoss) {
   const w = isBoss ? 2 : 0;
   const t = tier; // 1-5
+  // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
   if (['STR','DEX','INT','LUK','방어력'].includes(option))
-    return (Math.floor(level / 20) + 1) * (t + w);
+    return (level < 250 ? Math.floor(level / 20) + 1 : 12) * (t + w);
   if (['STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK'].includes(option))
     return (Math.floor(level / 40) + 1) * (t + w);
   if (['ALL%','ATTACK','MAGIC ATK','데미지%'].includes(option))
@@ -37,7 +38,7 @@ function flameStatValue(option, tier, level, isBoss) {
   if (option === '보공%')
     return (t + w) * 2;
   if (['HP','MP'].includes(option))
-    return Math.floor(level / 10) * 30 * (t + w);
+    return (level < 250 ? Math.floor(level / 10) * 30 : 700) * (t + w);
   if (option === '착용레벨감소')
     return -((t + w) * 5);
   return 0;

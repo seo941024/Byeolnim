@@ -426,11 +426,27 @@
         </div>
       </div>
       <div class="lookup-box__result" id="lkResult"></div>
-      <input type="hidden" id="inpName" />
-      <input type="hidden" id="inpLevel" />
-      <input type="hidden" id="inpJob" />
-      <input type="hidden" id="inpJobSearch" />
-      <div class="job-grid job-grid--hidden" id="jobGrid"></div>
+
+      <div class="char-manual-sep">또는 직접 입력</div>
+      <div class="char-manual">
+        <div class="form-grid" style="grid-template-columns:1fr auto;gap:10px">
+          <div class="field">
+            <label class="field__label">캐릭터명</label>
+            <input class="inp" id="inpName" placeholder="캐릭터명" autocomplete="off" />
+          </div>
+          <div class="field" style="width:110px">
+            <label class="field__label">레벨</label>
+            <input class="inp" id="inpLevel" type="number" min="1" max="300" placeholder="270" />
+          </div>
+        </div>
+        <div class="field" style="margin-top:8px">
+          <label class="field__label">직업</label>
+          <input class="inp" id="inpJobSearch" placeholder="직업 검색" autocomplete="off" />
+        </div>
+        <div class="job-grid" id="jobGrid"></div>
+        <input type="hidden" id="inpJob" />
+        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 직접 입력한 캐릭터는 이미지 없이 NO IMAGE로 등록됩니다.</p>
+      </div>
     </div>
     <div class="modal__foot">
       <button class="sbtn sbtn--ghost" id="modalCharCancel">취소</button>

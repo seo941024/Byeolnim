@@ -504,6 +504,7 @@ function openCharModal(idx = -1) {
   document.getElementById('inpJobSearch').value = '';
   document.getElementById('lkName').value = idx >= 0 ? state.chars[idx].name : '';
   document.getElementById('lkResult').innerHTML = '';
+  renderJobGrid('');   // 직접 입력용 직업 그리드
   document.getElementById('overlayChar').classList.add('open');
 }
 
@@ -718,26 +719,39 @@ document.getElementById('btnAddChar').addEventListener('click', () => {
   document.getElementById(id).addEventListener('click', () => document.getElementById('overlayChar').classList.remove('open'));
 });
 document.getElementById('modalCharSave').addEventListener('click', () => {
-  if (!fetchedInfo) return alert('랭킹 조회 후 저장할 수 있습니다.');
-  const name  = fetchedInfo.name;
-  const level = Math.max(200, Math.min(300, parseInt(fetchedInfo.level)||200));
-  const ji = jobIdxFromName(fetchedInfo.job);
-  selectedJob = ji >= 0 ? ji : selectedJob;
+  const inputName = document.getElementById('inpName').value.trim();
+  // 조회 결과가 있고 이름이 일치하면 랭킹 데이터 사용, 아니면 직접 입력(이미지 없음)
+  const useFetched = fetchedInfo && inputName && fetchedInfo.name.toLowerCase() === inputName.toLowerCase();
+
+  let name, level, fetched;
+  if (useFetched) {
+    name  = fetchedInfo.name;
+    level = Math.max(200, Math.min(300, parseInt(fetchedInfo.level) || 200));
+    fetched = fetchedInfo;
+    const ji = jobIdxFromName(fetchedInfo.job);
+    selectedJob = ji >= 0 ? ji : selectedJob;
+  } else {
+    if (!inputName) return alert('캐릭터명을 입력하거나 랭킹 조회를 하세요.');
+    name  = inputName;
+    level = Math.max(1, Math.min(300, parseInt(document.getElementById('inpLevel').value) || 260));
+    fetched = null;   // 직접 입력 → NO IMAGE
+  }
+
   // 같은 캐릭터(이름) 중복 추가 방지 (대소문자 무시, 편집 중인 본인은 제외)
   const dup = state.chars.findIndex((c, idx) =>
     idx !== editIdx && c.name?.toLowerCase() === name.toLowerCase());
   if (dup >= 0) return alert('이미 추가된 캐릭터입니다.');
 
   if (editIdx >= 0) {
-    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched: fetchedInfo };
+    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched };
   } else {
-    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched: fetchedInfo });
+    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched });
     state.activeChar = state.chars.length - 1;
   }
   save();
   document.getElementById('overlayChar').classList.remove('open');
   renderCharList(); renderBossTable(); renderCharInfo();
-  syncServerHistThenRender(state.chars[state.activeChar]);
+  if (fetched) syncServerHistThenRender(state.chars[state.activeChar]);
 });
 
 // 수정/삭제 버튼 (위임)

@@ -73,5 +73,5 @@ const JOB_LIST = [
   {name:'Illium'},{name:'Ark'},{name:'Adele'},{name:'Khali'},
   {name:'Hoyoung'},{name:'Lara'},{name:'Ren'},
   {name:'Zero'},{name:'Kinesis'},{name:'Lynn'},
-  {name:'Erel Light'},{name:'Sia Astelle'},
+  {name:'Erel Light'},{name:'Sia Astelle'},{name:'Lethe'},
 ];

@@ -1070,6 +1070,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .lookup-box__row .inp { flex: 1; }
 .lookup-box__row .sbtn { flex-shrink: 0; padding: 9px 16px; }
 .lookup-box__result:empty { display: none; }
+.char-manual-sep { display: flex; align-items: center; gap: 10px; margin: 16px 0 12px; font-size: .78rem; color: var(--text-sub); }
+.char-manual-sep::before, .char-manual-sep::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+.char-manual .job-grid { margin-top: 8px; }
 .lookup-readonly { display: grid; grid-template-columns: 1fr 100px 1fr; gap: 10px; }
 .lk-err { font-size: .8rem; color: var(--danger); font-weight: 600; }
 .lk-load { font-size: .8rem; color: var(--text-sub); }

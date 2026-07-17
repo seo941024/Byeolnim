@@ -28,6 +28,13 @@ let hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, ['마스터리 1','마스터�
 let hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   ['부스트 1','부스트 2','부스트 3','부스트 4'], 30);
 let hxCommon  = _hxLoad(STORAGE_KEYS.hexaCommon,  ['솔 야누스', '솔 헤카테'], 30);
 
+// 아이콘 로드 실패 시 .png ↔ .webp 상호 대체, 그래도 없으면 숨김
+function _hxIcoFallback(img) {
+  if (!img.dataset.alt && /\.png$/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.png$/, '.webp'); }
+  else if (!img.dataset.alt && /\.webp$/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.webp$/, '.png'); }
+  else { img.style.display = 'none'; }
+}
+
 function renderNodeList(nodes, containerId, storageKey, icons=[]) {
   const list = document.getElementById(containerId);
   if (!list) return;
@@ -36,7 +43,7 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
     const div = document.createElement('div');
     div.className = 'hexa-support-item';
     const iconHtml = icons[i]
-      ? `<img src="${icons[i]}" class="hx-node-icon" alt="" />`
+      ? `<img src="${icons[i]}" class="hx-node-icon" alt="" onerror="_hxIcoFallback(this)" />`
       : '';
     const minCur = sk.min ?? 0;
     div.innerHTML = `

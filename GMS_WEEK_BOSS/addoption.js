@@ -517,7 +517,14 @@ function initAddOption() {
     </div>`;
 
   /* 이벤트 */
-  const refresh = () => { flameBuildStatTable(); flameRefreshOptionSelects(); };
+  // 활성 탭에 맞춰 자동 계산 (버튼 없이도 결과 표시)
+  // 옵션 시뮬(sim): 목표 옵션 있으면 즉시(조합식, 가벼움) / 추옵 계산(score): 목표 있으면 실행(몬테카를로, blur 때만 호출)
+  const _flameAutoCalc = () => {
+    const tab = sec.querySelector('.sf-tab.active')?.dataset.tab;
+    if (tab === 'sim') { if (flameGetGoals().length) flameSimulate(); }
+    else if (tab === 'score') { if ((parseInt(document.getElementById('flameScoreTarget')?.value) || 0) > 0) flameScoreSim(); }
+  };
+  const refresh = () => { flameBuildStatTable(); flameRefreshOptionSelects(); _flameAutoCalc(); };
 
   sec.querySelectorAll('#flameEquipGroup .sf-toggle, #flameTypeGroup .sf-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -535,10 +542,16 @@ function initAddOption() {
   });
   document.getElementById('flameBoss').addEventListener('change', refresh);
 
-  // 목표 옵션 변경 시 다른 셀렉트에서 해당 옵션 비활성화 갱신
+  // 목표 옵션/티어 변경 → 셀렉트 갱신 + 자동 계산 (옵션 시뮬)
   for (let i = 1; i <= 4; i++) {
-    document.getElementById(`flameGoalOpt${i}`)?.addEventListener('change', flameRefreshOptionSelects);
+    document.getElementById(`flameGoalOpt${i}`)?.addEventListener('change', () => { flameRefreshOptionSelects(); _flameAutoCalc(); });
+    document.getElementById(`flameGoalTier${i}`)?.addEventListener('change', _flameAutoCalc);
   }
+
+  // 추옵 계산 탭 입력 변경 → 자동 계산 (무거우므로 change/blur 때만)
+  ['flameScoreTarget','flameScoreMainStat','flameScoreAllW','flameScoreAtkW'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', _flameAutoCalc);
+  });
 
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
@@ -555,6 +568,7 @@ function initAddOption() {
       document.getElementById('flameStatTableCard').style.display  = isSim ? '' : 'none';
       document.getElementById('flameSimResultCard').style.display  = isSim ? '' : 'none';
       document.getElementById('flameScoreResultCard').style.display = isSim ? 'none' : '';
+      _flameAutoCalc(); // 탭 전환 시 해당 탭 결과 자동 표시
     });
   });
 

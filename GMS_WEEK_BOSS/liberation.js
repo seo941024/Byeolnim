@@ -563,15 +563,20 @@ function renderDestiny() {
     card.querySelector('.party-stepper__val').textContent = party;
   }
 
+  // 결과가 이미 계산돼 있으면 변경 즉시 재계산
+  const refreshDestIfShown = () => {
+    if (document.querySelector('#destResultPanel .gen-date-big, #destResultPanel .gen-res-row')) renderDestinyResult();
+  };
+
   document.getElementById('destHeld').addEventListener('change', e => {
     const val = Math.max(0, Math.min(DESTINY_RESOLVE_MAX, parseInt(e.target.value) || 0));
     destState.heldResolve = val;
     e.target.value = val;
-    saveDest();
+    saveDest(); refreshDestIfShown();
   });
   document.getElementById('destStartDate').addEventListener('change', e => {
     destState.startDate = e.target.value || nextThursday();
-    saveDest();
+    saveDest(); refreshDestIfShown();
   });
 
   panel.querySelectorAll('.dest-boss__party').forEach(ps => {
@@ -581,14 +586,14 @@ function renderDestiny() {
       const cur = destState.sel[id] || {};
       if ((cur.party||1) > 1) {
         destState.sel[id] = { ...cur, party:(cur.party||1)-1 };
-        saveDest(); updateDestCard(id);
+        saveDest(); updateDestCard(id); refreshDestIfShown();
       }
     });
     ps.querySelector('.pp').addEventListener('click', () => {
       const cur = destState.sel[id] || {};
       if ((cur.party||1) < (meta.maxParty||6)) {
         destState.sel[id] = { ...cur, party:(cur.party||1)+1 };
-        saveDest(); updateDestCard(id);
+        saveDest(); updateDestCard(id); refreshDestIfShown();
       }
     });
   });
@@ -596,14 +601,14 @@ function renderDestiny() {
     cb.addEventListener('change', () => {
       const id = cb.dataset.id;
       destState.sel[id] = { ...(destState.sel[id]||{}), cleared: cb.checked };
-      saveDest();
+      saveDest(); refreshDestIfShown();
     });
   });
   panel.querySelectorAll('.dest-boss__diff').forEach(s => {
     s.addEventListener('change', () => {
       const id = s.dataset.id;
       destState.sel[id] = { ...(destState.sel[id]||{}), diff: s.value };
-      saveDest(); updateDestCard(id);
+      saveDest(); updateDestCard(id); refreshDestIfShown();
     });
   });
 

@@ -69,6 +69,7 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
         inp.value = v;
         nodes[i][inp.dataset.field] = v;
         _hxSave(storageKey, nodes);
+        if (typeof _hxCompute === 'function') _hxCompute(); // 값 바뀌면 자동 재계산
       });
     });
     list.appendChild(div);
@@ -104,9 +105,11 @@ function renderAllHexaLists() {
   renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, [ico(5), ico(6), ico(7), ico(8)]);
   renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   [ico(9), ico(10), ico(11), ico(12)]);
   renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  commonIcoFull);
+  if (typeof _hxCompute === 'function') _hxCompute(); // 탭 진입/캐릭 전환 시 결과 자동 표시
 }
 
-document.getElementById('hxCalc').addEventListener('click', () => {
+function _hxCompute() {
+  if (!document.getElementById('hxResult')) return;
   const haveSE  = parseInt(document.getElementById('hxHaveSE').value)  || 0;
   const haveSEF = parseInt(document.getElementById('hxHaveSEF').value) || 0;
   let totalSE = 0, totalSEF = 0;
@@ -176,7 +179,10 @@ document.getElementById('hxCalc').addEventListener('click', () => {
     <div style="margin-top:10px;font-size:.75rem;color:var(--text-sub);line-height:1.6">
       ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.
     </div>`;
-});
+}
+document.getElementById('hxCalc')?.addEventListener('click', _hxCompute);
+// 보유 솔 에르다/조각 변경 시 자동 재계산
+['hxHaveSE','hxHaveSEF'].forEach(id => document.getElementById(id)?.addEventListener('change', _hxCompute));
 
 renderAllHexaLists();
 

@@ -74,7 +74,7 @@ function navigateTo(sec) {
   if (secEl) secEl.classList.add('active');
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
-  if (sec === 'starforce') renderSFRateTable();
+  if (sec === 'starforce') { renderSFRateTable(); if (typeof _sfRecalcExpected === 'function') _sfRecalcExpected(); }
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {

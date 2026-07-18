@@ -165,6 +165,7 @@ function initStarforce() {
         grp.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         sfBuildStageGrid(); // 샤이닝 상태 바뀌면 파괴율 다시 계산
+        _sfRecalcExpected();
       });
     });
   });
@@ -173,7 +174,11 @@ function initStarforce() {
   document.getElementById('sfFrom')?.addEventListener('change', () => {
     _sfState.star = _sfGetFrom();
     sfRenderResult();
+    _sfRecalcExpected();
   });
+  // 레벨·목표 성 변경 시에도 기댓값 자동 재계산
+  document.getElementById('sfLevel')?.addEventListener('change', _sfRecalcExpected);
+  document.getElementById('sfTo')?.addEventListener('change', _sfRecalcExpected);
 
   // 강화 1회
   document.getElementById('sfBtn1')?.addEventListener('click', () => {
@@ -248,10 +253,18 @@ function initStarforce() {
       document.getElementById('sfRightSimulate').style.display  = mode === 'simulate'  ? '' : 'none';
       document.getElementById('sfBtnWrapExpected').style.display = mode === 'expected' ? '' : 'none';
       document.getElementById('sfBtnWrapSimulate').style.display = mode === 'simulate' ? 'grid' : 'none';
+      if (mode === 'expected') _sfRecalcExpected();
     });
   });
   // 초기 상태
   document.getElementById('sfBtnWrapSimulate').style.display = 'none';
+}
+
+// 기댓값 탭이 활성일 때만, 유효한 범위면 조용히 재계산 (버튼 없이도 결과 표시)
+function _sfRecalcExpected() {
+  if (document.querySelector('.sf-tab.active')?.dataset.sftab !== 'expected') return;
+  if (_sfGetFrom() >= _sfGetTo()) return;
+  sfShowExpected();
 }
 
 let _sfChart        = null;

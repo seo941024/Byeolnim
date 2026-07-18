@@ -237,6 +237,7 @@ function selectChar(i) {
   renderCharList();
   renderBossTable();
   renderCharInfo();
+  if (typeof renderAllHexaLists === 'function') renderAllHexaLists(); // 헥사도 해당 캐릭 수치로 갱신
   syncServerHistThenRender(state.chars[i]);
 }
 
@@ -753,10 +754,12 @@ document.querySelectorAll('.overlay').forEach(ov => {
    보스/캐릭(state)뿐 아니라 해방·헥사·폰트 등 모든 localStorage 키를 함께 백업 */
 document.getElementById('btnExport').addEventListener('click', () => {
   const extra = {};
-  Object.values(STORAGE_KEYS).forEach(k => {
-    const v = localStorage.getItem(k);
-    if (v != null) extra[k] = v;
-  });
+  // 모든 localStorage 키 백업 (캐릭터별 헥사 hx_*_<id> 등 포함)
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
+    extra[k] = localStorage.getItem(k);
+  }
   const bundle = { _byeolnim: 1, state, extra };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
@@ -1020,6 +1023,21 @@ load();
     }
   } catch {}
   localStorage.removeItem('rental');
+})();
+
+// 구버전: 헥사가 전역(hx_skill 등)이었음 → 첫 캐릭터 키로 1회 이전 후 제거
+(function migrateHexa() {
+  const bases = [STORAGE_KEYS.hexaSkill, STORAGE_KEYS.hexaMastery, STORAGE_KEYS.hexaBoost, STORAGE_KEYS.hexaCommon];
+  const ch0 = state.chars[0];
+  const cid = ch0 ? (ch0.id ?? 0) : null;
+  bases.forEach(base => {
+    const legacy = localStorage.getItem(base); // 접미사 없는 구버전 키
+    if (legacy == null) return;
+    if (cid != null && localStorage.getItem(`${base}_${cid}`) == null) {
+      localStorage.setItem(`${base}_${cid}`, legacy);
+    }
+    localStorage.removeItem(base);
+  });
 })();
 
 applyRegionUI();

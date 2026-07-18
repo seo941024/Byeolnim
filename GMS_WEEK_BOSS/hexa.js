@@ -7,26 +7,36 @@
    Skill Node (×2, max30) / Mastery (×4, max10) /
    Boost (×4, max10) / Common: Sol Janus·Sol Hecate (×2, max30)
 ═══════════════════════════════════════════════ */
-function _hxLoad(key, names, maxLv) {
-  const stored = JSON.parse(localStorage.getItem(key) || '[]');
+// 헥사 강화 수치는 캐릭터별로 저장 → 저장 키에 활성 캐릭터 id를 붙인다.
+function _hxCharId() {
+  try { const ch = state?.chars?.[state.activeChar]; return ch ? (ch.id ?? state.activeChar) : 'default'; }
+  catch { return 'default'; }
+}
+function _hxKey(base) { return `${base}_${_hxCharId()}`; }
+
+function _hxLoad(base, names, maxLv) {
+  const stored = JSON.parse(localStorage.getItem(_hxKey(base)) || '[]');
   return names.map((n, i) => ({ name:n, cur: stored[i]?.cur ?? 0, tgt: stored[i]?.tgt ?? maxLv, max: maxLv }));
 }
-function _hxSave(key, nodes) {
-  localStorage.setItem(key, JSON.stringify(nodes.map(n => ({ cur:n.cur, tgt:n.tgt }))));
+function _hxSave(base, nodes) {
+  localStorage.setItem(_hxKey(base), JSON.stringify(nodes.map(n => ({ cur:n.cur, tgt:n.tgt }))));
 }
 
-let hxSkill = (() => {
-  const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.hexaSkill) || '[]');
+let hxSkill, hxMastery, hxBoost, hxCommon;
+// 활성 캐릭터 기준으로 노드 수치를 다시 불러온다 (캐릭 전환 시 호출)
+function _hxReloadForChar() {
+  const stored = JSON.parse(localStorage.getItem(_hxKey(STORAGE_KEYS.hexaSkill)) || '[]');
   const defaults = [1, 0, 0];
-  return ['스킬 노드 1', '스킬 노드 2', '스킬 노드 3'].map((n, i) => {
+  hxSkill = ['스킬 노드 1', '스킬 노드 2', '스킬 노드 3'].map((n, i) => {
     let cur = stored[i]?.cur ?? defaults[i];
     if (i === 0) cur = Math.max(1, cur); // 스킬 노드 1 = 오리진: 6차 전직 시 항상 Lv1 이상
     return { name:n, cur, tgt: stored[i]?.tgt ?? 30, max: 30, min: i === 0 ? 1 : 0 };
   });
-})();
-let hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, ['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], 30);
-let hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   ['부스트 1','부스트 2','부스트 3','부스트 4'], 30);
-let hxCommon  = _hxLoad(STORAGE_KEYS.hexaCommon,  ['솔 야누스', '솔 헤카테'], 30);
+  hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, ['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], 30);
+  hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   ['부스트 1','부스트 2','부스트 3','부스트 4'], 30);
+  hxCommon  = _hxLoad(STORAGE_KEYS.hexaCommon,  ['솔 야누스', '솔 헤카테'], 30);
+}
+_hxReloadForChar();
 
 // 아이콘 로드 실패 시 .png ↔ .webp 상호 대체, 그래도 없으면 숨김
 function _hxIcoFallback(img) {
@@ -66,6 +76,7 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
 }
 
 function renderAllHexaLists() {
+  _hxReloadForChar(); // 활성 캐릭터의 저장 수치로 다시 로드
   const ch  = typeof state !== 'undefined' ? state.chars[state.activeChar] : null;
   const job = ch?.fetched?.job || (typeof JOB_LIST !== 'undefined' && JOB_LIST[ch?.jobIdx]?.name) || '';
   const jd  = (typeof HEXA_JOB_DATA !== 'undefined' && HEXA_JOB_DATA[job]) || (typeof HEXA_DEFAULT_DATA !== 'undefined' ? HEXA_DEFAULT_DATA : { folder:null, skill:['스킬 노드 1','스킬 노드 2'], mastery:['마스터리 1','마스터리 2','마스터리 3','마스터리 4'], boost:['부스트 1','부스트 2','부스트 3','부스트 4'], common:['솔 야누스','솔 헤카테'] });
@@ -76,8 +87,8 @@ function renderAllHexaLists() {
   hxMastery.forEach((n,i) => { if(jd.mastery[i]) n.name = jd.mastery[i]; });
   hxBoost.forEach((n,i)   => { if(jd.boost[i])   n.name = jd.boost[i]; });
 
-  // 공용 코어 개수가 직업마다 다를 수 있으므로 동적으로 맞춤
-  const stored = JSON.parse(localStorage.getItem(STORAGE_KEYS.hexaCommon) || '[]');
+  // 공용 코어 개수가 직업마다 다를 수 있으므로 동적으로 맞춤 (캐릭터별 키)
+  const stored = JSON.parse(localStorage.getItem(_hxKey(STORAGE_KEYS.hexaCommon)) || '[]');
   while (hxCommon.length < jd.common.length)  hxCommon.push({ name: jd.common[hxCommon.length], cur: stored[hxCommon.length]?.cur ?? 0, tgt: stored[hxCommon.length]?.tgt ?? 30, max: 30 });
   if (hxCommon.length > jd.common.length) hxCommon.length = jd.common.length;
   hxCommon.forEach((n,i)  => { if(jd.common[i])  n.name = jd.common[i]; });

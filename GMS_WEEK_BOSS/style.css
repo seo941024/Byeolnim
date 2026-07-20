@@ -1126,7 +1126,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-portrait--noimg .ci-portrait__ph { display: block; }
 .ci-card__body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
 .ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.ci-jobicon { width: 55px; height: 55px; object-fit: contain; border-radius: 10px; background: var(--bg3); flex-shrink: 0; }
+/* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음 */
+.ci-jobicon { width: 55px; height: 55px; object-fit: contain; border-radius: 10px; background: transparent; flex-shrink: 0; }
 .ci-card__name { font-size: 1.05rem; font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__job { font-size: .72rem; color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {

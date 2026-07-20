@@ -127,11 +127,14 @@ function _hxCompute() {
   }
 
   // 노드1 = 오리진(4,400조각/145SE), 노드2 = 어센트 이후는 공용 코어와 동일(6,268/208)
-  const skillTable = i => i === 0 ? HEXA_SKILL1_COSTS : HEXA_COMMON_COSTS;
+  // 노드1 = 오리진(첫 레벨 무료), 노드2 = 어센트(스킬 코어), 노드3 = 3rd 스킬 코어
+  const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
+  // 공용 1·2 = 솔 야누스/헤카테, 3번째부터 = 직업별 공용(프리드의 가호 등)
+  const commonTable = i => i < 2 ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
   addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
   addNodes(hxBoost,   HEXA_BOOST_COSTS);
-  addNodes(hxCommon,  HEXA_COMMON_COSTS);
+  addNodes(hxCommon,  commonTable);
 
   // 전체 통계 (0→max, 0→cur, cur→max)
   let totalAllSE = 0, totalAllSEF = 0;
@@ -149,7 +152,7 @@ function _hxCompute() {
   addStats(hxSkill,   skillTable);
   addStats(hxMastery, HEXA_MASTERY_COSTS);
   addStats(hxBoost,   HEXA_BOOST_COSTS);
-  addStats(hxCommon,  HEXA_COMMON_COSTS);
+  addStats(hxCommon,  commonTable);
 
   const enough  = haveSE >= totalSE;
   const enoughF = haveSEF >= totalSEF;

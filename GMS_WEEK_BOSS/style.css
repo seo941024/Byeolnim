@@ -1066,6 +1066,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: flex; flex-direction: column; gap: 10px;
 }
 .lookup-box__title { font-size: .8rem; font-weight: 800; color: var(--text); }
+.region-toggle { display: flex; gap: 0; border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); align-self: flex-start; }
+.region-toggle__btn { padding: 5px 18px; font-size: .78rem; font-weight: 700; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all .15s; }
+.region-toggle__btn:last-child { border-right: none; }
+.region-toggle__btn.active { background: var(--primary); color: #fff; }
+.region-toggle__btn:hover:not(.active) { background: rgba(139,92,246,.1); color: var(--text); }
+
 .lookup-box__row { display: flex; gap: 8px; }
 .lookup-box__row .inp { flex: 1; }
 .lookup-box__row .sbtn { flex-shrink: 0; padding: 9px 16px; }

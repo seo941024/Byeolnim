@@ -126,7 +126,8 @@ function _hxCompute() {
     });
   }
 
-  const skillTable = i => i === 0 ? HEXA_SKILL1_COSTS : HEXA_SKILL_COSTS;
+  // 노드1 = 오리진(4,400조각/145SE), 노드2 = 어센트 이후는 공용 코어와 동일(6,268/208)
+  const skillTable = i => i === 0 ? HEXA_SKILL1_COSTS : HEXA_COMMON_COSTS;
   addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
   addNodes(hxBoost,   HEXA_BOOST_COSTS);

@@ -12,10 +12,9 @@ function worldName(id){ return WORLD_NAMES[id] || ('World #' + id); }
 
 const NEXON_BASE = 'https://www.nexon.com/api/maplestory/no-auth/ranking/v2';
 
-// Heroic(리부트) 월드 ID 목록
-const HEROIC_WORLDS = new Set([45, 46, 70]); // Kronos, Hyperion, Solis
-
-/* nexon 랭킹에서 캐릭터 1명 조회 */
+/* nexon 랭킹에서 캐릭터 1명 조회
+   ※ 공개 랭킹 API v2는 type=overall만 실제 데이터를 반환한다.
+      legion/world/job은 totalCount만 크게 주고 ranks는 항상 빈 배열 → 조회하지 않는다. */
 async function lookupCharacter(name, reboot, region) {
   const reg = region === 'eu' ? 'eu' : 'na';
   const headers = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
@@ -35,57 +34,6 @@ async function lookupCharacter(name, reboot, region) {
   }
   if (!hit) return null;
 
-  // worldID 기반으로 Heroic 여부 자동 판단
-  const ri = HEROIC_WORLDS.has(hit.worldID) ? 1 : 0;
-
-  // 2) legion / world / job 랭킹 병렬 조회 — 실패해도 무시
-  let legionLevel = hit.legionLevel || 0;
-  let legionPower = 0, legionRank = 0;
-  let worldRank = 0, jobRankWorld = 0;
-  const fetchRank = (type, rb) =>
-    fetch(`${NEXON_BASE}/${reg}?type=${type}&id=weekly&reboot_index=${rb}&page_index=1&character_name=${encodeURIComponent(name)}`, { headers })
-      .then(r => r.ok ? r.json() : null).catch(() => null);
-
-  const [ld, wd, jd, jgd] = await Promise.all([
-    fetchRank('legion', 0),
-    fetchRank('world', ri),
-    fetchRank('job',   ri),
-    fetchRank('job',   ri),   // GMS-wide job rank는 world 파라미터 없이 same endpoint
-  ]);
-
-  if (ld) {
-    const lhit = (ld.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
-    if (lhit) {
-      legionLevel = lhit.legionLevel || lhit.legion_level || lhit.unionLevel || legionLevel;
-      legionPower = lhit.legionPower || lhit.legionCombatPower || lhit.legion_power || lhit.unionPower || lhit.combatPower || 0;
-      legionRank  = lhit.rank || lhit.legionRank || 0;
-    }
-  }
-  if (wd) {
-    const whit = (wd.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
-    if (whit) worldRank = whit.rank || 0;
-  }
-  if (jd) {
-    const jhit = (jd.ranks || []).find(c => (c.characterName||'').toLowerCase() === lc);
-    if (jhit) jobRankWorld = jhit.rank || 0;
-  }
-
-  // 3) Redis 캐시에서 랭킹 보완
-  try {
-    const redis = getRedis();
-    if (redis) {
-      const cached = await redis.get(`rnk:${reg}:${lc}`);
-      const c = cached ? (typeof cached === 'string' ? JSON.parse(cached) : cached) : null;
-      if (c) {
-        if (!worldRank   && c.worldRank)    worldRank    = c.worldRank;
-        if (!jobRankWorld && c.jobRankWorld) jobRankWorld = c.jobRankWorld;
-        if (!legionRank  && c.legionRank)   legionRank   = c.legionRank;
-        if (!legionLevel && c.legionLevel)  legionLevel  = c.legionLevel;
-        if (!legionPower && c.legionPower)  legionPower  = c.legionPower;
-      }
-    }
-  } catch { /* 무시 */ }
-
   return {
     name:         hit.characterName,
     level:        hit.level,
@@ -94,11 +42,6 @@ async function lookupCharacter(name, reboot, region) {
     world:        worldName(hit.worldID),
     worldID:      hit.worldID,
     rank:         hit.rank,
-    worldRank,
-    jobRankWorld,
-    legion:       legionLevel,
-    legionPower,
-    legionRank,
     img:          hit.characterImgURL || '',
     reboot:       !!reboot,
     region:       region === 'eu' ? 'EU' : 'NA',

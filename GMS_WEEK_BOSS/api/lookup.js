@@ -25,6 +25,7 @@ module.exports = async function handler(req, res) {
         await pushSnapshot(redis, key, {
           date: todayStr(), ts: Date.now(), level: info.level,
           exp: Number(info.exp) || 0, img: info.img || '', job: info.job || '',
+          rank: info.rank || 0, world: info.world || '',
         });
       } catch (e) { /* 저장 실패는 조회 결과에 영향 주지 않음 */ }
     }

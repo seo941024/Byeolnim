@@ -700,7 +700,7 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   if (useFetched) {
     name  = fetchedInfo.name;
     level = Math.max(200, Math.min(300, parseInt(fetchedInfo.level) || 200));
-    fetched = fetchedInfo;
+    fetched = { ...fetchedInfo, syncedAt: Date.now() };   // 방금 조회 → 자동 최신화 대상에서 제외
     const ji = jobIdxFromName(fetchedInfo.job);
     selectedJob = ji >= 0 ? ji : selectedJob;
   } else {
@@ -815,6 +815,39 @@ async function fetchServerHist(f) {
 }
 function syncServerHistThenRender(ch) {
   if (ch?.fetched) fetchServerHist(ch.fetched).then(d => { if (d) renderCharInfo(); });
+}
+
+/* ── 랭킹 정보 자동 최신화 ──
+   조회로 등록한 캐릭터는 fetched가 등록 시점에 고정되어 레벨/코디가 갱신되지 않는다.
+   앱 진입 시 마지막 갱신이 REFRESH_INTERVAL 이상 지난 캐릭터만 조용히 재조회한다.
+   실패해도 기존 값을 유지하며 사용자에게 알리지 않는다. */
+const REFRESH_INTERVAL = 6 * 60 * 60 * 1000;   // 6시간
+
+async function refreshStaleChars() {
+  const now = Date.now();
+  const stale = state.chars.filter(ch =>
+    ch.fetched && ch.fetched.name && now - (ch.fetched.syncedAt || 0) > REFRESH_INTERVAL);
+  if (!stale.length) return;
+
+  let changed = false;
+  for (const ch of stale) {
+    const f = ch.fetched;
+    try {
+      const r = await fetch(`/api/lookup?name=${encodeURIComponent(f.name)}&reboot=${f.reboot?1:0}&region=${(f.region||'na').toLowerCase()}`);
+      const j = await r.json();
+      if (!j.ok || !j.data) continue;
+      // reboot/region은 히스토리 키의 일부이므로 덮어쓰지 않는다
+      const d = j.data;
+      Object.assign(f, {
+        level: d.level, exp: d.exp, rank: d.rank,
+        job: canonJobName(d.job), world: d.world, worldID: d.worldID,
+        img: d.img || f.img, syncedAt: now,
+      });
+      if (d.level) ch.level = d.level;
+      changed = true;
+    } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
+  }
+  if (changed) { save(); renderCharList(); renderCharInfo(); }
 }
 
 /* 스냅샷 배열(시간순)에서 days일 일평균 EXP 증가량 */
@@ -1045,6 +1078,7 @@ applyFont(localStorage.getItem(FONT_KEY) || '고딕');
 renderCharList();
 renderBossTable();
 renderCharInfo();
+refreshStaleChars();
 
 
 /* 입력칸에서 Enter → blur(=commit). 입력은 바깥 클릭/Enter 전까지 자유롭게. */

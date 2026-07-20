@@ -1341,12 +1341,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 
 /* ?? 罹먮┃??洹몃━??(罹먮┃???뺣낫 ?? ?? */
-/* 가로형 카드 2행 고정 → 캐릭터가 늘면 오른쪽으로 열이 추가되고 가로 스크롤 */
+/* 가로형 카드 2열 고정 → 캐릭터가 늘면 아래로 행이 추가된다.
+   창이 넓어지면 카드도 커지다가 380px에서 멈추고, 그 뒤로는 여백만 늘어난다. */
 .cg-grid {
-  display:grid; grid-auto-flow:column;
-  grid-template-rows:repeat(2,auto); grid-auto-columns:264px;
+  display:grid; grid-template-columns:repeat(2,minmax(0,380px));
+  justify-content:start;
   gap:10px; padding:8px 0 12px;
-  overflow-x:auto; overflow-y:hidden;
 }
 .cg-card {
   background: rgba(15,10,32,.7);
@@ -1354,7 +1354,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
   /* 행을 명시해야 일러스트의 grid-row:1/-1 이 두 행을 걸친다 */
-  display: grid; grid-template-columns: 88px 1fr; grid-template-rows: 1fr auto; align-items: stretch;
+  display: grid; grid-template-columns: 150px 1fr; grid-template-rows: 1fr auto; align-items: stretch;
   transition: transform .18s, box-shadow .18s, border-color .18s;
   box-shadow: 0 2px 10px rgba(0,0,0,.4);
 }
@@ -1365,12 +1365,14 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 /* 일러스트는 왼쪽에서 카드 전체 높이를 차지 */
 .cg-portrait {
-  grid-row:1 / -1; width:88px; min-height:104px;
+  grid-row:1 / -1; width:150px; min-height:156px;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display:flex; align-items:flex-end; justify-content:center;
   overflow:hidden; position:relative; flex-shrink:0;
 }
-.cg-portrait img { width:96%; height:100%; object-fit:contain; object-position:bottom center; }
+/* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
+   확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
+.cg-portrait img { width:100%; height:100%; object-fit:contain; object-position:bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }
@@ -1517,8 +1519,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   body.sidebar-open .sidebar-overlay { opacity: 1; pointer-events: auto; }
 
   /* 캐릭터 그리드 5열 → 2열 */
-  /* 모바일은 1행만 — 가로로 쭉 스크롤 */
-  .cg-grid { grid-template-rows: auto; grid-auto-columns: 252px; gap: 10px; }
+  /* 모바일은 1열 — 아래로 쌓이고 카드는 440px에서 멈춘다 */
+  .cg-grid { grid-template-columns: minmax(0, 440px); gap: 10px; }
 
   /* 보스 테이블 → 카드형 */
   .boss-table-wrap { overflow-x: visible; }
@@ -1598,7 +1600,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
 /* 아주 좁은 화면: 캐릭터 그리드 1열 */
 @media (max-width: 420px) {
-  .cg-grid { grid-auto-columns: 240px; gap: 8px; }
+  .cg-grid { gap: 8px; }
 }
 
 /* ═══ 추옵 시뮬레이터 ═══ */

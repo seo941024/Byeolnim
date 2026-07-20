@@ -74,7 +74,7 @@ function navigateTo(sec) {
   if (secEl) secEl.classList.add('active');
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
-  if (sec === 'starforce') { renderSFRateTable(); if (typeof _sfRecalcExpected === 'function') _sfRecalcExpected(); }
+  if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {
@@ -83,7 +83,6 @@ document.querySelectorAll('.sb-nav__item').forEach(btn => {
 document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
 
 /* ── 모바일 사이드바 드로어 토글 ── */
-function openSidebar()  { document.body.classList.add('sidebar-open'); }
 function closeSidebar() { document.body.classList.remove('sidebar-open'); }
 document.getElementById('btnHamburger')?.addEventListener('click', () => {
   document.body.classList.toggle('sidebar-open');
@@ -797,8 +796,6 @@ document.getElementById('fileImport').addEventListener('change', e => {
    - 좌측: 큰 캐릭터 카드 (이미지 80% + 정보)
    - 우측: 경험치 평균(7/14/30/90일), 일별 EXP 차트, 랭킹
 ═══════════════════════════════════════════════ */
-let charExpChart = null;
-
 /* 서버(Vercel Cron 수집) 히스토리를 가져와 로컬에 병합.
    배포 환경에서만 동작하며, 로컬/미설정 시 조용히 무시되고 로컬 스냅샷이 쓰인다. */
 async function fetchServerHist(f) {
@@ -850,33 +847,9 @@ async function refreshStaleChars() {
   if (changed) { save(); renderCharList(); renderCharInfo(); }
 }
 
-/* 스냅샷 배열(시간순)에서 days일 일평균 EXP 증가량 */
-function expDailyAvg(arr, days) {
-  if (!arr || arr.length < 2) return null;
-  const latest = arr[arr.length - 1];
-  const cutoff = latest.ts - days * 86400000;
-  let base = null;
-  for (const s of arr) { if (s.ts <= cutoff) base = s; }
-  if (!base) base = arr[0];                       // 기간보다 데이터가 짧으면 가장 오래된 것
-  const elapsed = (latest.ts - base.ts) / 86400000;
-  if (elapsed < 0.4) return null;
-  return (latest.exp - base.exp) / elapsed;
-}
-
-function fmtExp(n) {
-  if (n == null) return '—';
-  const a = Math.abs(n);
-  if (a >= 1e12) return (n/1e12).toFixed(1) + 'T';
-  if (a >= 1e9)  return (n/1e9).toFixed(1) + 'B';
-  if (a >= 1e6)  return (n/1e6).toFixed(1) + 'M';
-  if (a >= 1e3)  return (n/1e3).toFixed(1) + 'K';
-  return Math.round(n).toString();
-}
-
 function renderCharInfo() {
   const box = document.getElementById('charInfoBody');
   if (!box) return;
-  if (charExpChart) { charExpChart.destroy(); charExpChart = null; }
 
   if (!state.chars.length) {
     box.innerHTML = '<div class="ci-empty">캐릭터를 추가하세요.</div>';
@@ -898,8 +871,7 @@ function renderCharInfo() {
     const headHtml = headSrc ? `<img class="ci-jobicon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
     const rankRow = f?.rank ? `
       <div class="ci-card__ranks">
-        <div class="ci-ranks-title">랭킹 / 정보</div>
-        <div class="ci-rank-row"><span>${jn || ''}<br>Rank in ${region}</span><b>#${f.rank.toLocaleString()}</b></div>
+        <div class="ci-rank-row"><span>${region} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>
       </div>` : '';
     const isActive = i === state.activeChar;
     return `

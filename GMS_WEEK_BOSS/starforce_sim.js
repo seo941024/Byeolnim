@@ -2,13 +2,6 @@
    스타포스 시뮬레이터 (직접 강화 모드)
 ═══════════════════════════════════════════════ */
 
-/* 단계별 파괴율 라벨 계산 (shining 반영) */
-function _sfDestLabel(star, stage, isShining) {
-  const p = getSfProb(star, isShining, false, stage);
-  if (p.dest <= 0) return '파괴 없음';
-  return `파괴 ${(p.dest * 100).toFixed(2)}%`;
-}
-
 /* 단계 드롭다운 그리드 빌드 */
 function sfBuildStageGrid() {
   const grid = document.getElementById('sfStageGrid');

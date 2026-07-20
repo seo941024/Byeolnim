@@ -62,22 +62,6 @@ const BOSS_HP_TABLE = [
   {name:'자쿰',               diff:'카오스',   hp:840,          lv:140, pdr:100, force:null, ftype:null},
 ];
 
-function forceBoost(myForce, requiredForce) {
-  if (myForce < requiredForce) {
-    const penalty = Math.floor((requiredForce - myForce) / 5) * 10;
-    return { pct: -Math.min(penalty, 100), penalty: true };
-  }
-  const bonus = Math.floor((myForce - requiredForce) / 5) * 2;
-  return { pct: Math.min(bonus, 100), penalty: false };
-}
-
-const ARCANE_SYM_EXP = [
-  0,12,15,20,27,36,48,64,86,115,154,207,277,371,496,664,888,1188,1590,2130,
-];
-const SACRED_SYM_EXP = [
-  0,20,30,45,67,100,150,225,338,507,760,1140,1710,2565,3848,5772,8658,12987,19480,29220,
-];
-
 const BOSS_HP_PHASES = {
   '아케치_노말': [
     { label:'Phase 1', hp:'152B' },

@@ -174,30 +174,3 @@ function sfRunOnce(cfg) {
   return { cost: totalCost, destroys };
 }
 
-/* ── 시뮬레이션 n회 돌려서 통계 반환 ── */
-function sfSimulate(cfg, n) {
-  const costs = [];
-  let totalDestroy = 0;
-
-  for (let i = 0; i < n; i++) {
-    const r = sfRunOnce(cfg);
-    costs.push(r.cost);
-    totalDestroy += r.destroys;
-  }
-
-  costs.sort((a, b) => a - b);
-  const sum = costs.reduce((s, c) => s + c, 0);
-  const mean = sum / n;
-  const variance = costs.reduce((s, c) => s + (c - mean) ** 2, 0) / n;
-  const std = Math.sqrt(variance);
-
-  return {
-    mean,
-    std,
-    p25:  costs[Math.floor(n * 0.25)],
-    p50:  costs[Math.floor(n * 0.50)],
-    p75:  costs[Math.floor(n * 0.75)],
-    p90:  costs[Math.floor(n * 0.90)],
-    avgDestroy: totalDestroy / n,
-  };
-}

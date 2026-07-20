@@ -381,8 +381,9 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; flex-direction: column; gap: 0;
   background: transparent;
   min-height: calc(100vh - 60px);
+  min-width: 0;   /* 넓은 자식이 레이아웃을 밀지 않고 자체 스크롤하도록 */
 }
-.sec { display: none; flex-direction: column; gap: 16px; }
+.sec { display: none; flex-direction: column; gap: 16px; min-width: 0; }
 .sec.active { display: flex; }
 
 /* section header */
@@ -1121,36 +1122,22 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .ci-portrait__img { width: 115%; height: 115%; object-fit: contain; object-position: bottom center; margin-bottom: -4px; }
 .cg-char-img { width: 130%; object-fit: contain; object-position: bottom center; display: block; }
-.cg-portrait-box {
-  position: relative; width: 100%; height: 160px;
-  background: url('images/icons/bg.webp') center/cover no-repeat, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
-  display: flex; align-items: flex-end; justify-content: center;
-  overflow: hidden; border-radius: var(--radius) var(--radius) 0 0;
-  flex-shrink: 0;
-}
 .ci-portrait__ph { display: none; color: var(--text-dim); font-size: .86rem; font-weight: 800; letter-spacing: 1px; }
 .ci-portrait--noimg .ci-portrait__ph { display: block; }
-.ci-card__body { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
-.ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.ci-card__body { padding: 8px 10px; display: flex; flex-direction: column; gap: 5px; }
+.ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 7px; }
 /* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음 */
-.ci-jobicon { width: 55px; height: 55px; object-fit: contain; border-radius: 10px; background: transparent; flex-shrink: 0; }
-.ci-card__name { font-size: 1.05rem; font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ci-card__job { font-size: .72rem; color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-jobicon { width: 34px; height: 34px; object-fit: contain; border-radius: 8px; background: transparent; flex-shrink: 0; }
+.ci-card__name { font-size: .88rem; font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-card__job { font-size: .66rem; color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 8px; flex-wrap: wrap;
-  border-top: 1px solid var(--border); padding-top: 10px;
+  gap: 6px; flex-wrap: wrap;
+  border-top: 1px solid var(--border); padding-top: 6px;
 }
-.ci-lv { font-size: .96rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
-.ci-server { display: flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; color: var(--text-sub); }
-.ci-servericon { width: 18px; height: 18px; object-fit: contain; }
-.ci-card__exp { font-size: .74rem; color: var(--text-sub); font-weight: 700; border-top: 1px solid var(--border); padding-top: 8px; }
-.ci-rank-tag {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 10px; border-radius: 99px;
-  background: rgba(216,177,90,.15); border: 1px solid rgba(216,177,90,.35);
-  font-size: .72rem; font-weight: 800; color: var(--gold);
-}
+.ci-lv { font-size: .82rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
+.ci-server { display: flex; align-items: center; gap: 4px; font-size: .68rem; font-weight: 700; color: var(--text-sub); }
+.ci-servericon { width: 14px; height: 14px; object-fit: contain; }
 .ci-main { display: flex; flex-direction: column; gap: 16px; }
 .ci-cody img { width: 96px; height: 96px; }
 .ci-panel {
@@ -1179,14 +1166,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-chart-wrap { position: relative; height: 220px; }
 .ci-rank-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: .86rem; }
 .ci-rank-row:last-child { border-bottom: none; }
-.ci-rank-row--div { padding: 0; border-bottom: 2px solid var(--border); margin: 4px 0; }
 .ci-rank-row span { color: var(--text-sub); font-weight: 600; }
 .ci-rank-row b { font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
 
 /* 醫뚯륫 移대뱶 ?섎떒 ??궧 */
-.ci-card__ranks { margin-top: 14px; padding: 12px 16px 16px; border-top: 1px solid var(--border); }
-.ci-ranks-title { font-size: .75rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
-.ci-card__ranks .ci-rank-row { padding: 6px 0; font-size: .82rem; }
+.ci-card__ranks { margin-top: 0; padding: 5px 10px 7px; border-top: 1px solid var(--border); align-self: end; }
+.ci-ranks-title { font-size: .64rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.ci-card__ranks .ci-rank-row { padding: 3px 0; font-size: .7rem; }
 
 /* 肄붾뵒 ?덉뒪?좊━ */
 .ci-codies { display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 6px; overflow-x: auto; }
@@ -1355,13 +1341,20 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 
 /* ?? 罹먮┃??洹몃━??(罹먮┃???뺣낫 ?? ?? */
-.cg-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; padding:8px 0; }
+/* 가로형 카드 2행 고정 → 캐릭터가 늘면 오른쪽으로 열이 추가되고 가로 스크롤 */
+.cg-grid {
+  display:grid; grid-auto-flow:column;
+  grid-template-rows:repeat(2,auto); grid-auto-columns:264px;
+  gap:10px; padding:8px 0 12px;
+  overflow-x:auto; overflow-y:hidden;
+}
 .cg-card {
   background: rgba(15,10,32,.7);
   border: 1px solid rgba(139,92,246,.2);
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
-  display: flex; flex-direction: column;
+  /* 행을 명시해야 일러스트의 grid-row:1/-1 이 두 행을 걸친다 */
+  display: grid; grid-template-columns: 88px 1fr; grid-template-rows: 1fr auto; align-items: stretch;
   transition: transform .18s, box-shadow .18s, border-color .18s;
   box-shadow: 0 2px 10px rgba(0,0,0,.4);
 }
@@ -1370,19 +1363,16 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-color: var(--primary);
   animation: card-sparkle 2.4s ease-in-out infinite;
 }
+/* 일러스트는 왼쪽에서 카드 전체 높이를 차지 */
 .cg-portrait {
-  width:100%; aspect-ratio:4/5;
+  grid-row:1 / -1; width:88px; min-height:104px;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display:flex; align-items:flex-end; justify-content:center;
   overflow:hidden; position:relative; flex-shrink:0;
 }
-.cg-portrait img { width:92%; object-fit:contain; object-position:bottom center; }
+.cg-portrait img { width:96%; height:100%; object-fit:contain; object-position:bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }
-.cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.75rem; color:var(--text-sub); }
-.cg-body { padding:9px 10px 4px; flex:1; display:flex; flex-direction:column; gap:2px; }
-.cg-name { font-weight:700; font-size:.88rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cg-job { font-size:.72rem; color:var(--text-sub); }
-.cg-meta { font-size:.7rem; color:var(--text-sub); display:flex; align-items:center; gap:3px; }
+.cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }
 .cg-rank { font-size:.75rem; font-weight:700; color:var(--accent); margin-top:2px; }
 .cg-btns { display:flex; gap:5px; padding:6px 10px 9px; margin-top:auto; }
@@ -1527,7 +1517,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   body.sidebar-open .sidebar-overlay { opacity: 1; pointer-events: auto; }
 
   /* 캐릭터 그리드 5열 → 2열 */
-  .cg-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  /* 모바일은 1행만 — 가로로 쭉 스크롤 */
+  .cg-grid { grid-template-rows: auto; grid-auto-columns: 252px; gap: 10px; }
 
   /* 보스 테이블 → 카드형 */
   .boss-table-wrap { overflow-x: visible; }
@@ -1607,7 +1598,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
 /* 아주 좁은 화면: 캐릭터 그리드 1열 */
 @media (max-width: 420px) {
-  .cg-grid { grid-template-columns: 1fr; }
+  .cg-grid { grid-auto-columns: 240px; gap: 8px; }
 }
 
 /* ═══ 추옵 시뮬레이터 ═══ */

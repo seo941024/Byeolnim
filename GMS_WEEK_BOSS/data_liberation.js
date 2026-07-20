@@ -47,14 +47,6 @@ const DESTINY_BOSS_META = [
   { id:'baldrix',    name:'발드릭스',      maxParty:3, img:'images/bosses/baldrix.webp' },
   { id:'jupiter',    name:'유피테르',      maxParty:3, img:'images/bosses/jupiter.webp' },
 ];
-const DESTINY_QUESTS = [
-  { name:'세렌',     phase:1 },
-  { name:'칼로스',   phase:1 },
-  { name:'카링',     phase:1 },
-  { name:'대적자',   phase:2 },
-  { name:'림보',     phase:2 },
-  { name:'발드릭스', phase:2 },
-];
 const DESTINY_1ST_TARGET  = 7500;
 const DESTINY_2ND_TARGET  = 45000;
 const DESTINY_RESOLVE_MAX = 50000;

@@ -44,12 +44,6 @@ function flameStatValue(option, tier, level, isBoss) {
   return 0;
 }
 
-function flameUnit(option) {
-  if (['ALL%','보공%','데미지%'].includes(option)) return '%';
-  if (['ATTACK','MAGIC ATK'].includes(option)) return '';
-  if (option === 'HP') return '';
-  return '';
-}
 
 /* 랜덤 티어 뽑기 (확률 배열 기반) */
 function rollTier(prob) {
@@ -74,16 +68,6 @@ function rollFlame(flameKey, level, isBoss, isWeapon) {
     lines.push({ opt, tier, val: flameStatValue(opt, tier, level, isBoss) });
   }
   return lines;
-}
-
-/* 목표 달성 여부 체크 */
-function checkGoals(lines, goals) {
-  return goals.every(g => {
-    if (!g.opt || g.opt === 'none') return true;
-    const match = lines.find(l => l.opt === g.opt);
-    // 단계 1=최고, 단계 5=최저 → 단계 n 이상 = old tier >= (6-n)
-    return match && match.tier >= (6 - g.minTier);
-  });
 }
 
 /* 추옵 점수 계산 — 주스탯(main)만 반영. 복합옵션은 주스탯 포함 시 합산.

@@ -18,16 +18,6 @@ function saveGen() { localStorage.setItem(STORAGE_KEYS.genesis, JSON.stringify(g
 function bossInfo(id) { return BOSS_DATA.find(b => b.id === id) || { name:id, img:'' }; }
 function fmtTrace(n) { return Number(n).toLocaleString(); }
 
-const QUEST_BOSS_IMG = {
-  '반 레온':   'images/bosses/vanleon.webp',
-  '아카이럼':  'images/bosses/akaiyrum.webp',
-  '매그너스':  'images/bosses/magnus.webp',
-  '스우':      'images/bosses/suu.webp',
-  '데미안':    'images/bosses/demian.webp',
-  '윌':        'images/bosses/will.webp',
-  '루시드':    'images/bosses/lucid.webp',
-  '진 힐라':   'images/bosses/jinhilla.webp',
-};
 
 /* ─── 계산 로직 ─── */
 function calcBossTraces() {

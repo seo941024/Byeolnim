@@ -23,6 +23,7 @@ function _hxSave(base, nodes) {
 }
 
 let hxSkill, hxMastery, hxBoost, hxCommon;
+let _hxJobData = null;   // 현재 직업의 HEXA 데이터 (비용 예외 참조용)
 // 활성 캐릭터 기준으로 노드 수치를 다시 불러온다 (캐릭 전환 시 호출)
 function _hxReloadForChar() {
   const stored = JSON.parse(localStorage.getItem(_hxKey(STORAGE_KEYS.hexaSkill)) || '[]');
@@ -84,15 +85,25 @@ function renderAllHexaLists() {
 
   const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png` : null;
 
-  hxSkill.forEach((n,i)   => { n.name = jd.skill[i] || `스킬 노드 ${i+1}`; });
-  hxMastery.forEach((n,i) => { if(jd.mastery[i]) n.name = jd.mastery[i]; });
-  hxBoost.forEach((n,i)   => { if(jd.boost[i])   n.name = jd.boost[i]; });
-
-  // 공용 코어 개수가 직업마다 다를 수 있으므로 동적으로 맞춤 (캐릭터별 키)
-  const stored = JSON.parse(localStorage.getItem(_hxKey(STORAGE_KEYS.hexaCommon)) || '[]');
-  while (hxCommon.length < jd.common.length)  hxCommon.push({ name: jd.common[hxCommon.length], cur: stored[hxCommon.length]?.cur ?? 0, tgt: stored[hxCommon.length]?.tgt ?? 30, max: 30 });
-  if (hxCommon.length > jd.common.length) hxCommon.length = jd.common.length;
-  hxCommon.forEach((n,i)  => { if(jd.common[i])  n.name = jd.common[i]; });
+  /* 코어 개수는 직업마다 다름(시아 마스터리 1개 등) → 데이터 길이에 맞춰 동적으로 맞춤 */
+  const syncNodes = (nodes, names, storageKey, minFirst = 0) => {
+    const stored = JSON.parse(localStorage.getItem(_hxKey(storageKey)) || '[]');
+    while (nodes.length < names.length) {
+      const i = nodes.length;
+      nodes.push({ name: names[i], cur: stored[i]?.cur ?? 0, tgt: stored[i]?.tgt ?? 30, max: 30 });
+    }
+    if (nodes.length > names.length) nodes.length = names.length;
+    nodes.forEach((n, i) => {
+      n.name = names[i];
+      n.min  = i === 0 ? minFirst : 0;
+      if (n.cur < n.min) n.cur = n.min;
+    });
+  };
+  _hxJobData = jd;   // 비용 계산에서 직업별 예외(skillCost 등) 참조
+  syncNodes(hxSkill,   jd.skill,   STORAGE_KEYS.hexaSkill, 1); // 노드1=오리진: 최소 Lv1
+  syncNodes(hxMastery, jd.mastery, STORAGE_KEYS.hexaMastery);
+  syncNodes(hxBoost,   jd.boost,   STORAGE_KEYS.hexaBoost);
+  syncNodes(hxCommon,  jd.common,  STORAGE_KEYS.hexaCommon);
 
   // 공용 코어 아이콘 — 3번째부터는 직업 폴더 이미지 13번 사용
   const commonIcoFull = [
@@ -128,7 +139,11 @@ function _hxCompute() {
 
   // 노드1 = 오리진(4,400조각/145SE), 노드2 = 어센트 이후는 공용 코어와 동일(6,268/208)
   // 노드1 = 오리진(첫 레벨 무료), 노드2 = 어센트(스킬 코어), 노드3 = 3rd 스킬 코어
-  const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
+  // skillCost:'common' 직업(시아 아스텔)은 오리진 외 스킬 코어도 공용 비용 사용
+  const skillIsCommon = _hxJobData?.skillCost === 'common';
+  const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS
+                         : skillIsCommon ? HEXA_COMMON_COSTS
+                         : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
   // 공용 1·2 = 솔 야누스/헤카테, 3번째부터 = 직업별 공용(프리드의 가호 등)
   const commonTable = i => i < 2 ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
   addNodes(hxSkill,   skillTable);

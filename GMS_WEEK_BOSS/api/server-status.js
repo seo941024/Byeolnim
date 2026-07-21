@@ -7,22 +7,26 @@
 const NEXON_BASE = 'https://www.nexon.com/api/maplestory/no-auth/v1';
 const HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
 
-/* Game/Login/기타 접두사 키들을 종류별로 묶어 온라인/전체 채널 수만 집계.
-   -1 = 해당 월드에 없는(미개통) 채널 슬롯 — 전체 개수에서 제외해야 한다.
-   1 = 온라인, 그 외(0 등) = 다운. */
+/* Game/Login/기타 접두사 키들을 종류별로 묶어 온라인/전체 채널 수 집계 + 채널별 세부 목록.
+   -1 = 해당 월드에 없는(미개통) 채널 슬롯 — 전체 개수/목록 모두에서 제외해야 한다.
+   1 = 온라인, 그 외(0 등) = 다운. GameNN 키는 0-index → 채널 번호는 NN+1. */
 function summarizeWorld(w) {
-  const gameKeys = Object.keys(w).filter(k => /^Game\d+$/.test(k));
-  const channels = gameKeys.map(k => w[k]).filter(v => v !== null && v !== -1);
-  const onlineChannels = channels.filter(v => v === 1).length;
+  const gameKeys = Object.keys(w).filter(k => /^Game\d+$/.test(k)).sort((a, b) => Number(a.slice(4)) - Number(b.slice(4)));
+  const channelList = gameKeys
+    .map(k => ({ n: Number(k.slice(4)) + 1, v: w[k] }))
+    .filter(c => c.v !== null && c.v !== -1)
+    .map(c => ({ n: c.n, up: c.v === 1 }));
+  const onlineChannels = channelList.filter(c => c.up).length;
   const loginKeys = Object.keys(w).filter(k => /^Login\d+$/.test(k));
   const loginOnline = loginKeys.filter(k => w[k] === 1).length;
-  const up = channels.length > 0 && onlineChannels > 0;
+  const up = channelList.length > 0 && onlineChannels > 0;
   return {
     worldId: w.worldId,
     world: w.worldName,
     up,
-    channels: { online: onlineChannels, total: channels.length },
+    channels: { online: onlineChannels, total: channelList.length },
     login: { online: loginOnline, total: loginKeys.length },
+    channelList,
     lastUpdate: w.LogDate || null,
   };
 }

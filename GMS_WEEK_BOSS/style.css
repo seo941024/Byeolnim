@@ -1809,4 +1809,17 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-card__row { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--text-sub); }
 .ss-card__row b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
 .ss-card__upd { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
+.ss-card__toggle {
+  font-size: .7rem; font-weight: 700; color: var(--primary);
+  text-align: left; padding: 4px 0 0; margin-top: 2px;
+}
+.ss-card__toggle:hover { text-decoration: underline; }
+.ss-chan-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+.ss-chan {
+  min-width: 22px; text-align: center; padding: 2px 3px;
+  border-radius: 4px; font-size: .64rem; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.ss-chan--up { background: rgba(74,222,128,.15); color: var(--success); }
+.ss-chan--down { background: rgba(240,80,96,.18); color: var(--danger); }
 

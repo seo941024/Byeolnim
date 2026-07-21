@@ -138,14 +138,17 @@ http.createServer(async (req, res) => {
         { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } });
       const d = await r.json();
       const worlds = (d.servers || []).filter(w => w.worldId != null && w.LogDate).map(w => {
-        const gameKeys = Object.keys(w).filter(k => /^Game\d+$/.test(k));
-        const channels = gameKeys.map(k => w[k]).filter(v => v !== null && v !== -1);
-        const onlineChannels = channels.filter(v => v === 1).length;
+        const gameKeys = Object.keys(w).filter(k => /^Game\d+$/.test(k)).sort((a, b) => Number(a.slice(4)) - Number(b.slice(4)));
+        const channelList = gameKeys
+          .map(k => ({ n: Number(k.slice(4)) + 1, v: w[k] }))
+          .filter(c => c.v !== null && c.v !== -1)
+          .map(c => ({ n: c.n, up: c.v === 1 }));
+        const onlineChannels = channelList.filter(c => c.up).length;
         const loginKeys = Object.keys(w).filter(k => /^Login\d+$/.test(k));
         const loginOnline = loginKeys.filter(k => w[k] === 1).length;
-        return { worldId: w.worldId, world: w.worldName, up: channels.length > 0 && onlineChannels > 0,
-          channels: { online: onlineChannels, total: channels.length },
-          login: { online: loginOnline, total: loginKeys.length }, lastUpdate: w.LogDate || null };
+        return { worldId: w.worldId, world: w.worldName, up: channelList.length > 0 && onlineChannels > 0,
+          channels: { online: onlineChannels, total: channelList.length },
+          login: { online: loginOnline, total: loginKeys.length }, channelList, lastUpdate: w.LogDate || null };
       });
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok:true, region, worlds }));

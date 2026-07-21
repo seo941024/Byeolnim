@@ -3,6 +3,7 @@
    ============================================= */
 let _ssRegion = 'na';
 let _ssLoading = false;
+const _ssExpanded = new Set();   // 채널 상세를 펼쳐둔 worldId 집합 (재렌더링에도 유지)
 
 async function _ssFetch() {
   _ssLoading = true;
@@ -62,10 +63,13 @@ function _ssRender(statusData, maintData) {
 
   const cards = statusData.worlds.map(w => {
     const chOk = w.channels.total > 0 && w.channels.online === w.channels.total;
-    const chPart = w.channels.online > 0 && w.channels.online < w.channels.total;
     const statusCls = w.up ? (chOk ? 'ss-up' : 'ss-partial') : 'ss-down';
     const statusLabel = w.up ? (chOk ? '정상' : '일부 채널 점검') : '점검 중';
     const updated = w.lastUpdate ? new Date(w.lastUpdate).toLocaleTimeString('ko-KR', { hour:'2-digit', minute:'2-digit' }) : '-';
+    const expanded = _ssExpanded.has(w.worldId);
+    const channelGrid = (w.channelList || []).map(c =>
+      `<span class="ss-chan ${c.up ? 'ss-chan--up' : 'ss-chan--down'}" title="${c.n}번 채널 ${c.up ? '정상' : '점검'}">${c.n}</span>`
+    ).join('');
     return `
       <div class="ss-card ${statusCls}">
         <div class="ss-card__head">
@@ -75,6 +79,9 @@ function _ssRender(statusData, maintData) {
         <div class="ss-card__row"><span>채널</span><b>${w.channels.online} / ${w.channels.total}</b></div>
         <div class="ss-card__row"><span>로그인 게이트</span><b>${w.login.online} / ${w.login.total}</b></div>
         <div class="ss-card__upd">갱신 ${updated}</div>
+        ${w.channelList && w.channelList.length ? `
+        <button class="ss-card__toggle" data-ssworld="${w.worldId}">채널 상세 ${expanded ? '숨기기 ▲' : '보기 ▼'}</button>
+        <div class="ss-chan-grid" style="${expanded ? '' : 'display:none'}">${channelGrid}</div>` : ''}
       </div>`;
   }).join('');
 
@@ -84,6 +91,13 @@ function _ssRender(statusData, maintData) {
     <button class="sbtn sbtn--ghost mt16" id="ssRefreshBtn">새로고침</button>
   `;
   document.getElementById('ssRefreshBtn')?.addEventListener('click', () => { if (!_ssLoading) _ssFetch(); });
+  body.querySelectorAll('.ss-card__toggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = Number(btn.dataset.ssworld);
+      if (_ssExpanded.has(id)) _ssExpanded.delete(id); else _ssExpanded.add(id);
+      _ssRender(statusData, maintData);
+    });
+  });
 }
 
 function renderServerStatus() {

@@ -27,6 +27,13 @@
 
 ## 이번 세션에서 한 일 (최신 → 과거 순, 커밋 해시 포함)
 
+0. (HANDOFF 작성 이후 추가 작업, 커밋 해시는 `git log` 참고)
+   - **미스틱 프론티어 도감 탭 신규 추가** — 사이드바에 "환산주스탯" 바로 위 위치, 아이콘은 사용자가 추가한 `images/icons/Eqp_Roro_the_Familiar_Manager.png`. `mysticfrontier.js` + `sec-mysticfrontier`. 아직 **덱 구성/프론티어 잠재옵션/주사위 계산 로직은 없음** — 패밀리어 192종 검색·타입/속성 필터만 되는 도감 뷰어 수준
+   - 캐릭터 목록 nav 아이콘 → `images/icons/835835maple.ico`로 교체 (`.ico`도 `<img>` src로 정상 동작 확인)
+   - 서버 상태 nav 아이콘 → 캐릭터 목록이 원래 쓰던 `info.webp`로 이동
+   - **패밀리어 아이콘/데이터 192개 전량 확보 완료**: `data_familiars.js`(FAMILIAR_LIST: id/name/level/type/element), `images/familiars/icons/{id}.png` 192개, `images/familiars/type/*.webp` 9개, `images/familiars/elements/*.webp` 6개. 전부 MapleHub CDN에서 직접 다운로드(npc_id는 MapleHub "Select Familiar" 다이얼로그 DOM에서 추출)
+   - **서버 상태에 채널별 세부 보기 추가** — MapleHub처럼 월드 카드에서 "채널 상세 보기"를 누르면 1~N번 채널이 개별 정상/다운 배지로 펼쳐짐. 넥슨 API의 `GameNN`(0-index) 키를 채널 번호(NN+1)로 변환. `api/server-status.js`/`serve.js`의 `summarizeWorld`에 `channelList` 추가
+   - 보스 난이도 pill "EXTREME" 잘림 버그 — 처음엔 ellipsis 안전망만 추가했으나(부적절한 미봉책이라는 지적을 받음), 재조사 끝에 **진짜 원인**을 찾음: 기본 폰트 '고딕'이 실제로는 `font/ONE_Mobile_Title.ttf`(장식용 타이틀 폰트)라 일반 UI 폰트보다 훨씬 넓게 렌더링됨. `.boss-diff-pill .dpill__t`에 `font-family:'Segoe UI','Malgun Gothic',sans-serif`로 고정해 사용자가 어떤 폰트(고딕/Maple/8bit)를 고르든 pill만은 영향받지 않게 함 + 박스도 80px로 확대
 1. `8cc8a5f` 보스 난이도 pill(HARD/CHAOS/EXTREME 등) 텍스트가 알약 밖으로 튀어나오는 문제 — `overflow:hidden` + `ellipsis` 안전망 추가
 2. `b515300` 사이드바 캐릭터 카드 — 긴 직업명("Arch Mage (Ice, Lightning)") 줄바꿈 재발 방지. 사이드바 300→340px, 일러스트 108→84px로 여유 대폭 확대. 그 여파로 769~920px 폭에서 해방계산기/스타포스 2열 레이아웃이 40px로 짜부라지는 버그가 새로 생겨서 `@media (max-width:920px)`로 1열 전환 브레이크포인트 추가
 3. `be93fc1` **서버 상태 페이지 신규 추가** (MapleHub 대비 마지막 기능 격차 해소). 넥슨 공식 `no-auth/v1/server-status`, `no-auth/v1/maintenance/10100` API를 실측해서 프록시. 이 과정에서 **`WORLD_NAMES`의 Hyperion(46)/Solis(70) worldId가 뒤바뀌어 있던 버그 발견 및 수정** (`api/_lib.js`, `serve.js`)
@@ -42,13 +49,14 @@
 ### 1. 에렐 라이트 "Radiant Spear" 한글명 미확정
 `data_hexa.js`의 `Erel Light.skill[1]`이 `'레디언트 스피어'`로 되어 있는데, 이건 확인된 공식 한글명이 아니라 기존 노드들의 음역 관례를 따라 임시로 붙인 이름. 사용자가 인게임/공식 패치노트에서 정확한 한글명을 확인하면 그 값만 바꾸면 됨.
 
-### 2. 미스틱 프론티어(Mystic Frontier) 계산기 — 아직 미착수
-MapleHub에는 있고 우리는 없는 기능. 조사 결과:
-- 실제로는 "타입"이 아니라 **개별 패밀리어 192마리** 중 하나를 선택하는 시스템 (`Select Familiar — 192 Found`)
-- 공용 배지: 타입 9종(human/beast/plant/aquatic/fairy/reptile/devil/undead/machine) + 속성 6종(fire/poison/light/ice/dark/holy) = 15개 아이콘, MapleHub CDN `familiars/type/{name}.webp`, `familiars/elements/{name}.webp`
-- 개별 패밀리어 아이콘: MapleHub CDN `https://maplehub.app/familiars/images/{npc_id}.png` (예: 9961485.png). npc_id 192개는 MapleHub의 "Select Familiar" 검색 다이얼로그 DOM에서 전부 뽑아낼 수 있음(스크롤 없이 한 번에 로드됨)
-- 사용자와 논의 결과: MapleHub CDN에서 직접 다운로드하는 것으로 방향은 정했음(이미지 자체가 넥슨 게임 리소스라 원저작자가 아니라는 점에서 우리가 이미 해온 maplestorywiki 스크래핑과 같은 성격). **아직 실제로 192개를 다운로드하지는 않음** — 사용자가 "1차 종료"를 선언해서 여기서 멈춤
-- 다음에 이어서 할 일: (1) 공용 배지 15개 먼저 다운로드, (2) `[role="dialog"]` 안의 `img[src*="/familiars/images/"]`를 전부 순회해서 192개 npc_id 목록 확보, (3) 각 파일 다운로드, (4) 프론티어 잠재옵션/주사위 계산 로직은 MapleHub UI를 참고해 별도 설계 필요 (아직 설계 안 함)
+### 2. 미스틱 프론티어(Mystic Frontier) — 도감까지만 완료, 계산 로직은 미착수
+이미지·데이터 192종 전부 확보 완료 + 사이드바 탭도 만들어서 검색/필터 가능한 도감으로 노출 중 (`mysticfrontier.js`, `sec-mysticfrontier`, `data_familiars.js`).
+
+**아직 없는 것 — 여기부터 이어서 하면 됨**:
+- 덱 구성 UI (덱 1~3, 슬롯당 패밀리어 3마리 선택)
+- 프론티어 잠재옵션 시스템 (MapleHub에서 "SELECT FRONTIER POTENTIAL..." 드롭다운으로 봤던 것 — 정확한 옵션 목록/효과는 미조사)
+- 원정 주사위 굴림 계산 로직 (덱 조합에 따른 다이스 합계 계산 — MapleHub UI에서 "EXPEDITION DICE SIMULATION", "DICE TOTAL" 값 확인은 했으나 계산식은 역산 안 함)
+- 참고용 데이터는 다 있음: `FAMILIAR_LIST`(192종, id/name/level/type/element), 아이콘 전부(`images/familiars/icons/{id}.png`), 타입·속성 배지(`images/familiars/type/`, `images/familiars/elements/`)
 
 ### 3. 다른 신규 기능 후보 (사용자가 "잠시 보류" 표명)
 - 일/주/월 숙제 트래커 — 기존 캐릭터/보스 데이터 재활용 가능해서 가장 쉬움. **우선순위 1순위로 추천**했었음

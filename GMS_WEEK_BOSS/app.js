@@ -75,6 +75,7 @@ function navigateTo(sec) {
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
   if (sec === 'serverstatus') renderServerStatus();
+  if (sec === 'mysticfrontier') renderMysticFrontier();
   if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
   if (sec === 'hexa')      renderAllHexaLists();
 }

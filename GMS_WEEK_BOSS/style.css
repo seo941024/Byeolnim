@@ -1823,3 +1823,30 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-chan--up { background: rgba(74,222,128,.15); color: var(--success); }
 .ss-chan--down { background: rgba(240,80,96,.18); color: var(--danger); }
 
+/* ── 미스틱 프론티어 도감 ── */
+.mf-notice {
+  font-size: .8rem; color: var(--text-sub); background: rgba(139,92,246,.08);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 10px 14px; margin-bottom: 14px;
+}
+.mf-filters { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+.mf-filters .inp { flex: 1; min-width: 160px; }
+.mf-filters .sel { width: 130px; }
+.mf-count { font-size: .78rem; color: var(--text-sub); font-weight: 700; white-space: nowrap; margin-left: auto; }
+.mf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+.mf-card {
+  background: rgba(14,10,30,.65); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 8px; text-align: center;
+  display: flex; flex-direction: column; gap: 4px; min-width: 0;
+}
+.mf-card__img { width: 100%; aspect-ratio: 1/1; display: flex; align-items: center; justify-content: center; }
+.mf-card__img img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.mf-card__name {
+  font-size: .74rem; font-weight: 800; color: var(--text);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mf-card__meta { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.mf-card__lv { font-size: .68rem; font-weight: 700; color: var(--accent); }
+.mf-badge { width: 15px; height: 15px; object-fit: contain; }
+.mf-empty { grid-column: 1 / -1; text-align: center; color: var(--text-sub); font-size: .85rem; padding: 24px 0; }
+

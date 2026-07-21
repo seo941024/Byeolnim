@@ -1128,18 +1128,19 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-card__body { padding: 11px 13px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
 .ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
 .ci-card__nameline > div { min-width: 0; }
-/* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음 */
-.ci-jobicon { width: 46px; height: 46px; object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
-.ci-card__name { font-size: 1.02rem; font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ci-card__job { font-size: .78rem; color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음
+   카드 폭(cqw) 기준으로 크기를 잡아 카드가 커지면 아이콘도 함께 커진다 */
+.ci-jobicon { width: clamp(34px, 13cqw, 64px); height: clamp(34px, 13cqw, 64px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
+.ci-card__name { font-size: clamp(.9rem, .68rem + 2.2cqw, 1.5rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-card__job { font-size: clamp(.68rem, .5rem + 1.1cqw, 1.05rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {
   display: flex; align-items: center; justify-content: space-between;
   gap: 7px; flex-wrap: wrap; min-width: 0;
   border-top: 1px solid var(--border); padding-top: 8px;
 }
-.ci-lv { font-size: .96rem; font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
-.ci-server { display: flex; align-items: center; gap: 5px; font-size: .8rem; font-weight: 700; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.ci-servericon { width: 17px; height: 17px; object-fit: contain; }
+.ci-lv { font-size: clamp(.84rem, .6rem + 1.8cqw, 1.4rem); font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
+.ci-server { display: flex; align-items: center; gap: 5px; font-size: clamp(.7rem, .5rem + 1.1cqw, 1.05rem); font-weight: 700; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-servericon { width: clamp(14px, 4.5cqw, 24px); height: clamp(14px, 4.5cqw, 24px); object-fit: contain; }
 .ci-main { display: flex; flex-direction: column; gap: 16px; }
 .ci-cody img { width: 96px; height: 96px; }
 .ci-panel {
@@ -1174,7 +1175,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 醫뚯륫 移대뱶 ?섎떒 ??궧 */
 .ci-card__ranks { margin-top: 0; padding: 7px 13px 9px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
 .ci-ranks-title { font-size: .64rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.ci-card__ranks .ci-rank-row { padding: 3px 0; font-size: .82rem; }
+.ci-card__ranks .ci-rank-row { padding: 3px 0; font-size: clamp(.72rem, .5rem + 1.4cqw, 1.15rem); }
 
 /* 肄붾뵒 ?덉뒪?좊━ */
 .ci-codies { display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 6px; overflow-x: auto; }
@@ -1296,8 +1297,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-boss__trace{font-size:.82rem;font-weight:800;color:var(--text-dim)}
 .gen-boss__trace.on{color:var(--success)}
 
-/* ?곗륫 ?듦퀎 ?⑤꼸 */
-.gen-stat-panel{display:flex;flex-direction:column;position:sticky;top:70px}
+/* 우측 통계 패널
+   .card{position:relative}가 이후에 선언되어 있어 같은 클래스 하나짜리
+   명세도로는 소스 순서상 sticky를 덮어써 버린다 → 두 클래스 선택자로 명세도를 올림 */
+.gen-stat-panel.card{display:flex;flex-direction:column;position:sticky;top:70px}
 .gen-stat2{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;padding:7px 0;border-bottom:1px solid var(--border);color:var(--text-sub)}
 .gen-stat2 b{font-weight:900;color:var(--text);font-size:.88rem}
 .gen-stat2-div{height:8px}
@@ -1358,6 +1361,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: grid; grid-template-columns: minmax(130px, 36%) 1fr; grid-template-rows: 1fr auto; align-items: stretch;
   transition: transform .18s, box-shadow .18s, border-color .18s;
   box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  /* 카드 폭 기준 컨테이너 쿼리 단위(cqw) → 카드가 커지면 글씨/아이콘도 함께 커진다 */
+  container-type: inline-size;
 }
 .cg-card:hover { transform:translateY(-3px); border-color:rgba(167,139,250,.5); box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 14px rgba(139,92,246,.15); }
 .cg-card--active {
@@ -1551,7 +1556,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
   /* 제네시스/데스티니 2열 → 1열 */
   .gen-main-layout { grid-template-columns: 1fr; }
-  .gen-stat-panel { position: static; }
+  .gen-stat-panel.card { position: static; }
   .gen-input-row { flex-direction: column; }
   .gen-input-row .field { flex: none; width: 100%; }
   .gen-cfg-card { width: 100%; }

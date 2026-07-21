@@ -859,8 +859,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .diff-btns .dpill { cursor: pointer; padding: 5px 14px; font-size: .72rem; }
 .boss-diff-wrap { display: flex; align-items: center; gap: 8px; }
 .boss-diff-pill { width: 56px; flex-shrink: 0; display: flex; justify-content: center; }
-.boss-diff-pill .dpill { pointer-events: none; padding: 3px 0; width: 100%; justify-content: center; }
-.boss-diff-pill .dpill .dpill__t { font-size: clamp(.44rem, 1.1vw, .62rem); }
+/* overflow:hidden 안전망 — vw 기준 폰트가 브라우저 기본 폰트 크기(접근성 설정 등)에 따라
+   56px보다 커지면 텍스트가 알약 밖으로 튀어나가던 문제 */
+.boss-diff-pill .dpill { pointer-events: none; padding: 3px 2px; width: 100%; justify-content: center; overflow: hidden; }
+.boss-diff-pill .dpill .dpill__t {
+  font-size: clamp(.44rem, 1.1vw, .62rem);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .boss-diff-sel {
   appearance: none; -webkit-appearance: none;
   background: var(--bg3) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23888'/%3E%3C/svg%3E") no-repeat right 8px center;

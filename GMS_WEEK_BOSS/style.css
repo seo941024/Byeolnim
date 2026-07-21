@@ -1368,7 +1368,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
   /* 행을 명시해야 일러스트의 grid-row:1/-1 이 두 행을 걸친다 */
-  display: grid; grid-template-columns: minmax(130px, 36%) 1fr; grid-template-rows: 1fr auto; align-items: stretch;
+  /* 일러스트 칼럼은 240px에서 상한 — 초광폭 화면에서 카드가 무한정 커지지 않도록 */
+  display: grid; grid-template-columns: minmax(130px, min(36%, 240px)) 1fr; grid-template-rows: 1fr auto; align-items: stretch;
   transition: transform .18s, box-shadow .18s, border-color .18s;
   box-shadow: 0 2px 10px rgba(0,0,0,.4);
   /* 카드 폭 기준 컨테이너 쿼리 단위(cqw) → 카드가 커지면 글씨/아이콘도 함께 커진다 */

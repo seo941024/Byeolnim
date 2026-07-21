@@ -1225,7 +1225,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   box-shadow:0 4px 20px rgba(0,0,0,.4);
   transition:.3s;
   position:relative;overflow:hidden;
-  flex:1;
+  /* overflow:hidden인 flex 아이템의 자동 최소폭은 min-content가 아니라 0이라
+     min-width을 명시하지 않으면 좁은 화면에서 이미지가 잘릴 정도로 짜부라진다 */
+  flex:1 1 180px; min-width:180px;
 }
 .gen-cfg-card::before{
   content:'';position:absolute;inset:0;
@@ -1279,10 +1281,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-boss__toggle.on{background:var(--success);color:#000}
 
 /* ?? ?대갑 怨꾩궛湲????덉씠?꾩썐 ?? */
-.gen-main-layout{display:grid;grid-template-columns:1fr 320px;gap:16px;align-items:start}
+/* minmax(0,1fr) 필수 — 1fr만 쓰면 트랙 최소폭이 auto(콘텐츠 기준)라
+   왼쪽 콘텐츠가 넓을 때 그리드 자체가 오른쪽으로 넘친다 */
+.gen-main-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
 .gen-left{display:flex;flex-direction:column;gap:14px}
 .gen-inputs{display:flex;flex-direction:column;gap:0}
-.gen-input-row{display:flex;gap:12px;align-items:flex-end}
+/* flex-wrap 없으면 768~900px대에서 두 카드가 짜부라짐 → 공간 부족 시 줄바꿈 */
+.gen-input-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
 .gen-input-row .field{flex:1;display:flex;flex-direction:column;gap:5px}
 .gen-pass-field{flex:0 0 auto!important}
 .gen-inp{font-size:.88rem!important;height:38px}

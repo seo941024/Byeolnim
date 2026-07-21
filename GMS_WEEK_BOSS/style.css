@@ -1763,3 +1763,32 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   .header, .sidebar { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 
+/* ── 서버 상태 ── */
+.ss-maint {
+  background: rgba(240,80,96,.12); border: 1px solid rgba(240,80,96,.4);
+  color: var(--danger); font-weight: 800; font-size: .88rem;
+  border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;
+}
+.ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.ss-card {
+  background: rgba(14,10,30,.65); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+  display: flex; flex-direction: column; gap: 8px;
+  border-left: 3px solid var(--text-sub);
+}
+.ss-card.ss-up { border-left-color: var(--success); }
+.ss-card.ss-partial { border-left-color: var(--accent); }
+.ss-card.ss-down { border-left-color: var(--danger); }
+.ss-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.ss-card__name { font-weight: 900; font-size: .96rem; color: var(--text); }
+.ss-card__badge {
+  font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px;
+  background: rgba(255,255,255,.06); color: var(--text-sub); white-space: nowrap;
+}
+.ss-card.ss-up .ss-card__badge { background: rgba(74,222,128,.15); color: var(--success); }
+.ss-card.ss-partial .ss-card__badge { background: rgba(246,199,68,.15); color: var(--accent); }
+.ss-card.ss-down .ss-card__badge { background: rgba(240,80,96,.15); color: var(--danger); }
+.ss-card__row { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--text-sub); }
+.ss-card__row b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
+.ss-card__upd { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
+

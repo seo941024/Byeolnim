@@ -20,13 +20,14 @@ const MIME = {
 };
 
 // worldID → 월드명 (NA/EU, best-effort, 모르면 fallback)
+// 넥슨 공식 server-status API로 실측: Hyperion=70(NA), Solis=46(EU) — 기존 값과 뒤바뀌어 있었음
 const WORLD_NAMES = {
   // NA 일반
   1:'Bera', 19:'Scania', 17:'Aurora',
   // NA 리부트(Heroic)
-  45:'Kronos', 46:'Hyperion',
+  45:'Kronos', 70:'Hyperion',
   // EU
-  30:'Luna', 70:'Solis',
+  30:'Luna', 46:'Solis',
 };
 function worldName(id){ return WORLD_NAMES[id] || ('World #' + id); }
 
@@ -121,6 +122,49 @@ http.createServer(async (req, res) => {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       if (!info) return res.end(JSON.stringify({ ok:false, error:'캐릭터를 찾을 수 없습니다. (월드/리부트 구분 확인)' }));
       res.end(JSON.stringify({ ok:true, data:info }));
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'조회 실패: ' + e.message }));
+    }
+    return;
+  }
+
+  // ── API: /api/server-status?region=na|eu ──
+  if (u.pathname === '/api/server-status') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const region = (u.searchParams.get('region') || 'na').toLowerCase() === 'eu' ? 'eu' : 'na';
+    try {
+      const r = await fetch(`https://www.nexon.com/api/maplestory/no-auth/v1/server-status/${region}`,
+        { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } });
+      const d = await r.json();
+      const worlds = (d.servers || []).filter(w => w.worldId != null && w.LogDate).map(w => {
+        const gameKeys = Object.keys(w).filter(k => /^Game\d+$/.test(k));
+        const channels = gameKeys.map(k => w[k]).filter(v => v !== null && v !== -1);
+        const onlineChannels = channels.filter(v => v === 1).length;
+        const loginKeys = Object.keys(w).filter(k => /^Login\d+$/.test(k));
+        const loginOnline = loginKeys.filter(k => w[k] === 1).length;
+        return { worldId: w.worldId, world: w.worldName, up: channels.length > 0 && onlineChannels > 0,
+          channels: { online: onlineChannels, total: channels.length },
+          login: { online: loginOnline, total: loginKeys.length }, lastUpdate: w.LogDate || null };
+      });
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:true, region, worlds }));
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'조회 실패: ' + e.message }));
+    }
+    return;
+  }
+
+  // ── API: /api/maintenance ──
+  if (u.pathname === '/api/maintenance') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    try {
+      const r = await fetch('https://www.nexon.com/api/maplestory/no-auth/v1/maintenance/10100',
+        { headers: { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' } });
+      const d = await r.json();
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:true, maintenance: !!d.maintenance }));
     } catch (e) {
       res.writeHead(502, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok:false, error:'조회 실패: ' + e.message }));

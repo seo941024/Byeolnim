@@ -3,10 +3,12 @@
    여러 서버리스 함수에서 재사용.
    ============================================= */
 
+/* 넥슨 공식 server-status API(worldId 필드)로 실측 확인한 값.
+   기존에 Hyperion(46)/Solis(70)가 서로 뒤바뀌어 있었음 — 실제는 Hyperion=70(NA), Solis=46(EU) */
 const WORLD_NAMES = {
   1:'Bera', 19:'Scania', 17:'Aurora',   // NA 일반
-  45:'Kronos', 46:'Hyperion',           // NA 리부트(Heroic)
-  30:'Luna', 70:'Solis',                // EU
+  45:'Kronos', 70:'Hyperion',           // NA 리부트(Heroic)
+  30:'Luna', 46:'Solis',                // EU
 };
 function worldName(id){ return WORLD_NAMES[id] || ('World #' + id); }
 

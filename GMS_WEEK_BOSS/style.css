@@ -161,8 +161,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 
 /* ?? APP ?? */
-/* 300px — 가장 긴 직업명(Arch Mage (Ice, Lightning))도 한 줄에 들어가도록 260px에서 확장 */
-.app { display: grid; grid-template-columns: 300px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
+/* 340px — 300px는 실제 브라우저에서 여유가 0px라 폰트 렌더링差로 줄바꿈 재발 → 여유를 크게 늘림 */
+.app { display: grid; grid-template-columns: 340px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
 
 /* ?? SIDEBAR ?? */
 .sidebar {
@@ -244,8 +244,9 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: stretch; overflow: hidden;
 }
 .char-card__portrait {
-  /* 50%였던 걸 고정폭으로 바꿔 텍스트 쪽에 더 여유를 준다(긴 직업명 한 줄 확보) */
-  width: 108px; flex-shrink: 0;
+  /* 50%였던 걸 고정폭으로 바꿔 텍스트 쪽에 더 여유를 준다(긴 직업명 한 줄 확보)
+     사이드바 340px 기준 84px — 텍스트 칸에 충분한 여유(40px+)를 남겨 폰트 렌더링差에도 줄바꿈 없게 */
+  width: 84px; flex-shrink: 0;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
@@ -1499,6 +1500,14 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .sb-nav__item.active, .gen-cfg-card--pass.on { animation: none; }
   /* 그림자는 단일 레이어로 단순화해 매 프레임 페인트 비용 절감 */
   .char-card.active, .cg-card--active { box-shadow: 0 0 0 1px #f5c842, 0 2px 10px rgba(0,0,0,.5); }
+}
+
+/* ══════════════ 데스크톱 사이드바(340px) + 고정폭 320px 우측 패널 조합에서
+   768px보다 넓은 폭(769~~890px대)에서도 좌측 칼럼이 40px대로 짜부라지는
+   구간이 있어 minmax(0,1fr)만으로는 부족 — 이 폭에서는 아예 1열로 전환 ══════════════ */
+@media (max-width: 920px) {
+  .gen-main-layout { grid-template-columns: 1fr; }
+  .sf-layout { grid-template-columns: 1fr !important; }
 }
 
 /* ══════════════ 모바일 레이아웃 (≤768px) ══════════════ */

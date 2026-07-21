@@ -735,8 +735,10 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .lib-pct { font-size: .74rem; color: var(--text-sub); text-align: right; margin-top: 4px; }
 
 /* ?? STARFORCE ?? */
-.sf-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; align-items: start; }
-.sf-chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+/* minmax(0,1fr) 필수 — 1fr만 쓰면 콘텐츠가 더 큰 쪽(결과 카드)이 최소폭을
+   더 많이 가져가 반대쪽(토글 버튼들)이 짜부라진다 */
+.sf-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; align-items: start; }
+.sf-chart-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; }
 .sf-right { display: flex; flex-direction: column; gap: 16px; }
 #sfResult { display: flex; flex-direction: column; gap: 4px; }
 #cubeResults { display: flex; flex-direction: column; gap: 4px; }
@@ -753,7 +755,8 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-tab:last-child { border-right: none; }
 .sf-tab.active { background: var(--primary); color: #fff; }
 .sf-tab:hover:not(.active) { background: rgba(139,92,246,.1); color: var(--text); }
-.sf-toggle-group { display: flex; gap: 0; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border); }
+/* flex-wrap 안전망 — 그리드 수정 후에도 극단적으로 좁은 폭에서는 줄바꿈으로 대응 */
+.sf-toggle-group { display: flex; gap: 0; flex-wrap: wrap; border-radius: 10px; overflow: hidden; border: 1.5px solid var(--border); }
 .sf-toggle { flex: 1; padding: 10px 10px 8px; font-size: .83rem; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all .15s; display: flex; flex-direction: column; align-items: center; gap: 2px; }
 .sf-toggle:last-child { border-right: none; }
 .sf-toggle.active { background: var(--primary); color: #fff; font-weight: 700; }

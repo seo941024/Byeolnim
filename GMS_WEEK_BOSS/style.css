@@ -858,12 +858,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .diff-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .diff-btns .dpill { cursor: pointer; padding: 5px 14px; font-size: .72rem; }
 .boss-diff-wrap { display: flex; align-items: center; gap: 8px; }
-.boss-diff-pill { width: 56px; flex-shrink: 0; display: flex; justify-content: center; }
-/* overflow:hidden 안전망 — vw 기준 폰트가 브라우저 기본 폰트 크기(접근성 설정 등)에 따라
-   56px보다 커지면 텍스트가 알약 밖으로 튀어나가던 문제 */
-.boss-diff-pill .dpill { pointer-events: none; padding: 3px 2px; width: 100%; justify-content: center; overflow: hidden; }
+/* "EXTREME"(가장 긴 라벨)이 잘리지 않고 통째로 들어가도록 56→64px,
+   폰트도 뷰포트(vw) 기준이 아니라 이 박스 폭에 맞춘 고정값으로 변경.
+   ellipsis는 혹시 모를 극단적 상황을 위한 최후의 안전망일 뿐, 평소엔 걸리지 않아야 함 */
+.boss-diff-pill { width: 64px; flex-shrink: 0; display: flex; justify-content: center; }
+.boss-diff-pill .dpill { pointer-events: none; padding: 3px 3px; width: 100%; justify-content: center; overflow: hidden; }
 .boss-diff-pill .dpill .dpill__t {
-  font-size: clamp(.44rem, 1.1vw, .62rem);
+  font-size: .62rem;
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .boss-diff-sel {

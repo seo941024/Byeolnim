@@ -161,7 +161,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 
 /* ?? APP ?? */
-.app { display: grid; grid-template-columns: 260px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
+/* 300px — 가장 긴 직업명(Arch Mage (Ice, Lightning))도 한 줄에 들어가도록 260px에서 확장 */
+.app { display: grid; grid-template-columns: 300px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
 
 /* ?? SIDEBAR ?? */
 .sidebar {
@@ -243,7 +244,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: stretch; overflow: hidden;
 }
 .char-card__portrait {
-  width: 50%; flex-shrink: 0;
+  /* 50%였던 걸 고정폭으로 바꿔 텍스트 쪽에 더 여유를 준다(긴 직업명 한 줄 확보) */
+  width: 108px; flex-shrink: 0;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
@@ -1523,6 +1525,9 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
     transition: transform .28s ease;
     overflow-y: auto; -webkit-overflow-scrolling: touch;
   }
+  /* 80vw가 300px보다 좁아지는 소형 화면(~<375px)에서는 일러스트를 줄여
+     "Arch Mage (Ice, Lightning)" 같은 긴 직업명도 한 줄에 들어가게 한다 */
+  .char-card__portrait { width: 88px; }
   body.sidebar-open .sidebar { transform: translateX(0); }
 
   /* 드로어 배경 오버레이 */

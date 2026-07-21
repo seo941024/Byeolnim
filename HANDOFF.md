@@ -27,22 +27,24 @@
 
 ## 이번 세션에서 한 일 (최신 → 과거 순, 커밋 해시 포함)
 
-0. (HANDOFF 작성 이후 추가 작업, 커밋 해시는 `git log` 참고)
-   - **미스틱 프론티어 도감 탭 신규 추가** — 사이드바에 "환산주스탯" 바로 위 위치, 아이콘은 사용자가 추가한 `images/icons/Eqp_Roro_the_Familiar_Manager.png`. `mysticfrontier.js` + `sec-mysticfrontier`. 아직 **덱 구성/프론티어 잠재옵션/주사위 계산 로직은 없음** — 패밀리어 192종 검색·타입/속성 필터만 되는 도감 뷰어 수준
-   - 캐릭터 목록 nav 아이콘 → `images/icons/835835maple.ico`로 교체 (`.ico`도 `<img>` src로 정상 동작 확인)
-   - 서버 상태 nav 아이콘 → 캐릭터 목록이 원래 쓰던 `info.webp`로 이동
-   - **패밀리어 아이콘/데이터 192개 전량 확보 완료**: `data_familiars.js`(FAMILIAR_LIST: id/name/level/type/element), `images/familiars/icons/{id}.png` 192개, `images/familiars/type/*.webp` 9개, `images/familiars/elements/*.webp` 6개. 전부 MapleHub CDN에서 직접 다운로드(npc_id는 MapleHub "Select Familiar" 다이얼로그 DOM에서 추출)
-   - **서버 상태에 채널별 세부 보기 추가** — MapleHub처럼 월드 카드에서 "채널 상세 보기"를 누르면 1~N번 채널이 개별 정상/다운 배지로 펼쳐짐. 넥슨 API의 `GameNN`(0-index) 키를 채널 번호(NN+1)로 변환. `api/server-status.js`/`serve.js`의 `summarizeWorld`에 `channelList` 추가
-   - 보스 난이도 pill "EXTREME" 잘림 버그 — 처음엔 ellipsis 안전망만 추가했으나(부적절한 미봉책이라는 지적을 받음), 재조사 끝에 **진짜 원인**을 찾음: 기본 폰트 '고딕'이 실제로는 `font/ONE_Mobile_Title.ttf`(장식용 타이틀 폰트)라 일반 UI 폰트보다 훨씬 넓게 렌더링됨. `.boss-diff-pill .dpill__t`에 `font-family:'Segoe UI','Malgun Gothic',sans-serif`로 고정해 사용자가 어떤 폰트(고딕/Maple/8bit)를 고르든 pill만은 영향받지 않게 함 + 박스도 80px로 확대
-1. `8cc8a5f` 보스 난이도 pill(HARD/CHAOS/EXTREME 등) 텍스트가 알약 밖으로 튀어나오는 문제 — `overflow:hidden` + `ellipsis` 안전망 추가
-2. `b515300` 사이드바 캐릭터 카드 — 긴 직업명("Arch Mage (Ice, Lightning)") 줄바꿈 재발 방지. 사이드바 300→340px, 일러스트 108→84px로 여유 대폭 확대. 그 여파로 769~920px 폭에서 해방계산기/스타포스 2열 레이아웃이 40px로 짜부라지는 버그가 새로 생겨서 `@media (max-width:920px)`로 1열 전환 브레이크포인트 추가
-3. `be93fc1` **서버 상태 페이지 신규 추가** (MapleHub 대비 마지막 기능 격차 해소). 넥슨 공식 `no-auth/v1/server-status`, `no-auth/v1/maintenance/10100` API를 실측해서 프록시. 이 과정에서 **`WORLD_NAMES`의 Hyperion(46)/Solis(70) worldId가 뒤바뀌어 있던 버그 발견 및 수정** (`api/_lib.js`, `serve.js`)
-4. `7177bb0` 초광폭 화면(2560px+)에서 캐릭터 카드 일러스트가 무한정 커지던 것에 240px 상한
-5. `1906406` 에렐 라이트 헥사 노드 구조 수정 — 스킬 1→2개, 마스터리 2→3개(사용자가 실제 아이콘 파일로 검증)
-6. `3fe8d6d` 시아 아스텔/에렐 라이트 헥사 스킬 아이콘을 maplestorywiki.net 원본과 대조해 정확히 매칭 (기존에 완전히 잘못된 아이콘/표 스크린샷이 들어가 있었음)
-7. `e4d2492` ~ `da4aec6` 등 — 캐릭터 카드 반응형 스윕 (모달, 초광폭, 큐브/스타포스 결과 렌더링 등 4단계로 나눠 진행)
+1. `90ca0aa` 서버 상태 — `.ss-grid` auto-fill → 2열 고정(NA 6장=3행, EU 4장=2행). 채널 상세보기 **토글 버튼 완전 제거**, 항상 펼친 채로 표시 (`_ssExpanded` 상태·`.ss-card__toggle` CSS 삭제)
+2. `e431df0` 미스틱 프론티어 도감 카드 크기 통일 — 패밀리어 원본 해상도가 87×107~398×358로 제각각이라 정사각박스+`object-fit:contain`이 작은 이미지를 억지로 확대하던 문제. `width/height:auto`+`max-width/max-height:100%`로 바꿔 확대 없이 축소만 되게 함. `.mf-grid` 5열 고정(모바일 3열, `!important` 필요 — 아래 버그패턴 참고)
+3. `47644bf` 서버 상태 nav 아이콘(`info.webp`, 원본 50×48)이 `data-sec`별 크기 규칙 누락으로 원본 그대로 렌더링되어 라벨이 밀려 보이던 문제. `.sb-nav__icon` 기본값(28×28) 추가 + `serverstatus`/`mysticfrontier` 각각 크기 지정
+4. `cace921` **미스틱 프론티어 도감 탭 신규 추가** — 사이드바 "환산주스탯" 바로 위, 아이콘은 `images/icons/Eqp_Roro_the_Familiar_Manager.png`. 캐릭터 목록 nav 아이콘 → `images/icons/835835maple.ico`(`.ico`도 `<img>`에서 정상 동작 확인). 서버 상태 nav 아이콘 → 캐릭터 목록이 쓰던 `info.webp`로 이동
+5. `108b95c` 서버 상태에 채널별 세부 보기 추가(이후 3번 커밋에서 토글은 다시 제거됨) — 넥슨 API의 `GameNN`(0-index) 키를 채널 번호(NN+1)로 변환해 `channelList` 노출
+6. `a815bf3` **패밀리어 아이콘/데이터 192개 전량 확보**: `data_familiars.js`(FAMILIAR_LIST: id/name/level/type/element), `images/familiars/icons/{id}.png` 192개, `images/familiars/type/*.webp` 9개, `images/familiars/elements/*.webp` 6개. MapleHub CDN에서 직접 다운로드(npc_id는 MapleHub "Select Familiar" 다이얼로그 DOM에서 추출)
+7. `ec45db1` 보스 난이도 pill "EXTREME" 잘림 — **진짜 원인**: 기본 폰트 '고딕'이 실제로는 `font/ONE_Mobile_Title.ttf`(장식용 타이틀 폰트)라 일반 UI 폰트보다 훨씬 넓게 렌더링됨. `.boss-diff-pill .dpill__t`에 `font-family:'Segoe UI','Malgun Gothic',sans-serif` 고정 + 박스 80px로 확대. (`2afbccb`에서 먼저 박스만 키웠으나 부족했고, `8cc8a5f`의 최초 ellipsis 안전망은 "미봉책" 지적을 받고 이걸로 대체)
+8. `b515300` 사이드바 캐릭터 카드 — 긴 직업명("Arch Mage (Ice, Lightning)") 줄바꿈 재발 방지. 사이드바 300→340px, 일러스트 108→84px로 여유 대폭 확대. 그 여파로 769~920px 폭에서 해방계산기/스타포스 2열 레이아웃이 40px로 짜부라지는 버그가 새로 생겨서 `@media (max-width:920px)`로 1열 전환 브레이크포인트 추가
+9. `be93fc1` **서버 상태 페이지 신규 추가** (MapleHub 대비 마지막 기능 격차 해소). 넥슨 공식 `no-auth/v1/server-status`, `no-auth/v1/maintenance/10100` API를 실측해서 프록시. 이 과정에서 **`WORLD_NAMES`의 Hyperion(46)/Solis(70) worldId가 뒤바뀌어 있던 버그 발견 및 수정** (`api/_lib.js`, `serve.js`)
+10. `7177bb0` 초광폭 화면(2560px+)에서 캐릭터 카드 일러스트가 무한정 커지던 것에 240px 상한
+11. `1906406` 에렐 라이트 헥사 노드 구조 수정 — 스킬 1→2개, 마스터리 2→3개(사용자가 실제 아이콘 파일로 검증)
+12. `3fe8d6d` 시아 아스텔/에렐 라이트 헥사 스킬 아이콘을 maplestorywiki.net 원본과 대조해 정확히 매칭 (기존에 완전히 잘못된 아이콘/표 스크린샷이 들어가 있었음)
+13. `e4d2492` ~ `da4aec6` 등 — 캐릭터 카드 반응형 스윕 (모달, 초광폭, 큐브/스타포스 결과 렌더링 등 4단계로 나눠 진행)
 
-**이번 세션에서 반복적으로 잡은 버그 패턴**: CSS Grid/Flex에서 `1fr` 트랙이나 `flex:1` 아이템은 기본 최소 크기가 콘텐츠 기준(`auto`)이라, 특정 폭에서 형제 요소가 크면 다른 쪽이 그 미만으로 안 줄어들고 그리드/카드 밖으로 넘치거나 텍스트가 잘림. 해결은 거의 항상 `minmax(0, 1fr)` 또는 명시적 `min-width:0`. 앞으로 비슷한 잘림/오버플로 버그를 보면 이 패턴부터 의심할 것.
+**이번 세션에서 반복적으로 잡은 버그 패턴**:
+1. CSS Grid/Flex에서 `1fr` 트랙이나 `flex:1` 아이템은 기본 최소 크기가 콘텐츠 기준(`auto`)이라, 특정 폭에서 형제 요소가 크면 다른 쪽이 그 미만으로 안 줄어들고 그리드/카드 밖으로 넘치거나 텍스트가 잘림. 해결은 거의 항상 `minmax(0, 1fr)` 또는 명시적 `min-width:0`. 앞으로 비슷한 잘림/오버플로 버그를 보면 이 패턴부터 의심할 것.
+2. **CSS를 파일 맨 뒤에 새 블록으로 추가하면, 이미 파일 중간에 있는 모바일 미디어쿼리보다 소스 순서상 나중에 와서 명세도가 같을 때 미디어쿼리 쪽이 무시된다.** `.sf-layout`, `.mf-grid`에서 실제로 겪음 — 새 컴포넌트의 모바일 오버라이드를 쓸 때는 `!important`를 쓰거나, 기존 모바일 미디어쿼리 블록보다 앞쪽에 기본 규칙을 선언할 것.
+3. nav 아이콘처럼 `data-sec`별로 개별 크기 규칙을 거는 구조에서, 새 항목을 추가하면서 크기 규칙을 깜빡하면 이미지 원본 픽셀 크기 그대로 렌더링되어 레이아웃이 밀림. 새 아이콘 추가 시 반드시 크기 규칙도 같이 추가할 것(이번에 `.sb-nav__icon`에 기본값을 넣어 안전장치는 마련해둠).
 
 ## 미해결 / 확인 필요한 것
 
@@ -50,7 +52,7 @@
 `data_hexa.js`의 `Erel Light.skill[1]`이 `'레디언트 스피어'`로 되어 있는데, 이건 확인된 공식 한글명이 아니라 기존 노드들의 음역 관례를 따라 임시로 붙인 이름. 사용자가 인게임/공식 패치노트에서 정확한 한글명을 확인하면 그 값만 바꾸면 됨.
 
 ### 2. 미스틱 프론티어(Mystic Frontier) — 도감까지만 완료, 계산 로직은 미착수
-이미지·데이터 192종 전부 확보 완료 + 사이드바 탭도 만들어서 검색/필터 가능한 도감으로 노출 중 (`mysticfrontier.js`, `sec-mysticfrontier`, `data_familiars.js`).
+이미지·데이터 192종 전부 확보 완료 + 사이드바 탭도 만들어서 검색/필터 가능한 도감으로 노출 중 (`mysticfrontier.js`, `sec-mysticfrontier`, `data_familiars.js`). 5열 고정, 카드 크기 통일(96px 이미지 박스, 원본보다 확대 안 함) 완료.
 
 **아직 없는 것 — 여기부터 이어서 하면 됨**:
 - 덱 구성 UI (덱 1~3, 슬롯당 패밀리어 3마리 선택)

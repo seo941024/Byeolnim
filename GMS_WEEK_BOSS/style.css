@@ -1899,8 +1899,57 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .mf-card--pick { cursor: pointer; transition: border-color .15s, transform .1s; }
 .mf-card--pick:hover { border-color: var(--primary); transform: translateY(-1px); }
 .mf-card--disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+
+/* ── 미스틱 프론티어 주사위 계산기 ── */
+.mf-dice-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 340px); gap: 14px; align-items: start; }
+.mf-dice-config, .mf-dice-result-card { display: flex; flex-direction: column; }
+.mf-slot--potential { align-items: flex-start; padding: 8px 30px 8px 10px; }
+.mf-slot__body { min-width: 0; flex: 1; }
+.mf-slot__cond { font-size: .78rem; font-weight: 700; color: var(--text); line-height: 1.4; }
+.mf-slot__bonus { font-size: .74rem; color: var(--primary); font-weight: 700; margin-top: 2px; }
+.mf-rarity-badge {
+  flex-shrink: 0; font-size: .64rem; font-weight: 800; padding: 2px 7px; border-radius: 999px;
+  white-space: nowrap; margin-top: 1px;
+}
+.mf-rarity--common    { background: rgba(148,163,184,.18); color: #94a3b8; }
+.mf-rarity--rare      { background: rgba(56,189,248,.18);  color: #38bdf8; }
+.mf-rarity--epic      { background: rgba(167,139,250,.2);  color: var(--primary); }
+.mf-rarity--unique    { background: rgba(246,199,68,.18);  color: var(--accent); }
+.mf-rarity--legendary { background: rgba(240,80,96,.18);   color: var(--danger); }
+.mf-roller-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; margin-top: 2px; }
+.mf-roller-dot--gray   { background: #94a3b8; }
+.mf-roller-dot--blue   { background: #38bdf8; }
+.mf-roller-dot--purple { background: var(--primary); }
+.mf-roller-dot--orange { background: #fb923c; }
+.mf-roller-dot--green  { background: var(--success); }
+.mf-roller-icon { width: 24px; height: 24px; object-fit: contain; flex-shrink: 0; }
+
+.mf-potential-list { max-height: 55vh; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.mf-potential-row {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.mf-potential-row:hover { border-color: var(--primary); background: rgba(139,92,246,.06); }
+.mf-potential-row__cond { flex: 1; font-size: .8rem; color: var(--text); min-width: 0; }
+.mf-potential-row__bonus { font-size: .78rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
+
+.mf-dice-rolled { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
+.mf-die {
+  width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
+  background: var(--bg3); border: 1.5px solid var(--border); border-radius: var(--radius-sm);
+  font-size: 1.15rem; font-weight: 900; color: var(--text);
+}
+.mf-dice-eq { font-size: .95rem; font-weight: 800; color: var(--accent); margin-left: 4px; }
+.mf-dice-breakdown { font-size: .78rem; color: var(--text-sub); margin-top: 8px; }
+.mf-dice-divider { height: 1px; background: var(--border); margin: 14px 0; }
+.mf-dice-chance { display: flex; justify-content: space-between; align-items: center; font-size: .86rem; font-weight: 700; }
+.mf-dice-chance b { font-size: 1.1rem; color: var(--accent); }
+.mf-dice-range { font-size: .74rem; color: var(--text-sub); margin-top: 8px; }
+
 @media (max-width: 768px) {
   .mf-deck-wrap { grid-template-columns: 1fr !important; }
   .mf-picker-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+  .mf-dice-wrap { grid-template-columns: 1fr !important; }
 }
 

@@ -1797,7 +1797,8 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   color: var(--danger); font-weight: 800; font-size: .88rem;
   border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;
 }
-.ss-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+/* 2열 고정 — NA 6개 월드 기준 3행 2열 */
+.ss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .ss-card {
   background: rgba(14,10,30,.65); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px 16px;
@@ -1819,11 +1820,6 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-card__row { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--text-sub); }
 .ss-card__row b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
 .ss-card__upd { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
-.ss-card__toggle {
-  font-size: .7rem; font-weight: 700; color: var(--primary);
-  text-align: left; padding: 4px 0 0; margin-top: 2px;
-}
-.ss-card__toggle:hover { text-decoration: underline; }
 .ss-chan-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
 .ss-chan {
   min-width: 22px; text-align: center; padding: 2px 3px;

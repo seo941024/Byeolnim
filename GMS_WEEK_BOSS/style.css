@@ -1862,3 +1862,45 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .mf-badge { width: 15px; height: 15px; object-fit: contain; }
 .mf-empty { grid-column: 1 / -1; text-align: center; color: var(--text-sub); font-size: .85rem; padding: 24px 0; }
 
+/* ── 미스틱 프론티어 덱 구성 ── */
+.mf-deck-wrap { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.mf-deck-card { display: flex; flex-direction: column; gap: 10px; }
+.mf-deck-slots { display: flex; flex-direction: column; gap: 8px; }
+.mf-slot {
+  position: relative; border-radius: var(--radius-sm); border: 1.5px dashed var(--border);
+  padding: 8px; display: flex; align-items: center; gap: 10px; min-height: 60px;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.mf-slot--empty { justify-content: center; color: var(--text-sub); }
+.mf-slot--empty:hover { border-color: var(--primary); color: var(--primary); background: rgba(139,92,246,.06); }
+.mf-slot__plus { font-size: 1.1rem; font-weight: 700; }
+.mf-slot__label { font-size: .78rem; font-weight: 700; }
+.mf-slot--filled {
+  border-style: solid; border-color: var(--border); background: rgba(14,10,30,.4);
+  flex-direction: row; text-align: left; padding: 6px 30px 6px 8px; cursor: default;
+}
+.mf-slot--filled .mf-card__img { width: 40px; height: 40px; flex-shrink: 0; }
+.mf-slot--filled .mf-card__name { font-size: .8rem; }
+.mf-slot--filled .mf-card__meta { justify-content: flex-start; }
+.mf-slot__remove {
+  position: absolute; top: 6px; right: 6px; width: 20px; height: 20px;
+  border-radius: 50%; background: rgba(240,80,96,.15); color: var(--danger);
+  font-size: .85rem; line-height: 1; display: flex; align-items: center; justify-content: center;
+}
+.mf-slot__remove:hover { background: var(--danger); color: #fff; }
+.mf-deck-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 2px; }
+.mf-deck-tag {
+  font-size: .68rem; font-weight: 700; color: var(--primary);
+  background: rgba(139,92,246,.12); border: 1px solid var(--border);
+  border-radius: 999px; padding: 3px 9px;
+}
+/* 패밀리어 선택 피커 모달 */
+.mf-picker-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; max-height: 50vh; overflow-y: auto; }
+.mf-card--pick { cursor: pointer; transition: border-color .15s, transform .1s; }
+.mf-card--pick:hover { border-color: var(--primary); transform: translateY(-1px); }
+.mf-card--disabled { opacity: .3; cursor: not-allowed; pointer-events: none; }
+@media (max-width: 768px) {
+  .mf-deck-wrap { grid-template-columns: 1fr !important; }
+  .mf-picker-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+

@@ -351,8 +351,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   width: 32px; height: 32px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
 }
+/* data-sec별 크기 규칙이 없으면 원본 픽셀 크기 그대로 렌더링되어 32px 박스를
+   벗어나 라벨을 밀어낸다(서버 상태의 info.webp가 50x48이라 실제로 발생했음) →
+   기본값을 둬서 새 nav 아이템을 추가해도 안전하게 안착 */
 .sb-nav__icon {
   object-fit: contain;
+  width: 28px; height: 28px;
 }
 /* ?? nav ?꾩씠肄?媛쒕퀎 ?ш린 ?? */
 .sb-nav__item[data-sec="charinfo"]   .sb-nav__icon { width: 26px; height: 26px; }
@@ -363,6 +367,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="starforce"]  .sb-nav__icon { width: 25px; height: 25px; }
 .sb-nav__item[data-sec="cube"]       .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="bosshp"]     .sb-nav__icon { width: 26px; height: 26px; }
+.sb-nav__item[data-sec="serverstatus"]    .sb-nav__icon { width: 26px; height: 26px; }
+.sb-nav__item[data-sec="mysticfrontier"]  .sb-nav__icon { width: 27px; height: 27px; }
 .sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 26px; height: 26px; }
 /* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}

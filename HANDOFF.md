@@ -51,14 +51,17 @@
 ### 1. 에렐 라이트 "Radiant Spear" 한글명 미확정
 `data_hexa.js`의 `Erel Light.skill[1]`이 `'레디언트 스피어'`로 되어 있는데, 이건 확인된 공식 한글명이 아니라 기존 노드들의 음역 관례를 따라 임시로 붙인 이름. 사용자가 인게임/공식 패치노트에서 정확한 한글명을 확인하면 그 값만 바꾸면 됨.
 
-### 2. 미스틱 프론티어(Mystic Frontier) — 도감까지만 완료, 계산 로직은 미착수
-이미지·데이터 192종 전부 확보 완료 + 사이드바 탭도 만들어서 검색/필터 가능한 도감으로 노출 중 (`mysticfrontier.js`, `sec-mysticfrontier`, `data_familiars.js`). 5열 고정, 카드 크기 통일(96px 이미지 박스, 원본보다 확대 안 함) 완료.
+### 2. 미스틱 프론티어(Mystic Frontier) — ✅ 완료 (도감 + 덱 구성 + 주사위 계산기)
+아래는 이후 세션(커밋 `262b18c`, `e6a2f47`)에서 마무리됨. 더 손볼 게 없으면 이 항목은 지워도 됨.
 
-**아직 없는 것 — 여기부터 이어서 하면 됨**:
-- 덱 구성 UI (덱 1~3, 슬롯당 패밀리어 3마리 선택)
-- 프론티어 잠재옵션 시스템 (MapleHub에서 "SELECT FRONTIER POTENTIAL..." 드롭다운으로 봤던 것 — 정확한 옵션 목록/효과는 미조사)
-- 원정 주사위 굴림 계산 로직 (덱 조합에 따른 다이스 합계 계산 — MapleHub UI에서 "EXPEDITION DICE SIMULATION", "DICE TOTAL" 값 확인은 했으나 계산식은 역산 안 함)
-- 참고용 데이터는 다 있음: `FAMILIAR_LIST`(192종, id/name/level/type/element), 아이콘 전부(`images/familiars/icons/{id}.png`), 타입·속성 배지(`images/familiars/type/`, `images/familiars/elements/`)
+- **잠재옵션/주사위 계산식 원본 확보**: maplehub.app이 403으로 WebFetch를 막아서, Bash의 curl로 우회해 그 사이트의 실제 프로덕션 JS 번들(`MysticFrontier-*.js`)을 직접 다운로드 → 안의 데이터 배열을 grep으로 추출. 추측이 아니라 실제 배포 코드 그대로.
+  - `data_frontier_potentials.js` 신규: `FRONTIER_POTENTIALS`(1784건 — 조건 58종 × 등급 5단계) + `FRONTIER_DICE_ROLLERS`(20건, 소모 아이템)
+  - 계산식도 번들에서 확인: `totalDice = floor((3d6 + Σ선택한 옵션 dice보너스) × (Σ선택한 옵션 mult보너스, 0이면 1배) + 1e-9)` — **배수 보너스는 곱셈이 아니라 여러 개 선택 시 서로 합산됨**(중요, 직관과 다름). node로 검증 완료.
+- **덱 구성 UI**: 덱 3개 × 슬롯 3개, 슬롯 클릭 시 검색 가능한 패밀리어 피커. 저장은 `STORAGE_KEYS.mfDecks`(`mf_decks_v1`).
+- **주사위 계산기 탭**: 처음엔 잠재옵션을 덱과 별개로 다시 고르게 만들었다가, 사용자 지적으로 리팩토링 — **덱 슬롯이 `{familiarId, potentialId}` 구조**로 바뀌어서 패밀리어 고를 때 그 카드의 잠재옵션도 같이 지정하고, 주사위 탭에서는 "덱 1/2/3" 중 고르기만 하면 그 덱의 잠재옵션을 그대로 사용. 다이스 롤러(소모 아이템)만 별도 선택.
+- 롤러 아이콘은 maplehub.app 이미지를 핫링크하지 않고 색상 배지(`.mf-roller-dot`)로 대체.
+- **주의**: 이 세션은 Claude_Browser/claude-in-chrome 프리뷰 도구가 연결되지 않아 실제 렌더링을 직접 확인하지 못함 — 문법·데이터 무결성·계산식은 전부 Node 스크립트로 검증했지만, 화면상 확인은 사용자가 배포 후 직접 함.
+- 참고 데이터 위치는 기존과 동일: `FAMILIAR_LIST`(192종), 아이콘 `images/familiars/icons/{id}.png`
 
 ### 3. 다른 신규 기능 후보 (사용자가 "잠시 보류" 표명)
 - 일/주/월 숙제 트래커 — 기존 캐릭터/보스 데이터 재활용 가능해서 가장 쉬움. **우선순위 1순위로 추천**했었음

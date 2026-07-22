@@ -55,13 +55,23 @@ function _mfRenderList() {
     || '<p class="mf-empty">조건에 맞는 패밀리어가 없습니다.</p>';
 }
 
-/* ─── 덱 구성 ─── */
+/* ─── 덱 구성 ───
+   슬롯 하나 = { familiarId, potentialId }. 패밀리어 카드가 곧 잠재옵션을 갖고 있으므로
+   덱을 짤 때 패밀리어와 잠재옵션을 같이 지정해두면, 주사위 계산기에서 그 덱을
+   그대로 불러써서 다시 고를 필요가 없다. */
 function _mfLoadDecks() {
   try {
     const s = JSON.parse(localStorage.getItem(STORAGE_KEYS.mfDecks) || '[]');
-    return [0, 1, 2].map(i => Array.isArray(s[i])
-      ? [s[i][0] ?? null, s[i][1] ?? null, s[i][2] ?? null]
-      : [null, null, null]);
+    return [0, 1, 2].map(i => {
+      const d = Array.isArray(s[i]) ? s[i] : [null, null, null];
+      return [0, 1, 2].map(j => {
+        const v = d[j];
+        if (!v) return null;
+        // 구버전: 슬롯이 패밀리어 id 문자열 하나였음 → 이전
+        if (typeof v === 'string') return { familiarId: v, potentialId: null };
+        return { familiarId: v.familiarId ?? null, potentialId: v.potentialId ?? null };
+      });
+    });
   } catch { return [[null, null, null], [null, null, null], [null, null, null]]; }
 }
 function _mfSaveDecks() { localStorage.setItem(STORAGE_KEYS.mfDecks, JSON.stringify(_mfDecks)); }
@@ -69,7 +79,7 @@ function _mfSaveDecks() { localStorage.setItem(STORAGE_KEYS.mfDecks, JSON.string
 let _mfDecks = _mfLoadDecks();
 
 function _mfDeckSummary(deck) {
-  const fams = deck.map(id => id ? _mfFamiliarById(id) : null).filter(Boolean);
+  const fams = deck.map(s => s?.familiarId ? _mfFamiliarById(s.familiarId) : null).filter(Boolean);
   if (!fams.length) return '';
   const types = new Set(fams.map(f => f.type).filter(Boolean));
   const elems = new Set(fams.map(f => f.element).filter(Boolean));
@@ -82,16 +92,25 @@ function _mfDeckSummary(deck) {
 }
 
 function _mfSlotHtml(deckIdx, slotIdx) {
-  const id = _mfDecks[deckIdx][slotIdx];
-  const f = id ? _mfFamiliarById(id) : null;
+  const slot = _mfDecks[deckIdx][slotIdx];
+  const f = slot?.familiarId ? _mfFamiliarById(slot.familiarId) : null;
   if (!f) {
     return `<div class="mf-slot mf-slot--empty" data-deck="${deckIdx}" data-slot="${slotIdx}">
       <span class="mf-slot__plus">+</span><span class="mf-slot__label">패밀리어 선택</span>
     </div>`;
   }
-  return `<div class="mf-slot mf-slot--filled" data-deck="${deckIdx}" data-slot="${slotIdx}">
-    <button class="mf-slot__remove" data-deck="${deckIdx}" data-slot="${slotIdx}" title="제거">×</button>
-    ${_mfCardHtml(f)}
+  const potential = slot.potentialId ? _mfPotentialById(slot.potentialId) : null;
+  const potHtml = potential
+    ? `<div class="mf-slot__pot mf-slot__pot--set" data-deck="${deckIdx}" data-slot="${slotIdx}">
+         <span class="mf-rarity-badge mf-rarity--${potential.rarity}">${MF_RARITY_KO[potential.rarity]}</span>
+         <span class="mf-slot__cond">${potential.ko}</span>
+         <span class="mf-slot__bonus">${_mfBonusText(potential)}</span>
+       </div>`
+    : `<div class="mf-slot__pot mf-slot__pot--unset" data-deck="${deckIdx}" data-slot="${slotIdx}">+ 잠재옵션 설정</div>`;
+  return `<div class="mf-slot mf-slot--filled mf-slot--withpot" data-deck="${deckIdx}" data-slot="${slotIdx}">
+    <button class="mf-slot__remove" data-deck-remove="${deckIdx}" data-slot-remove="${slotIdx}" title="제거">×</button>
+    <div class="mf-slot__fam" data-fam-deck="${deckIdx}" data-fam-slot="${slotIdx}">${_mfCardHtml(f)}</div>
+    ${potHtml}
   </div>`;
 }
 
@@ -108,18 +127,30 @@ function _mfRenderDecks() {
     </div>`).join('');
 
   wrap.querySelectorAll('.mf-slot--empty').forEach(el => {
-    el.addEventListener('click', () => _mfOpenPicker(+el.dataset.deck, +el.dataset.slot));
+    el.addEventListener('click', () => _mfOpenFamiliarPicker(+el.dataset.deck, +el.dataset.slot));
+  });
+  wrap.querySelectorAll('.mf-slot__fam').forEach(el => {
+    el.addEventListener('click', () => _mfOpenFamiliarPicker(+el.dataset.famDeck, +el.dataset.famSlot));
+  });
+  wrap.querySelectorAll('.mf-slot__pot').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      _mfOpenPotentialPicker(pot => {
+        _mfDecks[+el.dataset.deck][+el.dataset.slot].potentialId = pot.id;
+        _mfSaveDecks(); _mfRenderDecks();
+      });
+    });
   });
   wrap.querySelectorAll('.mf-slot__remove').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
-      _mfDecks[+btn.dataset.deck][+btn.dataset.slot] = null;
+      _mfDecks[+btn.dataset.deckRemove][+btn.dataset.slotRemove] = null;
       _mfSaveDecks(); _mfRenderDecks();
     });
   });
 }
 
-function _mfOpenPicker(deckIdx, slotIdx) {
+function _mfOpenFamiliarPicker(deckIdx, slotIdx) {
   _mfPickerDeckIdx = deckIdx;
   _mfPickerSlotIdx = slotIdx;
   let overlay = document.getElementById('mfPickerOverlay');
@@ -154,18 +185,20 @@ function _mfClosePicker() {
 function _mfRenderPickerGrid(query) {
   const grid = document.getElementById('mfPickerGrid');
   if (!grid) return;
-  const usedInDeck = new Set(_mfDecks[_mfPickerDeckIdx].filter(Boolean));
+  const usedInDeck = new Set(_mfDecks[_mfPickerDeckIdx].map(s => s?.familiarId).filter(Boolean));
+  const curId = _mfDecks[_mfPickerDeckIdx][_mfPickerSlotIdx]?.familiarId;
   const list = FAMILIAR_LIST
     .filter(f => !query || f.name.toLowerCase().includes(query.toLowerCase()))
     .sort((a, b) => b.level - a.level);
   grid.innerHTML = list.map(f => {
-    const disabled = usedInDeck.has(f.id) && _mfDecks[_mfPickerDeckIdx][_mfPickerSlotIdx] !== f.id;
+    const disabled = usedInDeck.has(f.id) && curId !== f.id;
     return `<div class="mf-card mf-card--pick ${disabled ? 'mf-card--disabled' : ''}" data-id="${f.id}">${_mfCardHtml(f)}</div>`;
   }).join('') || '<p class="mf-empty">검색 결과가 없습니다.</p>';
 
   grid.querySelectorAll('.mf-card--pick:not(.mf-card--disabled)').forEach(el => {
     el.addEventListener('click', () => {
-      _mfDecks[_mfPickerDeckIdx][_mfPickerSlotIdx] = el.dataset.id;
+      // 새 패밀리어를 고르면 그 카드의 잠재옵션은 다시 설정해야 하므로 초기화
+      _mfDecks[_mfPickerDeckIdx][_mfPickerSlotIdx] = { familiarId: el.dataset.id, potentialId: null };
       _mfSaveDecks(); _mfRenderDecks(); _mfClosePicker();
     });
   });
@@ -175,10 +208,8 @@ function _mfRenderPickerGrid(query) {
 const MF_RARITY_KO = { common:'커먼', rare:'레어', epic:'에픽', unique:'유니크', legendary:'레전더리' };
 const MF_RARITY_ORDER = ['legendary', 'unique', 'epic', 'rare', 'common'];
 
-let _mfDicePotentials = [null, null, null]; // 선택한 잠재옵션(최대 3, 패밀리어 슬롯당 1개)
-let _mfDiceRoller = null;                    // 선택한 다이스 롤러(최대 1)
-let _mfDicePickerSlot = null;                // 'p0' | 'p1' | 'p2' | 'roller'
-let _mfDiceLastRoll = null;                  // { d1,d2,d3 }
+let _mfDiceRoller = null;    // 선택한 다이스 롤러(최대 1)
+let _mfDiceLastRoll = null;  // { d1,d2,d3 }
 
 function _mfPotentialById(id) { return FRONTIER_POTENTIALS.find(p => p.id === id) || null; }
 function _mfRollerById(id) { return FRONTIER_DICE_ROLLERS.find(r => r.id === id) || null; }
@@ -188,16 +219,6 @@ function _mfBonusText(item) {
   if (item.dice) parts.push(`주사위 ${item.dice > 0 ? '+' : ''}${item.dice}`);
   if (item.mult) parts.push(`배수 +${item.mult}x`);
   return parts.join(', ') || '효과 없음';
-}
-
-function _mfComputeDice(d1, d2, d3) {
-  const rawSum = d1 + d2 + d3;
-  let diceBonus = 0, multSum = 0;
-  _mfDicePotentials.forEach(p => { if (p) { diceBonus += p.dice; multSum += p.mult; } });
-  if (_mfDiceRoller) { diceBonus += _mfDiceRoller.dice; multSum += _mfDiceRoller.mult; }
-  const bonusMultiplier = multSum > 0 ? multSum : 1;
-  const total = Math.floor((rawSum + diceBonus) * bonusMultiplier + 1e-9);
-  return { rawSum, diceBonus, bonusMultiplier, total };
 }
 
 // 목표치 이상 달성 확률: 3주사위(1~6) 216가지 전수 조사
@@ -210,22 +231,32 @@ function _mfSuccessChance(target) {
   return hit / total;
 }
 
-function _mfDiceSlotHtml(idx) {
-  const p = _mfDicePotentials[idx];
-  if (!p) {
-    return `<div class="mf-slot mf-slot--empty" data-dice-slot="p${idx}">
-      <span class="mf-slot__plus">+</span><span class="mf-slot__label">패밀리어 ${idx + 1} 잠재옵션</span>
-    </div>`;
-  }
-  return `<div class="mf-slot mf-slot--filled mf-slot--potential" data-dice-slot="p${idx}">
-    <button class="mf-slot__remove" data-dice-remove="p${idx}" title="제거">×</button>
-    <span class="mf-rarity-badge mf-rarity--${p.rarity}">${MF_RARITY_KO[p.rarity]}</span>
-    <div class="mf-slot__body">
-      <div class="mf-slot__cond">${p.ko}</div>
-      <div class="mf-slot__bonus">${_mfBonusText(p)}</div>
-    </div>
-  </div>`;
+// 주사위 계산기는 독립된 옵션 슬롯이 아니라 "덱 구성"에서 만든 덱을 그대로 사용한다.
+let _mfDiceSelectedDeck = 0; // 0|1|2
+
+function _mfActivePotentials() {
+  return _mfDecks[_mfDiceSelectedDeck].map(s => s?.potentialId ? _mfPotentialById(s.potentialId) : null);
 }
+
+function _mfDeckPreviewHtml() {
+  const deck = _mfDecks[_mfDiceSelectedDeck];
+  return deck.map((slot, i) => {
+    const f = slot?.familiarId ? _mfFamiliarById(slot.familiarId) : null;
+    if (!f) return `<div class="mf-slot mf-slot--empty mf-slot--readonly"><span class="mf-slot__label">패밀리어 ${i + 1} 미지정</span></div>`;
+    const potential = slot.potentialId ? _mfPotentialById(slot.potentialId) : null;
+    return `<div class="mf-slot mf-slot--filled mf-slot--withpot mf-slot--readonly">
+      <div class="mf-slot__fam">${_mfCardHtml(f)}</div>
+      ${potential
+        ? `<div class="mf-slot__pot mf-slot__pot--set">
+             <span class="mf-rarity-badge mf-rarity--${potential.rarity}">${MF_RARITY_KO[potential.rarity]}</span>
+             <span class="mf-slot__cond">${potential.ko}</span>
+             <span class="mf-slot__bonus">${_mfBonusText(potential)}</span>
+           </div>`
+        : `<div class="mf-slot__pot mf-slot__pot--unset">잠재옵션 미설정</div>`}
+    </div>`;
+  }).join('');
+}
+
 function _mfRollerSlotHtml() {
   const r = _mfDiceRoller;
   if (!r) {
@@ -242,6 +273,17 @@ function _mfRollerSlotHtml() {
     </div>
   </div>`;
 }
+
+function _mfComputeDiceForPotentials(d1, d2, d3, potentials) {
+  const rawSum = d1 + d2 + d3;
+  let diceBonus = 0, multSum = 0;
+  potentials.forEach(p => { if (p) { diceBonus += p.dice; multSum += p.mult; } });
+  if (_mfDiceRoller) { diceBonus += _mfDiceRoller.dice; multSum += _mfDiceRoller.mult; }
+  const bonusMultiplier = multSum > 0 ? multSum : 1;
+  const total = Math.floor((rawSum + diceBonus) * bonusMultiplier + 1e-9);
+  return { rawSum, diceBonus, bonusMultiplier, total };
+}
+function _mfComputeDice(d1, d2, d3) { return _mfComputeDiceForPotentials(d1, d2, d3, _mfActivePotentials()); }
 
 function _mfRenderDiceResult() {
   const el = document.getElementById('mfDiceResult');
@@ -277,12 +319,16 @@ function _mfRollDice() {
 function _mfRenderDiceTab() {
   const wrap = document.getElementById('mfDiceWrap');
   if (!wrap) return;
+  const deckOpts = [0, 1, 2].map(i => `<option value="${i}" ${_mfDiceSelectedDeck===i?'selected':''}>덱 ${i+1}</option>`).join('');
   wrap.innerHTML = `
     <div class="card mf-dice-config">
-      <div class="card__title">잠재옵션 선택 (패밀리어별 1개)</div>
-      <div class="mf-deck-slots">
-        ${[0, 1, 2].map(i => _mfDiceSlotHtml(i)).join('')}
+      <div class="field" style="margin-bottom:10px">
+        <label class="field__label">사용할 덱</label>
+        <select class="sel" id="mfDiceDeckSel">${deckOpts}</select>
       </div>
+      <div class="card__title">덱 구성 (편성된 패밀리어·잠재옵션)</div>
+      <div class="mf-deck-slots">${_mfDeckPreviewHtml()}</div>
+      <p class="mf-notice" style="margin-top:8px">패밀리어·잠재옵션은 <b>덱 구성</b> 탭에서 수정하세요.</p>
       <div class="card__title" style="margin-top:14px">다이스 롤러 (선택)</div>
       <div class="mf-deck-slots">${_mfRollerSlotHtml()}</div>
       <button class="sbtn sbtn--primary w100" id="mfRollBtn" style="margin-top:14px">🎲 주사위 굴리기</button>
@@ -296,28 +342,62 @@ function _mfRenderDiceTab() {
       <div id="mfDiceResult"></div>
     </div>`;
 
-  wrap.querySelectorAll('[data-dice-slot]').forEach(el => {
+  document.getElementById('mfDiceDeckSel').addEventListener('change', e => {
+    _mfDiceSelectedDeck = +e.target.value;
+    _mfDiceLastRoll = null;
+    _mfRenderDiceTab();
+  });
+  wrap.querySelectorAll('[data-dice-slot="roller"]').forEach(el => {
     if (el.classList.contains('mf-slot--empty')) {
-      el.addEventListener('click', () => _mfOpenDicePicker(el.dataset.diceSlot));
+      el.addEventListener('click', () => _mfOpenRollerPicker(r => { _mfDiceRoller = r; _mfRenderDiceTab(); }));
     }
   });
-  wrap.querySelectorAll('[data-dice-remove]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const slot = btn.dataset.diceRemove;
-      if (slot === 'roller') _mfDiceRoller = null;
-      else _mfDicePotentials[+slot.slice(1)] = null;
-      _mfRenderDiceTab();
-    });
+  wrap.querySelectorAll('[data-dice-remove="roller"]').forEach(btn => {
+    btn.addEventListener('click', e => { e.stopPropagation(); _mfDiceRoller = null; _mfRenderDiceTab(); });
   });
   document.getElementById('mfRollBtn').addEventListener('click', _mfRollDice);
   document.getElementById('mfDiceTarget').addEventListener('input', _mfRenderDiceResult);
   _mfRenderDiceResult();
 }
 
-function _mfOpenDicePicker(slot) {
-  _mfDicePickerSlot = slot;
-  const isRoller = slot === 'roller';
+/* 잠재옵션/롤러 선택 모달 — 콜백 기반이라 덱 구성(슬롯별 잠재옵션)과
+   주사위 계산기(롤러)에서 공용으로 쓴다. */
+function _mfOpenPotentialPicker(onSelect) {
+  _mfOpenSelectPicker({
+    title: '잠재옵션 선택',
+    rarityFilter: true,
+    getRows: (query, rarity) => {
+      let rows = FRONTIER_POTENTIALS.filter(p => {
+        if (rarity && p.rarity !== rarity) return false;
+        if (!query) return true;
+        return p.ko.toLowerCase().includes(query)
+          || String(p.dice).includes(query)
+          || String(p.mult).includes(query)
+          || MF_RARITY_KO[p.rarity].includes(query);
+      });
+      rows.sort((a, b) => (Math.abs(b.dice) + b.mult * 10) - (Math.abs(a.dice) + a.mult * 10));
+      return rows;
+    },
+    rowHtml: p => `
+      <span class="mf-rarity-badge mf-rarity--${p.rarity}">${MF_RARITY_KO[p.rarity]}</span>
+      <span class="mf-potential-row__cond">${p.ko}</span>
+      <span class="mf-potential-row__bonus">${_mfBonusText(p)}</span>`,
+    onSelect,
+  });
+}
+function _mfOpenRollerPicker(onSelect) {
+  _mfOpenSelectPicker({
+    title: '다이스 롤러 선택',
+    rarityFilter: false,
+    getRows: query => FRONTIER_DICE_ROLLERS.filter(r => !query || r.ko.toLowerCase().includes(query) || r.id.includes(query)),
+    rowHtml: r => `
+      <span class="mf-roller-dot mf-roller-dot--${(r.id.match(/gray|blue|purple|orange|green/)||[''])[0]}"></span>
+      <span class="mf-potential-row__cond">${r.ko}</span>
+      <span class="mf-potential-row__bonus">${_mfBonusText(r)}</span>`,
+    onSelect,
+  });
+}
+function _mfOpenSelectPicker({ title, rarityFilter, getRows, rowHtml, onSelect }) {
   let overlay = document.getElementById('mfDicePickerOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -330,75 +410,40 @@ function _mfOpenDicePicker(slot) {
   overlay.innerHTML = `
     <div class="modal" style="width:min(680px,95vw)">
       <div class="modal__head">
-        <span class="modal__title">${isRoller ? '다이스 롤러 선택' : '잠재옵션 선택'}</span>
+        <span class="modal__title">${title}</span>
         <button class="modal__close" id="mfDicePickerClose">×</button>
       </div>
       <div class="modal__body">
         <div class="mf-filters" style="margin-bottom:10px">
           <input class="inp" id="mfDicePickerSearch" placeholder="조건 검색 (예: 화속성, +12, 배수)" autocomplete="off" />
-          ${isRoller ? '' : `<select class="sel" id="mfDicePickerRarity" style="width:110px"><option value="">전체 등급</option>${rarityOpts}</select>`}
+          ${rarityFilter ? `<select class="sel" id="mfDicePickerRarity" style="width:110px"><option value="">전체 등급</option>${rarityOpts}</select>` : ''}
         </div>
         <div id="mfDicePickerList" class="mf-potential-list"></div>
       </div>
     </div>`;
-  document.getElementById('mfDicePickerClose').addEventListener('click', () => { overlay.style.display = 'none'; });
-  document.getElementById('mfDicePickerSearch').addEventListener('input', () => _mfRenderDicePickerList(isRoller));
-  document.getElementById('mfDicePickerRarity')?.addEventListener('change', () => _mfRenderDicePickerList(isRoller));
-  overlay.style.display = 'flex';
-  _mfRenderDicePickerList(isRoller);
-}
 
-function _mfRenderDicePickerList(isRoller) {
-  const listEl = document.getElementById('mfDicePickerList');
-  if (!listEl) return;
-  const query = (document.getElementById('mfDicePickerSearch')?.value || '').trim().toLowerCase();
-  const rarity = document.getElementById('mfDicePickerRarity')?.value || '';
-
-  if (isRoller) {
-    const rows = FRONTIER_DICE_ROLLERS.filter(r => !query || r.ko.toLowerCase().includes(query) || r.id.includes(query));
-    listEl.innerHTML = rows.map(r => `
-      <div class="mf-potential-row" data-roller="${r.id}">
-        <span class="mf-roller-dot mf-roller-dot--${(r.id.match(/gray|blue|purple|orange|green/)||[''])[0]}"></span>
-        <span class="mf-potential-row__cond">${r.ko}</span>
-      </div>`).join('') || '<p class="mf-empty">검색 결과가 없습니다.</p>';
+  const renderList = () => {
+    const listEl = document.getElementById('mfDicePickerList');
+    const query = (document.getElementById('mfDicePickerSearch')?.value || '').trim().toLowerCase();
+    const rarity = document.getElementById('mfDicePickerRarity')?.value || '';
+    let rows = getRows(query, rarity);
+    const shown = rows.slice(0, 150);
+    listEl.innerHTML = (shown.map(item => `<div class="mf-potential-row" data-id="${item.id}">${rowHtml(item)}</div>`).join('')
+      || '<p class="mf-empty">검색 결과가 없습니다.</p>')
+      + (rows.length > shown.length ? `<p class="mf-empty">외 ${rows.length - shown.length}개 더 있음 — 검색어를 더 입력해 좁혀보세요.</p>` : '');
     listEl.querySelectorAll('.mf-potential-row').forEach(el => {
       el.addEventListener('click', () => {
-        _mfDiceRoller = _mfRollerById(el.dataset.roller);
-        document.getElementById('mfDicePickerOverlay').style.display = 'none';
-        _mfRenderDiceTab();
+        const item = rows.find(r => r.id === el.dataset.id);
+        overlay.style.display = 'none';
+        onSelect(item);
       });
     });
-    return;
-  }
-
-  let rows = FRONTIER_POTENTIALS.filter(p => {
-    if (rarity && p.rarity !== rarity) return false;
-    if (!query) return true;
-    return p.ko.toLowerCase().includes(query)
-      || String(p.dice).includes(query)
-      || String(p.mult).includes(query)
-      || MF_RARITY_KO[p.rarity].includes(query);
-  });
-  // 조건 미입력 시 너무 많으므로 임팩트(수치) 큰 순으로 상위만 노출
-  rows = rows.sort((a, b) => (Math.abs(b.dice) + b.mult * 10) - (Math.abs(a.dice) + a.mult * 10));
-  const shown = rows.slice(0, 150);
-
-  listEl.innerHTML = (shown.map(p => `
-    <div class="mf-potential-row" data-potential="${p.id}">
-      <span class="mf-rarity-badge mf-rarity--${p.rarity}">${MF_RARITY_KO[p.rarity]}</span>
-      <span class="mf-potential-row__cond">${p.ko}</span>
-      <span class="mf-potential-row__bonus">${_mfBonusText(p)}</span>
-    </div>`).join('') || '<p class="mf-empty">검색 결과가 없습니다.</p>')
-    + (rows.length > shown.length ? `<p class="mf-empty">외 ${rows.length - shown.length}개 더 있음 — 검색어를 더 입력해 좁혀보세요.</p>` : '');
-
-  listEl.querySelectorAll('.mf-potential-row[data-potential]').forEach(el => {
-    el.addEventListener('click', () => {
-      const idx = +_mfDicePickerSlot.slice(1);
-      _mfDicePotentials[idx] = _mfPotentialById(el.dataset.potential);
-      document.getElementById('mfDicePickerOverlay').style.display = 'none';
-      _mfRenderDiceTab();
-    });
-  });
+  };
+  document.getElementById('mfDicePickerClose').addEventListener('click', () => { overlay.style.display = 'none'; });
+  document.getElementById('mfDicePickerSearch').addEventListener('input', renderList);
+  document.getElementById('mfDicePickerRarity')?.addEventListener('change', renderList);
+  overlay.style.display = 'flex';
+  renderList();
 }
 
 /* ─── 탭 전환 ─── */

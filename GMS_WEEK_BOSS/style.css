@@ -1947,6 +1947,23 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .mf-dice-chance b { font-size: 1.1rem; color: var(--accent); }
 .mf-dice-range { font-size: .74rem; color: var(--text-sub); margin-top: 8px; }
 
+/* 덱 슬롯: 패밀리어 + 잠재옵션을 한 칸에 세로로 묶어서 표시 (덱 구성 ↔ 주사위 계산기 공용) */
+.mf-slot--withpot { flex-direction: column; align-items: stretch; gap: 6px; cursor: default; }
+.mf-slot__fam { display: flex; align-items: center; gap: 10px; cursor: pointer; border-radius: var(--radius-sm); transition: background .15s; padding: 2px; margin: -2px; }
+.mf-slot__fam:hover { background: rgba(139,92,246,.08); }
+.mf-slot__pot {
+  display: flex; align-items: center; gap: 8px; padding: 6px 8px;
+  border-radius: var(--radius-sm); background: rgba(0,0,0,.15); cursor: pointer; transition: background .15s;
+}
+.mf-slot__pot--set:hover { background: rgba(139,92,246,.12); }
+.mf-slot__pot--unset { color: var(--text-sub); font-size: .76rem; font-weight: 700; justify-content: center; }
+.mf-slot__pot--unset:hover { color: var(--primary); background: rgba(139,92,246,.1); }
+.mf-slot__pot .mf-slot__cond { flex: 1; min-width: 0; }
+/* 주사위 계산기 쪽 미리보기는 읽기 전용 — 클릭해도 아무 일 없게 */
+.mf-slot--readonly, .mf-slot--readonly .mf-slot__fam, .mf-slot--readonly .mf-slot__pot { cursor: default; pointer-events: none; }
+.mf-slot--readonly.mf-slot--empty { color: var(--text-dim); }
+.mf-slot--readonly.mf-slot--filled { padding-right: 8px; } /* 제거 버튼이 없으므로 우측 여백 회수 */
+
 @media (max-width: 768px) {
   .mf-deck-wrap { grid-template-columns: 1fr !important; }
   .mf-picker-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }

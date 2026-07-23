@@ -208,11 +208,90 @@ function _mfRenderPickerGrid(query) {
 const MF_RARITY_KO = { common:'커먼', rare:'레어', epic:'에픽', unique:'유니크', legendary:'레전더리' };
 const MF_RARITY_ORDER = ['legendary', 'unique', 'epic', 'rare', 'common'];
 
-let _mfDiceRoller = null;    // 선택한 다이스 롤러(최대 1)
-let _mfDiceLastRoll = null;  // { d1,d2,d3 }
-
 function _mfPotentialById(id) { return FRONTIER_POTENTIALS.find(p => p.id === id) || null; }
 function _mfRollerById(id) { return FRONTIER_DICE_ROLLERS.find(r => r.id === id) || null; }
+
+function _mfLoadRoller() {
+  try {
+    const id = localStorage.getItem(STORAGE_KEYS.mfRoller);
+    return id ? _mfRollerById(id) : null;
+  } catch { return null; }
+}
+function _mfSaveRoller() {
+  try {
+    if (_mfDiceRoller) localStorage.setItem(STORAGE_KEYS.mfRoller, _mfDiceRoller.id);
+    else localStorage.removeItem(STORAGE_KEYS.mfRoller);
+  } catch {}
+}
+
+let _mfDiceRoller = _mfLoadRoller(); // 선택한 다이스 롤러(최대 1) — 덱과 마찬가지로 저장됨
+let _mfDiceLastRoll = null;  // { d1,d2,d3 }
+
+/* 잠재옵션의 조건(cond, 원문 영문)이 실제로 충족됐는지 판정.
+   maplehub.app 실제 배포 코드(se 함수)를 그대로 이식 — 속성/타입 조건은
+   "그 옵션을 가진 패밀리어"가 아니라 "덱에 편성된 3마리 전체"를 기준으로 판정하고,
+   주사위 조건은 실제로 굴린 값을 기준으로 판정한다. 즉 조건부 잠재옵션은
+   해당 굴림에서 조건이 안 맞으면 보너스가 아예 붙지 않는다.
+   ※ "주사위 중 하나가 N", "세 주사위가 모두 N" 두 조건은 원본 코드에도
+      분기가 없어(선택해도 항상 미발동) 문구 그대로의 의미로 직접 구현했다. */
+function _mfConditionMet(p, familiars, d1, d2, d3) {
+  const cond = p.cond;
+  if (cond === 'None') return true;
+  if (familiars.length < 3) return false; // 덱이 3마리 다 안 채워졌으면 편성 조건 자체가 성립 불가
+  const o = cond.toLowerCase();
+
+  if (o.includes('elemental familiar is on your active lineup')) {
+    const target = p.element;
+    return familiars.some(f => (target === 'non-elemental' ? f.element === null : f.element === target));
+  }
+  if (o.includes('type familiar is on your active lineup')) {
+    return familiars.some(f => f.type === p.type);
+  }
+  if (o.includes('all familiars on your active lineup have the same element')) {
+    const els = familiars.map(f => f.element);
+    return els.every(e => e === els[0]);
+  }
+  if (o.includes('all familiars on your active lineup have the same type')) {
+    const ts = familiars.map(f => f.type);
+    return ts.every(t => t === ts[0]);
+  }
+  if (o.includes('all familiars on your active lineup have a different element')) {
+    return new Set(familiars.map(f => f.element)).size === 3;
+  }
+  if (o.includes('all familiars on your active lineup have a different type')) {
+    return new Set(familiars.map(f => f.type)).size === 3;
+  }
+  if (o.includes('first die rolls an odd number')) return d1 % 2 !== 0;
+  if (o.includes('second die rolls an odd number')) return d2 % 2 !== 0;
+  if (o.includes('third die rolls an odd number')) return d3 % 2 !== 0;
+  if (o.includes('first die rolls an even number')) return d1 % 2 === 0;
+  if (o.includes('second die rolls an even number')) return d2 % 2 === 0;
+  if (o.includes('third die rolls an even number')) return d3 % 2 === 0;
+  if (o.includes('three dice roll consecutive numbers')) {
+    const s = [d1, d2, d3].sort((a, b) => a - b);
+    return s[1] === s[0] + 1 && s[2] === s[1] + 1;
+  }
+  if (o.includes('first and second dice match')) return d1 === d2;
+  if (o.includes('first and third dice match')) return d1 === d3;
+  if (o.includes('second and third dice match')) return d2 === d3;
+
+  let m = o.match(/(first and second|first and third|second and third) dice add up to (\d+) or more/);
+  if (m) {
+    const th = parseInt(m[2], 10);
+    if (m[1] === 'first and second') return d1 >= th && d2 >= th;
+    if (m[1] === 'first and third') return d1 >= th && d3 >= th;
+    return d2 >= th && d3 >= th;
+  }
+  m = o.match(/all three dice add up to (\d+) or more/);
+  if (m) { const th = parseInt(m[1], 10); return d1 >= th && d2 >= th && d3 >= th; }
+  m = o.match(/prevents dice from rolling over (\d+)/);
+  if (m) { const th = parseInt(m[1], 10); return d1 <= th && d2 <= th && d3 <= th; }
+  m = o.match(/all three dice roll a (\d+)/);
+  if (m) { const v = parseInt(m[1], 10); return d1 === v && d2 === v && d3 === v; }
+  m = o.match(/if a die rolls a (\d+)/);
+  if (m) { const v = parseInt(m[1], 10); return d1 === v || d2 === v || d3 === v; }
+  return false;
+}
 
 function _mfBonusText(item) {
   const parts = [];
@@ -221,22 +300,23 @@ function _mfBonusText(item) {
   return parts.join(', ') || '효과 없음';
 }
 
-// 목표치 이상 달성 확률: 3주사위(1~6) 216가지 전수 조사
-function _mfSuccessChance(target) {
-  let hit = 0, total = 0;
+// 목표치 이상 달성 확률 + 가능한 최소/최대치: 3주사위(1~6) 216가지 전수 조사
+// (조건부 잠재옵션이 섞여 있으면 총합이 굴림값에 따라 들쭉날쭉해져서 1,1,1/6,6,6이
+//  더 이상 최소/최대를 보장하지 않으므로 216가지를 전부 계산해서 직접 구한다)
+function _mfDiceStats(target, deck) {
+  let hit = 0, total = 0, min = Infinity, max = -Infinity;
   for (let a = 1; a <= 6; a++) for (let b = 1; b <= 6; b++) for (let c = 1; c <= 6; c++) {
     total++;
-    if (_mfComputeDice(a, b, c).total >= target) hit++;
+    const t = _mfComputeDiceForDeck(a, b, c, deck).total;
+    if (t >= target) hit++;
+    if (t < min) min = t;
+    if (t > max) max = t;
   }
-  return hit / total;
+  return { chance: hit / total, min, max };
 }
 
 // 주사위 계산기는 독립된 옵션 슬롯이 아니라 "덱 구성"에서 만든 덱을 그대로 사용한다.
 let _mfDiceSelectedDeck = 0; // 0|1|2
-
-function _mfActivePotentials() {
-  return _mfDecks[_mfDiceSelectedDeck].map(s => s?.potentialId ? _mfPotentialById(s.potentialId) : null);
-}
 
 function _mfDeckPreviewHtml() {
   const deck = _mfDecks[_mfDiceSelectedDeck];
@@ -266,32 +346,54 @@ function _mfRollerSlotHtml() {
   }
   return `<div class="mf-slot mf-slot--filled mf-slot--potential" data-dice-slot="roller">
     <button class="mf-slot__remove" data-dice-remove="roller" title="제거">×</button>
-    <span class="mf-roller-dot mf-roller-dot--${(r.id.match(/gray|blue|purple|orange|green/)||[''])[0]}"></span>
+    <span class="mf-roller-dot mf-roller-dot--${r.color}"></span>
     <div class="mf-slot__body">
-      <div class="mf-slot__cond">${r.id.replace(/_/g, ' ')}</div>
+      <div class="mf-slot__cond">${r.name}</div>
       <div class="mf-slot__bonus">${_mfBonusText(r)}</div>
     </div>
   </div>`;
 }
 
-function _mfComputeDiceForPotentials(d1, d2, d3, potentials) {
+// 굴린 주사위(d1,d2,d3) 기준으로 덱에 편성된 잠재옵션 중 조건이 실제로 충족된 것만 합산.
+// 롤러는 조건 없이 항상 적용됨. triggered에는 각 잠재옵션의 발동 여부를 같이 담아 UI에 표시한다.
+function _mfComputeDiceForDeck(d1, d2, d3, deck) {
+  const familiars = deck.map(s => s?.familiarId ? _mfFamiliarById(s.familiarId) : null).filter(Boolean);
   const rawSum = d1 + d2 + d3;
   let diceBonus = 0, multSum = 0;
-  potentials.forEach(p => { if (p) { diceBonus += p.dice; multSum += p.mult; } });
+  const triggered = [];
+  deck.forEach(s => {
+    if (!s?.potentialId) return;
+    const p = _mfPotentialById(s.potentialId);
+    if (!p) return;
+    const met = _mfConditionMet(p, familiars, d1, d2, d3);
+    if (met) { diceBonus += p.dice; multSum += p.mult; }
+    triggered.push({ potential: p, met });
+  });
   if (_mfDiceRoller) { diceBonus += _mfDiceRoller.dice; multSum += _mfDiceRoller.mult; }
   const bonusMultiplier = multSum > 0 ? multSum : 1;
   const total = Math.floor((rawSum + diceBonus) * bonusMultiplier + 1e-9);
-  return { rawSum, diceBonus, bonusMultiplier, total };
+  return { rawSum, diceBonus, bonusMultiplier, total, triggered };
 }
-function _mfComputeDice(d1, d2, d3) { return _mfComputeDiceForPotentials(d1, d2, d3, _mfActivePotentials()); }
+function _mfComputeDice(d1, d2, d3) { return _mfComputeDiceForDeck(d1, d2, d3, _mfDecks[_mfDiceSelectedDeck]); }
 
 function _mfRenderDiceResult() {
   const el = document.getElementById('mfDiceResult');
   if (!el) return;
+  const deck = _mfDecks[_mfDiceSelectedDeck];
   const target = Math.max(3, Math.min(60, parseInt(document.getElementById('mfDiceTarget')?.value) || 15));
   const roll = _mfDiceLastRoll || { d1: 1, d2: 1, d3: 1 };
-  const r = _mfComputeDice(roll.d1, roll.d2, roll.d3);
-  const chance = _mfSuccessChance(target);
+  const r = _mfComputeDiceForDeck(roll.d1, roll.d2, roll.d3, deck);
+  const stats = _mfDiceStats(target, deck);
+
+  const triggerHtml = r.triggered.length ? `
+    <div class="mf-dice-trigger-list">
+      ${r.triggered.map(t => `
+        <div class="mf-dice-trigger ${t.met ? 'mf-dice-trigger--hit' : 'mf-dice-trigger--miss'}">
+          <span class="mf-dice-trigger__mark">${t.met ? '✓' : '✗'}</span>
+          <span class="mf-dice-trigger__cond">${t.potential.ko}</span>
+          <span class="mf-dice-trigger__bonus">${_mfBonusText(t.potential)}</span>
+        </div>`).join('')}
+    </div>` : '';
 
   el.innerHTML = `
     ${_mfDiceLastRoll ? `
@@ -301,14 +403,15 @@ function _mfRenderDiceResult() {
       </div>
       <div class="mf-dice-breakdown">
         (${roll.d1}+${roll.d2}+${roll.d3}${r.diceBonus ? (r.diceBonus > 0 ? `+${r.diceBonus}` : r.diceBonus) : ''}) × ${r.bonusMultiplier}배 = ${r.total}
-      </div>` : '<p class="mf-notice" style="margin-bottom:0">주사위를 굴려보세요.</p>'}
+      </div>
+      ${triggerHtml}` : '<p class="mf-notice" style="margin-bottom:0">주사위를 굴려보세요.</p>'}
     <div class="mf-dice-divider"></div>
     <div class="mf-dice-chance">
       <span>목표 ${target} 이상 달성 확률</span>
-      <b>${(chance * 100).toFixed(1)}%</b>
+      <b>${(stats.chance * 100).toFixed(1)}%</b>
     </div>
-    <div class="lib-progress" style="margin-top:6px"><div class="lib-progress__fill" style="width:${(chance*100).toFixed(1)}%"></div></div>
-    <div class="mf-dice-range">가능 범위: ${_mfComputeDice(1,1,1).total} ~ ${_mfComputeDice(6,6,6).total}</div>`;
+    <div class="lib-progress" style="margin-top:6px"><div class="lib-progress__fill" style="width:${(stats.chance*100).toFixed(1)}%"></div></div>
+    <div class="mf-dice-range">가능 범위: ${stats.min} ~ ${stats.max}</div>`;
 }
 
 function _mfRollDice() {
@@ -349,11 +452,11 @@ function _mfRenderDiceTab() {
   });
   wrap.querySelectorAll('[data-dice-slot="roller"]').forEach(el => {
     if (el.classList.contains('mf-slot--empty')) {
-      el.addEventListener('click', () => _mfOpenRollerPicker(r => { _mfDiceRoller = r; _mfRenderDiceTab(); }));
+      el.addEventListener('click', () => _mfOpenRollerPicker(r => { _mfDiceRoller = r; _mfSaveRoller(); _mfRenderDiceTab(); }));
     }
   });
   wrap.querySelectorAll('[data-dice-remove="roller"]').forEach(btn => {
-    btn.addEventListener('click', e => { e.stopPropagation(); _mfDiceRoller = null; _mfRenderDiceTab(); });
+    btn.addEventListener('click', e => { e.stopPropagation(); _mfDiceRoller = null; _mfSaveRoller(); _mfRenderDiceTab(); });
   });
   document.getElementById('mfRollBtn').addEventListener('click', _mfRollDice);
   document.getElementById('mfDiceTarget').addEventListener('input', _mfRenderDiceResult);
@@ -389,10 +492,10 @@ function _mfOpenRollerPicker(onSelect) {
   _mfOpenSelectPicker({
     title: '다이스 롤러 선택',
     rarityFilter: false,
-    getRows: query => FRONTIER_DICE_ROLLERS.filter(r => !query || r.ko.toLowerCase().includes(query) || r.id.includes(query)),
+    getRows: query => FRONTIER_DICE_ROLLERS.filter(r => !query || r.name.includes(query) || r.ko.toLowerCase().includes(query) || r.id.includes(query)),
     rowHtml: r => `
-      <span class="mf-roller-dot mf-roller-dot--${(r.id.match(/gray|blue|purple|orange|green/)||[''])[0]}"></span>
-      <span class="mf-potential-row__cond">${r.ko}</span>
+      <span class="mf-roller-dot mf-roller-dot--${r.color}"></span>
+      <span class="mf-potential-row__cond">${r.name}</span>
       <span class="mf-potential-row__bonus">${_mfBonusText(r)}</span>`,
     onSelect,
   });

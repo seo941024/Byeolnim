@@ -57,6 +57,7 @@ const STORAGE_KEYS = {
   hexaBoost:   'hx_boost',
   hexaCommon:  'hx_common',
   mfDecks:     'mf_decks_v1',
+  mfRoller:    'mf_roller_v1',
 };
 
 const JOB_LIST = [

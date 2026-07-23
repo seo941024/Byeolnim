@@ -1942,6 +1942,18 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 .mf-dice-eq { font-size: .95rem; font-weight: 800; color: var(--accent); margin-left: 4px; }
 .mf-dice-breakdown { font-size: .78rem; color: var(--text-sub); margin-top: 8px; }
+.mf-dice-trigger-list { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; }
+.mf-dice-trigger {
+  display: flex; align-items: center; gap: 8px; padding: 5px 8px;
+  border-radius: var(--radius-sm); font-size: .74rem; border: 1px solid var(--border);
+}
+.mf-dice-trigger--hit { background: color-mix(in srgb, var(--accent) 12%, transparent); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+.mf-dice-trigger--miss { opacity: .5; }
+.mf-dice-trigger__mark { font-weight: 900; width: 14px; text-align: center; flex: none; }
+.mf-dice-trigger--hit .mf-dice-trigger__mark { color: var(--accent); }
+.mf-dice-trigger--miss .mf-dice-trigger__mark { color: var(--text-sub); }
+.mf-dice-trigger__cond { flex: 1 1 auto; min-width: 0; color: var(--text-sub); }
+.mf-dice-trigger__bonus { flex: none; font-weight: 700; }
 .mf-dice-divider { height: 1px; background: var(--border); margin: 14px 0; }
 .mf-dice-chance { display: flex; justify-content: space-between; align-items: center; font-size: .86rem; font-weight: 700; }
 .mf-dice-chance b { font-size: 1.1rem; color: var(--accent); }

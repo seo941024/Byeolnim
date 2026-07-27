@@ -32,13 +32,15 @@ function _parse(name) {
 function _extractNum(s) { const m=/(\d+\.?\d*)/.exec(s||''); return m?+m[1]:0; }
 function _extractUnit(s) { const m=/[가-힣a-zA-Z초%]+$/.exec((s||'').trim()); return m?m[0]:''; }
 
+// GMS는 160제 이상이면 잠재옵션 수치가 +1 (KMS는 250제부터, GMS는 250제도 동일하게 +1)
+function _gmsAdj(p, lv) {
+  return (p.type==='pct'||p.type==='flat') && lv>=160 && !_NO_GMS_ADJ.includes(p.base) ? 1 : 0;
+}
+
 // GMS 보정 포함 stat 기여값 반환
 function _statContrib(name) {
   const p=_parse(name), lv=_cubeLv();
-  if (p.type==='pct'||p.type==='flat') {
-    const adj = lv>=160&&lv<250&&!_NO_GMS_ADJ.includes(p.base) ? 1 : 0;
-    return {[p.cat]: p.valNum + adj};
-  }
+  if (p.type==='pct'||p.type==='flat') return {[p.cat]: p.valNum + _gmsAdj(p, lv)};
   if (p.type==='colon') return {[p.cat]: _extractNum(p.valShort)};
   return {};
 }
@@ -207,15 +209,33 @@ function _computeAllSets() {
   });
   if(!sets.length) return 0;
 
+  // 옵션명 → 기여값 캐시 (아래 3중 루프 안에서 매번 파싱하지 않도록)
+  const contribCache=Object.fromEntries(allNames.map(nm=>[nm,_statContrib(nm)]));
+
+  // 세트를 미리 가공: unique 목록 + 카테고리별 목표치 배열
+  // 같은 카테고리를 여러 줄 지정하면(예: STR% 12/9/9) 그 줄 수만큼 서로 다른
+  // 라인에서 각각 떠야 통과. 한 줄만 지정하면 기존처럼 합산으로 판정한다.
+  const preparedSets=sets.map(set=>{
+    const uniques=set.filter(g=>g.isUnique).map(g=>g.kmsName);
+    const byCat={};
+    set.filter(g=>!g.isUnique).forEach(g=>{ (byCat[g.cat]=byCat[g.cat]||[]).push(g.target); });
+    // 큰 목표부터 큰 라인에 배정해야 그리디 매칭이 최적이 된다
+    Object.values(byCat).forEach(arr=>arr.sort((a,b)=>b-a));
+    return { uniques, byCat:Object.entries(byCat) };
+  });
+
   // 세트 만족 체크
-  function checkSet(set, opts) {
-    for(const goal of set) {
-      if(goal.isUnique) {
-        if(!opts.includes(goal.kmsName)) return false;
-      } else {
+  function checkSet(ps, opts) {
+    for(const u of ps.uniques) if(!opts.includes(u)) return false;
+    for(const [cat,targets] of ps.byCat) {
+      if(targets.length===1) {
         let total=0;
-        for(const o of opts){ const c=_statContrib(o); total+=c[goal.cat]||0; }
-        if(total<goal.target) return false;
+        for(const o of opts) total+=contribCache[o][cat]||0;
+        if(total<targets[0]) return false;
+      } else {
+        const vals=opts.map(o=>contribCache[o][cat]||0).sort((a,b)=>b-a);
+        if(targets.length>vals.length) return false;
+        for(let i=0;i<targets.length;i++) if(vals[i]<targets[i]) return false;
       }
     }
     return true;
@@ -231,7 +251,7 @@ function _computeAllSets() {
       for(let k=0;k<n;k++){
         const p3=lineProbs[2][k]; if(!p3) continue;
         const combo=[allNames[i],allNames[j],allNames[k]];
-        if(sets.some(s=>checkSet(s,combo))){
+        if(preparedSets.some(ps=>checkSet(ps,combo))){
           const cp=p1*p2*p3;
           totalP+=cp;
           combos.push({lines:combo, p:cp});
@@ -244,10 +264,13 @@ function _computeAllSets() {
 }
 
 // ── 옵션명 짧게 표시 ─────────────────────────
+// 계산에 쓰는 값과 화면에 보이는 값이 달라지지 않도록 표시에도 GMS 보정을 반영한다
+// (예전엔 160제에서 13%로 계산해놓고 화면엔 12%로 찍혀 혼란스러웠음)
 function _shortName(name) {
-  const p=_parse(name);
-  if(p.type==='pct')    return `${p.base} : +${p.valNum}%`;
-  if(p.type==='flat')   return `${p.base} : +${p.valNum}`;
+  const p=_parse(name), lv=_cubeLv();
+  const adj=_gmsAdj(p, lv);
+  if(p.type==='pct')    return `${p.base} : +${p.valNum+adj}%`;
+  if(p.type==='flat')   return `${p.base} : +${p.valNum+adj}`;
   if(p.type==='colon')  return `${p.cat} ${p.valShort}`;
   return name.replace(/<([^>]+)>/g,'$1').replace('스킬 사용 가능','스킬').trim();
 }

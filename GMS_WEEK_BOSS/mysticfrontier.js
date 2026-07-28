@@ -165,7 +165,7 @@ function _mfOpenFamiliarPicker(deckIdx, slotIdx) {
           <button class="modal__close" id="mfPickerClose">×</button>
         </div>
         <div class="modal__body">
-          <input class="inp" id="mfPickerSearch" placeholder="이름 검색 (영문)" autocomplete="off" style="margin-bottom:10px" />
+          <input class="inp" id="mfPickerSearch" placeholder="이름 검색 · 영문" autocomplete="off" style="margin-bottom:10px" />
           <div class="mf-picker-grid" id="mfPickerGrid"></div>
         </div>
       </div>`;
@@ -237,8 +237,11 @@ let _mfDiceLastRoll = null;  // { d1,d2,d3 }
 function _mfConditionMet(p, familiars, d1, d2, d3) {
   const cond = p.cond;
   if (cond === 'None') return true;
-  if (familiars.length < 3) return false; // 덱이 3마리 다 안 채워졌으면 편성 조건 자체가 성립 불가
   const o = cond.toLowerCase();
+
+  // 덱 편성을 보는 조건만 3마리를 요구한다. 주사위 조건은 덱이 덜 찼어도
+  // 굴림값만으로 판정되므로 여기서 막으면 확률이 실제보다 낮게 나온다.
+  if (o.includes('lineup') && familiars.length < 3) return false;
 
   if (o.includes('elemental familiar is on your active lineup')) {
     const target = p.element;
@@ -341,7 +344,7 @@ function _mfRollerSlotHtml() {
   const r = _mfDiceRoller;
   if (!r) {
     return `<div class="mf-slot mf-slot--empty" data-dice-slot="roller">
-      <span class="mf-slot__plus">+</span><span class="mf-slot__label">다이스 롤러 (선택)</span>
+      <span class="mf-slot__plus">+</span><span class="mf-slot__label">다이스 롤러 · 선택</span>
     </div>`;
   }
   return `<div class="mf-slot mf-slot--filled mf-slot--potential" data-dice-slot="roller">
@@ -429,10 +432,10 @@ function _mfRenderDiceTab() {
         <label class="field__label">사용할 덱</label>
         <select class="sel" id="mfDiceDeckSel">${deckOpts}</select>
       </div>
-      <div class="card__title">덱 구성 (편성된 패밀리어·잠재옵션)</div>
+      <div class="card__title">덱 구성 — 편성된 패밀리어와 잠재옵션</div>
       <div class="mf-deck-slots">${_mfDeckPreviewHtml()}</div>
       <p class="mf-notice" style="margin-top:8px">패밀리어·잠재옵션은 <b>덱 구성</b> 탭에서 수정하세요.</p>
-      <div class="card__title" style="margin-top:14px">다이스 롤러 (선택)</div>
+      <div class="card__title" style="margin-top:14px">다이스 롤러 · 선택</div>
       <div class="mf-deck-slots">${_mfRollerSlotHtml()}</div>
       <button class="sbtn sbtn--primary w100" id="mfRollBtn" style="margin-top:14px">🎲 주사위 굴리기</button>
     </div>
@@ -518,7 +521,7 @@ function _mfOpenSelectPicker({ title, rarityFilter, getRows, rowHtml, onSelect }
       </div>
       <div class="modal__body">
         <div class="mf-filters" style="margin-bottom:10px">
-          <input class="inp" id="mfDicePickerSearch" placeholder="조건 검색 (예: 화속성, +12, 배수)" autocomplete="off" />
+          <input class="inp" id="mfDicePickerSearch" placeholder="조건 검색 · 예 화속성, +12, 배수" autocomplete="off" />
           ${rarityFilter ? `<select class="sel" id="mfDicePickerRarity" style="width:110px"><option value="">전체 등급</option>${rarityOpts}</select>` : ''}
         </div>
         <div id="mfDicePickerList" class="mf-potential-list"></div>
@@ -588,7 +591,7 @@ function renderMysticFrontier() {
 
     <div id="mfPanelDex">
       <div class="mf-filters">
-        <input class="inp" id="mfSearch" placeholder="이름 검색 (영문)" autocomplete="off" />
+        <input class="inp" id="mfSearch" placeholder="이름 검색 · 영문" autocomplete="off" />
         <select class="sel" id="mfTypeSel"><option value="">전체 타입</option>${typeOpts}</select>
         <select class="sel" id="mfElemSel"><option value="">전체 속성</option>${elemOpts}</select>
         <span class="mf-count" id="mfCount"></span>
@@ -604,7 +607,7 @@ function renderMysticFrontier() {
     </div>
 
     <div id="mfPanelDice" style="display:none">
-      <p class="mf-notice">패밀리어별 잠재옵션(최대 3개)과 다이스 롤러를 선택하면 주사위 결과·목표 달성 확률을 계산합니다.</p>
+      <p class="mf-notice">패밀리어별 잠재옵션 최대 3개와 다이스 롤러를 선택하면 주사위 결과·목표 달성 확률을 계산합니다.</p>
       <div class="mf-dice-wrap" id="mfDiceWrap"></div>
     </div>
   `;

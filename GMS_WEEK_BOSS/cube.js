@@ -109,7 +109,7 @@ function _makeRow() {
   row.className='cube-goal-row';
   row.innerHTML=`
     <select class="sel cube-opt-cat"></select>
-    <input  class="inp cube-opt-inp" type="number" min="0" placeholder="합산 수치">
+    <input  class="inp cube-opt-inp" type="number" min="0" placeholder="수치">
     <span   class="cube-opt-unit"></span>`;
   row.querySelector('.cube-opt-cat').addEventListener('change',()=>_syncRow(row));
   return row;

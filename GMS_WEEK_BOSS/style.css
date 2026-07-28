@@ -854,6 +854,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cube-set__title { font-size: .85rem; font-weight: 600; color: var(--text-sub); }
 .cube-set__del { background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: .9rem; padding: 2px 6px; border-radius: 4px; line-height: 1; }
 .cube-set__del:hover { color: var(--danger); background: var(--bg-hover); }
+.cube-goal-hint { color: var(--text-sub); font-size: .8rem; line-height: 1.5; margin: 4px 0 8px; }
 .cube-goal-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
 .cube-goal-row .sel { flex: 1; min-width: 0; }
 .cube-goal-row .cube-opt-inp { width: 72px; flex: 0 0 72px; text-align: right; }

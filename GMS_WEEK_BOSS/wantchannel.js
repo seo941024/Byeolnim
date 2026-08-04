@@ -56,7 +56,7 @@ function _wcModalBodyHtml(item, state) {
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
         <div class="wc-result__item">${item.name}</div>
-        <div class="wc-result__pick">${WC_WORLD} - ${state.channel}번 채널</div>
+        <div class="wc-result__pick">${WC_WORLD} - ${state.channel}채널</div>
       </div>
     </div>`;
 }

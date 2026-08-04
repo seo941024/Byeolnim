@@ -1898,3 +1898,8 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 @keyframes dtStampIn { from { transform: translate(-50%,-50%) rotate(-12deg) scale(1.6); opacity: 0; } to { transform: translate(-50%,-50%) rotate(-12deg) scale(1); opacity: 1; } }
 
+@media (max-width: 768px) {
+  .dt-grid { grid-template-columns: 1fr !important; }
+  .dt-tiles { grid-template-columns: 1fr !important; min-height: 0 !important; }
+}
+

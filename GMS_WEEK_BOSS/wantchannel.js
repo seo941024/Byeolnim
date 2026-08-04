@@ -12,7 +12,7 @@ const WANT_CATEGORIES = [
       { file: 'Eqp_Commanding_Force_Earring.png', name: '커맨더 포스 이어링' },
       { file: 'Eqp_Cursed_Red_Spellbook.png',     name: '저주받은 마도서' },
       { file: 'Eqp_Dreamy_Belt.png',              name: '몽환의 벨트' },
-      { file: 'Eqp_Endless_Terror.png',           name: '거대한 벨트' },
+      { file: 'Eqp_Endless_Terror.png',           name: '거대한 공포' },
       { file: 'Eqp_Genesis_Badge.png',            name: '창세의 뱃지' },
       { file: 'Eqp_Magic_Eyepatch.png',           name: '마력이 깃든 안대' },
       { file: "Eqp_Mitra's_Rage_Warrior.png",     name: '미트라의 분노' },

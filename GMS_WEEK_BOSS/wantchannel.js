@@ -3,19 +3,35 @@
    지금 점검 중이 아닌 채널 중 하나를 무작위로 추천해준다.
 ═══════════════════════════════════════════════ */
 
-const WANT_ITEMS = [
-  { file: 'Eqp_Berserked.png',                 name: 'Berserked' },
-  { file: 'Eqp_Black_Heart.png',                name: 'Black Heart' },
-  { file: 'Eqp_Commanding_Force_Earring.png',   name: 'Commanding Force Earring' },
-  { file: 'Eqp_Cursed_Red_Spellbook.png',       name: 'Cursed Red Spellbook' },
-  { file: 'Eqp_Dreamy_Belt.png',                name: 'Dreamy Belt' },
-  { file: 'Eqp_Endless_Terror.png',             name: 'Endless Terror' },
-  { file: 'Eqp_Genesis_Badge.png',              name: 'Genesis Badge' },
-  { file: 'Eqp_Magic_Eyepatch.png',             name: 'Magic Eyepatch' },
-  { file: "Eqp_Mitra's_Rage_Warrior.png",       name: "Mitra's Rage Warrior" },
-  { file: 'Eqp_Source_of_Suffering.png',        name: 'Source of Suffering' },
-  { file: 'Eqp_Total_Control.png',              name: 'Total Control' },
+const WANT_CATEGORIES = [
+  {
+    title: '칠흑의 보스 세트',
+    items: [
+      { file: 'Eqp_Berserked.png',               name: '루즈 컨트롤 머신 마크' },
+      { file: 'Eqp_Black_Heart.png',              name: '블랙 하트' },
+      { file: 'Eqp_Commanding_Force_Earring.png', name: '커맨더 포스 이어링' },
+      { file: 'Eqp_Cursed_Red_Spellbook.png',     name: '저주받은 마도서' },
+      { file: 'Eqp_Dreamy_Belt.png',              name: '몽환의 벨트' },
+      { file: 'Eqp_Endless_Terror.png',           name: '거대한 벨트' },
+      { file: 'Eqp_Genesis_Badge.png',            name: '창세의 뱃지' },
+      { file: 'Eqp_Magic_Eyepatch.png',           name: '마력이 깃든 안대' },
+      { file: "Eqp_Mitra's_Rage_Warrior.png",     name: '미트라의 분노' },
+      { file: 'Eqp_Source_of_Suffering.png',      name: '고통의 근원' },
+      { file: 'Eqp_Total_Control.png',            name: '컴플리트 언더컨트롤' },
+    ],
+  },
+  {
+    title: '광휘의 보스 세트',
+    items: [
+      { file: 'Eqp_Original_Sin_of_Pride.png',    name: '오만의 원죄' },
+      { file: 'Eqp_Whisper_of_the_Source.png',    name: '근원의 속삭임' },
+      { file: 'Eqp_Blissful_Nightmare.png',       name: '황홀한 악몽' },
+      { file: 'Eqp_Oath_of_Death.png',            name: '죽음의 맹세' },
+      { file: 'Eqp_Immortal_Legacy.png',          name: '불멸의 유산' },
+    ],
+  },
 ];
+const WANT_ITEMS = WANT_CATEGORIES.flatMap(c => c.items);
 const WC_WORLD = 'Kronos';
 
 let _wcPicked = null;   // 지금 고른 아이템
@@ -57,6 +73,14 @@ function _wcResultHtml() {
     </div>`;
 }
 
+function _wcRowHtml(item) {
+  return `
+    <div class="wc-item ${_wcPicked === item ? 'wc-item--picked' : ''}" data-want="${item.file}">
+      <img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" />
+      <span class="wc-item__name">${item.name}</span>
+    </div>`;
+}
+
 function renderWantChannel() {
   const sec = document.getElementById('sec-wantchannel');
   if (!sec) return;
@@ -65,13 +89,11 @@ function renderWantChannel() {
       <h2 class="sec-title">오늘의 채널 추천</h2>
     </div>
     <p class="dt-help">갖고 싶은 아이템을 클릭하면 Kronos에서 지금 점검 중이 아닌 채널 중 하나를 무작위로 추천해줘요.</p>
-    <div class="wc-grid">
-      ${WANT_ITEMS.map(item => `
-        <div class="wc-item ${_wcPicked === item ? 'wc-item--picked' : ''}" data-want="${item.file}" title="${item.name}">
-          <img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" />
-          <span class="wc-item__name">${item.name}</span>
-        </div>`).join('')}
-    </div>
+    ${WANT_CATEGORIES.map(cat => `
+      <div class="wc-category">
+        <div class="wc-category__title">${cat.title}</div>
+        <div class="wc-list">${cat.items.map(_wcRowHtml).join('')}</div>
+      </div>`).join('')}
     <div class="card wc-result-card">${_wcResultHtml()}</div>
   `;
 

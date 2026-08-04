@@ -252,6 +252,9 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   overflow: hidden;
 }
 .char-card__portrait img { width: 130%; object-fit: contain; object-position: bottom center; }
+/* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 130% 확대를 적용하면 과하게 잘려 보임 */
+.char-card__portrait--no { align-items: center; }
+.char-card__portrait--no img { width: 62%; object-position: center; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -1408,6 +1411,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
    확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
 .cg-portrait img { width:100%; height:100%; object-fit:contain; object-position:bottom center; }
+/* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
+.cg-portrait--no { align-items: center; }
+.cg-portrait--no img { width: 55%; height: 55%; object-position: center; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }
@@ -1908,23 +1914,25 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 
 /* ── 오늘의 채널 추천 ── */
-.wc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.wc-category { margin-bottom: 18px; }
+.wc-category__title {
+  font-size: .82rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;
+  border-left: 3px solid var(--primary); padding-left: 8px;
+}
+.wc-list { display: flex; flex-direction: column; gap: 6px; }
 .wc-item {
-  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px;
+  display: flex; align-items: center; gap: 12px; padding: 8px 14px;
   border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(0,0,0,.1);
   cursor: pointer; transition: background .15s, border-color .15s;
 }
 .wc-item:hover { background: rgba(0,0,0,.18); }
 .wc-item--picked { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); }
-.wc-item__img { width: 40px; height: 40px; object-fit: contain; }
-.wc-item__name { font-size: .68rem; font-weight: 700; color: var(--text-dim); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.wc-item__img { flex: none; width: 36px; height: 36px; object-fit: contain; }
+.wc-item__name { font-size: .84rem; font-weight: 700; color: var(--text-dim); }
 .wc-item--picked .wc-item__name { color: var(--text); }
 .wc-result-card:empty { display: none; }
 .wc-result { display: flex; align-items: center; gap: 14px; }
 .wc-result__img { flex: none; width: 56px; height: 56px; object-fit: contain; }
 .wc-result__item { font-size: .8rem; color: var(--text-sub); font-weight: 700; }
 .wc-result__pick { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin: 2px 0; }
-@media (max-width: 768px) {
-  .wc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-}
 

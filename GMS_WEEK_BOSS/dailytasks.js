@@ -3,7 +3,7 @@
    캐릭터 추가는 2단계 모달로 진행한다:
    1단계) GMS 랭킹 조회(캐릭터 추가 시트와 동일) 또는 직접 입력(챌린저스 등
           랭킹에 안 잡히는 캐릭터용 폴백) 중 하나로 이름·이미지를 정한다.
-   2단계) 추적할 항목(골럭스/아카이럼/일일퀘스트/몬스터 파크/헤이스트 부스터)을
+   2단계) 추적할 항목(골럭스/아카이럼/일일퀘스트/몬스터 파크/헤이스트)을
           고른다. 이름 입력칸이 없는 화면이라 체크할 때마다 값이 날아가는 일이 없다.
 ═══════════════════════════════════════════════ */
 
@@ -12,7 +12,7 @@ const DAILY_TASK_PRESETS = [
   { id: 'akaium',      label: '아카이럼',      emoji: '🤖', img: 'images/dailytasks/akaium.png' },
   { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜', img: 'images/dailytasks/dailyquest.webp' },
   { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲', img: 'images/dailytasks/monsterpark.png' },
-  { id: 'haste',       label: '헤이스트 부스터', emoji: '⚡', img: 'images/dailytasks/haste.webp' },
+  { id: 'haste',       label: '헤이스트',      emoji: '⚡', img: 'images/dailytasks/haste.webp' },
 ];
 const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 

@@ -1827,7 +1827,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-chan--down { background: rgba(240,80,96,.18); color: var(--danger); }
 
 /* ── 숙제 트래커 ── */
-.dt-grid { display: flex; flex-direction: column; gap: 14px; }
+.dt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
 .dt-card { display: flex; flex-direction: column; gap: 12px; transition: opacity .15s, border-color .15s; }
 .dt-card--dragging { opacity: .4; }
 .dt-card--dragover { border-color: var(--primary); }
@@ -1855,9 +1855,14 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 .dt-addform__opt input { display: none; }
 .dt-addform__opt--checked { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); color: var(--text); }
-.dt-tiles { display: flex; flex-wrap: wrap; gap: 8px; }
+/* 항목 2개씩 고정 폭으로 줄바꿈 — 이름 길이와 무관하게 상자 크기가 통일되고,
+   최대 5개(3줄)만큼 높이를 항상 확보해서 항목 개수와 무관하게 카드 크기가 같아진다 */
+.dt-tiles {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 46px;
+  gap: 8px; min-height: calc(46px * 3 + 8px * 2);
+}
 .dt-tile {
-  position: relative; flex: 0 0 auto; display: flex; align-items: center; gap: 8px;
+  position: relative; display: flex; align-items: center; gap: 8px; min-width: 0;
   padding: 7px 12px 7px 7px; border-radius: var(--radius-sm); cursor: pointer; overflow: hidden;
   border: 1px solid var(--border); transition: background .15s, border-color .15s, opacity .15s;
 }

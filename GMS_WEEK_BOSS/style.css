@@ -1828,15 +1828,19 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 
 /* ── 숙제 트래커 ── */
 .dt-grid { display: flex; flex-direction: column; gap: 14px; }
-.dt-card { display: flex; flex-direction: column; gap: 10px; }
-.dt-card__head { display: flex; align-items: center; gap: 10px; }
+.dt-card { display: flex; flex-direction: column; gap: 12px; transition: opacity .15s, border-color .15s; }
+.dt-card--dragging { opacity: .4; }
+.dt-card--dragover { border-color: var(--primary); }
+.dt-card__head { display: flex; align-items: center; gap: 12px; }
+.dt-card__drag { flex: none; cursor: grab; color: var(--text-dim); font-size: 1.1rem; line-height: 1; user-select: none; }
+.dt-card__drag:active { cursor: grabbing; }
 .dt-card__portrait {
-  flex: none; width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
+  flex: none; width: 88px; height: 88px; border-radius: var(--radius-sm); overflow: hidden;
   display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.2);
 }
 .dt-card__portrait-img { width: 100%; height: 100%; object-fit: cover; }
-.dt-card__portrait-no { font-size: .58rem; font-weight: 800; color: var(--text-dim); text-align: center; }
-.dt-card__name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-card__portrait-no { font-size: .74rem; font-weight: 800; color: var(--text-dim); text-align: center; }
+.dt-card__name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 1.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dt-card__del {
   flex: none; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
   color: var(--text-dim); font-size: 1rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s;

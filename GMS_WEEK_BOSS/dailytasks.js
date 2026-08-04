@@ -29,34 +29,49 @@ function _dtTodayKey() {
   return `${kst.getFullYear()}-${_dtPad(kst.getMonth() + 1)}-${_dtPad(kst.getDate())}`;
 }
 
+// { order: [charId, ...], items: { [charId]: record } } — order로 카드 배치 순서를 따로 관리(드래그 정렬용).
 function _dtLoadAll() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || '{}'); }
-  catch { return {}; }
+  try {
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null');
+    if (raw && Array.isArray(raw.order) && raw.items) return raw;
+    if (raw && typeof raw === 'object') return { order: Object.keys(raw), items: raw }; // 구버전(순서 없는 평면 객체) 마이그레이션
+    return { order: [], items: {} };
+  } catch { return { order: [], items: {} }; }
 }
 function _dtSaveAll(all) { localStorage.setItem(STORAGE_KEYS.dailyTasks, JSON.stringify(all)); }
 
 // 트래커 캐릭터 하나의 오늘자 상태. 저장된 날짜가 오늘(9시 기준)이 아니면 done을 비운 채로 반환 → 자동 초기화.
 function _dtGetChar(charId) {
-  const all = _dtLoadAll();
-  const rec = all[charId];
+  const rec = _dtLoadAll().items[charId];
   if (!rec) return null;
   const today = _dtTodayKey();
   return { name: rec.name, img: rec.img || null, active: rec.active || [], done: rec.date === today ? (rec.done || []) : [] };
 }
 function _dtSaveChar(charId, name, img, active, done) {
   const all = _dtLoadAll();
-  all[charId] = { name, img, active, date: _dtTodayKey(), done };
+  all.items[charId] = { name, img, active, date: _dtTodayKey(), done };
   _dtSaveAll(all);
 }
 function _dtDeleteChar(charId) {
   const all = _dtLoadAll();
-  delete all[charId];
+  delete all.items[charId];
+  all.order = all.order.filter(id => id !== charId);
   _dtSaveAll(all);
 }
 function _dtCreateChar(name, img, activeIds) {
   const all = _dtLoadAll();
   const id = String(Date.now());
-  all[id] = { name, img, active: activeIds, date: _dtTodayKey(), done: [] };
+  all.items[id] = { name, img, active: activeIds, date: _dtTodayKey(), done: [] };
+  all.order.push(id);
+  _dtSaveAll(all);
+}
+// 드래그로 카드 순서 바꾸기: fromId를 toId 자리로 옮긴다.
+function _dtReorder(fromId, toId) {
+  const all = _dtLoadAll();
+  const order = all.order.filter(id => id !== fromId);
+  const idx = order.indexOf(toId);
+  order.splice(idx < 0 ? order.length : idx, 0, fromId);
+  all.order = order;
   _dtSaveAll(all);
 }
 
@@ -99,8 +114,9 @@ function _dtCardHtml(charId, rec) {
     <span class="dt-card__portrait-no" style="display:none">NO IMG</span>`;
   const activeTasks = DAILY_TASK_PRESETS.filter(t => active.includes(t.id));
   return `
-    <div class="card dt-card">
+    <div class="card dt-card" draggable="true" data-char-card="${charId}">
       <div class="dt-card__head">
+        <span class="dt-card__drag" title="드래그해서 순서 바꾸기">⠿</span>
         <span class="dt-card__portrait">${portraitHtml}</span>
         <span class="dt-card__name">${name}</span>
         <button class="dt-card__del" data-del-char="${charId}" title="캐릭터 삭제">×</button>
@@ -260,11 +276,13 @@ function _dtWireStep2() {
   });
 }
 
+let _dtDragId = null;
+
 function renderDailyTasks() {
   const sec = document.getElementById('sec-dailytasks');
   if (!sec) return;
   const all = _dtLoadAll();
-  const ids = Object.keys(all);
+  const ids = all.order.filter(id => all.items[id]);
 
   sec.innerHTML = `
     <div class="sec-head">
@@ -277,6 +295,31 @@ function renderDailyTasks() {
   `;
 
   document.getElementById('dtToggleAdd').addEventListener('click', _dtOpenAddModal);
+
+  sec.querySelectorAll('.dt-card').forEach(card => {
+    card.addEventListener('dragstart', () => {
+      _dtDragId = card.dataset.charCard;
+      card.classList.add('dt-card--dragging');
+    });
+    card.addEventListener('dragend', () => {
+      card.classList.remove('dt-card--dragging');
+      _dtDragId = null;
+    });
+    card.addEventListener('dragover', e => {
+      e.preventDefault();
+      if (!_dtDragId || _dtDragId === card.dataset.charCard) return;
+      card.classList.add('dt-card--dragover');
+    });
+    card.addEventListener('dragleave', () => card.classList.remove('dt-card--dragover'));
+    card.addEventListener('drop', e => {
+      e.preventDefault();
+      card.classList.remove('dt-card--dragover');
+      const targetId = card.dataset.charCard;
+      if (!_dtDragId || _dtDragId === targetId) return;
+      _dtReorder(_dtDragId, targetId);
+      renderDailyTasks();
+    });
+  });
 
   sec.querySelectorAll('.dt-tile').forEach(tile => {
     tile.addEventListener('click', e => {

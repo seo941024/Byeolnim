@@ -1428,7 +1428,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 /* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
    확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
-.cg-portrait img { width:90%; height:90%; object-fit:contain; object-position:bottom center; }
+.cg-portrait img { width:81%; height:81%; object-fit:contain; object-position:bottom center; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
 .cg-portrait--no img { width: 89%; height: 89%; object-position: bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }

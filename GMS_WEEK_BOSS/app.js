@@ -532,6 +532,7 @@ function openCharModal(idx = -1) {
   document.getElementById('inpName').value  = idx >= 0 ? state.chars[idx].name  : '';
   document.getElementById('inpLevel').value = idx >= 0 ? state.chars[idx].level : '';
   document.getElementById('inpJob').value = idx >= 0 ? charJobName(state.chars[idx]) : '';
+  document.getElementById('inpWorld').value = idx >= 0 ? (state.chars[idx].fetched?.world || '') : '';
   document.getElementById('inpJobSearch').value = '';
   document.getElementById('lkName').value = idx >= 0 ? state.chars[idx].name : '';
   document.getElementById('lkResult').innerHTML = '';
@@ -582,7 +583,7 @@ const JOB_ASSET_NAMES = {
   'Hoyoung':'HoYoung',
 };
 // (JOB_HEAD_ASSET_NAMES 제거: 헤드 파일명을 전신과 통일해 JOB_ASSET_NAMES 하나로 해석)
-const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'png' };
+const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'png', Challengers:'png' };
 
 /* 캐릭터 직업명/아이콘 — 전부 영문명 기준 (name 이 곧 아이콘 파일명) */
 function charJobName(ch) {
@@ -737,7 +738,8 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
     if (!inputName) return alert('캐릭터명을 입력하거나 랭킹 조회를 하세요.');
     name  = inputName;
     level = Math.max(1, Math.min(300, parseInt(document.getElementById('inpLevel').value) || 260));
-    fetched = null;   // 직접 입력 → NO IMAGE
+    const manualWorld = document.getElementById('inpWorld').value;
+    fetched = manualWorld ? { world: manualWorld } : null;   // 직접 입력 → 이미지 없음(서버만 선택 가능)
   }
 
   // 같은 캐릭터(이름) 중복 추가 방지 (대소문자 무시, 편집 중인 본인은 제외)
@@ -754,7 +756,7 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   save();
   document.getElementById('overlayChar').classList.remove('open');
   renderCharList(); renderBossTable(); renderCharInfo();
-  if (fetched) syncServerHistThenRender(state.chars[state.activeChar]);
+  if (useFetched) syncServerHistThenRender(state.chars[state.activeChar]);
 });
 
 // 수정/삭제 버튼 (위임)

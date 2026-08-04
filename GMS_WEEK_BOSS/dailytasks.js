@@ -242,7 +242,10 @@ function _dtStep2Html() {
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">
-        <div class="dt-step2-name">${_dtPendingName}</div>
+        <div class="dt-step2-head">
+          <img class="dt-step2-portrait" src="${_dtPendingImg || DT_DEFAULT_PORTRAIT}" alt="" onerror="this.src='${DT_DEFAULT_PORTRAIT}'" />
+          <span class="dt-step2-name">${_dtPendingName}</span>
+        </div>
         <div class="dt-addform__presets">
           ${DAILY_TASK_PRESETS.map(t => `
             <label class="dt-addform__opt ${_dtNewActive.has(t.id) ? 'dt-addform__opt--checked' : ''}" data-preset="${t.id}">

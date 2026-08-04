@@ -1907,3 +1907,25 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   .dt-tiles { grid-template-columns: 1fr !important; min-height: 0 !important; }
 }
 
+/* ── 오늘의 채널 추천 ── */
+.wc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 10px; margin-bottom: 16px; }
+.wc-item {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 10px 6px;
+  border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(0,0,0,.1);
+  cursor: pointer; transition: background .15s, border-color .15s;
+}
+.wc-item:hover { background: rgba(0,0,0,.18); }
+.wc-item--picked { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); }
+.wc-item__img { width: 40px; height: 40px; object-fit: contain; }
+.wc-item__name { font-size: .68rem; font-weight: 700; color: var(--text-dim); text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 100%; }
+.wc-item--picked .wc-item__name { color: var(--text); }
+.wc-result-card:empty { display: none; }
+.wc-result { display: flex; align-items: center; gap: 14px; }
+.wc-result__img { flex: none; width: 56px; height: 56px; object-fit: contain; }
+.wc-result__item { font-size: .8rem; color: var(--text-sub); font-weight: 700; }
+.wc-result__pick { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin: 2px 0; }
+.wc-result__note { font-size: .7rem; color: var(--text-dim); }
+@media (max-width: 768px) {
+  .wc-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+}
+

@@ -76,6 +76,7 @@ function navigateTo(sec) {
   if (sec === 'bosshp')    renderBossHPTable();
   if (sec === 'serverstatus') renderServerStatus();
   if (sec === 'dailytasks') renderDailyTasks();
+  if (sec === 'wantchannel') renderWantChannel();
   if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
   if (sec === 'hexa')      renderAllHexaLists();
 }

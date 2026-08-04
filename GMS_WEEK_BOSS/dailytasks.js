@@ -10,7 +10,7 @@
 const DAILY_TASK_PRESETS = [
   { id: 'gollux',      label: '골럭스',        emoji: '🐍', img: 'images/dailytasks/gollux.png' },
   { id: 'akaium',      label: '아카이럼',      emoji: '🤖', img: 'images/dailytasks/akaium.png' },
-  { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜', img: 'images/dailytasks/dailyquest.webp' },
+  { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜', img: 'images/dailytasks/dailyquest.png' },
   { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲', img: 'images/dailytasks/monsterpark.png' },
   { id: 'haste',       label: '헤이스트',      emoji: '⚡', img: 'images/dailytasks/haste.webp' },
 ];

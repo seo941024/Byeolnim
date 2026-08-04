@@ -20,6 +20,7 @@ let _dtStep = 1;              // 1=이름 정하기(조회/직접입력), 2=항�
 let _dtPendingName = '';
 let _dtPendingImg = null;
 let _dtNewActive = new Set(); // 2단계에서 지금 체크 중인 항목(제출 전 임시 상태)
+let _dtEditCharId = null;     // null이면 신규 추가, 값이 있으면 그 캐릭터의 항목 수정 모드
 
 function _dtPad(n) { return String(n).padStart(2, '0'); }
 // 한국 기준 오전 9시를 하루의 경계로 삼는다 (게임 일일 컨텐츠 리셋 시각과 동일)
@@ -119,6 +120,7 @@ function _dtCardHtml(charId, rec) {
         <span class="dt-card__drag" title="드래그해서 순서 바꾸기">⠿</span>
         <span class="dt-card__portrait">${portraitHtml}</span>
         <span class="dt-card__name">${name}</span>
+        <button class="dt-card__edit" data-edit-char="${charId}" title="추적 항목 수정">✎</button>
         <button class="dt-card__del" data-del-char="${charId}" title="캐릭터 삭제">×</button>
       </div>
       <div class="dt-tiles">
@@ -138,9 +140,10 @@ function _dtCloseAddModal() {
   _dtPendingName = '';
   _dtPendingImg = null;
   _dtNewActive = new Set();
+  _dtEditCharId = null;
 }
 
-function _dtOpenAddModal() {
+function _dtEnsureOverlay() {
   let overlay = document.getElementById('dtAddOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -149,10 +152,30 @@ function _dtOpenAddModal() {
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) _dtCloseAddModal(); });
   }
+  return overlay;
+}
+
+function _dtOpenAddModal() {
+  const overlay = _dtEnsureOverlay();
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
   _dtNewActive = new Set();
+  _dtEditCharId = null;
+  _dtRenderAddModal();
+  overlay.classList.add('open');
+}
+
+// 기존 캐릭터의 추적 항목만 다시 고르는 모드 (이름/이미지는 그대로, 1단계 건너뜀)
+function _dtOpenEditModal(charId) {
+  const rec = _dtGetChar(charId);
+  if (!rec) return;
+  const overlay = _dtEnsureOverlay();
+  _dtStep = 2;
+  _dtPendingName = rec.name;
+  _dtPendingImg = rec.img;
+  _dtNewActive = new Set(rec.active);
+  _dtEditCharId = charId;
   _dtRenderAddModal();
   overlay.classList.add('open');
 }
@@ -235,10 +258,11 @@ function _dtWireStep1() {
 }
 
 function _dtStep2Html() {
+  const editing = !!_dtEditCharId;
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">추적할 항목 선택 (2/2)</span>
+        <span class="modal__title">${editing ? '추적 항목 수정' : '추적할 항목 선택 (2/2)'}</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -255,8 +279,8 @@ function _dtStep2Html() {
         </div>
       </div>
       <div class="modal__foot">
-        <button class="sbtn sbtn--ghost" id="dtStepBack">이전</button>
-        <button class="sbtn sbtn--primary" id="dtStepSave">추가 완료</button>
+        <button class="sbtn sbtn--ghost" id="dtStepBack">${editing ? '취소' : '이전'}</button>
+        <button class="sbtn sbtn--primary" id="dtStepSave">${editing ? '저장' : '추가 완료'}</button>
       </div>
     </div>`;
 }
@@ -270,10 +294,20 @@ function _dtWireStep2() {
       _dtRenderAddModal(); // 이름 입력칸이 없는 화면이라 다시 그려도 값이 안 날아감
     });
   });
-  document.getElementById('dtStepBack').addEventListener('click', () => { _dtStep = 1; _dtRenderAddModal(); });
+  document.getElementById('dtStepBack').addEventListener('click', () => {
+    if (_dtEditCharId) { _dtCloseAddModal(); return; }
+    _dtStep = 1;
+    _dtRenderAddModal();
+  });
   document.getElementById('dtStepSave').addEventListener('click', () => {
     if (_dtNewActive.size === 0) return;
-    _dtCreateChar(_dtPendingName, _dtPendingImg, DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id)));
+    const activeIds = DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id));
+    if (_dtEditCharId) {
+      const rec = _dtGetChar(_dtEditCharId);
+      _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds, rec.done.filter(d => activeIds.includes(d)));
+    } else {
+      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds);
+    }
     _dtCloseAddModal();
     renderDailyTasks();
   });
@@ -292,6 +326,7 @@ function renderDailyTasks() {
       <h2 class="sec-title">숙제 트래커</h2>
       <button class="sbtn sbtn--primary" id="dtToggleAdd">+ 캐릭터 추가</button>
     </div>
+    <p class="dt-help">완료 후 목록을 클릭하면 CLEAR 처리가 됩니다.</p>
     ${ids.length
       ? `<div class="dt-grid">${ids.map(id => _dtCardHtml(id, _dtGetChar(id))).join('')}</div>`
       : '<p class="mf-empty">위에서 캐릭터를 추가하세요.</p>'}
@@ -343,5 +378,8 @@ function renderDailyTasks() {
       _dtDeleteChar(btn.dataset.delChar);
       renderDailyTasks();
     });
+  });
+  sec.querySelectorAll('.dt-card__edit').forEach(btn => {
+    btn.addEventListener('click', () => _dtOpenEditModal(btn.dataset.editChar));
   });
 }

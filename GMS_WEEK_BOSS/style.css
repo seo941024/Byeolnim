@@ -1841,11 +1841,13 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .dt-card__portrait-img { width: 100%; height: 100%; object-fit: cover; }
 .dt-card__portrait-no { font-size: .74rem; font-weight: 800; color: var(--text-dim); text-align: center; }
 .dt-card__name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 1.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dt-card__del {
+.dt-card__edit, .dt-card__del {
   flex: none; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
-  color: var(--text-dim); font-size: 1rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s;
+  color: var(--text-dim); font-size: .92rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s;
 }
+.dt-card__edit:hover { background: rgba(139,92,246,.18); color: var(--primary); }
 .dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
+.dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; }
 .dt-step2-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .dt-step2-portrait { flex: none; width: 72px; height: 72px; border-radius: var(--radius-sm); object-fit: cover; background: rgba(0,0,0,.2); }
 .dt-step2-name { font-size: 1.35rem; font-weight: 800; }
@@ -1874,7 +1876,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 }
 .dt-tile__img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) brightness(.55); transition: filter .15s; }
 .dt-tile__emoji { font-size: 1.15rem; line-height: 1; filter: grayscale(1); opacity: .4; transition: filter .15s, opacity .15s; }
-.dt-tile__label { flex: none; font-size: .82rem; font-weight: 700; color: var(--text-dim); transition: color .15s; }
+.dt-tile__label { flex: 1 1 auto; min-width: 0; font-size: .82rem; font-weight: 700; color: var(--text-dim); transition: color .15s; }
 .dt-tile--inactive { background: rgba(0,0,0,.1); }
 .dt-tile--inactive:hover { background: rgba(0,0,0,.18); }
 .dt-tile--active { background: rgba(139,92,246,.1); border-color: rgba(139,92,246,.35); }

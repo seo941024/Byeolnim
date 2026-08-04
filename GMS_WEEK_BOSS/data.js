@@ -56,8 +56,7 @@ const STORAGE_KEYS = {
   hexaMastery: 'hx_mastery',
   hexaBoost:   'hx_boost',
   hexaCommon:  'hx_common',
-  mfDecks:     'mf_decks_v1',
-  mfRoller:    'mf_roller_v1',
+  dailyTasks:  'daily_tasks_v1',
 };
 
 const JOB_LIST = [

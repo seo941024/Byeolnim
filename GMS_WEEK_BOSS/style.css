@@ -253,7 +253,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 .char-card__portrait img { width: 130%; object-fit: contain; object-position: bottom center; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 130% 확대를 적용하면 과하게 잘려 보임 */
-.char-card__portrait--no img { width: 100%; object-position: bottom center; }
+.char-card__portrait--no img { width: 115%; object-position: bottom center; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -1411,7 +1411,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
 .cg-portrait img { width:100%; height:100%; object-fit:contain; object-position:bottom center; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
-.cg-portrait--no img { width: 77%; height: 77%; object-position: bottom center; }
+.cg-portrait--no img { width: 89%; height: 89%; object-position: bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }
@@ -1891,13 +1891,6 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .dt-tile--done { background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.4); }
 .dt-tile--done .dt-tile__img { opacity: .4; }
 .dt-tile--done .dt-tile__emoji { opacity: .35; }
-.dt-tile__x {
-  flex: none; width: 18px; height: 18px; border-radius: 50%;
-  border: none; background: transparent; color: var(--text-dim); font-size: .82rem; line-height: 1;
-  cursor: pointer; opacity: 0; transition: opacity .15s, background .15s;
-}
-.dt-tile:hover .dt-tile__x { opacity: 1; }
-.dt-tile__x:hover { background: rgba(239,68,68,.2); color: #ef4444; }
 .dt-tile__stamp {
   position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%) rotate(-12deg);
   font-size: .68rem; font-weight: 900; letter-spacing: .06em; color: var(--success);

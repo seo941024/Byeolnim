@@ -76,12 +76,6 @@ function _dtReorder(fromId, toId) {
   _dtSaveAll(all);
 }
 
-// 활성 항목의 × 클릭 → 추적 목록에서 제거(오늘 완료 표시도 같이 사라짐)
-function _dtDeactivate(charId, taskId) {
-  const rec = _dtGetChar(charId);
-  if (!rec) return;
-  _dtSaveChar(charId, rec.name, rec.img, rec.active.filter(a => a !== taskId), rec.done.filter(d => d !== taskId));
-}
 // 활성 항목 클릭 → 오늘 완료(CLEAR) 토글
 function _dtToggleDone(charId, taskId) {
   const rec = _dtGetChar(charId);
@@ -103,7 +97,6 @@ function _dtTileHtml(charId, task, active, done) {
       <span class="dt-tile__thumb">${thumbHtml}</span>
       <span class="dt-tile__label">${task.label}</span>
       ${isDone ? '<span class="dt-tile__stamp">CLEAR</span>' : ''}
-      <button class="dt-tile__x" data-deact-char="${charId}" data-deact-task="${task.id}" title="추적 해제">×</button>
     </div>`;
 }
 
@@ -360,16 +353,8 @@ function renderDailyTasks() {
   });
 
   sec.querySelectorAll('.dt-tile').forEach(tile => {
-    tile.addEventListener('click', e => {
-      if (e.target.closest('.dt-tile__x')) return;
+    tile.addEventListener('click', () => {
       _dtToggleDone(tile.dataset.char, tile.dataset.task);
-      renderDailyTasks();
-    });
-  });
-  sec.querySelectorAll('.dt-tile__x').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      _dtDeactivate(btn.dataset.deactChar, btn.dataset.deactTask);
       renderDailyTasks();
     });
   });

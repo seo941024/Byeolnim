@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   오늘의 채널 추천 — 갖고 싶은 아이템을 고르면 Kronos 서버에서
+   오늘의 채널 추천 — 갖고 싶은 아이템을 고르면 팝업으로 Kronos 서버의
    지금 점검 중이 아닌 채널 중 하나를 무작위로 추천해준다.
 ═══════════════════════════════════════════════ */
 
@@ -34,48 +34,69 @@ const WANT_CATEGORIES = [
 const WANT_ITEMS = WANT_CATEGORIES.flatMap(c => c.items);
 const WC_WORLD = 'Kronos';
 
-let _wcPicked = null;   // 지금 고른 아이템
-let _wcResult = null;   // { channel } | 'loading' | 'error' | null
-
 function _wcImgSrc(item) { return `images/WANT/${item.file}`; }
 
-async function _wcRecommend(item) {
-  _wcPicked = item;
-  _wcResult = 'loading';
-  _wcRender();
+function _wcEnsureOverlay() {
+  let overlay = document.getElementById('wcOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'wcOverlay';
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  }
+  return overlay;
+}
+
+function _wcModalBodyHtml(item, state) {
+  if (state === 'loading') return '<p class="dt-help" style="margin:0">서버 상태 확인 중...</p>';
+  if (state === 'error') return '<p class="lk-err">서버 상태를 불러오지 못했어요. 잠시 후 다시 시도하세요.</p>';
+  return `
+    <div class="wc-result">
+      <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
+      <div class="wc-result__body">
+        <div class="wc-result__item">${item.name}</div>
+        <div class="wc-result__pick">${WC_WORLD} - ${state.channel}번 채널</div>
+      </div>
+    </div>`;
+}
+
+function _wcOpenModal(item) {
+  const overlay = _wcEnsureOverlay();
+  const render = body => {
+    overlay.innerHTML = `
+      <div class="modal" style="width:min(420px,92vw)">
+        <div class="modal__head">
+          <span class="modal__title">오늘의 채널 추천</span>
+          <button class="modal__close" id="wcModalClose">×</button>
+        </div>
+        <div class="modal__body">${body}</div>
+      </div>`;
+    document.getElementById('wcModalClose').addEventListener('click', () => overlay.classList.remove('open'));
+  };
+  render(_wcModalBodyHtml(item, 'loading'));
+  overlay.classList.add('open');
+  _wcFetchRecommend(item).then(state => render(_wcModalBodyHtml(item, state)));
+}
+
+async function _wcFetchRecommend(item) {
   try {
     const r = await fetch(`/api/server-status?region=na`);
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '조회 실패');
     const world = j.worlds.find(w => w.world === WC_WORLD);
     const upChannels = (world?.channelList || []).filter(c => c.up);
-    if (!world || !world.up || !upChannels.length) { _wcResult = 'error'; _wcRender(); return; }
+    if (!world || !world.up || !upChannels.length) return 'error';
     const channel = upChannels[Math.floor(Math.random() * upChannels.length)];
-    _wcResult = { channel: channel.n };
+    return { channel: channel.n };
   } catch {
-    _wcResult = 'error';
+    return 'error';
   }
-  _wcRender();
-}
-
-function _wcResultHtml() {
-  if (!_wcPicked) return '<p class="mf-empty">위에서 갖고 싶은 아이템을 클릭하세요.</p>';
-  if (_wcResult === 'loading') return '<p class="dt-help" style="margin:0">서버 상태 확인 중...</p>';
-  if (_wcResult === 'error') return '<p class="lk-err">서버 상태를 불러오지 못했어요. 잠시 후 다시 시도하세요.</p>';
-  if (!_wcResult) return '';
-  return `
-    <div class="wc-result">
-      <img class="wc-result__img" src="${_wcImgSrc(_wcPicked)}" alt="" />
-      <div class="wc-result__body">
-        <div class="wc-result__item">${_wcPicked.name}</div>
-        <div class="wc-result__pick">${WC_WORLD} - ${_wcResult.channel}번 채널</div>
-      </div>
-    </div>`;
 }
 
 function _wcRowHtml(item) {
   return `
-    <div class="wc-item ${_wcPicked === item ? 'wc-item--picked' : ''}" data-want="${item.file}">
+    <div class="wc-item" data-want="${item.file}">
       <img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" />
       <span class="wc-item__name">${item.name}</span>
     </div>`;
@@ -94,14 +115,12 @@ function renderWantChannel() {
         <div class="wc-category__title">${cat.title}</div>
         <div class="wc-list">${cat.items.map(_wcRowHtml).join('')}</div>
       </div>`).join('')}
-    <div class="card wc-result-card">${_wcResultHtml()}</div>
   `;
 
   sec.querySelectorAll('.wc-item').forEach(el => {
     el.addEventListener('click', () => {
       const item = WANT_ITEMS.find(i => i.file === el.dataset.want);
-      _wcRecommend(item);
+      _wcOpenModal(item);
     });
   });
 }
-function _wcRender() { renderWantChannel(); }

@@ -3,15 +3,14 @@
    불러온 캐릭터 목록 전부에 대해 자동으로 트래커 카드를 만들고,
    정해진 항목(골럭스/아카이럼/일일퀘스트/몬스터 파크/헤이스트 부스터) 중
    그 캐릭터가 실제로 하는 것만 활성화해서 매일 체크한다.
-   ※ 아이콘은 별도 라이선스 이미지가 없어 이모지 배지로 대체.
 ═══════════════════════════════════════════════ */
 
 const DAILY_TASK_PRESETS = [
-  { id: 'gollux',      label: '골럭스',        emoji: '🐍' },
-  { id: 'akaium',      label: '아카이럼',      emoji: '🤖' },
-  { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜' },
-  { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲' },
-  { id: 'haste',       label: '헤이스트 부스터', emoji: '⚡' },
+  { id: 'gollux',      label: '골럭스',        emoji: '🐍', img: 'images/dailytasks/gollux.png' },
+  { id: 'akaium',      label: '아카이럼',      emoji: '🤖', img: 'images/dailytasks/akaium.png' },
+  { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜', img: 'images/dailytasks/dailyquest.webp' },
+  { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲', img: 'images/dailytasks/monsterpark.png' },
+  { id: 'haste',       label: '헤이스트 부스터', emoji: '⚡', img: 'images/dailytasks/haste.webp' },
 ];
 
 function _dtPad(n) { return String(n).padStart(2, '0'); }
@@ -63,22 +62,31 @@ function _dtToggleDone(charId, taskId) {
 function _dtTileHtml(charId, task, active, done) {
   const isActive = active.includes(task.id);
   const isDone = isActive && done.includes(task.id);
+  const thumbHtml = task.img
+    ? `<img class="dt-tile__img" src="${task.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <span class="dt-tile__emoji" style="display:none">${task.emoji}</span>`
+    : `<span class="dt-tile__emoji">${task.emoji}</span>`;
   return `
     <div class="dt-tile ${isActive ? 'dt-tile--active' : 'dt-tile--inactive'} ${isDone ? 'dt-tile--done' : ''}"
          data-char="${charId}" data-task="${task.id}" title="${isActive ? '클릭: 오늘 완료 체크' : '클릭: 이 캐릭터에서 추적 시작'}">
-      ${isActive ? `<button class="dt-tile__x" data-deact-char="${charId}" data-deact-task="${task.id}" title="추적 해제">×</button>` : ''}
-      <span class="dt-tile__emoji">${task.emoji}</span>
+      <span class="dt-tile__thumb">${thumbHtml}</span>
       <span class="dt-tile__label">${task.label}</span>
       ${isDone ? '<span class="dt-tile__stamp">CLEAR</span>' : ''}
+      ${isActive ? `<button class="dt-tile__x" data-deact-char="${charId}" data-deact-task="${task.id}" title="추적 해제">×</button>` : ''}
     </div>`;
 }
 
 function _dtCardHtml(ch) {
   const { active, done } = _dtGetChar(ch.id);
   const doneCount = active.filter(a => done.includes(a)).length;
+  const portraitHtml = ch.fetched?.img
+    ? `<img class="dt-card__portrait-img" src="${ch.fetched.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <span class="dt-card__portrait-no" style="display:none">NO IMG</span>`
+    : `<span class="dt-card__portrait-no">NO IMG</span>`;
   return `
     <div class="card dt-card">
       <div class="dt-card__head">
+        <span class="dt-card__portrait">${portraitHtml}</span>
         <span class="dt-card__name">${ch.name}</span>
         <span class="dt-card__count">${doneCount} / ${active.length}</span>
       </div>

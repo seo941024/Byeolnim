@@ -491,6 +491,25 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .boss-table td { padding: 8px 18px; vertical-align: middle; color: var(--text); }
 
 .boss-name-cell { display: flex; align-items: center; gap: 12px; }
+.bm-crystal-toggle {
+  position: relative; display: inline-flex; align-items: center; width: 52px; height: 24px;
+  border-radius: 999px; border: none; cursor: pointer; padding: 0; margin-left: auto; flex: none;
+  background: rgba(255,255,255,.12); transition: background .15s;
+}
+.bm-crystal-toggle.on { background: rgba(139,92,246,.55); }
+.bm-crystal-toggle__knob {
+  position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.bm-crystal-toggle.on .bm-crystal-toggle__knob { transform: translateX(28px); }
+.bm-crystal-toggle__txt {
+  position: absolute; top: 50%; transform: translateY(-50%); font-size: .6rem; font-weight: 900;
+  color: rgba(255,255,255,.85); letter-spacing: .02em; display: none;
+}
+.bm-crystal-toggle__txt--on { left: 6px; }
+.bm-crystal-toggle__txt--off { right: 6px; }
+.bm-crystal-toggle.on .bm-crystal-toggle__txt--on { display: block; }
+.bm-crystal-toggle.off .bm-crystal-toggle__txt--off { display: block; }
 .boss-thumb {
   width: 44px; height: 44px; border-radius: 10px;
   background: var(--bg3); overflow: hidden;
@@ -1409,7 +1428,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 /* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
    확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
-.cg-portrait img { width:100%; height:100%; object-fit:contain; object-position:bottom center; }
+.cg-portrait img { width:90%; height:90%; object-fit:contain; object-position:bottom center; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
 .cg-portrait--no img { width: 89%; height: 89%; object-position: bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }

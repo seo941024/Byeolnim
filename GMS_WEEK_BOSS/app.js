@@ -21,6 +21,7 @@ function load() {
   if (!state.chars) state.chars = [];
   if (state.activeChar === undefined) state.activeChar = -1;
   if (!state.region) state.region = 'na';
+  if (state.bmCrystalIncluded === undefined) state.bmCrystalIncluded = true; // 기본값: 기존과 동일하게 결정석 개수에 포함
   // 기존 저장 데이터의 약칭 직업명을 정식 이름으로 마이그레이션
   let migrated = false;
   state.chars.forEach(c => {
@@ -137,6 +138,14 @@ function countMonthlyCrystals(ch) {
 function countCrystals(ch) {
   return countWeeklyCrystals(ch) + countMonthlyCrystals(ch);
 }
+function countBossCrystals(ch, bossId) {
+  let n = 0;
+  Object.entries(ch.checks || {}).forEach(([key, v]) => {
+    if (!v?.on) return;
+    if (key.slice(0, key.lastIndexOf('_')) === bossId) n++;
+  });
+  return n;
+}
 /* 한 캐릭터의 주간 보스 수익 합 */
 function thursdaysInMonth() {
   const now = new Date();
@@ -178,7 +187,9 @@ function charMonthlyMeso(ch) {
 function updateCrystalBar() {
   const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
   const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
-  const total  = Math.min(totalW + totalM, MAX_CRYSTALS);
+  const bmCount = state.chars.reduce((s, c) => s + countBossCrystals(c, 'blackmage'), 0);
+  const cappedM = state.bmCrystalIncluded ? totalM : totalM - bmCount;
+  const total  = Math.min(totalW + cappedM, MAX_CRYSTALS);
   document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
   document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
   const elCW = document.getElementById('totalCrystalWeekly');
@@ -304,15 +315,32 @@ function renderBossTable() {
       ? `<span class="rev-val">${fmtMeso(price)}</span>`
       : `<span class="rev-dash">-</span>`;
 
+    const bmToggleHtml = boss.id === 'blackmage'
+      ? `<button class="bm-crystal-toggle ${state.bmCrystalIncluded ? 'on' : 'off'}" id="bmCrystalToggle"
+                title="결정석을 주간 개수에 포함시키기">
+           <span class="bm-crystal-toggle__knob"></span>
+           <span class="bm-crystal-toggle__txt bm-crystal-toggle__txt--on">ON</span>
+           <span class="bm-crystal-toggle__txt bm-crystal-toggle__txt--off">OFF</span>
+         </button>`
+      : '';
+
     tr.innerHTML = `
       <td><div class="boss-name-cell">
         <div class="boss-thumb"><img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
         <span class="boss-label">${boss.name}</span>
+        ${bmToggleHtml}
       </div></td>
       <td>${pillsHtml}</td>
       <td>${partyHtml}</td>
       <td>${revHtml}</td>`;
     tb.appendChild(tr);
+  });
+
+  document.getElementById('bmCrystalToggle')?.addEventListener('click', () => {
+    state.bmCrystalIncluded = !state.bmCrystalIncluded;
+    save();
+    renderBossTable();
+    updateCrystalBar();
   });
 
   const wCost = rentalWeeklyCost();

@@ -396,7 +396,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sec.active { display: flex; }
 
 /* section header */
-.sec-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
 .sec-title {
   font-size: 1.25rem; font-weight: 900; letter-spacing: -.3px;
   position: relative; padding-left: 14px; color: var(--text);
@@ -1827,19 +1827,30 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-chan--down { background: rgba(240,80,96,.18); color: var(--danger); }
 
 /* ── 숙제 트래커 ── */
-.dt-reset-notice { font-size: .74rem; color: var(--text-sub); margin-left: 10px; }
-.dt-help { font-size: .78rem; color: var(--text-sub); margin: 4px 0 14px; }
 .dt-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
 .dt-card { display: flex; flex-direction: column; gap: 10px; }
 .dt-card__head { display: flex; align-items: center; gap: 10px; }
 .dt-card__portrait {
-  flex: none; width: 36px; height: 36px; border-radius: 8px; overflow: hidden;
+  flex: none; width: 56px; height: 56px; border-radius: 10px; overflow: hidden;
   display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.2);
 }
 .dt-card__portrait-img { width: 100%; height: 100%; object-fit: cover; }
-.dt-card__portrait-no { font-size: .5rem; font-weight: 800; color: var(--text-dim); text-align: center; }
-.dt-card__name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: .95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.dt-card__count { flex: none; font-size: .78rem; color: var(--text-sub); font-weight: 700; }
+.dt-card__portrait-no { font-size: .58rem; font-weight: 800; color: var(--text-dim); text-align: center; }
+.dt-card__name { flex: 1 1 auto; min-width: 0; font-weight: 800; font-size: 1.05rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-card__del {
+  flex: none; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
+  color: var(--text-dim); font-size: 1rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s;
+}
+.dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
+.dt-addform { margin: 10px 0 16px; max-width: 420px; }
+.dt-addform__presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.dt-addform__opt {
+  display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(0,0,0,.1); font-size: .78rem; font-weight: 700;
+  color: var(--text-dim); cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+}
+.dt-addform__opt input { display: none; }
+.dt-addform__opt--checked { background: rgba(139,92,246,.15); border-color: rgba(139,92,246,.4); color: var(--text); }
 .dt-tiles { display: flex; flex-direction: column; gap: 6px; }
 .dt-tile {
   position: relative; display: flex; align-items: center; gap: 10px;

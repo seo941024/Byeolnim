@@ -1,8 +1,10 @@
 /* ═══════════════════════════════════════════════
    숙제 트래커 — 캐릭터별 일일 숙제 체크리스트
-   위쪽 "캐릭터 추가" 폼에서 이름을 직접 입력하고 추적할 항목을 미리 골라야
-   카드가 생긴다 (전체 캐릭터 목록에서 자동으로 뽑아오지 않음). 카드에는
-   그때 고른 항목만 표시된다.
+   캐릭터 추가는 2단계 모달로 진행한다:
+   1단계) GMS 랭킹 조회(캐릭터 추가 시트와 동일) 또는 직접 입력(챌린저스 등
+          랭킹에 안 잡히는 캐릭터용 폴백) 중 하나로 이름·이미지를 정한다.
+   2단계) 추적할 항목(골럭스/아카이럼/일일퀘스트/몬스터 파크/헤이스트 부스터)을
+          고른다. 이름 입력칸이 없는 화면이라 체크할 때마다 값이 날아가는 일이 없다.
 ═══════════════════════════════════════════════ */
 
 const DAILY_TASK_PRESETS = [
@@ -12,8 +14,12 @@ const DAILY_TASK_PRESETS = [
   { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲', img: 'images/dailytasks/monsterpark.png' },
   { id: 'haste',       label: '헤이스트 부스터', emoji: '⚡', img: 'images/dailytasks/haste.webp' },
 ];
+const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 
-let _dtNewActive = new Set(); // 캐릭터 추가 모달에서 지금 체크 중인 항목(제출 전 임시 상태)
+let _dtStep = 1;              // 1=이름 정하기(조회/직접입력), 2=항목 선택
+let _dtPendingName = '';
+let _dtPendingImg = null;
+let _dtNewActive = new Set(); // 2단계에서 지금 체크 중인 항목(제출 전 임시 상태)
 
 function _dtPad(n) { return String(n).padStart(2, '0'); }
 // 한국 기준 오전 9시를 하루의 경계로 삼는다 (게임 일일 컨텐츠 리셋 시각과 동일)
@@ -35,11 +41,11 @@ function _dtGetChar(charId) {
   const rec = all[charId];
   if (!rec) return null;
   const today = _dtTodayKey();
-  return { name: rec.name, active: rec.active || [], done: rec.date === today ? (rec.done || []) : [] };
+  return { name: rec.name, img: rec.img || null, active: rec.active || [], done: rec.date === today ? (rec.done || []) : [] };
 }
-function _dtSaveChar(charId, name, active, done) {
+function _dtSaveChar(charId, name, img, active, done) {
   const all = _dtLoadAll();
-  all[charId] = { name, active, date: _dtTodayKey(), done };
+  all[charId] = { name, img, active, date: _dtTodayKey(), done };
   _dtSaveAll(all);
 }
 function _dtDeleteChar(charId) {
@@ -47,25 +53,18 @@ function _dtDeleteChar(charId) {
   delete all[charId];
   _dtSaveAll(all);
 }
-
-function _dtCreateChar(name, activeIds) {
+function _dtCreateChar(name, img, activeIds) {
   const all = _dtLoadAll();
   const id = String(Date.now());
-  all[id] = { name, active: activeIds, date: _dtTodayKey(), done: [] };
+  all[id] = { name, img, active: activeIds, date: _dtTodayKey(), done: [] };
   _dtSaveAll(all);
 }
 
-// 비활성 항목 클릭 → 이 캐릭터의 추적 목록에 추가(활성화)
-function _dtActivate(charId, taskId) {
-  const rec = _dtGetChar(charId);
-  if (!rec || rec.active.includes(taskId)) return;
-  _dtSaveChar(charId, rec.name, [...rec.active, taskId], rec.done);
-}
 // 활성 항목의 × 클릭 → 추적 목록에서 제거(오늘 완료 표시도 같이 사라짐)
 function _dtDeactivate(charId, taskId) {
   const rec = _dtGetChar(charId);
   if (!rec) return;
-  _dtSaveChar(charId, rec.name, rec.active.filter(a => a !== taskId), rec.done.filter(d => d !== taskId));
+  _dtSaveChar(charId, rec.name, rec.img, rec.active.filter(a => a !== taskId), rec.done.filter(d => d !== taskId));
 }
 // 활성 항목 클릭 → 오늘 완료(CLEAR) 토글
 function _dtToggleDone(charId, taskId) {
@@ -73,16 +72,7 @@ function _dtToggleDone(charId, taskId) {
   if (!rec) return;
   const i = rec.done.indexOf(taskId);
   const newDone = i === -1 ? [...rec.done, taskId] : rec.done.filter(d => d !== taskId);
-  _dtSaveChar(charId, rec.name, rec.active, newDone);
-}
-
-const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
-// 캐릭터 목록(state.chars)에 같은 이름이 있으면 그 캐릭터의 초상화를 가져다 쓰고, 없으면 기본 이미지를 쓴다.
-function _dtPortraitFor(name) {
-  try {
-    const ch = (typeof state !== 'undefined' ? state.chars : []).find(c => c.name === name);
-    return ch?.fetched?.img || DT_DEFAULT_PORTRAIT;
-  } catch { return DT_DEFAULT_PORTRAIT; }
+  _dtSaveChar(charId, rec.name, rec.img, rec.active, newDone);
 }
 
 function _dtTileHtml(charId, task, active, done) {
@@ -102,12 +92,11 @@ function _dtTileHtml(charId, task, active, done) {
 }
 
 function _dtCardHtml(charId, rec) {
-  const { name, active, done } = rec;
-  const portraitSrc = _dtPortraitFor(name);
-  const portraitHtml = portraitSrc
-    ? `<img class="dt-card__portrait-img" src="${portraitSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <span class="dt-card__portrait-no" style="display:none">NO IMG</span>`
-    : `<span class="dt-card__portrait-no">NO IMG</span>`;
+  const { name, img, active, done } = rec;
+  const portraitSrc = img || DT_DEFAULT_PORTRAIT;
+  const portraitHtml = `
+    <img class="dt-card__portrait-img" src="${portraitSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+    <span class="dt-card__portrait-no" style="display:none">NO IMG</span>`;
   const activeTasks = DAILY_TASK_PRESETS.filter(t => active.includes(t.id));
   return `
     <div class="card dt-card">
@@ -124,37 +113,14 @@ function _dtCardHtml(charId, rec) {
     </div>`;
 }
 
-function _dtRenderAddModalBody() {
-  const body = document.getElementById('dtModalBody');
-  if (!body) return;
-  body.innerHTML = `
-    <div class="field">
-      <label class="field__label">캐릭터명</label>
-      <input class="inp" id="dtNewName" type="text" placeholder="캐릭터 이름" maxlength="20" autocomplete="off" />
-    </div>
-    <div class="field" style="margin-top:12px">
-      <label class="field__label">추적할 항목</label>
-      <div class="dt-addform__presets">
-        ${DAILY_TASK_PRESETS.map(t => `
-          <label class="dt-addform__opt ${_dtNewActive.has(t.id) ? 'dt-addform__opt--checked' : ''}" data-preset="${t.id}">
-            <input type="checkbox" data-preset-cb="${t.id}" ${_dtNewActive.has(t.id) ? 'checked' : ''} />
-            <span>${t.label}</span>
-          </label>`).join('')}
-      </div>
-    </div>`;
-  body.querySelectorAll('.dt-addform__opt').forEach(label => {
-    label.addEventListener('click', e => {
-      e.preventDefault();
-      const id = label.dataset.preset;
-      if (_dtNewActive.has(id)) _dtNewActive.delete(id); else _dtNewActive.add(id);
-      _dtRenderAddModalBody();
-    });
-  });
-}
+/* ── 캐릭터 추가 모달 (2단계) ── */
 
 function _dtCloseAddModal() {
   const overlay = document.getElementById('dtAddOverlay');
   if (overlay) overlay.classList.remove('open');
+  _dtStep = 1;
+  _dtPendingName = '';
+  _dtPendingImg = null;
   _dtNewActive = new Set();
 }
 
@@ -164,34 +130,134 @@ function _dtOpenAddModal() {
     overlay = document.createElement('div');
     overlay.id = 'dtAddOverlay';
     overlay.className = 'overlay';
-    overlay.innerHTML = `
-      <div class="modal">
-        <div class="modal__head">
-          <span class="modal__title">캐릭터 추가</span>
-          <button class="modal__close" id="dtModalClose">×</button>
-        </div>
-        <div class="modal__body" id="dtModalBody"></div>
-        <div class="modal__foot">
-          <button class="sbtn sbtn--ghost" id="dtModalCancel">취소</button>
-          <button class="sbtn sbtn--primary" id="dtModalSave">저장</button>
-        </div>
-      </div>`;
     document.body.appendChild(overlay);
     overlay.addEventListener('click', e => { if (e.target === overlay) _dtCloseAddModal(); });
-    document.getElementById('dtModalClose').addEventListener('click', _dtCloseAddModal);
-    document.getElementById('dtModalCancel').addEventListener('click', _dtCloseAddModal);
-    document.getElementById('dtModalSave').addEventListener('click', () => {
-      const nameInp = document.getElementById('dtNewName');
-      const name = nameInp.value.trim();
-      if (!name || _dtNewActive.size === 0) { nameInp.focus(); return; }
-      _dtCreateChar(name, DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id)));
-      _dtCloseAddModal();
-      renderDailyTasks();
-    });
   }
-  _dtRenderAddModalBody();
+  _dtStep = 1;
+  _dtPendingName = '';
+  _dtPendingImg = null;
+  _dtNewActive = new Set();
+  _dtRenderAddModal();
   overlay.classList.add('open');
-  document.getElementById('dtNewName').value = '';
+}
+
+function _dtRenderAddModal() {
+  const overlay = document.getElementById('dtAddOverlay');
+  if (!overlay) return;
+  overlay.innerHTML = _dtStep === 1 ? _dtStep1Html() : _dtStep2Html();
+  document.getElementById('dtModalClose').addEventListener('click', _dtCloseAddModal);
+  if (_dtStep === 1) _dtWireStep1(); else _dtWireStep2();
+}
+
+function _dtStep1Html() {
+  return `
+    <div class="modal">
+      <div class="modal__head">
+        <span class="modal__title">캐릭터 추가 (1/2)</span>
+        <button class="modal__close" id="dtModalClose">×</button>
+      </div>
+      <div class="modal__body">
+        <div class="lookup-box">
+          <div class="lookup-box__title">GMS 랭킹에서 불러오기</div>
+          <div class="lookup-box__row">
+            <input class="inp" id="dtLkName" placeholder="GMS 캐릭터명 (영문)" autocomplete="off" />
+            <button class="sbtn sbtn--primary" id="dtLkBtn">조회</button>
+          </div>
+        </div>
+        <div class="lookup-box__result" id="dtLkResult"></div>
+
+        <div class="char-manual-sep">또는 직접 입력</div>
+        <div class="field">
+          <label class="field__label">캐릭터명</label>
+          <input class="inp" id="dtManualName" placeholder="캐릭터명" autocomplete="off" />
+        </div>
+        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 챌린저스 등 랭킹 조회에 안 잡히는 캐릭터는 직접 입력을 쓰세요. 기본 이미지로 등록됩니다.</p>
+        <button class="sbtn sbtn--ghost w100" id="dtManualBtn" style="margin-top:8px">직접 입력으로 계속</button>
+      </div>
+    </div>`;
+}
+
+function _dtWireStep1() {
+  document.getElementById('dtLkBtn').addEventListener('click', async () => {
+    const name = document.getElementById('dtLkName').value.trim();
+    const box = document.getElementById('dtLkResult');
+    if (!name) { box.innerHTML = '<span class="lk-err">캐릭터명을 입력하세요.</span>'; return; }
+    box.innerHTML = '<span class="lk-load">조회 중...</span>';
+    try {
+      const region = typeof state !== 'undefined' ? state.region : 'na';
+      const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=0&region=${region}`);
+      const j = await r.json();
+      if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
+      box.innerHTML = `
+        <div class="lk-card">
+          ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
+          <div class="lk-card__info">
+            <div class="lk-card__name">${j.data.name} <span class="lk-card__job">${j.data.job || ''}</span></div>
+            <div class="lk-card__meta">Lv.${j.data.level} · ${j.data.region} ${j.data.world}</div>
+          </div>
+        </div>
+        <button class="sbtn sbtn--primary w100" id="dtLkUse" style="margin-top:8px">이 캐릭터로 계속</button>`;
+      document.getElementById('dtLkUse').addEventListener('click', () => {
+        _dtPendingName = j.data.name;
+        _dtPendingImg = j.data.img || null;
+        _dtStep = 2;
+        _dtRenderAddModal();
+      });
+    } catch (e) {
+      box.innerHTML = '<span class="lk-err">조회 실패 — 서버(serve.js)가 실행 중인지 확인하세요.</span>';
+    }
+  });
+  document.getElementById('dtManualBtn').addEventListener('click', () => {
+    const nameInp = document.getElementById('dtManualName');
+    const name = nameInp.value.trim();
+    if (!name) { nameInp.focus(); return; }
+    _dtPendingName = name;
+    _dtPendingImg = null;
+    _dtStep = 2;
+    _dtRenderAddModal();
+  });
+}
+
+function _dtStep2Html() {
+  return `
+    <div class="modal">
+      <div class="modal__head">
+        <span class="modal__title">추적할 항목 선택 (2/2)</span>
+        <button class="modal__close" id="dtModalClose">×</button>
+      </div>
+      <div class="modal__body">
+        <div class="dt-step2-name">${_dtPendingName}</div>
+        <div class="dt-addform__presets">
+          ${DAILY_TASK_PRESETS.map(t => `
+            <label class="dt-addform__opt ${_dtNewActive.has(t.id) ? 'dt-addform__opt--checked' : ''}" data-preset="${t.id}">
+              <input type="checkbox" ${_dtNewActive.has(t.id) ? 'checked' : ''} />
+              <span>${t.label}</span>
+            </label>`).join('')}
+        </div>
+      </div>
+      <div class="modal__foot">
+        <button class="sbtn sbtn--ghost" id="dtStepBack">이전</button>
+        <button class="sbtn sbtn--primary" id="dtStepSave">추가 완료</button>
+      </div>
+    </div>`;
+}
+
+function _dtWireStep2() {
+  document.querySelectorAll('.dt-addform__opt').forEach(label => {
+    label.addEventListener('click', e => {
+      e.preventDefault();
+      const id = label.dataset.preset;
+      if (_dtNewActive.has(id)) _dtNewActive.delete(id); else _dtNewActive.add(id);
+      _dtRenderAddModal(); // 이름 입력칸이 없는 화면이라 다시 그려도 값이 안 날아감
+    });
+  });
+  document.getElementById('dtStepBack').addEventListener('click', () => { _dtStep = 1; _dtRenderAddModal(); });
+  document.getElementById('dtStepSave').addEventListener('click', () => {
+    if (_dtNewActive.size === 0) return;
+    _dtCreateChar(_dtPendingName, _dtPendingImg, DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id)));
+    _dtCloseAddModal();
+    renderDailyTasks();
+  });
 }
 
 function renderDailyTasks() {
@@ -212,7 +278,6 @@ function renderDailyTasks() {
 
   document.getElementById('dtToggleAdd').addEventListener('click', _dtOpenAddModal);
 
-  // 카드
   sec.querySelectorAll('.dt-tile').forEach(tile => {
     tile.addEventListener('click', e => {
       if (e.target.closest('.dt-tile__x')) return;

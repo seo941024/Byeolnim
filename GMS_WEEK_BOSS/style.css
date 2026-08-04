@@ -1849,7 +1849,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .dt-step2-name { font-size: 1rem; font-weight: 800; margin-bottom: 12px; }
 .dt-addform__presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .dt-addform__opt {
-  display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px;
+  display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--radius-sm);
   border: 1px solid var(--border); background: rgba(0,0,0,.1); font-size: .78rem; font-weight: 700;
   color: var(--text-dim); cursor: pointer; transition: background .15s, border-color .15s, color .15s;
 }

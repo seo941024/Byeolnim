@@ -13,8 +13,7 @@ const DAILY_TASK_PRESETS = [
   { id: 'haste',       label: '헤이스트 부스터', emoji: '⚡', img: 'images/dailytasks/haste.webp' },
 ];
 
-let _dtNewActive = new Set(); // 캐릭터 추가 폼에서 지금 체크 중인 항목(제출 전 임시 상태)
-let _dtShowAddForm = false;   // "+ 캐릭터 추가" 버튼을 눌렀을 때만 폼을 보여준다
+let _dtNewActive = new Set(); // 캐릭터 추가 모달에서 지금 체크 중인 항목(제출 전 임시 상태)
 
 function _dtPad(n) { return String(n).padStart(2, '0'); }
 // 한국 기준 오전 9시를 하루의 경계로 삼는다 (게임 일일 컨텐츠 리셋 시각과 동일)
@@ -77,12 +76,13 @@ function _dtToggleDone(charId, taskId) {
   _dtSaveChar(charId, rec.name, rec.active, newDone);
 }
 
-// 캐릭터 목록(state.chars)에 같은 이름이 있으면 그 캐릭터의 초상화를 가져다 쓴다.
+const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
+// 캐릭터 목록(state.chars)에 같은 이름이 있으면 그 캐릭터의 초상화를 가져다 쓰고, 없으면 기본 이미지를 쓴다.
 function _dtPortraitFor(name) {
   try {
     const ch = (typeof state !== 'undefined' ? state.chars : []).find(c => c.name === name);
-    return ch?.fetched?.img || null;
-  } catch { return null; }
+    return ch?.fetched?.img || DT_DEFAULT_PORTRAIT;
+  } catch { return DT_DEFAULT_PORTRAIT; }
 }
 
 function _dtTileHtml(charId, task, active, done) {
@@ -124,11 +124,16 @@ function _dtCardHtml(charId, rec) {
     </div>`;
 }
 
-function _dtAddFormHtml() {
-  return `
-    <div class="card dt-addform">
-      <div class="card__title">캐릭터 추가</div>
-      <input class="inp" id="dtNewName" type="text" placeholder="캐릭터 이름" maxlength="20" style="margin:8px 0" />
+function _dtRenderAddModalBody() {
+  const body = document.getElementById('dtModalBody');
+  if (!body) return;
+  body.innerHTML = `
+    <div class="field">
+      <label class="field__label">캐릭터명</label>
+      <input class="inp" id="dtNewName" type="text" placeholder="캐릭터 이름" maxlength="20" autocomplete="off" />
+    </div>
+    <div class="field" style="margin-top:12px">
+      <label class="field__label">추적할 항목</label>
       <div class="dt-addform__presets">
         ${DAILY_TASK_PRESETS.map(t => `
           <label class="dt-addform__opt ${_dtNewActive.has(t.id) ? 'dt-addform__opt--checked' : ''}" data-preset="${t.id}">
@@ -136,8 +141,57 @@ function _dtAddFormHtml() {
             <span>${t.label}</span>
           </label>`).join('')}
       </div>
-      <button class="sbtn sbtn--primary w100" id="dtAddBtn" style="margin-top:10px">+ 추가</button>
     </div>`;
+  body.querySelectorAll('.dt-addform__opt').forEach(label => {
+    label.addEventListener('click', e => {
+      e.preventDefault();
+      const id = label.dataset.preset;
+      if (_dtNewActive.has(id)) _dtNewActive.delete(id); else _dtNewActive.add(id);
+      _dtRenderAddModalBody();
+    });
+  });
+}
+
+function _dtCloseAddModal() {
+  const overlay = document.getElementById('dtAddOverlay');
+  if (overlay) overlay.classList.remove('open');
+  _dtNewActive = new Set();
+}
+
+function _dtOpenAddModal() {
+  let overlay = document.getElementById('dtAddOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'dtAddOverlay';
+    overlay.className = 'overlay';
+    overlay.innerHTML = `
+      <div class="modal">
+        <div class="modal__head">
+          <span class="modal__title">캐릭터 추가</span>
+          <button class="modal__close" id="dtModalClose">×</button>
+        </div>
+        <div class="modal__body" id="dtModalBody"></div>
+        <div class="modal__foot">
+          <button class="sbtn sbtn--ghost" id="dtModalCancel">취소</button>
+          <button class="sbtn sbtn--primary" id="dtModalSave">저장</button>
+        </div>
+      </div>`;
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) _dtCloseAddModal(); });
+    document.getElementById('dtModalClose').addEventListener('click', _dtCloseAddModal);
+    document.getElementById('dtModalCancel').addEventListener('click', _dtCloseAddModal);
+    document.getElementById('dtModalSave').addEventListener('click', () => {
+      const nameInp = document.getElementById('dtNewName');
+      const name = nameInp.value.trim();
+      if (!name || _dtNewActive.size === 0) { nameInp.focus(); return; }
+      _dtCreateChar(name, DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id)));
+      _dtCloseAddModal();
+      renderDailyTasks();
+    });
+  }
+  _dtRenderAddModalBody();
+  overlay.classList.add('open');
+  document.getElementById('dtNewName').value = '';
 }
 
 function renderDailyTasks() {
@@ -149,38 +203,14 @@ function renderDailyTasks() {
   sec.innerHTML = `
     <div class="sec-head">
       <h2 class="sec-title">숙제 트래커</h2>
-      <button class="sbtn sbtn--primary" id="dtToggleAdd">${_dtShowAddForm ? '닫기' : '+ 캐릭터 추가'}</button>
+      <button class="sbtn sbtn--primary" id="dtToggleAdd">+ 캐릭터 추가</button>
     </div>
-    ${_dtShowAddForm ? _dtAddFormHtml() : ''}
     ${ids.length
       ? `<div class="dt-grid">${ids.map(id => _dtCardHtml(id, _dtGetChar(id))).join('')}</div>`
       : '<p class="mf-empty">위에서 캐릭터를 추가하세요.</p>'}
   `;
 
-  document.getElementById('dtToggleAdd').addEventListener('click', () => {
-    _dtShowAddForm = !_dtShowAddForm;
-    if (!_dtShowAddForm) _dtNewActive = new Set();
-    renderDailyTasks();
-  });
-
-  // 캐릭터 추가 폼
-  sec.querySelectorAll('.dt-addform__opt').forEach(label => {
-    label.addEventListener('click', e => {
-      e.preventDefault();
-      const id = label.dataset.preset;
-      if (_dtNewActive.has(id)) _dtNewActive.delete(id); else _dtNewActive.add(id);
-      renderDailyTasks();
-    });
-  });
-  document.getElementById('dtAddBtn')?.addEventListener('click', () => {
-    const nameInp = document.getElementById('dtNewName');
-    const name = nameInp.value.trim();
-    if (!name || _dtNewActive.size === 0) { nameInp.focus(); return; }
-    _dtCreateChar(name, [...DAILY_TASK_PRESETS.map(t => t.id)].filter(id => _dtNewActive.has(id)));
-    _dtNewActive = new Set();
-    _dtShowAddForm = false;
-    renderDailyTasks();
-  });
+  document.getElementById('dtToggleAdd').addEventListener('click', _dtOpenAddModal);
 
   // 카드
   sec.querySelectorAll('.dt-tile').forEach(tile => {

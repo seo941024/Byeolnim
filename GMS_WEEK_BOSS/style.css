@@ -1842,7 +1842,6 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
   color: var(--text-dim); font-size: 1rem; line-height: 1; cursor: pointer; transition: background .15s, color .15s;
 }
 .dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
-.dt-addform { margin: 10px 0 16px; max-width: 420px; }
 .dt-addform__presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .dt-addform__opt {
   display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 999px;

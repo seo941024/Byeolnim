@@ -230,7 +230,7 @@ function renderCharList() {
       <div class="char-card__txt">
         <div class="char-card__name">${ch.name}</div>
         <div class="char-card__lv">Lv.${ch.level}</div>
-        ${world ? `<div class="char-card__world-line">${sIconHtml}${world}</div>` : ''}
+        ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${world}</span></div>` : ''}
         ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
         <div class="char-card__btns">
           <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
@@ -1058,12 +1058,15 @@ function applyTheme(name) {
   const t = name === 'light' ? 'light' : 'dark';
   document.documentElement.dataset.theme = t;
   localStorage.setItem(THEME_KEY, t);
-  document.querySelectorAll('[data-theme]').forEach(b => {
-    if (b.tagName === 'BUTTON') b.classList.toggle('sbtn--primary', b.dataset.theme === t);
-  });
+  const btn = document.getElementById('themeToggle');
+  if (btn) {
+    btn.classList.toggle('theme-toggle--light', t === 'light');
+    btn.querySelector('.theme-toggle__icon').textContent = t === 'light' ? '☀️' : '🌙';
+    btn.setAttribute('aria-pressed', t === 'light');
+  }
 }
-document.querySelectorAll('.settings-box [data-theme]').forEach(btn => {
-  if (btn.tagName === 'BUTTON') btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+document.getElementById('themeToggle')?.addEventListener('click', () => {
+  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
 });
 applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
 

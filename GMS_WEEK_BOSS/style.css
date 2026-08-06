@@ -209,8 +209,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 /* 테마 토글 — '초기화' 라벨 좌측, 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */
 .theme-toggle-wrap { display: flex; align-items: center; gap: 7px; }
-.theme-toggle__label { font-size: .74rem; font-weight: 700; color: var(--text-dim); transition: color .18s ease; }
-.theme-toggle__label--active { color: var(--text); }
+.theme-toggle__label { display: none; font-size: .74rem; font-weight: 700; color: var(--text-dim); transition: color .18s ease; }
+.theme-toggle__label--active { display: inline; color: var(--text); }
 .theme-toggle {
   position: relative;
   width: 40px; height: 22px; flex: 0 0 40px;

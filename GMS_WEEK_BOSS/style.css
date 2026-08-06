@@ -1949,5 +1949,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .wc-result { display: flex; align-items: center; gap: 14px; }
 .wc-result__img { flex: none; width: 56px; height: 56px; object-fit: contain; }
 .wc-result__item { font-size: .8rem; color: var(--text-sub); font-weight: 700; }
-.wc-result__pick { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin: 2px 0; }
+.wc-result__pick { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin: 2px 0; display: flex; align-items: center; gap: 7px; min-width: 0; }
+.wc-result__world { width: 26px; height: 26px; object-fit: contain; flex: 0 0 26px; margin: -4px 0; }
+.wc-result__world[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
 

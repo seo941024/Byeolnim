@@ -56,9 +56,15 @@ function _wcModalBodyHtml(item, state) {
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
         <div class="wc-result__item">${item.name}</div>
-        <div class="wc-result__pick">${WC_WORLD} - ${state.channel}채널</div>
+        <div class="wc-result__pick">${_wcWorldIconHtml()}${WC_WORLD} - ${state.channel}채널</div>
       </div>
     </div>`;
+}
+
+// 추천 채널 앞에 서버 아이콘. 아이콘 파일이 없으면 빈 문자열이라 글자만 나온다.
+function _wcWorldIconHtml() {
+  const src = serverIconSrc(WC_WORLD);
+  return src ? `<img class="wc-result__world" src="${src}" alt="" onerror="this.style.display='none'">` : '';
 }
 
 function _wcOpenModal(item) {

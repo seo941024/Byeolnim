@@ -144,6 +144,67 @@ function getDestStar(star) {
 }
 
 /* ── 몬테카를로 시뮬레이션 (1회) ── */
+/* 기댓값 정확해 — 시뮬레이션 없이 마르코프 연쇄를 직접 푼다.
+   sfRunOnce와 완전히 동일한 모델이어야 한다: 실패=유지, 파괴=getDestStar로 복귀.
+
+   E[s] = 목표까지 남은 기대 비용이라 하면
+     E[s] = c(s) + Ps·E[s+1] + Pf·E[s] + Pd·E[d(s)]
+   d(s) < s라 파괴가 아래로 되돌리므로 단순 역순 점화식으로는 안 풀리고
+   연립방정식이 된다. 정리하면
+     (1-Pf)·E[s] − Ps·E[s+1] − Pd·E[d(s)] = c(s)
+   상태가 최대 30개뿐이라 가우스 소거로 즉시 푼다.
+
+   기대 파괴 횟수·시행 횟수는 좌변이 같고 우변만 다르므로(각각 Pd, 1)
+   같은 행렬에 우변 3개를 한 번에 얹어 푼다. */
+function sfExpectedExact(cfg) {
+  const to = cfg.target;
+  const n  = to;                       // 상태 0 .. to-1 (to는 흡수 상태)
+  if (n <= 0 || cfg.current >= to) return { cost: 0, destroys: 0, attempts: 0 };
+
+  const A = Array.from({ length: n }, () => new Float64Array(n));
+  const B = Array.from({ length: n }, () => new Float64Array(3)); // 비용 / 파괴 / 시행
+
+  for (let s = 0; s < n; s++) {
+    const btn = (cfg.stages && cfg.stages[s]) || 1;
+    const isProtected = (s >= 15 && s <= 17) && btn === 4;
+    const stage = isProtected ? 1 : btn;
+
+    const c = calcSfCost(cfg.level, s, cfg.mvpDiscount || 0, cfg.isShining, isProtected, stage, 0);
+    const p = getSfProb(s, cfg.isShining, isProtected, stage);
+
+    A[s][s] += 1 - p.fail;
+    if (s + 1 < to) A[s][s + 1] -= p.succ;      // s+1 === to 이면 E=0이라 항이 사라짐
+    if (p.dest > 0) {
+      const d = getDestStar(s);
+      if (d < to) A[s][d] -= p.dest;
+    }
+    B[s][0] = c;
+    B[s][1] = p.dest;
+    B[s][2] = 1;
+  }
+
+  // 가우스 소거 (부분 피벗)
+  for (let col = 0; col < n; col++) {
+    let piv = col;
+    for (let r = col + 1; r < n; r++) if (Math.abs(A[r][col]) > Math.abs(A[piv][col])) piv = r;
+    if (Math.abs(A[piv][col]) < 1e-12) continue;      // 도달 불가 상태 — 건너뜀
+    if (piv !== col) { [A[col], A[piv]] = [A[piv], A[col]]; [B[col], B[piv]] = [B[piv], B[col]]; }
+    const pv = A[col][col];
+    for (let c2 = col; c2 < n; c2++) A[col][c2] /= pv;
+    for (let k = 0; k < 3; k++) B[col][k] /= pv;
+    for (let r = 0; r < n; r++) {
+      if (r === col) continue;
+      const f = A[r][col];
+      if (!f) continue;
+      for (let c2 = col; c2 < n; c2++) A[r][c2] -= f * A[col][c2];
+      for (let k = 0; k < 3; k++) B[r][k] -= f * B[col][k];
+    }
+  }
+
+  const s0 = cfg.current;
+  return { cost: B[s0][0], destroys: B[s0][1], attempts: B[s0][2] };
+}
+
 function sfRunOnce(cfg) {
   let star = cfg.current;
   let totalCost = 0;

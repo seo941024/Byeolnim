@@ -362,9 +362,13 @@ function sfShowExpected() {
   _sfLastCosts    = costs;
   _sfLastDestroys = destroyArr;
 
-  const mean = costs.reduce((s, c) => s + c, 0) / N;
+  // 평균은 시뮬레이션 대신 마르코프 연쇄 정확해를 쓴다. 표본평균은 2만 회로도
+  // 실행마다 2% 남짓 흔들려서 1레벨 차이(약 1%)보다 오차가 커, 값이 안정적으로
+  // 보이지 않았다. 분포·상위%·히스토그램은 표본이 있어야 하므로 그대로 시뮬 사용.
+  const exact = sfExpectedExact(cfg);
+  const mean = exact.cost;
   const p99  = costs[Math.floor(N * 0.99)];
-  const avgDestroy = (totalDestroy / N);
+  const avgDestroy = exact.destroys;
 
   /* 히스토그램 버킷 40개, p99 범위 */
   const BINS = 40;

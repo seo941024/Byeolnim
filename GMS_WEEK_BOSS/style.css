@@ -1966,5 +1966,8 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
    중심이 글자 중심보다 아래에 생기고, 그만큼 글자가 위로 떠 보인다.
    고딕 1px, Maple·8bit 0.5px 차이라 1px 내려주면 세 폰트 모두 맞는다. */
 .icon-lbl { position: relative; top: 1px; }
+/* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
+   내려가야 하므로 같은 규칙을 물려준다. */
+.ci-server .icon-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-result__world[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
 

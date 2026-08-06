@@ -924,7 +924,7 @@ function renderCharInfo() {
           </div>
           <div class="ci-card__meta">
             <span class="ci-lv">Lv.${lv}</span>
-            <span class="ci-server">${sIconHtml}${region} ${world}</span>
+            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${region} ${world}</span></span>
           </div>
         </div>
         ${rankRow}

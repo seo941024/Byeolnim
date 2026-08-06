@@ -270,7 +270,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: center; gap: 3px;
   font-size: .7rem; color: var(--text-sub); font-weight: 600;
 }
-.char-card__world-line img { width: 13px; height: 13px; object-fit: contain; }
+.char-card__world-line img { width: 16px; height: 16px; object-fit: contain; margin: -2px 0; }
 .char-card__job-line { font-size: .68rem; color: var(--text-dim); }
 .char-card__btns { display: flex; flex-direction: row; gap: 5px; margin-top: auto; padding-top: 6px; }
 .ccbtn {
@@ -1836,7 +1836,7 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
    투명 여백을 안고 있어 같은 박스에 넣으면 혼자 작아 보인다 — 여백만큼 키운다.
    늘어난 크기는 음수 마진으로 흡수해 줄 높이는 건드리지 않는다. */
 .ss-card__icon[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
-.char-card__world-line img[src*="Challengers"] { width: 17px; height: 17px; margin: -2px; }
+.char-card__world-line img[src*="Challengers"] { width: 21px; height: 21px; margin: -4px -2px; }
 .ci-servericon[src*="Challengers"] { width: clamp(18px, 5.8cqw, 31px); height: clamp(18px, 5.8cqw, 31px); margin: -2px; }
 .ss-card__badge {
   font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px;

@@ -73,7 +73,69 @@
   --radius:     6px;
   --radius-lg:  8px;
   --radius-pill:999px;
+
+  /* 카드·패널의 반투명 바탕 */
+  --panel-veil: rgba(15,10,32,.7);
 }
+
+/* ═══ 화이트 테마 ═══
+   색은 대부분 위 변수를 거쳐 쓰이므로 변수만 갈아끼우면 대부분 따라온다.
+   변수를 안 거치고 rgba(255,255,255,.0x)로 박아둔 곳들은 흰 배경에서
+   보이지 않게 되므로 아래에서 따로 어두운 톤으로 덮는다. */
+:root[data-theme="light"] {
+  --bg:      #f2f0f7;
+  --bg2:     #ffffff;
+  --bg3:     #eae6f4;
+  --bg-card: #ffffff;
+  --bg-hover:#e7e1f6;
+
+  --text:     #14121c;
+  --text-sub: rgba(20,18,28,.70);
+  --text-dim: rgba(20,18,28,.45);
+
+  --border:   rgba(109,72,206,.22);
+  --border-hl:rgba(109,72,206,.45);
+
+  --shadow:    0 2px 8px rgba(60,50,90,.10);
+  --shadow-md: 0 6px 24px rgba(60,50,90,.14);
+  --shadow-lg: 0 16px 48px rgba(60,50,90,.18);
+
+  --grad:       linear-gradient(135deg,#8b6cd6 0%,#6d48ce 100%);
+  --grad-soft:  linear-gradient(180deg,#ffffff 0%,#f2f0f7 100%);
+  --grad-card:  linear-gradient(160deg,#ffffff 0%,#f7f5fc 100%);
+  --grad-sheen: linear-gradient(180deg,rgba(0,0,0,.035) 0%,rgba(0,0,0,0) 60%);
+
+  --primary:   #6d48ce;
+  --primary-d: #5a35b8;
+  --primary-l: rgba(109,72,206,.10);
+  --accent:    #9a6f12;   /* 흰 배경에서 읽히도록 노랑을 어둡게 */
+  --gold:      #8f6a1c;
+  --danger:    #d02236;
+  --danger-l:  rgba(208,34,54,.10);
+  --success:   #0f7a48;
+  --success-l: rgba(15,122,72,.12);
+  --panel-veil: rgba(255,255,255,.86);
+}
+
+/* 변수 밖에 하드코딩돼 있어 화이트에서 안 보이던 것들 */
+/* 헤더·사이드바는 아래쪽에 !important 그라디언트가 따로 걸려 있어 변수로는 못 덮는다 */
+:root[data-theme="light"] .header {
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(246,244,251,.86)) !important;
+  border-bottom: 1px solid var(--border) !important;
+}
+:root[data-theme="light"] .sidebar {
+  background: linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,242,250,.86)) !important;
+  border-right: 1px solid var(--border);
+}
+:root[data-theme="light"] .ccbtn--del { background: rgba(208,34,54,.12); }
+:root[data-theme="light"] .sb-nav__item:hover { background: rgba(20,18,28,.06); }
+:root[data-theme="light"] .ccbtn--edit        { background: rgba(20,18,28,.07); }
+:root[data-theme="light"] .crystal-bar__track { background: rgba(20,18,28,.09); }
+:root[data-theme="light"] .lib-progress       { background: rgba(20,18,28,.09); }
+:root[data-theme="light"] .sf-bidir           { background: rgba(20,18,28,.04); }
+:root[data-theme="light"] .empty,
+:root[data-theme="light"] .ci-empty,
+:root[data-theme="light"] .bus-empty          { color: var(--text-dim); }
 
 /* ?? 湲곕낯 ?? */
 /* ?? 蹂?罹붾쾭???? */
@@ -87,7 +149,7 @@
 html { font-size: 17px; }
 body {
   font-family: '고딕', 'Segoe UI', 'Malgun Gothic', sans-serif;
-  background: #06040f;
+  background: var(--bg);
   background-attachment: fixed;
   color: var(--text);
   min-height: 100vh;
@@ -216,7 +278,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 /* char card */
 .char-card {
-  background: rgba(15,10,32,.7);
+  background: var(--panel-veil);
   
   
   border: 1px solid rgba(139,92,246,.2);
@@ -288,10 +350,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .crystal-bar__row { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .crystal-bar__detail { display: flex; gap: 10px; margin-top: 5px; }
 .crystal-bar__type { display: flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--text-sub); }
-/* 글자가 아이콘보다 1px 위로 떠 보이던 것 보정 — .icon-lbl과 같은 폰트 메트릭 문제.
-   여기는 글자가 span과 텍스트 노드로 나뉘어 있어 감싸는 대신 아이콘을 1px 올린다.
-   position 이동이라 레이아웃(줄 높이)에는 영향이 없다. */
-.crystal-icon { position: relative; top: -1px; }
 .crystal-icon { width: 14px; height: 14px; object-fit: contain; vertical-align: middle; }
 .crystal-bar__label { font-size: .72rem; color: var(--text-sub); font-weight: 700; }
 .crystal-bar__count { font-size: .72rem; font-weight: 800; color: var(--text); }
@@ -1405,7 +1463,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   gap:10px; padding:8px 0 12px;
 }
 .cg-card {
-  background: rgba(15,10,32,.7);
+  background: var(--panel-veil);
   border: 1px solid rgba(139,92,246,.2);
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
@@ -1444,7 +1502,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* ── 버스 5% 참조 패널 ── */
 .bus-panel {
-  background: rgba(15,10,32,.7);
+  background: var(--panel-veil);
   border: 1px solid rgba(139,92,246,.25);
   border-radius: var(--radius);
   margin-bottom: 20px;
@@ -1966,6 +2024,10 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
    중심이 글자 중심보다 아래에 생기고, 그만큼 글자가 위로 떠 보인다.
    고딕 1px, Maple·8bit 0.5px 차이라 1px 내려주면 세 폰트 모두 맞는다. */
 .icon-lbl { position: relative; top: 1px; }
+/* 결정석은 아이콘이 세로로 길쭉해서 글자가 상대적으로 더 위로 떠 보인다는 지적.
+   측정상으로는 1px에서 이미 잉크 중심이 맞지만, 눈으로는 1px 더 내린 쪽이
+   맞아 보인다고 해서 여기만 2px로 둔다. 되돌리려면 이 규칙만 지우면 된다. */
+.crystal-bar__type .icon-lbl { top: 2px; }
 /* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
    내려가야 하므로 같은 규칙을 물려준다. */
 .ci-server .icon-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

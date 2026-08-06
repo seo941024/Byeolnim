@@ -50,6 +50,7 @@ const STORAGE_KEYS = {
   boss:        'gms_boss_v2',
   charHistory: 'gms_char_history',
   font:        'gms_font',
+  theme:       'gms_theme',
   genesis:     'lib_genesis_v2',
   destiny:     'lib_destiny_v1',
   hexaSkill:   'hx_skill',

@@ -1050,6 +1050,23 @@ document.querySelectorAll('.settings-font-btns [data-font]').forEach(btn => {
   btn.addEventListener('click', () => applyFont(btn.dataset.font));
 });
 
+/* ── 테마 ──
+   색은 대부분 :root의 CSS 변수를 거쳐 쓰이므로, html에 data-theme만 걸면
+   style.css의 :root[data-theme="light"] 블록이 변수를 갈아끼운다. */
+const THEME_KEY = STORAGE_KEYS.theme;
+function applyTheme(name) {
+  const t = name === 'light' ? 'light' : 'dark';
+  document.documentElement.dataset.theme = t;
+  localStorage.setItem(THEME_KEY, t);
+  document.querySelectorAll('[data-theme]').forEach(b => {
+    if (b.tagName === 'BUTTON') b.classList.toggle('sbtn--primary', b.dataset.theme === t);
+  });
+}
+document.querySelectorAll('.settings-box [data-theme]').forEach(btn => {
+  if (btn.tagName === 'BUTTON') btn.addEventListener('click', () => applyTheme(btn.dataset.theme));
+});
+applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+
 /* ── 초기화 ── */
 load();
 

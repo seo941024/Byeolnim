@@ -724,8 +724,10 @@ document.getElementById('btnAddChar').addEventListener('click', () => {
 });
 document.getElementById('modalCharSave').addEventListener('click', () => {
   const inputName = document.getElementById('inpName').value.trim();
-  // 조회 결과가 있고 이름이 일치하면 랭킹 데이터 사용, 아니면 직접 입력(이미지 없음)
-  const useFetched = fetchedInfo && inputName && fetchedInfo.name.toLowerCase() === inputName.toLowerCase();
+  // 조회 결과가 있고 이름이 일치하면 랭킹 데이터 사용, 아니면 직접 입력
+  // 직접 입력 캐릭터도 서버를 고르면 fetched={world}가 생기는데 여기엔 name이 없다.
+  // 그 캐릭터를 수정하려고 열면 fetchedInfo.name이 undefined라 아래 비교에서 터졌었음
+  const useFetched = !!fetchedInfo?.name && inputName && fetchedInfo.name.toLowerCase() === inputName.toLowerCase();
 
   let name, level, fetched;
   if (useFetched) {

@@ -1061,9 +1061,11 @@ function applyTheme(name) {
   const btn = document.getElementById('themeToggle');
   if (btn) {
     btn.classList.toggle('theme-toggle--light', t === 'light');
-    btn.querySelector('.theme-toggle__icon').textContent = t === 'light' ? '☀️' : '🌙';
     btn.setAttribute('aria-pressed', t === 'light');
   }
+  document.querySelectorAll('[data-theme-label]').forEach(el => {
+    el.classList.toggle('theme-toggle__label--active', el.dataset.themeLabel === t);
+  });
 }
 document.getElementById('themeToggle')?.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');

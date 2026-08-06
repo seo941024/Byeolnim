@@ -207,10 +207,13 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .header__rlabel { font-size: .75rem; color: var(--text-sub); font-weight: 600; }
 
-/* 테마 토글 — 초기화 타이머 옆 스위치 */
+/* 테마 토글 — '초기화' 라벨 좌측, 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */
+.theme-toggle-wrap { display: flex; align-items: center; gap: 7px; }
+.theme-toggle__label { font-size: .74rem; font-weight: 700; color: var(--text-dim); transition: color .18s ease; }
+.theme-toggle__label--active { color: var(--text); }
 .theme-toggle {
   position: relative;
-  width: 50px; height: 26px; flex: 0 0 50px;
+  width: 40px; height: 22px; flex: 0 0 40px;
   padding: 0; border: 1px solid var(--border-hl);
   border-radius: var(--radius-pill);
   background: var(--bg3);
@@ -220,16 +223,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .theme-toggle:hover { border-color: var(--primary); }
 .theme-toggle__knob {
   position: absolute; top: 2px; left: 2px;
-  width: 20px; height: 20px;
+  width: 16px; height: 16px;
   border-radius: 50%;
   background: var(--grad);
   box-shadow: var(--shadow);
-  display: flex; align-items: center; justify-content: center;
   transition: transform .18s ease;
 }
-.theme-toggle__icon { font-size: 11px; line-height: 1; }
-.theme-toggle--light { background: rgba(246,199,68,.22); }
-.theme-toggle--light .theme-toggle__knob { transform: translateX(24px); }
+.theme-toggle--light { background: rgba(var(--hue),.22); }
+.theme-toggle--light .theme-toggle__knob { transform: translateX(18px); }
 .header__timer {
   font-size: .88rem; font-weight: 800; color: var(--accent);
   background: rgba(246,199,68,.1);
@@ -242,19 +243,19 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .hbtn {
   padding: 6px 16px; border-radius: 6px;
   font-size: .78rem; font-weight: 800; letter-spacing: .3px;
-  color: #c4b5fd;
-  background: linear-gradient(135deg, #1e1245 0%, #150d35 100%);
+  color: var(--primary);
+  background: linear-gradient(135deg, rgba(var(--hue-d),.35) 0%, rgba(var(--hue-d),.55) 100%);
   border: 1.5px solid rgba(var(--hue),.45);
   transition: background .2s, border-color .2s, color .2s, box-shadow .2s, transform .18s;
-  box-shadow: 0 0 0 0 transparent, 0 2px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.08);
+  box-shadow: 0 0 0 0 transparent, var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
 }
 #headerBtnSettings { color: var(--text-sub); }
 .hbtn:hover {
-  background: linear-gradient(135deg, #2d1a6e 0%, #1a0f45 100%);
+  background: linear-gradient(135deg, rgba(var(--hue-d),.5) 0%, rgba(var(--hue-d),.7) 100%);
   border-color: var(--primary);
   color: #fff;
   transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(var(--hue),.45), 0 2px 8px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.1);
+  box-shadow: 0 0 16px rgba(var(--hue),.45), var(--shadow), inset 0 1px 0 rgba(255,255,255,.1);
 }
 .hbtn:active {
   transform: scale(.96);
@@ -475,8 +476,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="wantchannel"] .sb-nav__icon { width: 33px; height: 33px; }
 /* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
-.sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:#8b5cf6;top:3px}
-.sb-nav__icon--char::after{width:16px;height:8px;border-radius:8px 8px 4px 4px;background:#6d3dcc;bottom:3px}
+.sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:var(--primary);top:3px}
+.sb-nav__icon--char::after{width:16px;height:8px;border-radius:8px 8px 4px 4px;background:var(--primary-d);bottom:3px}
 .sb-nav__icon--boss::before{width:17px;height:17px;border-radius:50%;border:2px solid var(--primary)}
 .sb-nav__icon--boss::after{width:4px;height:4px;border-radius:50%;background:var(--primary);box-shadow:8px 0 0 var(--primary)}
 .sb-nav__icon--hexa::before{width:14px;height:14px;background:var(--primary);transform:rotate(45deg);border-radius:3px}
@@ -1011,7 +1012,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .boss-diff-sel:hover { border-color: var(--border-hl); }
 .boss-diff-sel:focus { outline: none; border-color: var(--primary); }
-.boss-diff-sel option { background: #0d091e; color: var(--text); }
+.boss-diff-sel option { background: var(--bg2); color: var(--text); }
 
 /* ?? Genesis ?섏뒪???꾩씠肄??? */
 .gen-quest-icons {
@@ -1055,7 +1056,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   padding-right: 30px;
 }
 .diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.1); }
-.diff-sel option { background: #0d091e; color: var(--text); }
+.diff-sel option { background: var(--bg2); color: var(--text); }
 
 /* ?? BOSS HP 移대뱶 ?? */
 .bhp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
@@ -1110,7 +1111,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .bhp-diff-sel:hover { border-color: var(--border-hl); background-color: rgba(255,255,255,.11); }
 .bhp-diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.13); }
-.bhp-diff-sel option { background: #0d091e; color: var(--text); }
+.bhp-diff-sel option { background: var(--bg2); color: var(--text); }
 /* HP ?댁슜 */
 .bhp-diff { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
 .bhp-phase { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 3px 0; color: var(--text-sub); }
@@ -1365,7 +1366,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-cfg-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
 .gen-cfg-card{
   display:flex;gap:16px;align-items:center;
-  background:linear-gradient(140deg,#140e28 0%,#0c0820 100%);
+  background:var(--grad-card);
   border:1.5px solid rgba(var(--hue),.25);
   border-radius:16px;padding:18px;
   box-shadow:0 4px 20px rgba(0,0,0,.4);
@@ -1396,7 +1397,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .gen-cfg-card__img{width:72px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
-.gen-cfg-card__title{font-size:.95rem;font-weight:900;color:#fff;letter-spacing:.3px}
+.gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
 .gen-cfg-card--pass .gen-cfg-card__title{color:var(--accent)}
 .gen-cfg-card__desc{font-size:.75rem;color:var(--text-sub);font-weight:600}
 .gen-cfg-card__fields{display:flex;flex-direction:column;gap:8px}
@@ -1585,11 +1586,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* 버스 패널 난이도 셀렉트 */
 .bus-diff-sel {
-  background: #1a1035; border: 1px solid rgba(var(--hue),.3);
+  background: var(--bg2); border: 1px solid rgba(var(--hue),.3);
   color: var(--text); border-radius: 6px; padding: 3px 8px; font-size: .78rem;
   font-family: inherit; cursor: pointer;
 }
-.bus-diff-sel option { background: #1a1035; color: var(--text); }
+.bus-diff-sel option { background: var(--bg2); color: var(--text); }
 
 /* 버스 패널 제거 버튼 */
 .bus-remove {
@@ -1630,7 +1631,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* ── 햄버거 / 드로어 오버레이 (기본: 데스크탑에선 숨김) ── */
 #sbBtnSettings { display: none; }
 .hamburger { display: none; flex-direction: column; justify-content: center; gap: 4px; width: 34px; height: 34px; padding: 6px; border-radius: 8px; flex-shrink: 0; }
-.hamburger span { display: block; height: 2px; width: 100%; background: #c4b5fd; border-radius: 2px; transition: .25s; }
+.hamburger span { display: block; height: 2px; width: 100%; background: var(--primary); border-radius: 2px; transition: .25s; }
 body.sidebar-open .hamburger span:nth-child(1) { transform: translateY(6px) rotate(45deg); }
 body.sidebar-open .hamburger span:nth-child(2) { opacity: 0; }
 body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
@@ -1662,6 +1663,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .header__rlabel { display: none; }
   .header__center { gap: 6px; }
   .header__rlabel { display: inline; font-size: .68rem; }
+  .theme-toggle__label { display: none; }
   .header__timer { font-size: .76rem; padding: 4px 10px; }
   .header__right .hbtn { padding: 6px 10px; font-size: .72rem; }
 

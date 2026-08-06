@@ -583,7 +583,9 @@ const JOB_ASSET_NAMES = {
   'Hoyoung':'HoYoung',
 };
 // (JOB_HEAD_ASSET_NAMES 제거: 헤드 파일명을 전신과 통일해 JOB_ASSET_NAMES 하나로 해석)
-const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'png', Challengers:'png' };
+// 파일명 대소문자는 images/server/의 실제 파일과 정확히 일치해야 한다.
+// 로컬 Windows는 대소문자를 안 가리지만 배포(Vercel/리눅스)는 가려서 404가 난다.
+const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'png', Hyperion:'png', Luna:'webp', Solis:'webp', Challengers:'png' };
 
 /* 캐릭터 직업명/아이콘 — 전부 영문명 기준 (name 이 곧 아이콘 파일명) */
 function charJobName(ch) {

@@ -65,7 +65,19 @@ function _ssRender(statusData, maintData) {
   // 아이콘 파일이 없는 월드는 빈 문자열이 돌아와서 이름만 표시된다.
   const iconOf = world => serverIconSrc(world) || serverIconSrc(world.split('-')[0]) || '';
 
-  const cards = statusData.worlds.map(w => {
+  // 2열 그리드에서 1열은 전부 인터랙티브, 2열은 전부 히로익이 되도록 짝지어 배치한다.
+  // 히로익: Kronos(45)·Hyperion(70)·Solis(46)와 이름에 Heroic이 붙은 이벤트 월드.
+  const HEROIC_IDS = new Set([45, 46, 70]);
+  const isHeroic = w => HEROIC_IDS.has(w.worldId) || /heroic/i.test(w.world);
+  const inter = statusData.worlds.filter(w => !isHeroic(w));
+  const heroic = statusData.worlds.filter(isHeroic);
+  const ordered = [];
+  for (let i = 0; i < Math.max(inter.length, heroic.length); i++) {
+    if (inter[i])  ordered.push(inter[i]);
+    if (heroic[i]) ordered.push(heroic[i]);
+  }
+
+  const cards = ordered.map(w => {
     const chOk = w.channels.total > 0 && w.channels.online === w.channels.total;
     const statusCls = w.up ? (chOk ? 'ss-up' : 'ss-partial') : 'ss-down';
     const statusLabel = w.up ? (chOk ? '정상' : '일부 채널 점검') : '점검 중';

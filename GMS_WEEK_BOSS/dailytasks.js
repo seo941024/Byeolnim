@@ -119,7 +119,7 @@ function _dtCardHtml(charId, rec) {
       <div class="dt-tiles">
         ${activeTasks.length
           ? activeTasks.map(t => _dtTileHtml(charId, t, active, done)).join('')
-          : '<p class="mf-empty" style="margin:4px 0">추적할 항목이 없어요.</p>'}
+          : '<p class="empty" style="margin:4px 0">추적할 항목이 없어요.</p>'}
       </div>
     </div>`;
 }
@@ -322,7 +322,7 @@ function renderDailyTasks() {
     <p class="dt-help">완료 후 목록을 클릭하면 CLEAR 처리가 됩니다.</p>
     ${ids.length
       ? `<div class="dt-grid">${ids.map(id => _dtCardHtml(id, _dtGetChar(id))).join('')}</div>`
-      : '<p class="mf-empty">위에서 캐릭터를 추가하세요.</p>'}
+      : '<p class="empty">위에서 캐릭터를 추가하세요.</p>'}
   `;
 
   document.getElementById('dtToggleAdd').addEventListener('click', _dtOpenAddModal);

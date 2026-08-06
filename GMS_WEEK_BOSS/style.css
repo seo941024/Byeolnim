@@ -288,6 +288,10 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .crystal-bar__row { display: flex; justify-content: space-between; margin-bottom: 5px; }
 .crystal-bar__detail { display: flex; gap: 10px; margin-top: 5px; }
 .crystal-bar__type { display: flex; align-items: center; gap: 4px; font-size: .78rem; color: var(--text-sub); }
+/* 글자가 아이콘보다 1px 위로 떠 보이던 것 보정 — .icon-lbl과 같은 폰트 메트릭 문제.
+   여기는 글자가 span과 텍스트 노드로 나뉘어 있어 감싸는 대신 아이콘을 1px 올린다.
+   position 이동이라 레이아웃(줄 높이)에는 영향이 없다. */
+.crystal-icon { position: relative; top: -1px; }
 .crystal-icon { width: 14px; height: 14px; object-fit: contain; vertical-align: middle; }
 .crystal-bar__label { font-size: .72rem; color: var(--text-sub); font-weight: 700; }
 .crystal-bar__count { font-size: .72rem; font-weight: 800; color: var(--text); }
@@ -361,16 +365,17 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   width: 28px; height: 28px;
 }
 /* ?? nav ?꾩씠肄?媛쒕퀎 ?ш린 ?? */
-.sb-nav__item[data-sec="charinfo"]   .sb-nav__icon { width: 26px; height: 26px; }
-.sb-nav__item[data-sec="boss"]       .sb-nav__icon { width: 28px; height: 28px; }
-.sb-nav__item[data-sec="hexa"]       .sb-nav__icon { width: 31px; height: 31px; }
+.sb-nav__item[data-sec="charinfo"]   .sb-nav__icon { width: 28px; height: 28px; }
+.sb-nav__item[data-sec="boss"]       .sb-nav__icon { width: 30px; height: 30px; }
+.sb-nav__item[data-sec="hexa"]       .sb-nav__icon { width: 29px; height: 29px; }
 .sb-nav__item[data-sec="liberation"] .sb-nav__icon { width: 28px; height: 28px; }
 .sb-nav__item[data-sec="addoption"]  .sb-nav__icon { width: 28px; height: 28px; }
-.sb-nav__item[data-sec="starforce"]  .sb-nav__icon { width: 25px; height: 25px; }
+.sb-nav__item[data-sec="starforce"]  .sb-nav__icon { width: 28px; height: 28px; }
 .sb-nav__item[data-sec="cube"]       .sb-nav__icon { width: 30px; height: 30px; }
-.sb-nav__item[data-sec="bosshp"]     .sb-nav__icon { width: 26px; height: 26px; }
-.sb-nav__item[data-sec="serverstatus"]    .sb-nav__icon { width: 26px; height: 26px; }
-.sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 26px; height: 26px; }
+.sb-nav__item[data-sec="bosshp"]     .sb-nav__icon { width: 28px; height: 28px; }
+.sb-nav__item[data-sec="serverstatus"]    .sb-nav__icon { width: 30px; height: 30px; }
+.sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 29px; height: 29px; }
+.sb-nav__item[data-sec="wantchannel"] .sb-nav__icon { width: 33px; height: 33px; }
 /* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:#8b5cf6;top:3px}
@@ -1835,7 +1840,9 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
    보정은 제거했다. 다만 Challengers만 62x62 캔버스 안에 실제 그림이 46x48이라
    투명 여백을 안고 있어 같은 박스에 넣으면 혼자 작아 보인다 — 여백만큼 키운다.
    늘어난 크기는 음수 마진으로 흡수해 줄 높이는 건드리지 않는다. */
-.ss-card__icon[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
+/* Challengers는 33px이라 26px짜리와 라인 정렬이 달라, .icon-lbl을 1px 내린
+   만큼 아이콘도 1px 내려야 같이 맞는다(위 -6 / 아래 -8). */
+.ss-card__icon[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -6px -3px -8px; }
 .char-card__world-line img[src*="Challengers"] { width: 21px; height: 21px; margin: -4px -2px; }
 .ci-servericon[src*="Challengers"] { width: clamp(18px, 5.8cqw, 31px); height: clamp(18px, 5.8cqw, 31px); margin: -2px; }
 .ss-card__badge {
@@ -1951,5 +1958,13 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .wc-result__item { font-size: .8rem; color: var(--text-sub); font-weight: 700; }
 .wc-result__pick { font-size: 1.2rem; font-weight: 900; color: var(--accent); margin: 2px 0; display: flex; align-items: center; gap: 7px; min-width: 0; }
 .wc-result__world { width: 26px; height: 26px; object-fit: contain; flex: 0 0 26px; margin: -4px 0; }
+
+/* 아이콘 옆 라벨의 세로 정렬 보정.
+   flex의 align-items:center는 글리프가 아니라 '라인박스'를 기준으로 맞추는데,
+   라인박스 높이는 폰트의 ascent/descent로 정해진다. 이 앱 폰트들은 descent가
+   실제 글자보다 크게 잡혀 있어(고딕 15/5인데 실제 글리프는 15/3) 라인박스
+   중심이 글자 중심보다 아래에 생기고, 그만큼 글자가 위로 떠 보인다.
+   고딕 1px, Maple·8bit 0.5px 차이라 1px 내려주면 세 폰트 모두 맞는다. */
+.icon-lbl { position: relative; top: 1px; }
 .wc-result__world[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
 

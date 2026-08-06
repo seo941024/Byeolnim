@@ -88,7 +88,7 @@ function _ssRender(statusData, maintData) {
     return `
       <div class="ss-card ${statusCls}">
         <div class="ss-card__head">
-          <span class="ss-card__name">${(src => src ? `<img class="ss-card__icon" src="${src}" alt="" onerror="this.style.display='none'">` : '')(iconOf(w.world))}${w.world}</span>
+          <span class="ss-card__name">${(src => src ? `<img class="ss-card__icon" src="${src}" alt="" onerror="this.style.display='none'">` : '')(iconOf(w.world))}<span class="icon-lbl">${w.world}</span></span>
           <span class="ss-card__badge">${statusLabel}</span>
         </div>
         <div class="ss-card__row"><span>채널</span><b>${w.channels.online} / ${w.channels.total}</b></div>

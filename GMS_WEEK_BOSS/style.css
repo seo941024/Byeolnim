@@ -1831,6 +1831,17 @@ tbody tr:hover { background: rgba(139,92,246,.05); }
 .ss-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .ss-card__name { font-weight: 900; font-size: .96rem; color: var(--text); display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 .ss-card__icon { width: 18px; height: 18px; object-fit: contain; flex: 0 0 18px; }
+
+/* Luna/Solis 아이콘은 원형 메달이라 같은 박스에 넣어도 각진 마크보다 작아 보인다.
+   원이 정사각형에 내접하면서 네 귀퉁이만큼 시각 면적이 줄기 때문 — 광학 보정으로
+   조금 키워 다른 서버와 크기가 맞아 보이게 한다. 세로 여백은 음수 마진으로 흡수해
+   줄 높이는 그대로 유지한다. */
+.ss-card__icon[src*="Luna"],
+.ss-card__icon[src*="Solis"] { width: 23px; height: 23px; flex-basis: 23px; margin: -3px -2px; }
+.char-card__world-line img[src*="Luna"],
+.char-card__world-line img[src*="Solis"] { width: 17px; height: 17px; margin: -2px; }
+.ci-servericon[src*="Luna"],
+.ci-servericon[src*="Solis"] { width: clamp(18px, 5.8cqw, 31px); height: clamp(18px, 5.8cqw, 31px); margin: -2px; }
 .ss-card__badge {
   font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px;
   background: rgba(255,255,255,.06); color: var(--text-sub); white-space: nowrap;

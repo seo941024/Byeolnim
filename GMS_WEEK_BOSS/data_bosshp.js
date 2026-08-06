@@ -108,21 +108,21 @@ const BOSS_HP_PHASES = {
     { label:'Phase 3', hp:'12.80T' },
   ],
   '윌_이지': [
-    { label:'Phase 1 Blue (×3)', hp:'933.33B' },
-    { label:'Phase 1 Purple (×3)', hp:'933.33B' },
-    { label:'Phase 2 (×2)', hp:'2.10T' },
+    { label:'Phase 1 Blue ×3', hp:'933.33B' },
+    { label:'Phase 1 Purple ×3', hp:'933.33B' },
+    { label:'Phase 2 ×2', hp:'2.10T' },
     { label:'Phase 3', hp:'7T' },
   ],
   '윌_노말': [
-    { label:'Phase 1 Blue (×3)', hp:'1.40T' },
-    { label:'Phase 1 Purple (×3)', hp:'1.40T' },
-    { label:'Phase 2 (×2)', hp:'3.15T' },
+    { label:'Phase 1 Blue ×3', hp:'1.40T' },
+    { label:'Phase 1 Purple ×3', hp:'1.40T' },
+    { label:'Phase 2 ×2', hp:'3.15T' },
     { label:'Phase 3', hp:'10.50T' },
   ],
   '윌_하드': [
-    { label:'Phase 1 Blue (×3)', hp:'7T' },
-    { label:'Phase 1 Purple (×3)', hp:'7T' },
-    { label:'Phase 2 (×2)', hp:'15.75T' },
+    { label:'Phase 1 Blue ×3', hp:'7T' },
+    { label:'Phase 1 Purple ×3', hp:'7T' },
+    { label:'Phase 2 ×2', hp:'15.75T' },
     { label:'Phase 3', hp:'52.50T' },
   ],
   '진 힐라_노말': [
@@ -163,19 +163,19 @@ const BOSS_HP_PHASES = {
   ],
   '감시자 칼로스_이지': [
     { label:'Phase 1', hp:'94.50T' },
-    { label:'Phase 2 (×4)', hp:'65.63T' },
+    { label:'Phase 2 ×4', hp:'65.63T' },
   ],
   '감시자 칼로스_노말': [
     { label:'Phase 1', hp:'336T' },
-    { label:'Phase 2 (×4)', hp:'180T' },
+    { label:'Phase 2 ×4', hp:'180T' },
   ],
   '감시자 칼로스_카오스': [
     { label:'Phase 1', hp:'1.06Q' },
-    { label:'Phase 2 (×4)', hp:'1.01Q' },
+    { label:'Phase 2 ×4', hp:'1.01Q' },
   ],
   '감시자 칼로스_익스트림': [
     { label:'Phase 1', hp:'5.97Q' },
-    { label:'Phase 2 (×4)', hp:'3.90Q' },
+    { label:'Phase 2 ×4', hp:'3.90Q' },
   ],
   '최초의 대적자_이지': [
     { label:'Phase 1', hp:'171.54T' },
@@ -198,28 +198,28 @@ const BOSS_HP_PHASES = {
     { label:'Phase 3', hp:'13.40Q' },
   ],
   '카링_이지': [
-    { label:'Phase 1 Perils (×3)', hp:'96T' },
+    { label:'Phase 1 Perils ×3', hp:'96T' },
     { label:'Phase 2', hp:'105T' },
     { label:'Phase 3 Kaling', hp:'150T' },
-    { label:'Phase 3 Perils (×3)', hp:'126T' },
+    { label:'Phase 3 Perils ×3', hp:'126T' },
   ],
   '카링_노말': [
-    { label:'Phase 1 Perils (×3)', hp:'400T' },
+    { label:'Phase 1 Perils ×3', hp:'400T' },
     { label:'Phase 2', hp:'468T' },
     { label:'Phase 3 Kaling', hp:'722T' },
-    { label:'Phase 3 Perils (×3)', hp:'512T' },
+    { label:'Phase 3 Perils ×3', hp:'512T' },
   ],
   '카링_하드': [
-    { label:'Phase 1 Perils (×3)', hp:'906T' },
+    { label:'Phase 1 Perils ×3', hp:'906T' },
     { label:'Phase 2', hp:'1.40Q' },
     { label:'Phase 3 Kaling', hp:'2.24Q' },
-    { label:'Phase 3 Perils (×3)', hp:'1.83Q' },
+    { label:'Phase 3 Perils ×3', hp:'1.83Q' },
   ],
   '카링_익스트림': [
-    { label:'Phase 1 Perils (×3)', hp:'6.07Q' },
+    { label:'Phase 1 Perils ×3', hp:'6.07Q' },
     { label:'Phase 2', hp:'6.93Q' },
     { label:'Phase 3 Kaling', hp:'8.66Q' },
-    { label:'Phase 3 Perils (×3)', hp:'6.93Q' },
+    { label:'Phase 3 Perils ×3', hp:'6.93Q' },
   ],
   '찬란한 흉성_노말': [
     { label:'Phase 1', hp:'657.60T' },
@@ -233,12 +233,12 @@ const BOSS_HP_PHASES = {
   ],
   '림보_노말': [
     { label:'Phase 1', hp:'1.94Q' },
-    { label:'Phase 2 (×2)', hp:'970T' },
+    { label:'Phase 2 ×2', hp:'970T' },
     { label:'Phase 3', hp:'2.60Q' },
   ],
   '림보_하드': [
     { label:'Phase 1', hp:'3.78Q' },
-    { label:'Phase 2 (×2)', hp:'1.89Q' },
+    { label:'Phase 2 ×2', hp:'1.89Q' },
     { label:'Phase 3', hp:'4.99Q' },
   ],
   '발드릭스_노말': [

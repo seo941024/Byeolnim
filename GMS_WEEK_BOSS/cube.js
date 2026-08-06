@@ -304,10 +304,17 @@ function _renderResult(totalP, combos) {
   modal.style.display='flex';
 }
 
+// 부위 표시명 — 데이터 키의 괄호 부기만 떼어낸다. 키 자체는 그대로 유지.
+function _partLabel(p) {
+  return p.replace(/\s*\(([^)]*)\)/, ' · $1');
+}
+
 // ── 초기화 ──────────────────────────────────
 async function initCube() {
   const partSel=document.getElementById('cubePart');
-  if(partSel) partSel.innerHTML=CUBE_PARTS.map(p=>`<option value="${p}">${p}</option>`).join('');
+  // 부위명은 cube_table의 키로 그대로 쓰이므로 value는 절대 건드리지 않고,
+  // 화면에 보이는 글자만 괄호 없는 표기로 바꾼다.
+  if(partSel) partSel.innerHTML=CUBE_PARTS.map(p=>`<option value="${p}">${_partLabel(p)}</option>`).join('');
 
   document.querySelectorAll('.cube-type-btn').forEach(btn=>btn.addEventListener('click',()=>{
     document.querySelectorAll('.cube-type-btn').forEach(b=>b.classList.remove('active'));

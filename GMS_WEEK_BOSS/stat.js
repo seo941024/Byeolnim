@@ -77,8 +77,8 @@ function buildFields(jtIdx, parsed) {
     { label: '방어율 무시%',        key: 'IGNORE_DEF',  idx: 16 },
     { label: '크리티컬 확률%',      key: 'CRIT_RATE',   idx: 19 },
     { label: '크리티컬 데미지%',    key: 'CRIT_DMG',    idx: 21 },
-    { label: '재사용 감소(초)',      key: 'CD_SEC',      idx: 22 },
-    { label: '재사용 감소(%)',       key: 'CD_PCT',      idx: 23 },
+    { label: '재사용 감소 · 초',      key: 'CD_SEC',      idx: 22 },
+    { label: '재사용 감소 · %',       key: 'CD_PCT',      idx: 23 },
     { label: '버프 지속 시간%',     key: 'BUFF_DUR',    idx: 24 },
     { label: '재사용 미적용%',      key: 'CD_NOT',      idx: 25 },
     { label: '속성 내성 무시%',     key: 'IGNORE_ELEM', idx: 26 },
@@ -170,7 +170,7 @@ function initStatOCR() {
 
       <!-- 우측 결과 -->
       <div class="card" style="min-width:0;overflow-x:auto">
-        <div class="card__title">추출 결과 <span style="font-size:.72rem;font-weight:400;color:var(--text-sub)">(수정 가능)</span></div>
+        <div class="card__title">추출 결과 <span style="font-size:.72rem;font-weight:400;color:var(--text-sub)">※ 수정 가능</span></div>
         <div id="statResultTable" style="margin-top:10px"><p class="empty">정보값 자동입력을 클릭, 또는 수동입력을 시작하세요.</p></div>
       </div>
     </div>`;

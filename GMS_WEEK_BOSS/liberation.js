@@ -94,7 +94,7 @@ function calcResult() {
   }
 
   const weeksStr = daysLeft != null
-    ? `${(daysLeft / 7).toFixed(1)}주 (${daysLeft}일)`
+    ? `${(daysLeft / 7).toFixed(1)}주 · ${daysLeft}일`
     : '—';
 
   return { rows, weeklyTotal: thisWeekly, monthlyTotal: thisMonthly, fullWeekly, fullMonthly, mult, held, questCum, totalSpent, remaining, pct, daysLeft, weeksStr, targetDateStr };
@@ -389,7 +389,7 @@ function calcDestinyResult() {
 
     const today = new Date(); today.setHours(0,0,0,0);
     const daysLeft = Math.round((libDate - today) / 86400000);
-    const weeksStr = `${(daysLeft/7).toFixed(1)}주 (${daysLeft}일)`;
+    const weeksStr = `${(daysLeft/7).toFixed(1)}주 · ${daysLeft}일`;
     const dateStr  = `${libDate.getFullYear()}년 ${String(libDate.getMonth()+1).padStart(2,'0')}월 ${String(libDate.getDate()).padStart(2,'0')}일`;
     return { weeksStr, dateStr };
   }
@@ -432,7 +432,7 @@ function renderDestinyResult() {
       <b>${fmtResolve(r.held)}</b>
     </div>
     <div class="gen-res-divider"></div>
-    <div class="gen-res-row" style="margin-bottom:4px"><span style="font-weight:700">1차 해방 (${fmtResolve(DESTINY_1ST_TARGET)} 결의)</span></div>
+    <div class="gen-res-row" style="margin-bottom:4px"><span style="font-weight:700">1차 해방 · ${fmtResolve(DESTINY_1ST_TARGET)} 결의</span></div>
     <div class="lib-progress" style="margin:4px 0"><div class="lib-progress__fill" style="width:${r.pct1}%"></div></div>
     <div class="lib-pct" style="margin-bottom:4px">${r.pct1}% · ${fmtResolve(r.held)} / ${fmtResolve(DESTINY_1ST_TARGET)}</div>
     <div class="gen-res-row gen-res-accent">
@@ -443,7 +443,7 @@ function renderDestinyResult() {
       <div class="gen-date-big">${r.r1.dateStr}</div>
     </div>
     <div class="gen-res-divider"></div>
-    <div class="gen-res-row" style="margin-bottom:4px"><span style="font-weight:700">2차 해방 (${fmtResolve(DESTINY_2ND_TARGET)} 결의)</span></div>
+    <div class="gen-res-row" style="margin-bottom:4px"><span style="font-weight:700">2차 해방 · ${fmtResolve(DESTINY_2ND_TARGET)} 결의</span></div>
     <div class="lib-progress" style="margin:4px 0"><div class="lib-progress__fill" style="width:${r.pct2}%"></div></div>
     <div class="lib-pct" style="margin-bottom:4px">${r.pct2}% · ${fmtResolve(r.held)} / ${fmtResolve(DESTINY_2ND_TARGET)}</div>
     <div class="gen-res-row gen-res-accent">

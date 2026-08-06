@@ -147,7 +147,7 @@ function _flameScoreRenderResult(results, N, target) {
       <div class="flame-score-card">
         <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
         <div class="flame-score-card__prob">확률: ${(p*100).toFixed(7)}%</div>
-        <div class="flame-score-card__mean">평균 (상위 ${medianPct}%): ${mean.toLocaleString()}회</div>
+        <div class="flame-score-card__mean">평균 · 상위 ${medianPct}%: ${mean.toLocaleString()}회</div>
         <div class="sf-bidir" style="margin-top:8px">
           <div class="sf-bidir__field">
             <label class="sf-bidir__lbl">상위 %</label>
@@ -473,7 +473,7 @@ function initAddOption() {
               <input class="inp" id="flameScoreAtkW" type="number" value="4" min="0" step="0.5" />
             </div>
           </div>
-          <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 추옵 (예: 142)" style="width:100%;margin-bottom:10px" />
+          <input class="inp" id="flameScoreTarget" type="number" placeholder="목표 추옵 · 예 142" style="width:100%;margin-bottom:10px" />
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
         </div>
 

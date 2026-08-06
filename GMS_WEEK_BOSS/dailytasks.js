@@ -185,14 +185,14 @@ function _dtStep1Html() {
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">캐릭터 추가 (1/2)</span>
+        <span class="modal__title">캐릭터 추가 · 1/2</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">
         <div class="lookup-box">
           <div class="lookup-box__title">GMS 랭킹에서 불러오기</div>
           <div class="lookup-box__row">
-            <input class="inp" id="dtLkName" placeholder="GMS 캐릭터명 (영문)" autocomplete="off" />
+            <input class="inp" id="dtLkName" placeholder="GMS 캐릭터명 · 영문" autocomplete="off" />
             <button class="sbtn sbtn--primary" id="dtLkBtn">조회</button>
           </div>
         </div>
@@ -236,7 +236,7 @@ function _dtWireStep1() {
         _dtRenderAddModal();
       });
     } catch (e) {
-      box.innerHTML = '<span class="lk-err">조회 실패 — 서버(serve.js)가 실행 중인지 확인하세요.</span>';
+      box.innerHTML = '<span class="lk-err">조회 실패 — serve.js 서버가 실행 중인지 확인하세요.</span>';
     }
   });
   document.getElementById('dtManualBtn').addEventListener('click', () => {
@@ -255,7 +255,7 @@ function _dtStep2Html() {
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">${editing ? '추적 항목 수정' : '추적할 항목 선택 (2/2)'}</span>
+        <span class="modal__title">${editing ? '추적 항목 수정' : '추적할 항목 선택 · 2/2'}</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">

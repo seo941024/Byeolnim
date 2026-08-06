@@ -169,9 +169,21 @@ function initStarforce() {
     sfRenderResult();
     _sfRecalcExpected();
   });
-  // 레벨·목표 성 변경 시에도 기댓값 자동 재계산
-  document.getElementById('sfLevel')?.addEventListener('change', _sfRecalcExpected);
-  document.getElementById('sfTo')?.addEventListener('change', _sfRecalcExpected);
+  // 레벨·목표 성 변경 시에도 기댓값 자동 재계산.
+  // change만 걸면 입력을 확정할 때까지 화면이 안 바뀌어서, 한 자씩 고쳐도
+  // 반응이 없다가 한 번에 튀는 것처럼 보인다. input도 같이 듣되 재계산이
+  // 2만 회 몬테카를로라 매 타건마다 돌리면 멈추므로 디바운스를 건다.
+  let _sfInputTimer = null;
+  const _sfRecalcDebounced = () => {
+    clearTimeout(_sfInputTimer);
+    _sfInputTimer = setTimeout(_sfRecalcExpected, 300);
+  };
+  ['sfLevel', 'sfTo', 'sfFrom'].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', _sfRecalcDebounced);
+    el.addEventListener('change', _sfRecalcExpected);
+  });
 
   // 강화 1회
   document.getElementById('sfBtn1')?.addEventListener('click', () => {
@@ -384,7 +396,7 @@ function sfShowExpected() {
         tooltip: {
           callbacks: {
             title: items => `소모 메소 ≈ ${labels[items[0].dataIndex]}`,
-            label: item  => `${item.raw.toLocaleString()}회 (${(item.raw/N*100).toFixed(1)}%)`
+            label: item  => `${item.raw.toLocaleString()}회 · ${(item.raw/N*100).toFixed(1)}%`
           }
         }
       },
@@ -428,7 +440,7 @@ function sfShowExpected() {
         tooltip: {
           callbacks: {
             title: items => `파괴 ${items[0].label}`,
-            label: item  => `${item.raw.toLocaleString()}회 (${(item.raw/N*100).toFixed(1)}%)`
+            label: item  => `${item.raw.toLocaleString()}회 · ${(item.raw/N*100).toFixed(1)}%`
           }
         }
       },

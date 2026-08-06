@@ -693,7 +693,7 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
       </div>
       <div class="lk-hist">${renderHistHtml(j.data)}</div>`;
   } catch (e) {
-    box.innerHTML = '<span class="lk-err">조회 실패 — 서버(serve.js)가 실행 중인지 확인하세요.</span>';
+    box.innerHTML = '<span class="lk-err">조회 실패 — serve.js 서버가 실행 중인지 확인하세요.</span>';
   }
 });
 

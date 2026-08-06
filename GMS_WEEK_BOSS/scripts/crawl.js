@@ -12,10 +12,12 @@ const NEXON_BASE = 'https://www.nexon.com/api/maplestory/no-auth/ranking/v2';
 const HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
 
 const HEROIC_WORLDS = new Set([45, 46, 70]);
+// 넥슨 server-status API 실측 기준(2026-08-06). Hyperion=70, Solis=46이며
+// 예전에 이 둘이 뒤바뀌어 있었다(_lib.js/serve.js는 수정됐는데 여기만 누락됐었음).
 const WORLD_NAMES = {
-  1:'Bera', 19:'Scania', 17:'Aurora',
-  45:'Kronos', 46:'Hyperion',
-  30:'Luna', 70:'Solis',
+  1:'Bera', 19:'Scania',        // NA 일반
+  45:'Kronos', 70:'Hyperion',   // NA 리부트
+  30:'Luna', 46:'Solis',        // EU
 };
 
 async function fetchPage(reg, type, reboot, page) {

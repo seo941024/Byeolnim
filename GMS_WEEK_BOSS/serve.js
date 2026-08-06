@@ -23,7 +23,7 @@ const MIME = {
 // 넥슨 공식 server-status API로 실측: Hyperion=70(NA), Solis=46(EU) — 기존 값과 뒤바뀌어 있었음
 const WORLD_NAMES = {
   // NA 일반
-  1:'Bera', 19:'Scania', 17:'Aurora',
+  1:'Bera', 19:'Scania',
   // NA 리부트(Heroic)
   45:'Kronos', 70:'Hyperion',
   // EU

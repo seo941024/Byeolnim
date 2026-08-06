@@ -60,6 +60,11 @@ function _ssRender(statusData, maintData) {
     ? `<div class="ss-maint">점검 진행 중입니다.</div>`
     : '';
 
+  // 상태 API의 월드명은 Challengers-Interactive / Challengers-Heroic처럼 접미사가
+  // 붙어 오는데 아이콘 파일은 Challengers.png 하나뿐이라 접미사를 떼고 찾는다.
+  // 아이콘 파일이 없는 월드는 빈 문자열이 돌아와서 이름만 표시된다.
+  const iconOf = world => serverIconSrc(world) || serverIconSrc(world.split('-')[0]) || '';
+
   const cards = statusData.worlds.map(w => {
     const chOk = w.channels.total > 0 && w.channels.online === w.channels.total;
     const statusCls = w.up ? (chOk ? 'ss-up' : 'ss-partial') : 'ss-down';
@@ -71,7 +76,7 @@ function _ssRender(statusData, maintData) {
     return `
       <div class="ss-card ${statusCls}">
         <div class="ss-card__head">
-          <span class="ss-card__name">${w.world}</span>
+          <span class="ss-card__name">${(src => src ? `<img class="ss-card__icon" src="${src}" alt="" onerror="this.style.display='none'">` : '')(iconOf(w.world))}${w.world}</span>
           <span class="ss-card__badge">${statusLabel}</span>
         </div>
         <div class="ss-card__row"><span>채널</span><b>${w.channels.online} / ${w.channels.total}</b></div>

@@ -212,7 +212,7 @@ function initStarforce() {
   });
 
   // 기댓값 보기
-  document.getElementById('sfBtnExpected')?.addEventListener('click', sfShowExpected);
+  document.getElementById('sfBtnExpected')?.addEventListener('click', () => sfShowExpected(true));
 
   // 양방향 메소 ↔ 상위% 이벤트 (한 번만 등록)
   document.getElementById('sfInputMeso').addEventListener('input', () => {
@@ -337,7 +337,7 @@ function _sfShowResult(luckPct, mesoVal) {
   _sfHighlightBar(mesoVal);
 }
 
-function sfShowExpected() {
+function sfShowExpected(scrollToResult) {
   const from = _sfGetFrom();
   const to   = _sfGetTo();
   if (from >= to) { alert('목표 성이 현재 성보다 높아야 합니다.'); return; }
@@ -348,7 +348,11 @@ function sfShowExpected() {
     stages: { ..._sfStages }
   };
 
-  const N = 20_000;
+  // 평균은 정확해로 따로 구하므로 시뮬레이션은 분포(히스토그램·상위%) 전용이다.
+  // 2만 회는 한 번에 약 650ms를 동기로 잡아먹어서 타이핑 중에 그만큼 멈춘다.
+  // 버튼을 직접 눌렀을 때만 2만 회, 입력 중 자동 재계산은 5천 회로 돌린다.
+  // 40구간 히스토그램에는 5천 표본이면 충분하고, 평균값은 어느 쪽이든 동일하다.
+  const N = scrollToResult ? 20_000 : 5_000;
   const costs = [], destroyArr = [];
   let totalDestroy = 0;
   for (let i = 0; i < N; i++) {
@@ -475,6 +479,10 @@ function sfShowExpected() {
   document.getElementById('sfInputDestroyPct').value   = avgDestPct.toFixed(3);
   _sfShowDestroyResult(avgDestPct, avgDest);
 
-  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // 버튼을 직접 눌렀을 때만 결과로 스크롤한다. 레벨을 한 자씩 고칠 때마다
+  // 화면이 끌려가면 입력을 못 하므로 자동 재계산에서는 스크롤하지 않는다.
+  if (scrollToResult) {
+    document.getElementById('sfRightExpected')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 

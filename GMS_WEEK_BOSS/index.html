@@ -475,19 +475,21 @@
           <label class="field__label">서버</label>
           <select class="sel" id="inpWorld">
             <option value="">선택 안 함</option>
-            <optgroup label="North America">
-              <option value="Bera">Bera</option>
-              <option value="Scania">Scania</option>
-            </optgroup>
             <optgroup label="North America · Heroic">
               <option value="Kronos">Kronos</option>
               <option value="Hyperion">Hyperion</option>
             </optgroup>
-            <optgroup label="Europe">
-              <option value="Luna">Luna</option>
+            <optgroup label="North America">
+              <option value="Bera">Bera</option>
+              <option value="Scania">Scania</option>
+            </optgroup>
+            <optgroup label="Europe · Heroic">
               <option value="Solis">Solis</option>
             </optgroup>
-            <optgroup label="이벤트">
+            <optgroup label="Europe">
+              <option value="Luna">Luna</option>
+            </optgroup>
+            <optgroup label="Event">
               <option value="Challengers">Challengers</option>
             </optgroup>
           </select>
@@ -499,6 +501,11 @@
         <div class="job-grid" id="jobGrid"></div>
         <input type="hidden" id="inpJob" />
         <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 직접 입력한 캐릭터는 이미지가 곧무원이 됩니다.</p>
+      </div>
+
+      <div class="field" style="margin-top:14px">
+        <label class="field__label">카드 배경</label>
+        <div class="cardbg-grid" id="cardBgGrid"></div>
       </div>
     </div>
     <div class="modal__foot">

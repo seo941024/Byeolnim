@@ -325,15 +325,20 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 /* char card */
 .char-card {
+  position: relative;
   background: var(--panel-veil);
-  
-  
   border: 1px solid rgba(var(--hue),.2);
   border-radius: var(--radius);
   cursor: pointer; overflow: hidden;
   transition: transform .2s, box-shadow .2s, border-color .2s;
   box-shadow: 0 2px 12px rgba(0,0,0,.4);
 }
+/* 카드 배경 이미지(선택 사항) — 이미지가 맨 뒤, 그 위에 기존 카드 색을 반투명
+   막처럼 얹어 글자 대비를 유지한다. 카드 자체 background는 그대로 폴백으로
+   남겨두므로(이미지가 100% 채워 덮으니 평소엔 안 보임) 이미지가 없는
+   캐릭터는 지금까지와 완전히 같은 모습이다. */
+.card-bg-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; pointer-events: none; }
+.card-bg-veil  { position: absolute; inset: 0; background: var(--panel-veil); z-index: -1; pointer-events: none; }
 .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.55), 0 0 14px rgba(var(--hue),.15); border-color: rgba(var(--hue-l),.4); }
 .char-card.dragging { opacity: .35; cursor: grabbing; }
 .char-card.drag-over { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
@@ -353,9 +358,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: stretch; overflow: hidden;
 }
 .char-card__portrait {
-  /* 50%였던 걸 고정폭으로 바꿔 텍스트 쪽에 더 여유를 준다(긴 직업명 한 줄 확보)
-     사이드바 340px 기준 84px — 텍스트 칸에 충분한 여유(40px+)를 남겨 폰트 렌더링差에도 줄바꿈 없게 */
-  width: 84px; flex-shrink: 0;
+  /* 폭을 고정값 대신 aspect-ratio:1/1로 둬서, 카드 높이가 얼마든 정사각형을
+     유지한다(예전엔 84px 고정이라 카드가 세로로 길어질수록 일러스트 박스만
+     길쭉해졌음). 텍스트 칸 줄바꿈 방지를 위해 최대 폭은 130px로 상한을 둔다 —
+     카드가 아주 낮아져 정사각형 폭이 130px를 넘으면 그 이상은 고정폭으로 전환. */
+  aspect-ratio: 1 / 1; max-width: 130px; flex-shrink: 0;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
@@ -1213,6 +1220,19 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .job-item.sel { background: rgba(var(--hue-l),.15); border-color: var(--primary); color: var(--primary); }
 .job-item img { width: 38px; height: 38px; object-fit: contain; border-radius: 7px; }
 
+/* 카드 배경 선택 그리드 — 파일이 없는 번호는 onerror 체인이 타일 자체를
+   지워버리므로, 실제로 채워 넣은 개수만큼만 자동으로 줄어든다. */
+.cardbg-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(52px,1fr)); gap: 6px; max-height: 180px; overflow-y: auto; padding: 2px; }
+.cardbg-opt {
+  aspect-ratio: 1/1; border-radius: var(--radius-sm);
+  border: 2px solid var(--border); background: var(--bg3); overflow: hidden;
+  cursor: pointer; padding: 0; transition: border-color .15s;
+}
+.cardbg-opt:hover { border-color: var(--border-hl); }
+.cardbg-opt.sel { border-color: var(--primary); box-shadow: 0 0 0 1px var(--primary); }
+.cardbg-opt img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.cardbg-opt--none { display: flex; align-items: center; justify-content: center; font-size: .68rem; color: var(--text-sub); font-weight: 700; }
+
 /* ?? LOOKUP ?? */
 .lookup-box {
   background: var(--lookup-bg);
@@ -1512,6 +1532,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   gap:10px; padding:8px 0 12px;
 }
 .cg-card {
+  position: relative;
   background: var(--panel-veil);
   border: 1px solid rgba(var(--hue),.2);
   border-radius: var(--radius);
@@ -1688,7 +1709,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   }
   /* 80vw가 300px보다 좁아지는 소형 화면(~<375px)에서는 일러스트를 줄여
      "Arch Mage (Ice, Lightning)" 같은 긴 직업명도 한 줄에 들어가게 한다 */
-  .char-card__portrait { width: 88px; }
+  .char-card__portrait { max-width: 100px; }
   body.sidebar-open .sidebar { transform: translateX(0); }
 
   /* 드로어 배경 오버레이 */

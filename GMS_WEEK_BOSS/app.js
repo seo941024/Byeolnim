@@ -226,6 +226,7 @@ function renderCharList() {
   const sIcon = world ? serverIconSrc(world) : '';
   const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
   li.innerHTML = `
+    ${cardBgLayerHtml(ch.cardBg)}
     <div class="char-card__inner">
       <div class="char-card__txt">
         <div class="char-card__name">${ch.name}</div>
@@ -522,12 +523,13 @@ document.getElementById('btnResetBoss').addEventListener('click', () => {
 });
 
 /* ── 캐릭터 모달 ── */
-let editIdx = -1, selectedJob = 0, fetchedInfo = null;
+let editIdx = -1, selectedJob = 0, fetchedInfo = null, selectedCardBg = null;
 
 function openCharModal(idx = -1) {
   editIdx = idx;
   selectedJob = idx >= 0 ? state.chars[idx].jobIdx : 0;
   fetchedInfo = idx >= 0 && state.chars[idx].fetched ? { ...state.chars[idx].fetched } : null;
+  selectedCardBg = idx >= 0 ? (state.chars[idx].cardBg || null) : null;
   document.getElementById('modalCharTitle').textContent = idx >= 0 ? '캐릭터 수정' : '캐릭터 추가';
   document.getElementById('inpName').value  = idx >= 0 ? state.chars[idx].name  : '';
   document.getElementById('inpLevel').value = idx >= 0 ? state.chars[idx].level : '';
@@ -537,7 +539,45 @@ function openCharModal(idx = -1) {
   document.getElementById('lkName').value = idx >= 0 ? state.chars[idx].name : '';
   document.getElementById('lkResult').innerHTML = '';
   renderJobGrid('');   // 직접 입력용 직업 그리드
+  renderCardBgGrid();
   document.getElementById('overlayChar').classList.add('open');
+}
+
+// 캐릭터 카드(.char-card, .cg-card) 배경 레이어 — cardBg가 'bg3'같은 id면
+// png를 먼저 시도하고 실패하면 webp, 그것도 없으면 통째로 사라진다.
+function cardBgLayerHtml(cardBg) {
+  if (!cardBg) return '';
+  const id = cardBg.replace(/^bg/, '');
+  const [primary, fallback] = cardBgCandidates(id);
+  return `<img class="card-bg-layer" src="${primary}" data-fallback="${fallback}"
+    onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.nextElementSibling?.remove();this.remove();}">
+    <div class="card-bg-veil"></div>`;
+}
+
+/* ── 카드 배경 선택 그리드 ──
+   images/bg/bg{0..CARD_BG_COUNT-1}에 png 또는 webp로 넣어두면 뜨는 방식.
+   파일이 아직 없는 번호는 두 확장자 다 실패하니 타일 자체를 숨긴다 —
+   그래서 나중에 이미지만 채워 넣으면 코드를 안 건드려도 그 번호가 나타난다. */
+function renderCardBgGrid() {
+  const grid = document.getElementById('cardBgGrid');
+  if (!grid) return;
+  const tiles = [`<button type="button" class="cardbg-opt cardbg-opt--none${selectedCardBg ? '' : ' sel'}" data-bg="">없음</button>`];
+  for (let i = 0; i < CARD_BG_COUNT; i++) {
+    const bgId = 'bg' + i;
+    const [primary, fallback] = cardBgCandidates(i);
+    tiles.push(`
+      <button type="button" class="cardbg-opt${selectedCardBg === bgId ? ' sel' : ''}" data-bg="${bgId}">
+        <img src="${primary}" data-fallback="${fallback}"
+             onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.closest('.cardbg-opt').remove();}">
+      </button>`);
+  }
+  grid.innerHTML = tiles.join('');
+  grid.querySelectorAll('.cardbg-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      selectedCardBg = btn.dataset.bg || null;
+      grid.querySelectorAll('.cardbg-opt').forEach(b => b.classList.toggle('sel', b === btn));
+    });
+  });
 }
 
 /* ── GMS 랭킹 조회 + 히스토리 ──
@@ -752,9 +792,9 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   if (dup >= 0) return alert('이미 추가된 캐릭터입니다.');
 
   if (editIdx >= 0) {
-    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched };
+    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched, cardBg: selectedCardBg };
   } else {
-    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched });
+    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched, cardBg: selectedCardBg });
     state.activeChar = state.chars.length - 1;
   }
   save();
@@ -913,6 +953,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
+        ${cardBgLayerHtml(ch.cardBg)}
         <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">

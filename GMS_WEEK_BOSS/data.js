@@ -46,6 +46,14 @@ const DIFF_META = {
 const MAX_CRYSTALS = 180;
 const MAX_CHARS    = 20;
 
+// 캐릭터 카드 배경 — images/bg/bg0 ~ bg{CARD_BG_COUNT-1}에 png 또는 webp로 넣으면
+// 자동으로 선택 목록에 뜬다(파일이 없는 번호는 골라내는 쪽에서 알아서 숨김).
+// 확장자는 png를 먼저 찾고 없으면 webp를 찾는다.
+const CARD_BG_COUNT = 30;
+function cardBgCandidates(id) {
+  return [`images/bg/bg${id}.png`, `images/bg/bg${id}.webp`];
+}
+
 const STORAGE_KEYS = {
   boss:        'gms_boss_v2',
   charHistory: 'gms_char_history',

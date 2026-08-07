@@ -175,6 +175,29 @@ http.createServer(async (req, res) => {
     return;
   }
 
+  // ── API: /api/img?url=... (넥슨 아바타 이미지 프록시, 캔버스 CORS 회피용) ──
+  if (u.pathname === '/api/img') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const urlParam = u.searchParams.get('url');
+    let target;
+    try { target = urlParam && new URL(urlParam); } catch { target = null; }
+    if (!target || !/^https?:$/.test(target.protocol) || !/(^|\.)nexon\.(net|com)$/i.test(target.hostname)) {
+      res.writeHead(403, { 'Content-Type': 'application/json' });
+      return res.end(JSON.stringify({ ok:false, error:'host not allowed' }));
+    }
+    try {
+      const r = await fetch(target.toString(), { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      if (!r.ok) { res.writeHead(502); return res.end('upstream fetch failed'); }
+      const buf = Buffer.from(await r.arrayBuffer());
+      res.writeHead(200, { 'Content-Type': r.headers.get('content-type') || 'image/png', 'Cache-Control': 'public, max-age=86400' });
+      res.end(buf);
+    } catch (e) {
+      res.writeHead(502, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'proxy failed: ' + e.message }));
+    }
+    return;
+  }
+
   // ── 정적 파일 ──
   let url = u.pathname === '/' ? '/index.html' : u.pathname;
   const filePath = path.join(ROOT, decodeURIComponent(url));

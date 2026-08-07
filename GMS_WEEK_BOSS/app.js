@@ -579,6 +579,156 @@ function renderCardBgGrid() {
   });
 }
 
+/* ── 캐릭터 카드를 이미지(명함)로 저장 ──
+   넥슨 아바타는 다른 출처(msavatar1.nexon.net)라 캔버스에 그대로 그리면
+   캔버스가 오염(tainted)되어 toDataURL이 막힌다. /api/img 프록시를 거쳐
+   같은 출처처럼 받아온다(api/img.js, serve.js 둘 다 구현돼 있음). */
+function proxiedImgSrc(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url, location.href);
+    if (/nexon\.(net|com)$/i.test(u.hostname)) return `/api/img?url=${encodeURIComponent(url)}`;
+  } catch { /* 상대경로(내부 images/) 등 — 그대로 사용 */ }
+  return url;
+}
+function loadImg(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+async function loadFirstAvailable(srcs) {
+  for (const s of srcs) {
+    try { return await loadImg(s); } catch { /* 다음 후보 시도 */ }
+  }
+  return null;
+}
+function cardRoundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+function cardRoundRectLeft(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w, y + h);
+  ctx.lineTo(x + r, y + h);
+  ctx.arcTo(x, y + h, x, y + h - r, r);
+  ctx.lineTo(x, y + r);
+  ctx.arcTo(x, y, x + r, y, r);
+  ctx.closePath();
+}
+function drawImgCover(ctx, img, x, y, w, h) {
+  const ir = img.width / img.height, br = w / h;
+  let sw, sh, sx, sy;
+  if (ir > br) { sh = img.height; sw = sh * br; sx = (img.width - sw) / 2; sy = 0; }
+  else { sw = img.width; sh = sw / br; sx = 0; sy = (img.height - sh) / 2; }
+  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
+}
+function drawImgContainBottom(ctx, img, x, y, w, h) {
+  const ir = img.width / img.height, br = w / h;
+  let dw, dh;
+  if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+  ctx.drawImage(img, x + (w - dw) / 2, y + h - dh, dw, dh);
+}
+
+async function exportCharCard(idx) {
+  const ch = state.chars[idx];
+  if (!ch) return;
+  const f = ch.fetched || {};
+  const jn = charJobName(ch);
+  const region = f.region || (state.region === 'eu' ? 'EU' : 'NA');
+  const world = f.world || '';
+  const lv = f.level || ch.level;
+
+  const SCALE = 2, W = 640, H = 220, PW = 230, PAD = 12;
+  const canvas = document.createElement('canvas');
+  canvas.width = W * SCALE; canvas.height = H * SCALE;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(SCALE, SCALE);
+
+  const cs = getComputedStyle(document.documentElement);
+  const panelBg   = cs.getPropertyValue('--bg-card').trim() || '#0e0b1e';
+  const panelVeil = cs.getPropertyValue('--panel-veil').trim() || 'rgba(15,10,32,.9)';
+  const textColor = cs.getPropertyValue('--text').trim() || '#fff';
+  const textSub   = cs.getPropertyValue('--text-sub').trim() || '#9a94b0';
+  const accent    = cs.getPropertyValue('--accent').trim() || '#f5c842';
+  const hue       = cs.getPropertyValue('--hue').trim() || '139,92,246';
+
+  // 카드 배경 — 둥근 사각형 밖은 그대로 투명(캔버스 기본값)으로 둬서
+  // 다운로드된 png가 카드 모양 그대로 잘려 보이게 한다. panel-veil은 반투명이라
+  // 그 아래 불투명 바탕(--bg-card)을 먼저 깔아 어디에 붙여넣어도 카드가 또렷하게 보이게 함.
+  cardRoundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
+  ctx.fillStyle = panelBg;
+  ctx.fill();
+  ctx.fillStyle = panelVeil;
+  ctx.fill();
+  ctx.strokeStyle = `rgba(${hue},.35)`;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+
+  // 일러스트 박스(왼쪽)
+  ctx.save();
+  cardRoundRectLeft(ctx, 0, 0, PW, H, 14);
+  ctx.clip();
+  if (ch.cardBg) {
+    const id = ch.cardBg.replace(/^bg/, '');
+    const bgImg = await loadFirstAvailable(cardBgCandidates(id));
+    if (bgImg) drawImgCover(ctx, bgImg, 0, 0, PW, H);
+  }
+  const hasReal = !!f.img;
+  const charImg = await loadFirstAvailable(hasReal ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
+  if (charImg) {
+    const pct = hasReal && charImg.src.includes('/api/img') ? 0.81 : 0.89;
+    drawImgContainBottom(ctx, charImg, 0, 0, PW * pct, H * pct);
+  }
+  ctx.restore();
+
+  // 텍스트(오른쪽)
+  const tx = PW + PAD * 2;
+  ctx.fillStyle = textColor;
+  ctx.font = 'bold 26px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.fillText(ch.name, tx, 46);
+
+  ctx.fillStyle = textSub;
+  ctx.font = '15px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.fillText(jn || '', tx, 70);
+
+  ctx.fillStyle = accent;
+  ctx.font = 'bold 22px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.fillText(`Lv.${lv}`, tx, 112);
+
+  ctx.fillStyle = textColor;
+  ctx.font = '15px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.fillText(`${region} ${world}`.trim(), tx, 138);
+
+  if (f.rank) {
+    ctx.fillStyle = textSub;
+    ctx.font = '14px "Malgun Gothic", "Segoe UI", sans-serif';
+    ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 164);
+  }
+
+  ctx.fillStyle = textSub;
+  ctx.font = '12px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.textAlign = 'right';
+  ctx.fillText('Byeolnim.app', W - PAD, H - 12);
+  ctx.textAlign = 'left';
+
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `${(ch.name || 'character').replace(/[\\/:*?"<>|]/g, '_')}_명함.png`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 /* ── GMS 랭킹 조회 + 히스토리 ──
    랭킹 API는 '현재 상태'만 제공하므로, 조회할 때마다 스냅샷
    (날짜·레벨·경험치·캐릭터이미지)을 로컬에 누적해 히스토리를 만든다. */
@@ -952,6 +1102,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
+        <button type="button" class="cg-card__save" data-ci="${i}" title="명함 이미지로 저장">⬇</button>
         <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
@@ -971,6 +1122,14 @@ function renderCharInfo() {
   }).join('');
 
   box.innerHTML = `<div class="cg-grid">${cards}</div>`;
+  box.querySelectorAll('.cg-card__save').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = Number(btn.dataset.ci);
+      btn.disabled = true; btn.textContent = '···';
+      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '⬇'; });
+    });
+  });
 
   let dragSrc = null;
   box.querySelectorAll('.cg-card').forEach(card => {

@@ -1063,9 +1063,8 @@ function applyTheme(name) {
     btn.classList.toggle('theme-toggle--light', t === 'light');
     btn.setAttribute('aria-pressed', t === 'light');
   }
-  document.querySelectorAll('[data-theme-label]').forEach(el => {
-    el.classList.toggle('theme-toggle__label--active', el.dataset.themeLabel === t);
-  });
+  const label = document.getElementById('themeLabel');
+  if (label) label.textContent = t === 'light' ? '화이트 모드' : '다크 모드';
 }
 document.getElementById('themeToggle')?.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');

@@ -3,9 +3,9 @@
 ═══════════════════════════════════════════════ */
 
 const FLAME_TYPES = {
-  POWERFUL: { label: '강환불', img: 'images/icons/Powerful_Rebirth_Flame.png', prob: [0.20, 0.30, 0.36, 0.14, 0.00] },
-  ETERNAL:  { label: '영환불', img: 'images/icons/Eternal_Rebirth_Flame.png',  prob: [0.00, 0.29, 0.45, 0.25, 0.01] },
-  ABYSS:    { label: '심환불', img: 'images/icons/Abyssal_Rebirth_Flame.png',  prob: [0.00, 0.00, 0.63, 0.34, 0.03] },
+  POWERFUL: { label: '강력한 환생의 불꽃', img: 'images/icons/Powerful_Rebirth_Flame.png', prob: [0.20, 0.30, 0.36, 0.14, 0.00] },
+  ETERNAL:  { label: '영원한 환생의 불꽃', img: 'images/icons/Eternal_Rebirth_Flame.png',  prob: [0.00, 0.29, 0.45, 0.25, 0.01] },
+  ABYSS:    { label: '심연의 환생의 불꽃', img: 'images/icons/Abyssal_Rebirth_Flame.png',  prob: [0.00, 0.00, 0.63, 0.34, 0.03] },
 };
 
 // 시뮬레이션 풀 — 넥슨 공식 방어구 옵션 19종(균등): 이동속도·점프력 포함

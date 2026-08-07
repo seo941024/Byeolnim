@@ -81,6 +81,11 @@
   --hue:   139,92,246;
   --hue-l: 167,139,250;
   --hue-d: 124,58,237;
+
+  /* var(--grad) 배경 위에 얹는 글자색. 다크에서는 어두운 보라 배경에 금색 글자가
+     맞지만, 라이트에서는 --grad 자체가 골드 계열이라 --accent(역시 골드)를
+     쓰면 금색 위에 금색 글자가 된다. 배경과 독립적으로 테마별로 정한다. */
+  --on-grad: var(--accent);
 }
 
 /* ═══ 화이트 테마 ═══
@@ -126,6 +131,7 @@
   --hue:   184,134,11;
   --hue-l: 214,168,44;
   --hue-d: 138,99,9;
+  --on-grad: #ffffff;
 }
 
 /* 로고 그라디언트는 라이트에서도 그대로 둔다(사용자 요청) */
@@ -209,8 +215,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 /* 테마 토글 — '초기화' 라벨 좌측, 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */
 .theme-toggle-wrap { display: flex; align-items: center; gap: 7px; }
-.theme-toggle__label { display: none; font-size: .74rem; font-weight: 700; color: var(--text-dim); transition: color .18s ease; }
-.theme-toggle__label--active { display: inline; color: var(--text); }
+.theme-toggle__label { font-size: .74rem; font-weight: 700; color: var(--text); }
 .theme-toggle {
   position: relative;
   width: 40px; height: 22px; flex: 0 0 40px;
@@ -736,14 +741,14 @@ tr.done .boss-thumb img { filter: none; }
   border: 1px solid transparent;
 }
 .sbtn--add {
-  background: var(--grad); color: var(--accent);
+  background: var(--grad); color: var(--on-grad);
   font-size: .76rem; padding: 5px 13px;
   box-shadow: 0 3px 10px rgba(0,0,0,.35);
   border-color: rgba(var(--hue-l),.25);
 }
 .sbtn--add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.45); filter: brightness(1.1); }
 .sbtn--primary {
-  background: var(--grad); color: var(--accent);
+  background: var(--grad); color: var(--on-grad);
   box-shadow: 0 4px 14px rgba(0,0,0,.4);
   border-color: rgba(var(--hue-l),.25);
 }
@@ -847,7 +852,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 }
 .lib-tab:last-child { border-right: none; }
 .lib-tab:hover { background: rgba(var(--hue),.1); color: var(--primary); }
-.lib-tab.active { background: var(--grad); color: var(--accent); box-shadow: none; }
+.lib-tab.active { background: var(--grad); color: var(--on-grad); box-shadow: none; }
 .lib-panel { display: none; flex-direction: column; gap: 14px; }
 .lib-panel.active { display: flex; }
 .lib-info { font-size: .86rem; color: var(--text-sub); line-height: 1.6; }
@@ -1334,7 +1339,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .toast {
   position: fixed; left: 50%; bottom: 32px;
   transform: translateX(-50%) translateY(24px);
-  background: var(--grad); color: var(--accent);
+  background: var(--grad); color: var(--on-grad);
   padding: 12px 24px; border-radius: 12px;
   box-shadow: var(--shadow-lg);
   font-size: .88rem; font-weight: 700;

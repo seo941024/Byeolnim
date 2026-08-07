@@ -908,7 +908,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-stage-lbl2 { font-size: .8rem; color: var(--text-sub); min-width: 50px; font-weight: 700; flex-shrink: 0; }
 select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding: 2px 4px; }
 .sf-stage-info { display: flex; gap: 6px; font-size: .72rem; flex: 1; }
-.sf-stage-prob--succ { color: #4ade80; }
+.sf-stage-prob--succ { color: var(--success); }
 .sf-stage-prob--fail { color: var(--text-dim); }
 .sf-stage-prob--dest { color: var(--danger); }
 
@@ -1129,7 +1129,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-thresholds { display: flex; flex-direction: column; align-items: flex-end; margin-top: auto; padding-top: 8px; gap: 2px; }
 .bhp-tr { display: flex; align-items: center; gap: 5px; font-size: .82rem; font-weight: 800; }
 .bhp-tr__pct { color: var(--text-sub); font-size: .72rem; font-weight: 700; }
-.bhp-tr__dot--10 { color: #4ade80; font-size: .65rem; }
+.bhp-tr__dot--10 { color: var(--success); font-size: .65rem; }
 .bhp-tr__dot--5  { color: #60a5fa; font-size: .65rem; }
 .bhp-tr__val { color: var(--text); }
 .bhp-reward {
@@ -1491,7 +1491,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-my-result__sep{color:var(--text-sub)}
 .sf-my-result__meso{color:var(--text)}
 .sf-my-result__tag{padding:4px 12px;border-radius:99px;font-size:.85rem;font-weight:800;background:var(--bg2);color:var(--text-sub)}
-.sf-my-result__tag.lucky{background:rgba(34,197,94,.18);color:#4ade80}
+.sf-my-result__tag.lucky{background:var(--success-l);color:var(--success)}
 .sf-my-result__tag.unlucky{background:rgba(240,80,96,.15);color:var(--danger)}
 
 /* ?? utils ?? */

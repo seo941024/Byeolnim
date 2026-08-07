@@ -115,7 +115,7 @@ function renderWantChannel() {
     <div class="sec-head">
       <h2 class="sec-title">오늘의 채널 추천</h2>
     </div>
-    <p class="dt-help">갖고 싶은 아이템을 클릭하면 Kronos에서 지금 점검 중이 아닌 채널 중 하나를 무작위로 추천해줘요.</p>
+    <p class="dt-help">갖고 싶은 아이템을 클릭하면 점검 중이 아닌 무작위 채널중 추천해줍니다.</p>
     ${WANT_CATEGORIES.map(cat => `
       <div class="wc-category">
         <div class="wc-category__title">${cat.title}</div>

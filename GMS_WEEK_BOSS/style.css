@@ -86,6 +86,7 @@
      맞지만, 라이트에서는 --grad 자체가 골드 계열이라 --accent(역시 골드)를
      쓰면 금색 위에 금색 글자가 된다. 배경과 독립적으로 테마별로 정한다. */
   --on-grad: var(--accent);
+  --lookup-bg: rgba(88,28,135,.12);
 }
 
 /* ═══ 화이트 테마 ═══
@@ -102,8 +103,8 @@
   --bg-hover:#fdf4dd;
 
   --text:     #14121c;
-  --text-sub: rgba(20,18,28,.70);
-  --text-dim: rgba(20,18,28,.45);
+  --text-sub: rgba(20,18,28,.82);
+  --text-dim: rgba(20,18,28,.82);
 
   --border:   rgba(184,134,11,.34);
   --border-hl:rgba(184,134,11,.60);
@@ -132,6 +133,7 @@
   --hue-l: 214,168,44;
   --hue-d: 138,99,9;
   --on-grad: #ffffff;
+  --lookup-bg: #ffffff;
 }
 
 /* 로고 그라디언트는 라이트에서도 그대로 둔다(사용자 요청) */
@@ -1213,7 +1215,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* ?? LOOKUP ?? */
 .lookup-box {
-  background: rgba(88,28,135,.12);
+  background: var(--lookup-bg);
   border: 1px solid rgba(var(--hue-l),.25);
   border-radius: var(--radius); padding: 14px 16px;
   display: flex; flex-direction: column; gap: 10px;
@@ -1403,7 +1405,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-cfg-card__img{width:72px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
-.gen-cfg-card--pass .gen-cfg-card__title{color:var(--accent)}
+.gen-cfg-card--pass .gen-cfg-card__title{color:var(--text)}
 .gen-cfg-card__desc{font-size:.75rem;color:var(--text-sub);font-weight:600}
 .gen-cfg-card__fields{display:flex;flex-direction:column;gap:8px}
 
@@ -2053,12 +2055,12 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .wc-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .wc-item {
   display: flex; align-items: center; gap: 10px; padding: 8px 12px; min-width: 0;
-  border-radius: var(--radius-sm); border: 1px solid var(--border); background: rgba(0,0,0,.1);
+  border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg-card);
   cursor: pointer; transition: background .15s, border-color .15s;
 }
-.wc-item:hover { background: rgba(0,0,0,.18); }
+.wc-item:hover { background: var(--bg-hover); }
 .wc-item__img { flex: none; width: 32px; height: 32px; object-fit: contain; }
-.wc-item__name { flex: 1 1 auto; min-width: 0; font-size: .8rem; font-weight: 700; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wc-item__name { flex: 1 1 auto; min-width: 0; font-size: .8rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-result { display: flex; align-items: center; gap: 14px; }
 .wc-result__img { flex: none; width: 56px; height: 56px; object-fit: contain; }
 .wc-result__item { font-size: .8rem; color: var(--text-sub); font-weight: 700; }

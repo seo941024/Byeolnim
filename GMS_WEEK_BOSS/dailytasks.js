@@ -185,7 +185,7 @@ function _dtStep1Html() {
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">캐릭터 추가 · 1/2</span>
+        <span class="modal__title">캐릭터 추가</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -255,7 +255,7 @@ function _dtStep2Html() {
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">${editing ? '추적 항목 수정' : '추적할 항목 선택 · 2/2'}</span>
+        <span class="modal__title">${editing ? '추적 항목 수정' : '항목 선택'}</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">

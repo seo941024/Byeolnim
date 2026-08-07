@@ -2079,7 +2079,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
    맞아 보인다고 해서 여기만 2px로 둔다. 되돌리려면 이 규칙만 지우면 된다. */
 .crystal-bar__type .icon-lbl { top: 2px; }
 /* 캐릭터 카드·캐릭터 정보의 서버 이름도 눈으로는 1px 더 내린 쪽이 맞아 보인다는 요청 */
-.char-card__world-line .icon-lbl { top: 2px; }
+.char-card__world-line .icon-lbl { top: 1.5px; }
 .ci-server .icon-lbl { top: 2px; }
 /* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
    내려가야 하므로 같은 규칙을 물려준다. */

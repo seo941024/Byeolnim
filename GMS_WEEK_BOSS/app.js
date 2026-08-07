@@ -648,6 +648,20 @@ async function exportCharCard(idx) {
   const world = f.world || '';
   const lv = f.level || ch.level;
 
+  // 화면에서 실제로 쓰고 있는 폰트를 그대로 쓴다(고딕/Maple/8bit 중 사용자가 고른 것).
+  // @font-face로 불러온 커스텀 폰트는 document.fonts에 로드가 끝나야 캔버스에 그려지므로
+  // fonts.load()로 명시적으로 로드하고 기다린다 — 안 그러면 기본 시스템 폰트로 그려짐.
+  const fontStack = getComputedStyle(document.body).fontFamily || "'고딕','Segoe UI','Malgun Gothic',sans-serif";
+  const primaryFont = (fontStack.split(',')[0] || '고딕').trim().replace(/^['"]|['"]$/g, '');
+  try {
+    await Promise.all([
+      document.fonts.load(`16px "${primaryFont}"`),
+      document.fonts.load(`bold 16px "${primaryFont}"`),
+    ]);
+    await document.fonts.ready;
+  } catch { /* 폰트 로드 실패해도 fallback 폰트로 계속 진행 */ }
+  const F = (size, bold) => `${bold ? 'bold ' : ''}${size}px "${primaryFont}", "Segoe UI", "Malgun Gothic", sans-serif`;
+
   const SCALE = 2, W = 640, H = 220, PW = 230, PAD = 12;
   const canvas = document.createElement('canvas');
   canvas.width = W * SCALE; canvas.height = H * SCALE;
@@ -670,9 +684,6 @@ async function exportCharCard(idx) {
   ctx.fill();
   ctx.fillStyle = panelVeil;
   ctx.fill();
-  ctx.strokeStyle = `rgba(${hue},.35)`;
-  ctx.lineWidth = 1;
-  ctx.stroke();
 
   // 일러스트 박스(왼쪽)
   ctx.save();
@@ -687,39 +698,49 @@ async function exportCharCard(idx) {
   const charImg = await loadFirstAvailable(hasReal ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
   if (charImg) {
     const pct = hasReal && charImg.src.includes('/api/img') ? 0.81 : 0.89;
-    drawImgContainBottom(ctx, charImg, 0, 0, PW * pct, H * pct);
+    // 화면 CSS와 동일하게: 이 비율 크기의 박스를 일러스트 박스 안에서
+    // 가로 가운데 정렬 + 바닥에 붙여서 배치한다(전에는 (0,0) 기준이라 왼쪽 위로 쏠렸음).
+    const boxW = PW * pct, boxH = H * pct;
+    drawImgContainBottom(ctx, charImg, (PW - boxW) / 2, H - boxH, boxW, boxH);
   }
   ctx.restore();
 
   // 텍스트(오른쪽)
   const tx = PW + PAD * 2;
   ctx.fillStyle = textColor;
-  ctx.font = 'bold 26px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.font = F(26, true);
   ctx.fillText(ch.name, tx, 46);
 
   ctx.fillStyle = textSub;
-  ctx.font = '15px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.font = F(15, false);
   ctx.fillText(jn || '', tx, 70);
 
   ctx.fillStyle = accent;
-  ctx.font = 'bold 22px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.font = F(22, true);
   ctx.fillText(`Lv.${lv}`, tx, 112);
 
   ctx.fillStyle = textColor;
-  ctx.font = '15px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.font = F(15, false);
   ctx.fillText(`${region} ${world}`.trim(), tx, 138);
 
   if (f.rank) {
     ctx.fillStyle = textSub;
-    ctx.font = '14px "Malgun Gothic", "Segoe UI", sans-serif';
+    ctx.font = F(14, false);
     ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 164);
   }
 
   ctx.fillStyle = textSub;
-  ctx.font = '12px "Malgun Gothic", "Segoe UI", sans-serif';
+  ctx.font = F(12, false);
   ctx.textAlign = 'right';
   ctx.fillText('Byeolnim.app', W - PAD, H - 12);
   ctx.textAlign = 'left';
+
+  // 카드 테두리는 맨 마지막에 그린다 — 일러스트/배경 이미지가 먼저 그려지면서
+  // 왼쪽 변의 테두리 선을 덮어버려 "테두리가 없다"고 보이던 문제가 있었음.
+  cardRoundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
+  ctx.strokeStyle = `rgba(${hue},.6)`;
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
 
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');

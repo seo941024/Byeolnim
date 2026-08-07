@@ -336,12 +336,10 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   transition: transform .2s, box-shadow .2s, border-color .2s;
   box-shadow: 0 2px 12px rgba(0,0,0,.4);
 }
-/* 카드 배경 이미지(선택 사항) — 이미지가 맨 뒤, 그 위에 기존 카드 색을 반투명
-   막처럼 얹어 글자 대비를 유지한다. 카드 자체 background는 그대로 폴백으로
-   남겨두므로(이미지가 100% 채워 덮으니 평소엔 안 보임) 이미지가 없는
-   캐릭터는 지금까지와 완전히 같은 모습이다. */
-/* 캐릭터 일러스트 뒤 배경 그림. 기본값은 일러스트 박스 CSS에 박혀 있는
-   images/icons/bg.webp이고, 캐릭터가 배경을 고르면 이 <img>가 그 위를 덮는다.
+/* 카드 배경 이미지(선택 사항) — 캐릭터가 cardBg를 고르면 이 <img>가 일러스트 박스
+   위를 덮는다. "없음"을 고르면 이 <img> 자체가 안 그려지므로, 박스는 자기 CSS의
+   기본 그라디언트만 보인다(예전엔 여기 images/icons/bg.webp가 항상 깔려 있어서
+   "없음"을 골라도 그 그림이 계속 보이는 버그가 있었음 — 지금은 제거함).
    캐릭터 그림보다 아래(z-index:0)에 깔려야 하므로 일러스트는 z-index:1. */
 .portrait-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
 .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.55), 0 0 14px rgba(var(--hue),.15); border-color: rgba(var(--hue-l),.4); }
@@ -368,7 +366,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 .char-card__portrait {
   width: 100%; aspect-ratio: 1 / 1; align-self: center;
-  background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
+  background: linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden; position: relative;
 }
@@ -1564,7 +1562,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 정사각 비율 → 카드가 넓어지면 높이도 따라 커진다 */
 .cg-portrait {
   grid-row:1 / -1; width:100%; aspect-ratio:1/1;
-  background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
+  background: linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display:flex; align-items:flex-end; justify-content:center;
   overflow:hidden; position:relative; flex-shrink:0;
 }

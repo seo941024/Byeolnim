@@ -359,15 +359,15 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 
 /* 移대뱶 ?대?: 醫??띿뒪??踰꾪듉, ??portrait */
+/* flex + aspect-ratio 조합은 폭이 텍스트 칸에 밀려 정사각형이 안 나온다
+   (실제로 95x130처럼 세로로 길어졌음). 오른쪽 큰 카드(.cg-card)가 쓰는 방식대로
+   grid로 칼럼 폭을 고정하고, 일러스트는 그 폭의 100% + aspect-ratio로 높이를 잡는다. */
 .char-card__inner {
-  display: flex; align-items: stretch; overflow: hidden;
+  display: grid; grid-template-columns: minmax(0, 1fr) 118px;
+  align-items: stretch; overflow: hidden;
 }
 .char-card__portrait {
-  /* 폭을 고정값 대신 aspect-ratio:1/1로 둬서, 카드 높이가 얼마든 정사각형을
-     유지한다(예전엔 84px 고정이라 카드가 세로로 길어질수록 일러스트 박스만
-     길쭉해졌음). 텍스트 칸 줄바꿈 방지를 위해 최대 폭은 130px로 상한을 둔다 —
-     카드가 아주 낮아져 정사각형 폭이 130px를 넘으면 그 이상은 고정폭으로 전환. */
-  aspect-ratio: 1 / 1; max-width: 130px; flex-shrink: 0;
+  width: 100%; aspect-ratio: 1 / 1; align-self: center;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden; position: relative;
@@ -1718,7 +1718,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   }
   /* 80vw가 300px보다 좁아지는 소형 화면(~<375px)에서는 일러스트를 줄여
      "Arch Mage (Ice, Lightning)" 같은 긴 직업명도 한 줄에 들어가게 한다 */
-  .char-card__portrait { max-width: 100px; }
+  .char-card__inner { grid-template-columns: minmax(0, 1fr) 100px; }
   body.sidebar-open .sidebar { transform: translateX(0); }
 
   /* 드로어 배경 오버레이 */

@@ -368,7 +368,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   width: 100%; aspect-ratio: 1 / 1; align-self: center;
   background: transparent;
   display: flex; align-items: flex-end; justify-content: center;
-  padding-bottom: 5%; box-sizing: border-box;
   overflow: hidden; position: relative;
 }
 /* 캐릭터 그림은 배경(.portrait-bg) 위로 */
@@ -377,10 +376,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
    예전 규칙은 height가 auto라 세로로 넘쳐서 위쪽(머리)이 잘렸다. 오른쪽 큰 카드
    (.cg-portrait)와 똑같이 width+height를 같이 %로 제한해 object-fit:contain이
    실제로 동작하게 함 — 잘리지 않고 박스 안에 꽉 차게 들어간다.
-   박스에 padding-bottom을 조금 둬서 발이 박스 테두리에 딱 붙어 잘린 것처럼
-   보이던 것도 같이 없앴다. */
-.char-card__portrait img:not(.portrait-bg) { width: 81%; height: 81%; object-fit: contain; object-position: bottom center; }
-.char-card__portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; }
+   (바닥 여백은 부모 padding-bottom이나 object-position 오프셋으로 시도했다가 둘 다
+   실패함 — padding은 width/height %의 기준이 갈라져 캐릭터가 작아졌고, 3-value
+   object-position("center bottom 5%")은 문법이 무효라 브라우저가 규칙 전체를
+   버리고 50% 50%로 되돌아갔다(실측으로 확인). 넥슨 아바타는 96x96 정사각형이라
+   object-fit:contain에 애초에 여백을 만들 레터박스가 안 생기므로 object-position은
+   의미가 없었음 — margin-bottom을 이미지 자체에 줘서 크기 계산과 완전히 분리했다.) */
+.char-card__portrait img:not(.portrait-bg) { width: 81%; height: 81%; object-fit: contain; object-position: bottom center; margin-bottom: 6%; }
+.char-card__portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; margin-bottom: 6%; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -1567,14 +1570,16 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   grid-row:1 / -1; width:100%; aspect-ratio:1/1;
   background: transparent;
   display:flex; align-items:flex-end; justify-content:center;
-  padding-bottom: 5%; box-sizing: border-box;
   overflow:hidden; position:relative; flex-shrink:0;
 }
 /* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
-   확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
-.cg-portrait img:not(.portrait-bg) { width:81%; height:81%; object-fit:contain; object-position:bottom center; position:relative; z-index:1; }
+   확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다.
+   바닥 여백은 margin-bottom으로 준다 — padding(부모)은 width/height %의 기준이
+   갈라져 캐릭터가 작아졌고, 3-value object-position은 문법 무효라 무시됐음
+   (넥슨 아바타가 96x96 정사각이라 애초에 object-position이 먹을 레터박스도 없었음). */
+.cg-portrait img:not(.portrait-bg) { width:81%; height:81%; object-fit:contain; object-position:bottom center; margin-bottom:6%; position:relative; z-index:1; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
-.cg-portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; }
+.cg-portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; margin-bottom: 6%; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }

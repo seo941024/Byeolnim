@@ -76,6 +76,8 @@
 
   /* 카드·패널의 반투명 바탕 */
   --panel-veil: rgba(15,10,32,.7);
+  /* 카드 배경 이미지 위에 얹는 옅은 막 — 글자 대비만 확보하고 그림은 보이게 */
+  --card-bg-scrim: rgba(10,6,24,.42);
 
   /* 포인트 색 원본값 — 테마별로 이 셋만 바꾸면 하드코딩돼 있던 곳까지 따라온다 */
   --hue:   139,92,246;
@@ -129,6 +131,7 @@
   --success:   #0f7a48;
   --success-l: rgba(15,122,72,.12);
   --panel-veil: rgba(255,255,255,.86);
+  --card-bg-scrim: rgba(255,255,255,.55);
   --hue:   184,134,11;
   --hue-l: 214,168,44;
   --hue-d: 138,99,9;
@@ -337,8 +340,10 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
    막처럼 얹어 글자 대비를 유지한다. 카드 자체 background는 그대로 폴백으로
    남겨두므로(이미지가 100% 채워 덮으니 평소엔 안 보임) 이미지가 없는
    캐릭터는 지금까지와 완전히 같은 모습이다. */
-.card-bg-layer { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; pointer-events: none; }
-.card-bg-veil  { position: absolute; inset: 0; background: var(--panel-veil); z-index: -1; pointer-events: none; }
+/* 캐릭터 일러스트 뒤 배경 그림. 기본값은 일러스트 박스 CSS에 박혀 있는
+   images/icons/bg.webp이고, 캐릭터가 배경을 고르면 이 <img>가 그 위를 덮는다.
+   캐릭터 그림보다 아래(z-index:0)에 깔려야 하므로 일러스트는 z-index:1. */
+.portrait-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
 .char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.55), 0 0 14px rgba(var(--hue),.15); border-color: rgba(var(--hue-l),.4); }
 .char-card.dragging { opacity: .35; cursor: grabbing; }
 .char-card.drag-over { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
@@ -365,14 +370,15 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   aspect-ratio: 1 / 1; max-width: 130px; flex-shrink: 0;
   background: url('images/icons/bg.webp') center/cover, linear-gradient(160deg,#140d2e 0%,#08051a 100%);
   display: flex; align-items: flex-end; justify-content: center;
-  overflow: hidden;
+  overflow: hidden; position: relative;
 }
-/* width:130%였던 건 박스가 84px 고정 폭(좁고 긴 모양)이던 시절 캐릭터를
-   크게 보이려고 일부러 박스 밖으로 넘치게 키운 값. 박스를 정사각형으로
-   바꾼 뒤에도 이 값이 남아 있어서 그림만 여전히 삐져나와 길쭉해 보였음.
-   정사각 박스에 맞춰 cg-portrait(큰 카드)와 같은 비율로 안쪽에 담는다. */
-.char-card__portrait img { width: 85%; height: 85%; object-fit: contain; object-position: bottom center; }
-.char-card__portrait--no img { width: 92%; height: 92%; object-position: bottom center; }
+/* 캐릭터 그림은 배경(.portrait-bg) 위로 */
+.char-card__portrait img:not(.portrait-bg) { position: relative; z-index: 1; }
+/* 캐릭터 그림 크기는 원래대로. '배경'이라고 한 건 박스 뒤에 깔리는
+   bg.webp 배경 이미지를 가리킨 거였고, 그건 위 박스를 정사각형으로
+   바꾼 것만으로 해결된다 — 캐릭터 그림 크기는 건드릴 필요 없었음. */
+.char-card__portrait img:not(.portrait-bg) { width: 130%; object-fit: contain; object-position: bottom center; }
+.char-card__portrait--no img:not(.portrait-bg) { width: 100%; object-position: bottom center; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -1563,9 +1569,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 /* 넥슨 캐릭터 이미지는 96x96 원본 → 박스 너비에 맞춰 그려진다.
    확대(transform)는 위쪽이 잘리므로 쓰지 않고 박스 크기로 키운다. */
-.cg-portrait img { width:81%; height:81%; object-fit:contain; object-position:bottom center; }
+.cg-portrait img:not(.portrait-bg) { width:81%; height:81%; object-fit:contain; object-position:bottom center; position:relative; z-index:1; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
-.cg-portrait--no img { width: 89%; height: 89%; object-position: bottom center; }
+.cg-portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }

@@ -226,7 +226,6 @@ function renderCharList() {
   const sIcon = world ? serverIconSrc(world) : '';
   const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
   li.innerHTML = `
-    ${cardBgLayerHtml(ch.cardBg)}
     <div class="char-card__inner">
       <div class="char-card__txt">
         <div class="char-card__name">${ch.name}</div>
@@ -238,7 +237,7 @@ function renderCharList() {
           <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
       </div>
-      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portrait}</div>
+      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
     </div>`;
   li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
   ul.appendChild(li);
@@ -543,15 +542,15 @@ function openCharModal(idx = -1) {
   document.getElementById('overlayChar').classList.add('open');
 }
 
-// 캐릭터 카드(.char-card, .cg-card) 배경 레이어 — cardBg가 'bg3'같은 id면
-// png를 먼저 시도하고 실패하면 webp, 그것도 없으면 통째로 사라진다.
-function cardBgLayerHtml(cardBg) {
+// 캐릭터 일러스트 뒤에 깔리는 배경 그림. 기본값은 CSS에 박혀 있는
+// images/icons/bg.webp이고, 캐릭터가 cardBg를 고르면 그걸로 갈아끼운다.
+// png를 먼저 시도하고 없으면 webp, 둘 다 없으면 요소가 사라져 기본 배경이 드러난다.
+function portraitBgHtml(cardBg) {
   if (!cardBg) return '';
   const id = cardBg.replace(/^bg/, '');
   const [primary, fallback] = cardBgCandidates(id);
-  return `<img class="card-bg-layer" src="${primary}" data-fallback="${fallback}"
-    onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.nextElementSibling?.remove();this.remove();}">
-    <div class="card-bg-veil"></div>`;
+  return `<img class="portrait-bg" src="${primary}" data-fallback="${fallback}" alt=""
+    onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.remove();}">`;
 }
 
 /* ── 카드 배경 선택 그리드 ──
@@ -953,8 +952,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
-        ${cardBgLayerHtml(ch.cardBg)}
-        <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portrait}</div>
+        <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
             <div>

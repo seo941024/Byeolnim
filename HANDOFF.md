@@ -11,6 +11,7 @@
 - 실제 코드 위치: 레포 루트가 아니라 **`GMS_WEEK_BOSS/`** 서브폴더
 - 순수 바닐라 JS — 프레임워크/번들러 없음. `index.html`에 `<script>` 태그로 전역 로드
 - 로컬 개발 서버: `GMS_WEEK_BOSS/serve.js` (Node 내장 http 모듈, 포트 3001). `.claude/launch.json`에 등록되어 있어 Claude Code의 Browser 프리뷰 도구로 `preview_start({name:"GMS_WEEK_BOSS"})` 하면 뜸
+- **캐시 버스팅 (중요, 2026-08-07 추가)**: `index.html`의 모든 로컬 `<link rel="stylesheet">`/`<script src>`에 `?v=YYYYMMDD` 쿼리가 붙어 있음. Vercel이 파일명을 안 바꾸고 그대로 배포하다 보니 브라우저가 예전 style.css/js를 계속 캐시해서 "고쳤는데 반영이 안 된다"는 오보고가 여러 세션에 걸쳐 반복됐었음. **CSS/JS 파일을 고칠 때마다 `index.html`의 해당 `?v=` 값을 오늘 날짜(또는 아무 값이나 이전과 다르게)로 반드시 올릴 것.** 안 올리면 이 버스팅이 무의미해짐.
 
 ## 아키텍처 핵심
 

@@ -367,9 +367,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: flex-end; justify-content: center;
   overflow: hidden;
 }
-.char-card__portrait img { width: 130%; object-fit: contain; object-position: bottom center; }
-/* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 130% 확대를 적용하면 과하게 잘려 보임 */
-.char-card__portrait--no img { width: 100%; object-position: bottom center; }
+/* width:130%였던 건 박스가 84px 고정 폭(좁고 긴 모양)이던 시절 캐릭터를
+   크게 보이려고 일부러 박스 밖으로 넘치게 키운 값. 박스를 정사각형으로
+   바꾼 뒤에도 이 값이 남아 있어서 그림만 여전히 삐져나와 길쭉해 보였음.
+   정사각 박스에 맞춰 cg-portrait(큰 카드)와 같은 비율로 안쪽에 담는다. */
+.char-card__portrait img { width: 85%; height: 85%; object-fit: contain; object-position: bottom center; }
+.char-card__portrait--no img { width: 92%; height: 92%; object-position: bottom center; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {

@@ -7,9 +7,13 @@ function nextThursday(from) {
   d.setDate(d.getDate() + diff);
   return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 
 const genState = (() => {
-  const def = { quest:0, held:0, pass:false, sel:{}, startDate: nextThursday() };
+  const def = { quest:0, held:0, pass:false, sel:{}, startDate: todayStr() };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.genesis) || '{}')); }
   catch { return def; }
 })();
@@ -67,7 +71,7 @@ function calcResult() {
     targetDateStr = '이미 달성!';
   } else if (fullWeekly > 0 || fullMonthly > 0) {
     // 시작일에서 첫 목요일 리셋 찾기
-    const startD = new Date(genState.startDate || nextThursday());
+    const startD = new Date(genState.startDate || todayStr());
     const daysToFirstReset = (4 - startD.getDay() + 7) % 7 || 7;
 
     let resetsNeeded;
@@ -201,7 +205,7 @@ function renderGenesis() {
   }).join('');
 
   const held = Math.max(0, genState.held);
-  const startDate = genState.startDate || nextThursday();
+  const startDate = genState.startDate || todayStr();
 
   panel.innerHTML = `
     <div class="gen-main-layout">
@@ -303,7 +307,7 @@ function renderGenesis() {
     refreshResultIfShown();
   });
   document.getElementById('genStartDate').addEventListener('change', e => {
-    genState.startDate = e.target.value || nextThursday();
+    genState.startDate = e.target.value || todayStr();
     saveGen(); refreshResultIfShown();
   });
   document.getElementById('genQuestSel').addEventListener('change', e => {
@@ -350,7 +354,7 @@ function renderGenesis() {
    해방 계산기 — 데스티니 (결의)
 ═══════════════════════════════════════════════ */
 const destState = (() => {
-  const def = { heldResolve: 0, sel: {}, startDate: nextThursday() };
+  const def = { heldResolve: 0, sel: {}, startDate: todayStr() };
   try { return Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.destiny) || '{}')); }
   catch { return def; }
 })();
@@ -382,7 +386,7 @@ function calcDestinyResult() {
     const week1After = Math.max(0, remaining - thisWeekly);
     const resetsNeeded = week1After <= 0 ? 1 : 1 + Math.ceil(week1After / fullWeekly);
 
-    const startD = new Date(destState.startDate || nextThursday());
+    const startD = new Date(destState.startDate || todayStr());
     const daysToReset = (4 - startD.getDay() + 7) % 7 || 7;
     const libDate = new Date(startD);
     libDate.setDate(startD.getDate() + daysToReset + (resetsNeeded - 1) * 7);
@@ -499,7 +503,7 @@ function renderDestiny() {
   }).join('');
 
   const held      = Math.max(0, destState.heldResolve);
-  const startDate = destState.startDate || nextThursday();
+  const startDate = destState.startDate || todayStr();
 
   panel.innerHTML = `
     <div class="gen-main-layout">
@@ -565,7 +569,7 @@ function renderDestiny() {
     saveDest(); refreshDestIfShown();
   });
   document.getElementById('destStartDate').addEventListener('change', e => {
-    destState.startDate = e.target.value || nextThursday();
+    destState.startDate = e.target.value || todayStr();
     saveDest(); refreshDestIfShown();
   });
 

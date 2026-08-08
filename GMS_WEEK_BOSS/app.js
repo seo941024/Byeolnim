@@ -675,7 +675,7 @@ async function exportCharCard(idx) {
   } catch { /* 폰트 로드 실패해도 fallback 폰트로 계속 진행 */ }
   const F = (size, bold) => `${bold ? 'bold ' : ''}${size}px "${primaryFont}", "Segoe UI", "Malgun Gothic", sans-serif`;
 
-  const SCALE = 2, W = 640, H = 220, PW = 230, PAD = 12;
+  const SCALE = 2, W = 460, H = 220, PW = 190, PAD = 12;
   const canvas = document.createElement('canvas');
   canvas.width = W * SCALE; canvas.height = H * SCALE;
   const ctx = canvas.getContext('2d');
@@ -716,39 +716,53 @@ async function exportCharCard(idx) {
   }
   ctx.restore();
 
-  // 텍스트(오른쪽)
+  // 텍스트(오른쪽) — 실제 카드(.ci-card__meta, .ci-card__ranks)와 동일하게
+  // 이름/직업 블록, Lv/서버 블록, 랭킹 블록 사이에 구분선을 넣는다.
   const tx = PW + PAD * 2;
+  const rightEdge = W - PAD;
   const jobHeadSrc = charJobHeadSrc(ch);
   const jobHeadImg = await loadOptional(jobHeadSrc);
-  const nameRight = jobHeadImg ? W - PAD - 30 : W - PAD;
+  const jobIconSize = 52;
 
   ctx.fillStyle = textColor;
-  ctx.font = F(26, true);
-  ctx.fillText(ch.name, tx, 46);
+  ctx.font = F(22, true);
+  ctx.fillText(ch.name, tx, 38);
 
-  if (jobHeadImg) drawImgContain(ctx, jobHeadImg, nameRight, 16, 30, 30);
+  if (jobHeadImg) drawImgContain(ctx, jobHeadImg, rightEdge - jobIconSize, 10, jobIconSize, jobIconSize);
 
   ctx.fillStyle = textSub;
-  ctx.font = F(15, false);
-  ctx.fillText(jn || '', tx, 70);
+  ctx.font = F(13, false);
+  ctx.fillText(jn || '', tx, 60);
+
+  const divider = y => {
+    ctx.strokeStyle = cs.getPropertyValue('--border').trim() || 'rgba(255,255,255,.12)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(tx, y);
+    ctx.lineTo(rightEdge, y);
+    ctx.stroke();
+  };
+
+  divider(76);
 
   ctx.fillStyle = accent;
-  ctx.font = F(22, true);
-  ctx.fillText(`Lv.${lv}`, tx, 112);
+  ctx.font = F(19, true);
+  ctx.fillText(`Lv.${lv}`, tx, 102);
 
   // 서버 아이콘 + "NA Kronos" 형태로 화면과 동일하게
   const sIconSrc = world ? serverIconSrc(world) : '';
   const sIconImg = await loadOptional(sIconSrc);
   let worldTx = tx;
-  if (sIconImg) { drawImgContain(ctx, sIconImg, tx, 128, 16, 16); worldTx = tx + 22; }
+  if (sIconImg) { drawImgContain(ctx, sIconImg, tx, 112, 16, 16); worldTx = tx + 22; }
   ctx.fillStyle = textColor;
-  ctx.font = F(15, false);
-  ctx.fillText(`${region} ${world}`.trim(), worldTx, 138);
+  ctx.font = F(14, false);
+  ctx.fillText(`${region} ${world}`.trim(), worldTx, 124);
 
   if (f.rank) {
+    divider(140);
     ctx.fillStyle = textSub;
-    ctx.font = F(14, false);
-    ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 164);
+    ctx.font = F(13, false);
+    ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 162);
   }
 
   // 카드 테두리는 맨 마지막에 그린다 — 일러스트/배경 이미지가 먼저 그려지면서

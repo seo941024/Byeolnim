@@ -1564,10 +1564,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cg-card:hover { transform:translateY(-3px); border-color:rgba(var(--hue-l),.5); box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 14px rgba(var(--hue),.15); }
 /* 명함 이미지로 저장 버튼 — 평소엔 옅게, 카드 hover 시에만 또렷하게 (카드 정보를 안 가리도록) */
 .cg-card__save {
-  position: absolute; top: 6px; right: 6px; z-index: 2;
-  width: 24px; height: 24px; border-radius: 999px;
+  position: absolute; top: 6px; left: 6px; z-index: 2;
+  padding: 3px 8px; border-radius: 4px;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,.45); color: #fff; font-size: .8rem;
+  background: rgba(0,0,0,.45); color: #fff; font-size: .68rem; font-weight: 600; white-space: nowrap;
   opacity: 0; transition: opacity .15s, background .15s;
 }
 .cg-card:hover .cg-card__save { opacity: 1; }

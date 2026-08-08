@@ -591,6 +591,11 @@ function proxiedImgSrc(url) {
   } catch { /* 상대경로(내부 images/) 등 — 그대로 사용 */ }
   return url;
 }
+/* 실제 카드 DOM을 그대로 캡처(html2canvas/html-to-image 둘 다 시도)하면
+   카드가 쓰는 컨테이너 쿼리(cqw, 카드 폭 기준 글씨 크기)를 두 라이브러리 다
+   제대로 못 살려서 이름/직업 글씨가 통째로 사라지거나 깨졌다(실측 확인).
+   그래서 캔버스에 직접 그리는 방식으로 되돌리되, 지난번에 빠졌던 서버 아이콘·
+   직업 아이콘을 추가하고 워터마크는 뺐다. */
 function loadImg(src) {
   return new Promise((resolve, reject) => {
     const img = new Image();
@@ -604,6 +609,10 @@ async function loadFirstAvailable(srcs) {
     try { return await loadImg(s); } catch { /* 다음 후보 시도 */ }
   }
   return null;
+}
+async function loadOptional(src) {
+  if (!src) return null;
+  try { return await loadImg(src); } catch { return null; }
 }
 function cardRoundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -632,6 +641,12 @@ function drawImgCover(ctx, img, x, y, w, h) {
   else { sw = img.width; sh = sw / br; sx = 0; sy = (img.height - sh) / 2; }
   ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
 }
+function drawImgContain(ctx, img, x, y, w, h) {
+  const ir = img.width / img.height, br = w / h;
+  let dw, dh;
+  if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
 function drawImgContainBottom(ctx, img, x, y, w, h) {
   const ir = img.width / img.height, br = w / h;
   let dw, dh;
@@ -649,8 +664,6 @@ async function exportCharCard(idx) {
   const lv = f.level || ch.level;
 
   // 화면에서 실제로 쓰고 있는 폰트를 그대로 쓴다(고딕/Maple/8bit 중 사용자가 고른 것).
-  // @font-face로 불러온 커스텀 폰트는 document.fonts에 로드가 끝나야 캔버스에 그려지므로
-  // fonts.load()로 명시적으로 로드하고 기다린다 — 안 그러면 기본 시스템 폰트로 그려짐.
   const fontStack = getComputedStyle(document.body).fontFamily || "'고딕','Segoe UI','Malgun Gothic',sans-serif";
   const primaryFont = (fontStack.split(',')[0] || '고딕').trim().replace(/^['"]|['"]$/g, '');
   try {
@@ -676,9 +689,9 @@ async function exportCharCard(idx) {
   const accent    = cs.getPropertyValue('--accent').trim() || '#f5c842';
   const hue       = cs.getPropertyValue('--hue').trim() || '139,92,246';
 
-  // 카드 배경 — 둥근 사각형 밖은 그대로 투명(캔버스 기본값)으로 둬서
-  // 다운로드된 png가 카드 모양 그대로 잘려 보이게 한다. panel-veil은 반투명이라
-  // 그 아래 불투명 바탕(--bg-card)을 먼저 깔아 어디에 붙여넣어도 카드가 또렷하게 보이게 함.
+  // 카드 배경 — 둥근 사각형 밖은 그대로 투명(캔버스 기본값)으로 둬서 다운로드된
+  // png가 카드 모양 그대로 잘려 보이게 한다. panel-veil은 반투명이라 그 아래
+  // 불투명 바탕(--bg-card)을 먼저 깔아 어디에 붙여넣어도 카드가 또렷하게 보이게 함.
   cardRoundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
   ctx.fillStyle = panelBg;
   ctx.fill();
@@ -698,8 +711,6 @@ async function exportCharCard(idx) {
   const charImg = await loadFirstAvailable(hasReal ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
   if (charImg) {
     const pct = hasReal && charImg.src.includes('/api/img') ? 0.81 : 0.89;
-    // 화면 CSS와 동일하게: 이 비율 크기의 박스를 일러스트 박스 안에서
-    // 가로 가운데 정렬 + 바닥에 붙여서 배치한다(전에는 (0,0) 기준이라 왼쪽 위로 쏠렸음).
     const boxW = PW * pct, boxH = H * pct;
     drawImgContainBottom(ctx, charImg, (PW - boxW) / 2, H - boxH, boxW, boxH);
   }
@@ -707,9 +718,15 @@ async function exportCharCard(idx) {
 
   // 텍스트(오른쪽)
   const tx = PW + PAD * 2;
+  const jobHeadSrc = charJobHeadSrc(ch);
+  const jobHeadImg = await loadOptional(jobHeadSrc);
+  const nameRight = jobHeadImg ? W - PAD - 30 : W - PAD;
+
   ctx.fillStyle = textColor;
   ctx.font = F(26, true);
   ctx.fillText(ch.name, tx, 46);
+
+  if (jobHeadImg) drawImgContain(ctx, jobHeadImg, nameRight, 16, 30, 30);
 
   ctx.fillStyle = textSub;
   ctx.font = F(15, false);
@@ -719,21 +736,20 @@ async function exportCharCard(idx) {
   ctx.font = F(22, true);
   ctx.fillText(`Lv.${lv}`, tx, 112);
 
+  // 서버 아이콘 + "NA Kronos" 형태로 화면과 동일하게
+  const sIconSrc = world ? serverIconSrc(world) : '';
+  const sIconImg = await loadOptional(sIconSrc);
+  let worldTx = tx;
+  if (sIconImg) { drawImgContain(ctx, sIconImg, tx, 128, 16, 16); worldTx = tx + 22; }
   ctx.fillStyle = textColor;
   ctx.font = F(15, false);
-  ctx.fillText(`${region} ${world}`.trim(), tx, 138);
+  ctx.fillText(`${region} ${world}`.trim(), worldTx, 138);
 
   if (f.rank) {
     ctx.fillStyle = textSub;
     ctx.font = F(14, false);
     ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 164);
   }
-
-  ctx.fillStyle = textSub;
-  ctx.font = F(12, false);
-  ctx.textAlign = 'right';
-  ctx.fillText('Byeolnim.app', W - PAD, H - 12);
-  ctx.textAlign = 'left';
 
   // 카드 테두리는 맨 마지막에 그린다 — 일러스트/배경 이미지가 먼저 그려지면서
   // 왼쪽 변의 테두리 선을 덮어버려 "테두리가 없다"고 보이던 문제가 있었음.
@@ -1110,8 +1126,11 @@ function renderCharInfo() {
     const region = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
+    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 명함 이미지 저장(html2canvas)이
+    // 캔버스에 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
+    // 모습은 완전히 동일(프록시가 원본 그대로 스트리밍).
     const portrait = f?.img
-      ? `<img src="${f.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('cg-portrait--no')" />`
+      ? `<img src="${proxiedImgSrc(f.img)}" crossorigin="anonymous" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('cg-portrait--no')" />`
       : `<img src="images/dailytasks/default.png" alt="" />`;
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);
@@ -1123,7 +1142,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
-        <button type="button" class="cg-card__save" data-ci="${i}" title="명함 이미지로 저장">⬇</button>
+        <button type="button" class="cg-card__save" data-ci="${i}">명함 저장하기</button>
         <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
@@ -1147,8 +1166,8 @@ function renderCharInfo() {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const i = Number(btn.dataset.ci);
-      btn.disabled = true; btn.textContent = '···';
-      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '⬇'; });
+      btn.disabled = true; btn.textContent = '저장 중...';
+      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '명함 저장하기'; });
     });
   });
 

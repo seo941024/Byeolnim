@@ -1142,7 +1142,7 @@ function renderCharInfo() {
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
-        <button type="button" class="cg-card__save" data-ci="${i}">명함 저장하기</button>
+        <button type="button" class="cg-card__save" data-ci="${i}">메애기 저장하기</button>
         <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
@@ -1167,7 +1167,7 @@ function renderCharInfo() {
       e.stopPropagation();
       const i = Number(btn.dataset.ci);
       btn.disabled = true; btn.textContent = '저장 중...';
-      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '명함 저장하기'; });
+      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '메애기 저장하기'; });
     });
   });
 

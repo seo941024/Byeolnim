@@ -627,21 +627,21 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .boss-name-cell { display: flex; align-items: center; gap: 12px; }
 .bm-crystal-toggle {
   position: relative; display: inline-flex; align-items: center; width: 52px; height: 24px;
-  border-radius: 999px; border: none; cursor: pointer; padding: 0; margin-left: auto; flex: none;
-  background: rgba(255,255,255,.12); transition: background .15s;
+  border-radius: 999px; border: 1.5px solid var(--border); cursor: pointer; padding: 0; margin-left: auto; flex: none;
+  background: var(--bg2); transition: background .15s;
 }
-.bm-crystal-toggle.on { background: rgba(var(--hue),.55); }
+.bm-crystal-toggle.on { background: rgba(var(--hue),.55); border-color: rgba(var(--hue),.55); }
 .bm-crystal-toggle__knob {
-  position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%;
+  position: absolute; top: 1px; left: 1px; width: 20px; height: 20px; border-radius: 50%;
   background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
 }
 .bm-crystal-toggle.on .bm-crystal-toggle__knob { transform: translateX(28px); }
 .bm-crystal-toggle__txt {
   position: absolute; top: 50%; transform: translateY(-50%); font-size: .6rem; font-weight: 900;
-  color: rgba(255,255,255,.85); letter-spacing: .02em; display: none;
+  letter-spacing: .02em; display: none;
 }
-.bm-crystal-toggle__txt--on { left: 6px; }
-.bm-crystal-toggle__txt--off { right: 6px; }
+.bm-crystal-toggle__txt--on { left: 6px; color: rgba(255,255,255,.85); }
+.bm-crystal-toggle__txt--off { right: 6px; color: var(--text-sub); }
 .bm-crystal-toggle.on .bm-crystal-toggle__txt--on { display: block; }
 .bm-crystal-toggle.off .bm-crystal-toggle__txt--off { display: block; }
 .boss-thumb {

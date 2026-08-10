@@ -30,6 +30,13 @@ const WANT_CATEGORIES = [
       { file: 'Eqp_Immortal_Legacy.png',          name: '불멸의 유산' },
     ],
   },
+  {
+    title: '연마석',
+    items: [
+      { file: 'Use_Grindstone_of_Life.png',   name: '생명의 연마석' },
+      { file: 'Use_Grindstone_of_Faith.png',  name: '신념의 연마석' },
+    ],
+  },
 ];
 const WANT_ITEMS = WANT_CATEGORIES.flatMap(c => c.items);
 const WC_WORLD = 'Kronos';
@@ -115,7 +122,7 @@ function renderWantChannel() {
     <div class="sec-head">
       <h2 class="sec-title">오늘의 채널 추천</h2>
     </div>
-    <p class="dt-help">갖고 싶은 아이템을 클릭하면 점검 중이 아닌 무작위 채널중 추천해줍니다.</p>
+    <p class="dt-help">갖고 싶은 아이템을 클릭하면 점검 중이 아닌 무작위 채널중에서 추천해줍니다.</p>
     ${WANT_CATEGORIES.map(cat => `
       <div class="wc-category">
         <div class="wc-category__title">${cat.title}</div>

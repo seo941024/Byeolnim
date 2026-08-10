@@ -19,6 +19,7 @@ const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 let _dtStep = 1;              // 1=이름 정하기(조회/직접입력), 2=항목 선택
 let _dtPendingName = '';
 let _dtPendingImg = null;
+let _dtPendingRegion = null;  // GMS 랭킹 조회로 정한 경우만 채워짐 → 자동 최신화에 사용
 let _dtNewActive = new Set(); // 2단계에서 지금 체크 중인 항목(제출 전 임시 상태)
 let _dtEditCharId = null;     // null이면 신규 추가, 값이 있으면 그 캐릭터의 항목 수정 모드
 
@@ -46,11 +47,16 @@ function _dtGetChar(charId) {
   const rec = _dtLoadAll().items[charId];
   if (!rec) return null;
   const today = _dtTodayKey();
-  return { name: rec.name, img: rec.img || null, active: rec.active || [], done: rec.date === today ? (rec.done || []) : [] };
+  return { name: rec.name, img: rec.img || null, active: rec.active || [], region: rec.region || null, done: rec.date === today ? (rec.done || []) : [] };
 }
-function _dtSaveChar(charId, name, img, active, done) {
+function _dtSaveChar(charId, name, img, active, done, region, syncedAt) {
   const all = _dtLoadAll();
-  all.items[charId] = { name, img, active, date: _dtTodayKey(), done };
+  const prev = all.items[charId] || {};
+  all.items[charId] = {
+    name, img, active, date: _dtTodayKey(), done,
+    region: region !== undefined ? region : prev.region,
+    syncedAt: syncedAt !== undefined ? syncedAt : prev.syncedAt,
+  };
   _dtSaveAll(all);
 }
 function _dtDeleteChar(charId) {
@@ -59,12 +65,47 @@ function _dtDeleteChar(charId) {
   all.order = all.order.filter(id => id !== charId);
   _dtSaveAll(all);
 }
-function _dtCreateChar(name, img, activeIds) {
+function _dtCreateChar(name, img, activeIds, region) {
   const all = _dtLoadAll();
   const id = String(Date.now());
-  all.items[id] = { name, img, active: activeIds, date: _dtTodayKey(), done: [] };
+  all.items[id] = {
+    name, img, active: activeIds, date: _dtTodayKey(), done: [],
+    region: region || null, syncedAt: region ? Date.now() : null,
+  };
   all.order.push(id);
   _dtSaveAll(all);
+}
+
+// 캐릭터 목록과 동일하게, GMS 랭킹 조회로 등록한 캐릭터는 이미지/레벨이 등록 시점에
+// 고정되어 갱신되지 않는다. 앱 진입 시 마지막 갱신이 REFRESH_INTERVAL 이상 지난
+// 캐릭터만 조용히 재조회한다. 실패해도 기존 값을 유지하며 사용자에게 알리지 않는다.
+async function dtRefreshStaleChars() {
+  const interval = typeof REFRESH_INTERVAL !== 'undefined' ? REFRESH_INTERVAL : 6 * 60 * 60 * 1000;
+  const all = _dtLoadAll();
+  const now = Date.now();
+  const staleIds = Object.keys(all.items).filter(id => {
+    const rec = all.items[id];
+    return rec.region && now - (rec.syncedAt || 0) > interval;
+  });
+  if (!staleIds.length) return;
+
+  let changed = false;
+  for (const id of staleIds) {
+    const rec = all.items[id];
+    try {
+      const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
+      const j = await r.json();
+      if (!j.ok || !j.data) continue;
+      rec.img = j.data.img || rec.img;
+      rec.syncedAt = now;
+      changed = true;
+    } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
+  }
+  if (changed) {
+    _dtSaveAll(all);
+    const sec = document.getElementById('sec-dailytasks');
+    if (sec && sec.classList.contains('active')) renderDailyTasks();
+  }
 }
 // 드래그로 카드 순서 바꾸기: fromId를 toId 자리로 옮긴다.
 function _dtReorder(fromId, toId) {
@@ -132,6 +173,7 @@ function _dtCloseAddModal() {
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
+  _dtPendingRegion = null;
   _dtNewActive = new Set();
   _dtEditCharId = null;
 }
@@ -153,6 +195,7 @@ function _dtOpenAddModal() {
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
+  _dtPendingRegion = null;
   _dtNewActive = new Set();
   _dtEditCharId = null;
   _dtRenderAddModal();
@@ -167,6 +210,7 @@ function _dtOpenEditModal(charId) {
   _dtStep = 2;
   _dtPendingName = rec.name;
   _dtPendingImg = rec.img;
+  _dtPendingRegion = rec.region || null;
   _dtNewActive = new Set(rec.active);
   _dtEditCharId = charId;
   _dtRenderAddModal();
@@ -232,6 +276,7 @@ function _dtWireStep1() {
       document.getElementById('dtLkUse').addEventListener('click', () => {
         _dtPendingName = j.data.name;
         _dtPendingImg = j.data.img || null;
+        _dtPendingRegion = region;
         _dtStep = 2;
         _dtRenderAddModal();
       });
@@ -245,6 +290,7 @@ function _dtWireStep1() {
     if (!name) { nameInp.focus(); return; }
     _dtPendingName = name;
     _dtPendingImg = null;
+    _dtPendingRegion = null;
     _dtStep = 2;
     _dtRenderAddModal();
   });
@@ -299,7 +345,7 @@ function _dtWireStep2() {
       const rec = _dtGetChar(_dtEditCharId);
       _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds, rec.done.filter(d => activeIds.includes(d)));
     } else {
-      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds);
+      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion);
     }
     _dtCloseAddModal();
     renderDailyTasks();
@@ -368,3 +414,5 @@ function renderDailyTasks() {
     btn.addEventListener('click', () => _dtOpenEditModal(btn.dataset.editChar));
   });
 }
+
+dtRefreshStaleChars();

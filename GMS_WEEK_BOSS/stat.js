@@ -89,9 +89,9 @@ function buildFields(jtIdx, parsed) {
   const has = k => parsed[k] !== undefined && parsed[k] !== '';
   statKeys.forEach((s, i) => {
     const baseKey = `${s}_BASE`, pctKey = `${s}_PCT`, naKey = `${s}_NOTAPPLIED`;
-    rows.push({ label: `${s} 기본수치`,  key: baseKey, idx: 3+i*3, note: has(baseKey) ? undefined : '수동 입력' });
-    rows.push({ label: `${s} % 수치`,   key: pctKey,  idx: 4+i*3, note: has(pctKey)  ? undefined : '수동 입력' });
-    rows.push({ label: `${s} % 미적용`, key: naKey,   idx: 5+i*3, note: has(naKey)   ? undefined : '수동 입력' });
+    rows.push({ label: `${s} 기본수치`,  key: baseKey, idx: 3+i*3, note: has(baseKey) ? undefined : '-' });
+    rows.push({ label: `${s} % 수치`,   key: pctKey,  idx: 4+i*3, note: has(pctKey)  ? undefined : '-' });
+    rows.push({ label: `${s} % 미적용`, key: naKey,   idx: 5+i*3, note: has(naKey)   ? undefined : '-' });
   });
 
   // 공격력/마력 그룹 (maplescouter 9·10·11번 = 주/부스탯 다음 칸, 기본스공 전).
@@ -100,9 +100,9 @@ function buildFields(jtIdx, parsed) {
   const apRows = [];
   if (statKeys.length <= 2) {
     const apLabel = jt.third === 'MATK' ? '마력' : '공격력';
-    apRows.push({ label: `${apLabel} 기본수치`, key: 'AP_BASE',       idx: 9,  note: has('AP_BASE')       ? undefined : '수동 입력' });
-    apRows.push({ label: `${apLabel} % 수치`,  key: 'AP_PCT',        idx: 10, note: has('AP_PCT')        ? undefined : '수동 입력' });
-    apRows.push({ label: `${apLabel} % 미적용`,key: 'AP_NOTAPPLIED', idx: 11, note: has('AP_NOTAPPLIED') ? undefined : '수동 입력' });
+    apRows.push({ label: `${apLabel} 기본수치`, key: 'AP_BASE',       idx: 9,  note: has('AP_BASE')       ? undefined : '-' });
+    apRows.push({ label: `${apLabel} % 수치`,  key: 'AP_PCT',        idx: 10, note: has('AP_PCT')        ? undefined : '-' });
+    apRows.push({ label: `${apLabel} % 미적용`,key: 'AP_NOTAPPLIED', idx: 11, note: has('AP_NOTAPPLIED') ? undefined : '-' });
   }
 
   const direct = [

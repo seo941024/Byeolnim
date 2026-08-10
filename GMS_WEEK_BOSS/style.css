@@ -638,7 +638,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 
 .boss-name-cell { display: flex; align-items: center; gap: 12px; }
 .bm-crystal-toggle {
-  position: relative; display: inline-flex; align-items: center; width: 52px; height: 24px;
+  position: relative; display: inline-flex; align-items: center; width: 62px; height: 24px;
   border-radius: 999px; border: 1.5px solid var(--border); cursor: pointer; padding: 0; margin-left: auto; flex: none;
   background: var(--bg2); transition: background .15s;
 }
@@ -647,13 +647,13 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   position: absolute; top: 1px; left: 1px; width: 20px; height: 20px; border-radius: 50%;
   background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
 }
-.bm-crystal-toggle.on .bm-crystal-toggle__knob { transform: translateX(28px); }
+.bm-crystal-toggle.on .bm-crystal-toggle__knob { transform: translateX(38px); }
 .bm-crystal-toggle__txt {
   position: absolute; top: 50%; transform: translateY(-50%); font-size: .6rem; font-weight: 900;
   letter-spacing: .02em; display: none;
 }
-.bm-crystal-toggle__txt--on { left: 6px; color: rgba(255,255,255,.85); }
-.bm-crystal-toggle__txt--off { right: 6px; color: var(--text-sub); }
+.bm-crystal-toggle__txt--on { left: 7px; color: rgba(255,255,255,.85); }
+.bm-crystal-toggle__txt--off { right: 8px; color: var(--text-sub); }
 .bm-crystal-toggle.on .bm-crystal-toggle__txt--on { display: block; }
 .bm-crystal-toggle.off .bm-crystal-toggle__txt--off { display: block; }
 .boss-thumb {

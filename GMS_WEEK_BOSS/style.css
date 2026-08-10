@@ -22,12 +22,12 @@
 /* ── CSS 변수 ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* 배경 — 별님 우주 다크 */
-  --bg:      #06040f;
-  --bg2:     #0d0920;
-  --bg3:     #130e2a;
-  --bg-card: #0e0b1e;
-  --bg-hover:#1a1438;
+  /* 배경 — 별님 우주 다크 (보라 채도 낮춤) */
+  --bg:      #08060d;
+  --bg2:     #100e1b;
+  --bg3:     #181523;
+  --bg-card: #121019;
+  --bg-hover:#201e2f;
 
   /* 텍스트 */
   --text:     #ffffff;
@@ -43,16 +43,16 @@
   --shadow-md: 0 6px 24px rgba(0,0,0,.55);
   --shadow-lg: 0 16px 48px rgba(0,0,0,.7);
 
-  /* 메인 그라데이션 — 우주 보라 */
-  --grad:       linear-gradient(135deg,#3b1f6e 0%,#1d1145 100%);
-  --grad-soft:  linear-gradient(180deg,#0f0922 0%,#06040f 100%);
-  --grad-card:  linear-gradient(160deg,#140e28 0%,#0c0820 100%);
+  /* 메인 그라데이션 — 우주 보라 (채도 낮춤) */
+  --grad:       linear-gradient(135deg,#40315c 0%,#231c3a 100%);
+  --grad-soft:  linear-gradient(180deg,#120e1d 0%,#08060d 100%);
+  --grad-card:  linear-gradient(160deg,#181521 0%,#0f0d1b 100%);
   --grad-sheen: linear-gradient(180deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,0) 60%);
   --grad-gold:  linear-gradient(135deg,#f0d080 0%,#c8903a 100%);
 
-  /* 포인트 컬러 */
-  --primary:   #a78bfa;   /* 라벤더 */
-  --primary-d: #7c3aed;
+  /* 포인트 컬러 (보라만 채도 낮춤) */
+  --primary:   #ae9aeb;   /* 라벤더 */
+  --primary-d: #8355d2;
   --primary-l: rgba(var(--hue-l),.12);
   --accent:    #f6c744;   /* 별빛 골드 */
   --gold:      #d8b15a;
@@ -74,21 +74,21 @@
   --radius-lg:  8px;
   --radius-pill:999px;
 
-  /* 카드·패널의 반투명 바탕 */
-  --panel-veil: rgba(15,10,32,.7);
+  /* 카드·패널의 반투명 바탕 (보라 채도 낮춤) */
+  --panel-veil: rgba(18,15,27,.7);
   /* 카드 배경 이미지 위에 얹는 옅은 막 — 글자 대비만 확보하고 그림은 보이게 */
-  --card-bg-scrim: rgba(10,6,24,.42);
+  --card-bg-scrim: rgba(12,10,20,.42);
 
-  /* 포인트 색 원본값 — 테마별로 이 셋만 바꾸면 하드코딩돼 있던 곳까지 따라온다 */
-  --hue:   139,92,246;
-  --hue-l: 167,139,250;
-  --hue-d: 124,58,237;
+  /* 포인트 색 원본값 — 테마별로 이 셋만 바꾸면 하드코딩돼 있던 곳까지 따라온다 (채도 낮춤) */
+  --hue:   147,113,225;
+  --hue-l: 174,154,235;
+  --hue-d: 131,85,210;
 
   /* var(--grad) 배경 위에 얹는 글자색. 다크에서는 어두운 보라 배경에 금색 글자가
      맞지만, 라이트에서는 --grad 자체가 골드 계열이라 --accent(역시 골드)를
      쓰면 금색 위에 금색 글자가 된다. 배경과 독립적으로 테마별로 정한다. */
   --on-grad: var(--accent);
-  --lookup-bg: rgba(88,28,135,.12);
+  --lookup-bg: rgba(86,48,115,.12);
 }
 
 /* ═══ 화이트 테마 ═══
@@ -217,7 +217,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   display: flex; align-items: center;
   padding: 0 24px; gap: 20px;
   flex-shrink: 0; position: sticky; top: 0; z-index: 100;
-  box-shadow: 0 1px 0 rgba(246,199,68,.06), 0 4px 32px rgba(0,0,0,.7), 0 0 60px rgba(88,28,135,.15);
+  box-shadow: 0 1px 0 rgba(246,199,68,.06), 0 4px 32px rgba(0,0,0,.7), 0 0 60px rgba(86,48,115,.15);
 }
 .header__logo { display: flex; align-items: center; gap: 8px; }
 .header__maple-img { width: 28px; height: 28px; object-fit: contain; }
@@ -551,7 +551,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   content: ''; position: absolute; left: 0; top: 50%;
   transform: translateY(-50%);
   width: 4px; height: .9em; border-radius: 99px;
-  background: linear-gradient(180deg, #f6c744 0%, #a78bfa 100%);
+  background: linear-gradient(180deg, #f6c744 0%, #ae9aeb 100%);
   box-shadow: 0 0 10px rgba(246,199,68,.5), 0 0 20px rgba(var(--hue-l),.3);
 }
 .sec-badge {
@@ -1153,7 +1153,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .force { display: inline-flex; align-items: center; gap: 4px; min-width: 40px; text-align: center; padding: 2px 9px; border-radius: 99px; font-size: .7rem; font-weight: 800; }
 .force-icon { width: 18px; height: 18px; object-fit: contain; flex-shrink: 0; }
 .force-arc { background: rgba(96,165,250,.15); color: #60a5fa; }
-.force-auth { background: rgba(157,108,245,.16); color: #9d6cf5; }
+.force-auth { background: rgba(163,128,225,.16); color: #a380e1; }
 
 /* ── FORCE ── */
 .force-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
@@ -1386,7 +1386,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-src-row.total b{color:var(--accent);font-size:1rem}
 .gen-src-note{font-size:.72rem;color:var(--text-sub);margin-top:8px;line-height:1.5}
 .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
-.dot-blue{background:var(--primary)}.dot-purple{background:#9d6cf5}
+.dot-blue{background:var(--primary)}.dot-purple{background:#a380e1}
 .gen-config{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
 /* ── 해방 설정 카드 ── */

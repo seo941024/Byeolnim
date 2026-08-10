@@ -74,16 +74,10 @@ function calcResult() {
     const startD = new Date(genState.startDate || todayStr());
     const daysToFirstReset = (4 - startD.getDay() + 7) % 7 || 7;
 
-    let resetsNeeded;
-    if (week1income === 0) {
-      // 이번주 보스 전부 완료 → 다음 목요일 리셋부터 fullWeekly 수입
-      resetsNeeded = Math.ceil(remaining / (fullWeekly + fullMonthly / 4));
-    } else {
-      const afterWeek1 = Math.max(0, remaining - week1income);
-      resetsNeeded = afterWeek1 <= 0
-        ? 1
-        : 1 + Math.ceil(afterWeek1 / (fullWeekly + fullMonthly / 4));
-    }
+    const afterWeek1 = Math.max(0, remaining - week1income);
+    const resetsNeeded = afterWeek1 <= 0
+      ? 1
+      : 1 + Math.ceil(afterWeek1 / (fullWeekly + fullMonthly / 4));
 
     // 해방 날짜
     const libDate = new Date(startD);

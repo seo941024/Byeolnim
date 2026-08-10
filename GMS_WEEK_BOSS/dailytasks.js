@@ -76,10 +76,24 @@ function _dtCreateChar(name, img, activeIds, region) {
   _dtSaveAll(all);
 }
 
+// 이 기능이 생기기 전에 등록된 캐릭터는 region이 없어 영영 갱신 대상이 되지 못한다.
+// 이미지가 있으면(=기본 이미지가 아니면) 랭킹 조회로 등록됐던 것으로 보고, 현재
+// 선택된 지역을 region으로 채워 넣어 갱신 대상에 포함시킨다.
+function _dtBackfillRegion() {
+  const all = _dtLoadAll();
+  const region = typeof state !== 'undefined' ? state.region : 'na';
+  let changed = false;
+  Object.values(all.items).forEach(rec => {
+    if (rec.img && !rec.region) { rec.region = region; rec.syncedAt = 0; changed = true; }
+  });
+  if (changed) _dtSaveAll(all);
+}
+
 // 캐릭터 목록과 동일하게, GMS 랭킹 조회로 등록한 캐릭터는 이미지/레벨이 등록 시점에
 // 고정되어 갱신되지 않는다. 앱 진입 시 마지막 갱신이 REFRESH_INTERVAL 이상 지난
 // 캐릭터만 조용히 재조회한다. 실패해도 기존 값을 유지하며 사용자에게 알리지 않는다.
 async function dtRefreshStaleChars() {
+  _dtBackfillRegion();
   const interval = typeof REFRESH_INTERVAL !== 'undefined' ? REFRESH_INTERVAL : 6 * 60 * 60 * 1000;
   const all = _dtLoadAll();
   const now = Date.now();

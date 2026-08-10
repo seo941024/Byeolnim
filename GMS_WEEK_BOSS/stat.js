@@ -406,7 +406,6 @@ function initStatOCR() {
     }
   });
 
-  // 필드별 합리적 최대값 (초과 시 경고)
   /* 테이블 렌더링 */
   function renderTable(parsed) {
     _parsed = parsed;

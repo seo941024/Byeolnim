@@ -2053,7 +2053,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .dt-tile__thumb {
   flex: none; width: 30px; height: 30px; border-radius: var(--radius-sm); overflow: hidden;
-  display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,.2);
+  display: flex; align-items: center; justify-content: center; background: transparent;
 }
 .dt-tile__img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) brightness(.55); transition: filter .15s; }
 .dt-tile__emoji { font-size: 1.15rem; line-height: 1; filter: grayscale(1); opacity: .4; transition: filter .15s, opacity .15s; }

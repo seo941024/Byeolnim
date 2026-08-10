@@ -144,6 +144,11 @@ function generateConsoleCode(fields) {
 }
 
 /* ─── UI ─── */
+// 페이지 로드 시 모든 섹션의 init 함수가 (화면에 안 보여도) 같이 실행되기 때문에,
+// 안내 팝업은 여기서 바로 띄우지 않고 navigateTo('statocr')로 실제 진입했을 때만 띄운다.
+let _statShowStepModal = null;
+function statOcrOnEnter() { if (_statShowStepModal) _statShowStepModal(); }
+
 function initStatOCR() {
   const sec = document.getElementById('sec-statocr');
   if (!sec) return;
@@ -233,15 +238,18 @@ function initStatOCR() {
     startSteps();
   });
 
-  /* ── 단계별 캡쳐 ── */
-  function startSteps() {
+  /* ── 단계별 캡쳐 ──
+     showModal=false로 부르면 안내 팝업 없이 상태만 초기화한다 — 페이지 로드 시
+     (탭이 아직 화면에 안 보이는 상태) 조용히 준비만 해 두고, 실제로 이 탭에
+     들어왔을 때(statOcrOnEnter)만 팝업을 띄우기 위해서다. */
+  function startSteps(showModal = true) {
     _steps = buildSteps(STAT_JOB_TYPES[_jtIdx]);
     _stepIdx = 0;
     _stepDone = _steps.map(() => false);
     _parsed = {};
     renderStepList();
     resetCaptureUI();
-    showStepModal();
+    if (showModal) showStepModal();
     renderTable(_parsed);
   }
 
@@ -307,6 +315,7 @@ function initStatOCR() {
     document.getElementById('statStepModalOk').addEventListener('click', close);
     overlay.classList.add('open');
   }
+  _statShowStepModal = showStepModal;
 
   function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
@@ -576,7 +585,7 @@ function initStatOCR() {
     });
   });
 
-  startSteps();
+  startSteps(false);
 }
 
 initStatOCR();

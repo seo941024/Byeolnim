@@ -159,6 +159,15 @@
 :root[data-theme="light"] .crystal-bar__track { background: rgba(20,18,28,.09); }
 :root[data-theme="light"] .lib-progress       { background: rgba(20,18,28,.09); }
 :root[data-theme="light"] .sf-bidir           { background: rgba(20,18,28,.04); }
+/* 헤더 버튼(초기화·설정)이 rgba(--hue-d)를 배경으로 써서 화이트에서 탁한 황토색이 된다.
+   다른 주요 버튼(.sbtn--primary)과 같은 골드 그라디언트로 맞춘다. */
+:root[data-theme="light"] .hbtn {
+  background: var(--grad);
+  color: var(--on-grad);
+  border-color: rgba(var(--hue-l),.25);
+}
+:root[data-theme="light"] .hbtn:hover { background: var(--grad); filter: brightness(1.08); color: var(--on-grad); }
+:root[data-theme="light"] #headerBtnSettings { color: var(--on-grad); }
 /* 다크용으로 고른 밝은 파랑/보라/빨강이 흰 배경에서는 대비가 부족하다.
    색 계열은 그대로 두고 명도만 낮춘 값으로 덮는다. */
 :root[data-theme="light"] .hexa-result-row .rv.hp-suf { color: #0369a1; }

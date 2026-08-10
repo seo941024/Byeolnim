@@ -40,11 +40,11 @@ const WANT_CATEGORIES = [
   {
     title: '익셉셔널 해머',
     items: [
-      { file: 'Use_Exceptional_Hammer_(Belt).png',     name: '익셉셔널 해머(벨트)' },
-      { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머(얼굴장식)' },
-      { file: 'Use_Exceptional_Hammer_(Eye_Acc).png',  name: '익셉셔널 해머(눈장식)' },
-      { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머(귀걸이)' },
-      { file: 'Use_Exceptional_Hammer_(Medal).png',    name: '익셉셔널 해머(훈장)' },
+      { file: 'Use_Exceptional_Hammer_(Belt).png',     name: '익셉셔널 해머 (벨트)' },
+      { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머 (얼굴장식)' },
+      { file: 'Use_Exceptional_Hammer_(Eye_Acc).png',  name: '익셉셔널 해머 (눈장식)' },
+      { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머 (귀걸이)' },
+      { file: 'Use_Exceptional_Hammer_(Medal).png',    name: '익셉셔널 해머 (훈장)' },
     ],
   },
 ];

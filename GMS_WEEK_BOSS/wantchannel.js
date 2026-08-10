@@ -37,6 +37,16 @@ const WANT_CATEGORIES = [
       { file: 'Use_Grindstone_of_Faith.png',  name: '신념의 연마석' },
     ],
   },
+  {
+    title: '익셉셔널 해머',
+    items: [
+      { file: 'Use_Exceptional_Hammer_(Belt).png',     name: '익셉셔널 해머(벨트)' },
+      { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머(얼굴 장식)' },
+      { file: 'Use_Exceptional_Hammer_(Eye_Acc).png',  name: '익셉셔널 해머(눈 장식)' },
+      { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머(귀걸이)' },
+      { file: 'Use_Exceptional_Hammer_(Medal).png',    name: '익셉셔널 해머(훈장)' },
+    ],
+  },
 ];
 const WANT_ITEMS = WANT_CATEGORIES.flatMap(c => c.items);
 const WC_WORLD = 'Kronos';

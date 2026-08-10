@@ -1,8 +1,8 @@
 ﻿/* =============================================
-   GMS 怨꾩궛湲???style.css  (臾띠쓬1: 泥?줉 ?ㅽ겕 ?뚮쭏 + ?고듃)
+   GMS 계산기 — style.css  (묶음1: 청록 다크 테마 + 폰트)
    ============================================= */
 
-/* ?? @font-face ?? */
+/* ── @font-face ── */
 @font-face {
   font-family: '고딕';
   src: url('font/ONE_Mobile_Title.ttf') format('truetype');
@@ -19,56 +19,56 @@
   font-weight: normal; font-style: normal;
 }
 
-/* ?? CSS 蹂???? */
+/* ── CSS 변수 ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* 諛곌꼍 ??蹂꾨떂 ?곗＜ ?ㅽ겕 */
+  /* 배경 — 별님 우주 다크 */
   --bg:      #06040f;
   --bg2:     #0d0920;
   --bg3:     #130e2a;
   --bg-card: #0e0b1e;
   --bg-hover:#1a1438;
 
-  /* ?띿뒪??*/
+  /* 텍스트 */
   --text:     #ffffff;
   --text-sub: rgba(255,255,255,.72);
   --text-dim: rgba(255,255,255,.42);
 
-  /* ?뚮몢由?*/
+  /* 테두리 */
   --border:   rgba(var(--hue),.2);
   --border-hl:rgba(var(--hue-l),.45);
 
-  /* 洹몃┝??*/
+  /* 그림자 */
   --shadow:    0 2px 8px rgba(0,0,0,.4);
   --shadow-md: 0 6px 24px rgba(0,0,0,.55);
   --shadow-lg: 0 16px 48px rgba(0,0,0,.7);
 
-  /* 硫붿씤 洹몃씪?곗씠?????곗＜ 蹂대씪 */
+  /* 메인 그라데이션 — 우주 보라 */
   --grad:       linear-gradient(135deg,#3b1f6e 0%,#1d1145 100%);
   --grad-soft:  linear-gradient(180deg,#0f0922 0%,#06040f 100%);
   --grad-card:  linear-gradient(160deg,#140e28 0%,#0c0820 100%);
   --grad-sheen: linear-gradient(180deg,rgba(255,255,255,.06) 0%,rgba(255,255,255,0) 60%);
   --grad-gold:  linear-gradient(135deg,#f0d080 0%,#c8903a 100%);
 
-  /* ?ъ씤??而щ윭 */
-  --primary:   #a78bfa;   /* ?쇰깽??*/
+  /* 포인트 컬러 */
+  --primary:   #a78bfa;   /* 라벤더 */
   --primary-d: #7c3aed;
   --primary-l: rgba(var(--hue-l),.12);
-  --accent:    #f6c744;   /* 蹂꾨튆 怨⑤뱶 */
+  --accent:    #f6c744;   /* 별빛 골드 */
   --gold:      #d8b15a;
   --danger:    #f05060;
   --danger-l:  rgba(240,80,96,.14);
   --success:   #3dd68c;
   --success-l: rgba(61,214,140,.12);
 
-  /* ?쒖씠??*/
+  /* 난이도 */
   --easy-bg:    #3cc47d; --easy-fg:    #fff;
   --normal-bg:  #5bc8f5; --normal-fg:  #fff;
   --hard-bg:    #c0186e; --hard-fg:    #fff;
   --chaos-bg:   #1c1c1c; --chaos-fg:   #c8924a;
   --extreme-bg: #1c1c1c; --extreme-fg: #e0473c;
 
-  /* 諛섍꼍 */
+  /* 반경 */
   --radius-sm:  4px;
   --radius:     6px;
   --radius-lg:  8px;
@@ -159,12 +159,24 @@
 :root[data-theme="light"] .crystal-bar__track { background: rgba(20,18,28,.09); }
 :root[data-theme="light"] .lib-progress       { background: rgba(20,18,28,.09); }
 :root[data-theme="light"] .sf-bidir           { background: rgba(20,18,28,.04); }
+/* 다크용으로 고른 밝은 파랑/보라/빨강이 흰 배경에서는 대비가 부족하다.
+   색 계열은 그대로 두고 명도만 낮춘 값으로 덮는다. */
+:root[data-theme="light"] .hexa-result-row .rv.hp-suf { color: #0369a1; }
+:root[data-theme="light"] .bhp-tr__dot--5             { color: #1d4ed8; }
+:root[data-theme="light"] .force-arc                  { color: #1d4ed8; }
+:root[data-theme="light"] .force-auth                 { color: #6d28d9; }
+:root[data-theme="light"] .boss-total__deduct         { color: var(--danger); }
+:root[data-theme="light"] .dt-card__del:hover         { color: var(--danger); }
+/* select 화살표가 흰색으로 박혀 있어 흰 배경에서 안 보인다 → 어두운 화살표로 교체 */
+:root[data-theme="light"] .bhp-diff-sel {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5' viewBox='0 0 9 5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%2314121c88'/%3E%3C/svg%3E");
+}
 :root[data-theme="light"] .empty,
 :root[data-theme="light"] .ci-empty,
 :root[data-theme="light"] .bus-empty          { color: var(--text-dim); }
 
-/* ?? 湲곕낯 ?? */
-/* ?? 蹂?罹붾쾭???? */
+/* ── 기본 ── */
+/* ── 별 캔버스 ── */
 #starCanvas {
   position: fixed; top: 0; left: 0;
   width: 100%; height: 100%;
@@ -195,7 +207,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   * { scrollbar-width: none; -ms-overflow-style: none; }
 }
 
-/* ?? HEADER ?? */
+/* ── HEADER ── */
 .header {
   height: 60px;
   background: rgba(6,4,15,.75);
@@ -272,11 +284,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   box-shadow: 0 0 8px rgba(var(--hue),.3);
 }
 
-/* ?? APP ?? */
+/* ── APP ── */
 /* 340px — 300px는 실제 브라우저에서 여유가 0px라 폰트 렌더링差로 줄바꿈 재발 → 여유를 크게 늘림 */
 .app { display: grid; grid-template-columns: 340px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
 
-/* ?? SIDEBAR ?? */
+/* ── SIDEBAR ── */
 .sidebar {
   background: rgba(8,5,20,.6);
   
@@ -288,7 +300,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   box-shadow: 2px 0 24px rgba(0,0,0,.4);
 }
 
-/* ?쒕쾭 ?좉? (NA / EU) */
+/* 서버 토글 (NA / EU) */
 .region-toggle {
   display: flex; gap: 4px;
   margin: 12px 12px 6px;
@@ -311,7 +323,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   text-shadow: 0 0 8px rgba(246,199,68,.4);
 }
 
-/* 罹먮┃???곸뿭 */
+/* 캐릭터 영역 */
 .sb-char-area { border-bottom: 1px solid var(--border); }
 .sb-char-head {
   display: flex; align-items: center;
@@ -356,7 +368,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   50%      { box-shadow: 0 0 0 1px #f5c842, 0 0 32px rgba(245,200,66,.7), 0 0 60px rgba(245,200,66,.25), 0 4px 16px rgba(0,0,0,.5); }
 }
 
-/* 移대뱶 ?대?: 醫??띿뒪??踰꾪듉, ??portrait */
+/* 카드 내부: 좌=텍스트+버튼, 우=portrait */
 /* flex + aspect-ratio 조합은 폭이 텍스트 칸에 밀려 정사각형이 안 나온다
    (실제로 95x130처럼 세로로 길어졌음). 오른쪽 큰 카드(.cg-card)가 쓰는 방식대로
    grid로 칼럼 폭을 고정하고, 일러스트는 그 폭의 100% + aspect-ratio로 높이를 잡는다. */
@@ -434,7 +446,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   border-radius: 99px; transition: width .4s;
 }
 
-/* ?꾩껜 二쇨컙 ?띾뱷 硫붿냼 */
+/* 전체 주간 획득 메소 */
 .sb-weekmeso {
   display: flex; flex-direction: column; gap: 2px;
   margin: 0 10px 10px;
@@ -492,7 +504,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   object-fit: contain;
   width: 28px; height: 28px;
 }
-/* ?? nav ?꾩씠肄?媛쒕퀎 ?ш린 ?? */
+/* ── nav 아이콘 개별 크기 ── */
 .sb-nav__item[data-sec="charinfo"]   .sb-nav__icon { width: 28px; height: 28px; }
 .sb-nav__item[data-sec="boss"]       .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="hexa"]       .sb-nav__icon { width: 29px; height: 29px; }
@@ -504,7 +516,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="serverstatus"]    .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 29px; height: 29px; }
 .sb-nav__item[data-sec="wantchannel"] .sb-nav__icon { width: 33px; height: 33px; }
-/* CSS ?꾩씠肄?(湲곗〈 ?좎? ??img ?쒓렇?먮뒗 ?곸슜 ???? */
+/* CSS 아이콘 (기존 유지 — img 태그에는 적용 안 됨) */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:var(--primary);top:3px}
 .sb-nav__icon--char::after{width:16px;height:8px;border-radius:8px 8px 4px 4px;background:var(--primary-d);bottom:3px}
@@ -518,7 +530,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__icon--force::before{width:17px;height:11px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#3b82f6)}
 .sb-nav__icon--force::after{width:11px;height:3px;border-radius:99px;background:rgba(255,255,255,.6);bottom:6px}
 
-/* ?? CONTENT ?? */
+/* ── CONTENT ── */
 .content {
   padding: 24px;
   display: flex; flex-direction: column; gap: 0;
@@ -550,7 +562,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   border: 1px solid rgba(var(--hue-l),.3);
 }
 
-/* ?? CARD ?? */
+/* ── CARD ── */
 .card {
   background: var(--panel-veil);
   
@@ -579,7 +591,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   color: var(--text-sub); margin-bottom: 14px;
 }
 
-/* ?? BOSS PANEL ?? */
+/* ── BOSS PANEL ── */
 .boss-panel {
   display: flex; flex-direction: column; gap: 0;
   background: var(--panel-veil);
@@ -660,7 +672,7 @@ tr.done .boss-thumb img { filter: none; }
   border: 1px solid rgba(216,177,90,.35);
 }
 
-/* ?쒖씠????*/
+/* 난이도 필 */
 .diff-pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: flex-start; }
 .dpill {
   position: relative; display: inline-flex; align-items: center; justify-content: center;
@@ -733,7 +745,7 @@ tr.done .boss-thumb img { filter: none; }
 .boss-total__val--month { font-size: 1.3rem; color: rgba(246,199,68,.75); text-shadow: none; }
 .boss-total__deduct { font-size: .8rem; color: #f06c6c; font-weight: 700; margin-top: 2px; display: block; }
 
-/* ?? ??ы뀥 ?뱀뀡 ?? */
+/* ── 대여템 섹션 ── */
 .rental-section {
   background: rgba(255,255,255,.02);
   border-top: 1px solid rgba(var(--hue-l),.15);
@@ -757,7 +769,7 @@ tr.done .boss-thumb img { filter: none; }
 .rental-wed-label input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; }
 .rental-notice { font-size: .72rem; color: var(--text-dim); }
 
-/* ?? BUTTONS ?? */
+/* ── BUTTONS ── */
 .sbtn {
   padding: 9px 20px; border-radius: 6px;
   font-size: .84rem; font-weight: 700; text-align: center;
@@ -789,7 +801,7 @@ tr.done .boss-thumb img { filter: none; }
 .sbtn--danger:hover { transform: translateY(-1px); filter: brightness(1.1); }
 .w100 { width: 100%; justify-content: center; }
 
-/* ?? FORM ?? */
+/* ── FORM ── */
 .field { display: flex; flex-direction: column; gap: 5px; }
 .field__label { font-size: .95rem; color: var(--text-sub); font-weight: 700; }
 .inp, select.sel {
@@ -817,7 +829,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .check-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
 .check-row input[type=checkbox] { accent-color: var(--primary); width: 15px; height: 15px; }
 
-/* ?? DATA TABLE ?? */
+/* ── DATA TABLE ── */
 .table-wrap { overflow-x: auto; border-radius: var(--radius-sm); }
 .data-table { width: 100%; border-collapse: collapse; font-size: .82rem; }
 .data-table th {
@@ -832,7 +844,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .data-table tbody tr:hover { background: var(--bg-hover); }
 .empty { text-align: center; color: var(--text-sub); padding: 32px; font-size: .9rem; }
 
-/* ?? HEXA ?? */
+/* ── HEXA ── */
 .hexa-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .hexa-field-group { display: flex; flex-direction: column; gap: 10px; }
 .hexa-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
@@ -865,7 +877,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 
-/* ?? LIBERATION ?? */
+/* ── LIBERATION ── */
 .lib-tabs { display: flex; gap: 0; margin-bottom: 16px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
 .lib-tab__icon { width: 40px; height: 40px; object-fit: contain; margin-right: 10px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(246,199,68,.6)); }
 .lib-tab {
@@ -898,7 +910,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .lib-progress__fill { height: 100%; background: linear-gradient(90deg,var(--primary),var(--accent)); border-radius: 99px; transition: width .4s; }
 .lib-pct { font-size: .74rem; color: var(--text-sub); text-align: right; margin-top: 4px; }
 
-/* ?? STARFORCE ?? */
+/* ── STARFORCE ── */
 /* minmax(0,1fr) 필수 — 1fr만 쓰면 콘텐츠가 더 큰 쪽(결과 카드)이 최소폭을
    더 많이 가져가 반대쪽(토글 버튼들)이 짜부라진다 */
 .sf-layout { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 16px; align-items: start; }
@@ -912,7 +924,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-res-val { font-size: .98rem; font-weight: 800; color: var(--text); }
 .sf-res-val.big { font-size: 1.2rem; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
 
-/* ?? ?ㅽ??ъ뒪 ?좉? 洹몃９ ?? */
+/* ── 스타포스 토글 그룹 ── */
 .sec-sep { border: none; border-top: 1.5px solid var(--border); margin: 0 0 20px; }
 .sf-tabs { display: flex; gap: 0; margin-bottom: 12px; border-radius: 12px; overflow: hidden; border: 1.5px solid var(--border); width: fit-content; }
 .sf-tab { padding: 10px 28px; font-size: .9rem; font-weight: 700; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: pointer; transition: all .15s; }
@@ -926,7 +938,7 @@ select.sel option { background: var(--bg2); color: var(--text); }
 .sf-toggle.active { background: var(--primary); color: #fff; font-weight: 700; }
 .sf-toggle:hover:not(.active) { background: rgba(var(--hue),.1); color: var(--text); }
 
-/* ?? ?ㅽ??ъ뒪 ?ㅽ뀒?댁? 踰꾪듉 ?? */
+/* ── 스타포스 스테이지 버튼 ── */
 .sf-stage-row2 { display: flex; align-items: center; gap: 6px; padding: 3px 0; border-bottom: 1px solid rgba(255,255,255,.04); }
 .sf-stage-lbl2 { font-size: .8rem; color: var(--text-sub); min-width: 50px; font-weight: 700; flex-shrink: 0; }
 select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding: 2px 4px; }
@@ -935,7 +947,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-stage-prob--fail { color: var(--text-dim); }
 .sf-stage-prob--dest { color: var(--danger); }
 
-/* ?? ?ㅽ??ъ뒪 寃곌낵 ?? */
+/* ── 스타포스 결과 ── */
 .sf-star-display { font-size: 2.4rem; font-weight: 900; text-align: center; color: var(--accent); text-shadow: 0 0 20px rgba(246,199,68,.5); padding: 12px 0 8px; }
 .sf-log { margin-top: 12px; display: flex; flex-direction: column; gap: 4px; max-height: 320px; overflow-y: auto; }
 .sf-log-row { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 7px; font-size: .82rem; }
@@ -946,7 +958,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-log-desc { flex: 1; color: var(--text); }
 .sf-log-cost { color: var(--text-sub); font-size: .78rem; }
 
-/* ?? ?ㅽ??ъ뒪 湲곕뙎媛?諛뺤뒪 ?? */
+/* ── 스타포스 기댓값 박스 ── */
 .sf-stat-box { flex: 1; min-width: 120px; background: rgba(var(--hue),.08); border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px; }
 .sf-stat-box--hi { border-color: rgba(246,199,68,.5); background: rgba(246,199,68,.07); }
 .sf-stat-box--danger { border-color: rgba(239,68,68,.4); background: rgba(239,68,68,.07); }
@@ -955,7 +967,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-stat-box--hi .sf-stat-val { color: var(--accent); }
 .sf-stat-box--danger .sf-stat-val { color: var(--danger); }
 
-/* ?? ?먮툕 ???踰꾪듉 ?? */
+/* ── 큐브 타입 버튼 ── */
 .cube-type-btn {
   flex: 1; padding: 9px 14px; border-radius: 10px; border: 1.5px solid rgba(var(--hue),.3);
   background: rgba(var(--hue),.08); color: var(--text-sub); font-size: .85rem; cursor: pointer;
@@ -968,7 +980,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .cube-type-btn:hover:not(.active) { border-color: rgba(var(--hue),.5); color: var(--text); }
 
-/* ?? ?먮툕 紐⑺몴 ?듭뀡 ?? */
+/* ── 큐브 목표 옵션 ── */
 .cube-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
 .cube-type-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; border-radius: var(--radius-sm); background: var(--bg3); border: 1.5px solid var(--border); color: var(--text-sub); font-size: .82rem; font-weight: 700; cursor: pointer; transition: .15s; opacity: .6; }
 .cube-type-btn img { width: 36px; height: 36px; object-fit: contain; }
@@ -1016,7 +1028,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cube-goal-row .cube-opt-unit { color: var(--text-sub); font-size: .85rem; white-space: nowrap; min-width: 14px; }
 .mb16 { margin-bottom: 16px; }
 
-/* ?? 蹂댁뒪 ?몃옒而??쒖씠??踰꾪듉 ?? */
+/* ── 보스 트래커 난이도 버튼 ── */
 .diff-btns { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; }
 .diff-btns .dpill { cursor: pointer; padding: 5px 14px; font-size: .72rem; }
 .boss-diff-wrap { display: flex; align-items: center; gap: 8px; }
@@ -1044,7 +1056,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .boss-diff-sel:focus { outline: none; border-color: var(--primary); }
 .boss-diff-sel option { background: var(--bg2); color: var(--text); }
 
-/* ?? Genesis ?섏뒪???꾩씠肄??? */
+/* ── Genesis 퀘스트 아이콘 ── */
 .gen-quest-icons {
   display: flex; gap: 6px; flex-wrap: wrap; padding: 6px 0;
 }
@@ -1068,27 +1080,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-party-row { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
 .gen-party-label { font-size: .76rem; color: var(--text-sub); font-weight: 700; }
 
-/* ?? ?쒖씠????됲듃 (蹂댁뒪 ?몃옒而? ?? */
-.diff-sel-wrap { display: flex; align-items: center; gap: 10px; }
-.diff-sel {
-  background: rgba(255,255,255,.06);
-  border: 1px solid var(--border);
-  border-radius: 6px;
-  padding: 7px 14px;
-  color: var(--text); font: inherit; font-size: .8rem; font-weight: 700;
-  cursor: pointer; outline: none;
-  transition: border-color .15s, background .15s;
-  appearance: none; -webkit-appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23ffffff66'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-color: rgba(255,255,255,.06);
-  padding-right: 30px;
-}
-.diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.1); }
-.diff-sel option { background: var(--bg2); color: var(--text); }
-
-/* ?? BOSS HP 移대뱶 ?? */
+/* ── 난이도 셀렉트 (보스 트래커) ── */
+/* ── BOSS HP 카드 ── */
 .bhp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
 .bhp-card {
   background: var(--panel-veil);
@@ -1113,7 +1106,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-card__name { font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 6px; color: var(--text); }
 .bhp-card__info { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .bhp-lv { font-size: .82rem; color: var(--text-sub); font-weight: 800; }
-/* ?좏깮???쒖씠??pill (Lv/?ъ뒪 ?꾨옒, select ?? */
+/* 선택된 난이도 pill (Lv/포스 아래, select 위) */
 .bhp-active-diff { display: flex; }
 .bhp-active-diff .dpill {
   flex: 1; width: 100%;
@@ -1122,7 +1115,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
   letter-spacing: .5px;
 }
-/* ?쒖씠??select */
+/* 난이도 select */
 .bhp-diff-sel {
   width: 100%;
   background-color: rgba(255,255,255,.07);
@@ -1142,28 +1135,19 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-diff-sel:hover { border-color: var(--border-hl); background-color: rgba(255,255,255,.11); }
 .bhp-diff-sel:focus { border-color: var(--primary); background-color: rgba(255,255,255,.13); }
 .bhp-diff-sel option { background: var(--bg2); color: var(--text); }
-/* HP ?댁슜 */
+/* HP 내용 */
 .bhp-diff { border-top: 1px solid var(--border); padding-top: 8px; margin-top: 2px; }
 .bhp-phase { display: flex; justify-content: space-between; gap: 8px; font-size: .88rem; padding: 3px 0; color: var(--text-sub); }
 .bhp-phase__val { font-weight: 900; color: var(--text); text-align: right; }
 .bhp-sep { border: none; border-top: 1px dashed var(--border); margin: 4px 0; }
 .bhp-pdr { font-size: .8rem; color: var(--text-sub); margin-bottom: 4px; }
-.bhp-pdr b { color: #fff; }
+.bhp-pdr b { color: var(--text); }
 .bhp-thresholds { display: flex; flex-direction: column; align-items: flex-end; margin-top: auto; padding-top: 8px; gap: 2px; }
 .bhp-tr { display: flex; align-items: center; gap: 5px; font-size: .82rem; font-weight: 800; }
 .bhp-tr__pct { color: var(--text-sub); font-size: .72rem; font-weight: 700; }
 .bhp-tr__dot--10 { color: var(--success); font-size: .65rem; }
 .bhp-tr__dot--5  { color: #60a5fa; font-size: .65rem; }
 .bhp-tr__val { color: var(--text); }
-.bhp-reward {
-  margin-top: auto;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 7px 12px; border-radius: 10px;
-  background: rgba(246,199,68,.1);
-  border: 1px solid rgba(246,199,68,.3);
-  font-size: .72rem; font-weight: 900; color: var(--accent);
-}
-.bhp-reward b { font-size: .82rem; color: #fff; font-variant-numeric: tabular-nums; }
 .hp-ok { color: var(--accent); font-weight: 800; }
 .hp-ng { color: var(--danger); font-weight: 800; }
 .force { display: inline-flex; align-items: center; gap: 4px; min-width: 40px; text-align: center; padding: 2px 9px; border-radius: 99px; font-size: .7rem; font-weight: 800; }
@@ -1171,7 +1155,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .force-arc { background: rgba(96,165,250,.15); color: #60a5fa; }
 .force-auth { background: rgba(157,108,245,.16); color: #9d6cf5; }
 
-/* ?? FORCE ?? */
+/* ── FORCE ── */
 .force-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .force-section-label { font-size: .8rem; font-weight: 800; text-transform: uppercase; letter-spacing: .5px; color: var(--text-sub); margin-bottom: 10px; }
 .boost-ok { color: var(--accent); font-weight: 800; }
@@ -1183,7 +1167,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sym-card .inp { margin-top: 4px; }
 .sym-card__result { margin-top: 6px; font-size: .86rem; font-weight: 700; color: var(--accent); }
 
-/* ?? MODAL ?? */
+/* ── MODAL ── */
 .overlay {
   display: none; position: fixed; inset: 0;
   background: var(--panel-veil);
@@ -1249,7 +1233,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cardbg-opt img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .cardbg-opt--none { display: flex; align-items: center; justify-content: center; font-size: .68rem; color: var(--text-sub); font-weight: 700; }
 
-/* ?? LOOKUP ?? */
+/* ── LOOKUP ── */
 .lookup-box {
   background: var(--lookup-bg);
   border: 1px solid rgba(var(--hue-l),.25);
@@ -1290,7 +1274,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .lk-card__meta { font-size: .74rem; color: var(--text-sub); }
 .lk-card__exp { font-size: .72rem; color: var(--text-sub); font-weight: 700; }
 
-/* ?? 罹먮┃???뺣낫 ?⑤꼸 ?? */
+/* ── 캐릭터 정보 패널 ── */
 .ci-empty {
   text-align: center; color: var(--text-sub); padding: 60px;
   font-size: .92rem; background: var(--bg-card);
@@ -1302,7 +1286,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   background: var(--bg-card); border: 1px solid var(--border);
   border-radius: var(--radius); box-shadow: var(--shadow-md);
 }
-/* 湲덉깋 ?뚮몢由????쒖꽦 罹먮┃??媛뺤“ */
+/* 금색 테두리 — 활성 캐릭터 강조 */
 .ci-card--gold { border-color: var(--gold); box-shadow: 0 0 0 1px var(--gold), var(--shadow-md); }
 .ci-portrait {
   position: relative; width: 100%; aspect-ratio: 3/4;
@@ -1362,18 +1346,18 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-rank-row span { color: var(--text-sub); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ci-rank-row b { font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
-/* 醫뚯륫 移대뱶 ?섎떒 ??궧 */
+/* 좌측 카드 하단 랭킹 */
 .ci-card__ranks { margin-top: 0; padding: 7px 13px 9px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
 .ci-ranks-title { font-size: .64rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
 .ci-card__ranks .ci-rank-row { padding: 3px 0; font-size: clamp(.72rem, .5rem + 1.4cqw, 1.15rem); }
 
-/* 肄붾뵒 ?덉뒪?좊━ */
+/* 코디 히스토리 */
 .ci-codies { display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 6px; overflow-x: auto; }
 .ci-cody { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
 .ci-cody img { width: 128px; height: 128px; object-fit: contain; background: transparent; border: none; }
 .ci-cody span { font-size: .78rem; color: var(--text-sub); }
 
-/* ?? TOAST ?? */
+/* ── TOAST ── */
 .toast {
   position: fixed; left: 50%; bottom: 32px;
   transform: translateX(-50%) translateY(24px);
@@ -1387,7 +1371,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-/* ?? ?쒕꽕?쒖뒪 / ?곗뒪?곕땲 ?? */
+/* ── 제네시스 / 데스티니 ── */
 .gen-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .gen-progress{text-align:left}
 .gen-stat-row{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:600;padding:5px 0;border-bottom:1px solid var(--border);color:var(--text)}
@@ -1405,7 +1389,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .dot-blue{background:var(--primary)}.dot-purple{background:#9d6cf5}
 .gen-config{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 
-/* ?? ?대갑 ?ㅼ젙 移대뱶 ?? */
+/* ── 해방 설정 카드 ── */
 .gen-cfg-wrap{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:4px}
 .gen-cfg-card{
   display:flex;gap:16px;align-items:center;
@@ -1445,7 +1429,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-cfg-card__desc{font-size:.75rem;color:var(--text-sub);font-weight:600}
 .gen-cfg-card__fields{display:flex;flex-direction:column;gap:8px}
 
-/* gen-switch ?좉? */
+/* gen-switch 토글 */
 .gen-switch{display:flex;align-items:center;gap:8px;font-size:.83rem;cursor:pointer;padding:7px 0;color:var(--text)}
 .gen-switch input{width:15px;height:15px;accent-color:var(--primary)}
 .gen-pass-toggle{gap:12px;padding:0}
@@ -1470,7 +1454,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-boss__toggle{padding:5px 12px;border-radius:var(--radius-pill);font-size:.78rem;font-weight:800;white-space:nowrap;background:var(--bg2);color:var(--text-sub);box-shadow:var(--shadow)}
 .gen-boss__toggle.on{background:var(--success);color:#000}
 
-/* ?? ?대갑 怨꾩궛湲????덉씠?꾩썐 ?? */
+/* ── 해방 계산기 새 레이아웃 ── */
 /* minmax(0,1fr) 필수 — 1fr만 쓰면 트랙 최소폭이 auto(콘텐츠 기준)라
    왼쪽 콘텐츠가 넓을 때 그리드 자체가 오른쪽으로 넘친다 */
 .gen-main-layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:16px;align-items:start}
@@ -1483,7 +1467,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-inp{font-size:.88rem!important;height:38px}
 .gen-pass-field .gen-switch{margin-top:2px}
 
-/* 蹂댁뒪 移대뱶 ??援ъ“ */
+/* 보스 카드 새 구조 */
 .gen-boss__row2{display:flex;align-items:center;gap:6px}
 .gen-boss__diff{flex:1;font-size:.76rem;padding:4px 7px}
 .gen-boss__row3{display:flex;align-items:center;justify-content:space-between;gap:6px;margin-top:2px}
@@ -1506,11 +1490,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-res-row b,.gen-res-val{font-weight:900;color:var(--text);font-size:.88rem}
 .gen-res-total{color:var(--text)!important;font-size:.88rem!important}
 .gen-res-total b{color:var(--primary)!important;font-size:.95rem!important}
-.gen-res-accent b{color:#fbbf24!important}
+.gen-res-accent b{color:var(--gold)!important}
 .gen-res-divider{height:10px}
 .gen-res-section{}
 
-/* ?? ?ㅽ??ъ뒪 ??硫붿냼 ?낅젰 ?? */
+/* ── 스타포스 내 메소 입력 ── */
 .sf-chart-card { display: flex; flex-direction: column; }
 .sf-chart-header { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
 .sf-chart-lbl { font-size: .8rem; font-weight: 700; color: var(--text-sub); }
@@ -1530,7 +1514,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sf-my-result__tag.lucky{background:var(--success-l);color:var(--success)}
 .sf-my-result__tag.unlucky{background:rgba(240,80,96,.15);color:var(--danger)}
 
-/* ?? utils ?? */
+/* ── utils ── */
 .mt8  { margin-top: 8px; }
 .mt16 { margin-top: 16px; }
 .stat-chip {
@@ -1540,7 +1524,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   padding: 4px 13px; font-size: .8rem; font-weight: 700;
 }
 
-/* ?? 罹먮┃??洹몃━??(罹먮┃???뺣낫 ?? ?? */
+/* ── 캐릭터 그리드 (캐릭터 정보 탭) ── */
 /* 가로형 카드 2열 고정 → 캐릭터가 늘면 아래로 행이 추가된다.
    카드는 창 너비를 꽉 채우며, 일러스트가 정사각 비율이라 폭이 커지면 높이도 함께 커진다. */
 .cg-grid {
@@ -1843,7 +1827,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 /* 첫 열(스탯명) 고정폭, 나머지 5개 등급열은 남은 폭 균등 분배 */
 .flame-tbl th:first-child, .flame-tbl .flame-opt-lbl { width: 30%; }
 .flame-tbl .flame-opt-lbl { text-align: left; color: var(--text); font-weight: 500; }
-.flame-tbl .flame-avg { color: #fbbf24; font-weight: 600; }
+.flame-tbl .flame-avg { color: var(--gold); font-weight: 600; }
 .flame-t--zero { color: var(--text-sub); opacity: .35; }
 .flame-score-card { padding: 12px 0; border-bottom: 1px solid var(--border); }
 .flame-score-card:last-of-type { border-bottom: none; }

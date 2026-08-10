@@ -144,7 +144,7 @@ function initStatOCR() {
             <input type="file" id="statFileInput" accept="image/*" style="display:none"/>
           </div>
           <div id="statCropWrap" style="display:none;margin-top:8px">
-            <p style="font-size:.78rem;color:#fbbf24;margin-bottom:6px">이미지에서 STAT 창 부분만 드래그해서 선택하세요</p>
+            <p style="font-size:.78rem;color:var(--gold);margin-bottom:6px">이미지에서 STAT 창 부분만 드래그해서 선택하세요</p>
             <div style="position:relative;display:inline-block;max-width:100%">
               <canvas id="statPreviewCanvas" style="max-width:100%;border-radius:8px;cursor:crosshair;display:block"></canvas>
               <canvas id="statOverlayCanvas" style="position:absolute;top:0;left:0;max-width:100%;border-radius:8px;cursor:crosshair;pointer-events:none"></canvas>

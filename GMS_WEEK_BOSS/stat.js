@@ -11,6 +11,18 @@ const STAT_JOB_TYPES = [
   { label: 'HP — 데몬어벤져',              stat: ['HP'],              third: 'ATK'  },
 ];
 
+// 직업별 캡처 단계: 메인 스탯창 1장 + 주스탯(2~3개)별 세부 팝업 + (주스탯 2개 이하인 직업만) 공격력/마력 세부 팝업.
+// 제논처럼 주스탯이 3개인 직업은 maplescouter 폼에서 공격력/마력 칸이 3번째 주스탯 칸과 겹쳐 생략한다(buildFields와 동일 기준).
+function buildSteps(jt) {
+  const steps = [{ type: 'main', label: '메인 스탯창(STAT) 띄우기' }];
+  jt.stat.slice(0, 3).forEach(s => steps.push({ type: 'detail', stat: s, label: `${s} 세부 팝업 띄우기` }));
+  if (jt.stat.length <= 2) {
+    const apLabel = jt.third === 'MATK' ? '마력' : '공격력';
+    steps.push({ type: 'detail', stat: 'AP', label: `${apLabel} 세부 팝업 띄우기` });
+  }
+  return steps;
+}
+
 function parseStatWindow(rawText) {
   // OCR 공통 오류 정규화
   let text = rawText
@@ -50,25 +62,47 @@ function parseStatWindow(rawText) {
   };
 }
 
+// GMS 스탯 세부(STAT INFO) 팝업 텍스트에서 Base Value / % Value / % Value Not Applied 세 값을 뽑는다.
+// maplescouter 직접입력의 "기본수치"는 메인 스탯창의 합산값이 아니라 이 팝업의 Base Value다
+// (maplescouter 직접입력 폼과 참고 툴 소스로 확인함 — Current Value는 검증용일 뿐 입력엔 안 쓰임).
+function parseStatDetailPopup(rawText) {
+  const T = rawText.replace(/[|]/g, ' ').replace(/\n/g, ' ').replace(/\s+/g, ' ');
+  // "Base Value 4767" / "Current Value 35,304" / "% Value 370%" / "% Value Not Applied 12900"
+  // — VALUE 바로 앞의 BASE/CURRENT 접두어, 바로 뒤의 NOT APPLIED만 보고 나머지("% ")는 무시한다.
+  const RE = /\b(BASE|CURRENT)?\s*VALUE\b(\s+NOT\s+APPLIED)?\s*[:\-]?\s*([\d.,]+)\s*(%)?/gi;
+  let base = '', pct = '', notApplied = '';
+  for (const m of T.matchAll(RE)) {
+    const prefix = (m[1] || '').toUpperCase();
+    const num = m[3].replace(/[,\s]/g, '');
+    if (m[2]) notApplied = num;                 // "... Not Applied"
+    else if (prefix === 'CURRENT') continue;    // 검증용 — 우리 입력엔 안 씀
+    else if (prefix === 'BASE') base = num;
+    else if (m[4]) pct = num;                    // "% Value 42%" 형태만 %수치로 인정
+  }
+  return { base, pct, notApplied };
+}
+
 function buildFields(jtIdx, parsed) {
   const jt   = STAT_JOB_TYPES[jtIdx];
   const rows = [];
   const statKeys = jt.stat.slice(0, 3);
+  const has = k => parsed[k] !== undefined && parsed[k] !== '';
   statKeys.forEach((s, i) => {
-    rows.push({ label: `${s} 기본수치`,  key: s,    idx: 3+i*3, note: '합산값' });
-    rows.push({ label: `${s} % 수치`,   key: null,  idx: 4+i*3, val: '', note: '수동 입력' });
-    rows.push({ label: `${s} % 미적용`, key: null,  idx: 5+i*3, val: '', note: '수동 입력' });
+    const baseKey = `${s}_BASE`, pctKey = `${s}_PCT`, naKey = `${s}_NOTAPPLIED`;
+    rows.push({ label: `${s} 기본수치`,  key: baseKey, idx: 3+i*3, note: has(baseKey) ? undefined : '수동 입력' });
+    rows.push({ label: `${s} % 수치`,   key: pctKey,  idx: 4+i*3, note: has(pctKey)  ? undefined : '수동 입력' });
+    rows.push({ label: `${s} % 미적용`, key: naKey,   idx: 5+i*3, note: has(naKey)   ? undefined : '수동 입력' });
   });
 
   // 공격력/마력 그룹 (maplescouter 9·10·11번 = 주/부스탯 다음 칸, 기본스공 전).
-  // INT 직업군(third:'MATK')은 마력, 나머지는 공격력. 전부 수동 입력(스샷에 분해값이 안 나옴).
+  // INT 직업군(third:'MATK')은 마력, 나머지는 공격력. 4단계 캡처의 마지막 단계(공격력/마력 세부 팝업)에서 채워진다.
   // 제논(3스탯)은 9·10·11이 3차 스탯이라 충돌 → 그룹 생략.
   const apRows = [];
   if (statKeys.length <= 2) {
     const apLabel = jt.third === 'MATK' ? '마력' : '공격력';
-    apRows.push({ label: `${apLabel} 기본수치`, key: null, idx: 9,  val: '', note: '수동 입력' });
-    apRows.push({ label: `${apLabel} % 수치`,  key: null,  idx: 10, val: '', note: '수동 입력' });
-    apRows.push({ label: `${apLabel} % 미적용`,key: null,  idx: 11, val: '', note: '수동 입력' });
+    apRows.push({ label: `${apLabel} 기본수치`, key: 'AP_BASE',       idx: 9,  note: has('AP_BASE')       ? undefined : '수동 입력' });
+    apRows.push({ label: `${apLabel} % 수치`,  key: 'AP_PCT',        idx: 10, note: has('AP_PCT')        ? undefined : '수동 입력' });
+    apRows.push({ label: `${apLabel} % 미적용`,key: 'AP_NOTAPPLIED', idx: 11, note: has('AP_NOTAPPLIED') ? undefined : '수동 입력' });
   }
 
   const direct = [
@@ -118,6 +152,7 @@ function initStatOCR() {
   let _img = null;
   let _crop = null;
   let _dragging = false, _dragStart = null;
+  let _steps = [], _stepIdx = 0, _stepDone = [];
 
   const jobOpts = STAT_JOB_TYPES.map((jt,i)=>`<option value="${i}">${jt.label}</option>`).join('');
 
@@ -137,21 +172,22 @@ function initStatOCR() {
         </div>
 
         <div id="statPanelOcr">
-          <div class="card__title">전투력 창 캡쳐</div>
+          <div class="card__title">단계별 캡쳐</div>
+          <div id="statStepList" style="font-size:.82rem;line-height:1.9;margin:8px 0 12px"></div>
           <div class="stat-paste-zone" id="statPasteZone" tabindex="0">
             <p>스크린샷 <b>Ctrl+V</b> 붙여넣기</p>
             <p style="font-size:.75rem;color:var(--text-sub);margin-top:4px">또는 클릭하여 파일 선택</p>
             <input type="file" id="statFileInput" accept="image/*" style="display:none"/>
           </div>
           <div id="statCropWrap" style="display:none;margin-top:8px">
-            <p style="font-size:.78rem;color:var(--gold);margin-bottom:6px">이미지에서 STAT 창 부분만 드래그해서 선택하세요</p>
+            <p style="font-size:.78rem;color:var(--gold);margin-bottom:6px">이미지에서 STAT 창(또는 STAT INFO 팝업) 부분만 드래그해서 선택하세요</p>
             <div style="position:relative;display:inline-block;max-width:100%">
               <canvas id="statPreviewCanvas" style="max-width:100%;border-radius:8px;cursor:crosshair;display:block"></canvas>
               <canvas id="statOverlayCanvas" style="position:absolute;top:0;left:0;max-width:100%;border-radius:8px;cursor:crosshair;pointer-events:none"></canvas>
             </div>
             <div style="margin-top:6px;font-size:.75rem;color:var(--text-sub)" id="statCropInfo">선택 영역 없음</div>
           </div>
-          <button class="sbtn sbtn--primary w100" id="statOcrBtn" style="margin-top:10px" disabled>정보값 자동 입력</button>
+          <button class="sbtn sbtn--primary w100" id="statOcrBtn" style="margin-top:10px" disabled>이 단계 인식하기</button>
           <div id="statOcrStatus" style="font-size:.78rem;color:var(--text-sub);margin-top:6px;text-align:center"></div>
         </div>
 
@@ -194,8 +230,85 @@ function initStatOCR() {
   document.getElementById('statManualInitBtn')?.addEventListener('click', ()=>renderTable({}));
   document.getElementById('statJobType').addEventListener('change', e=>{
     _jtIdx = parseInt(e.target.value);
-    renderTable(_parsed);
+    startSteps();
   });
+
+  /* ── 단계별 캡쳐 ── */
+  function startSteps() {
+    _steps = buildSteps(STAT_JOB_TYPES[_jtIdx]);
+    _stepIdx = 0;
+    _stepDone = _steps.map(() => false);
+    _parsed = {};
+    renderStepList();
+    resetCaptureUI();
+    showStepModal();
+    renderTable(_parsed);
+  }
+
+  function renderStepList() {
+    const el = document.getElementById('statStepList');
+    if (!el) return;
+    el.innerHTML = _steps.map((s, i) => {
+      const icon = _stepDone[i] ? '✅' : (i === _stepIdx ? '▶' : '○');
+      return `<div class="stat-step" data-step="${i}" style="cursor:pointer">${icon} ${i+1}. ${s.label}</div>`;
+    }).join('');
+    el.querySelectorAll('.stat-step').forEach(row => {
+      row.addEventListener('click', () => {
+        _stepIdx = parseInt(row.dataset.step);
+        renderStepList();
+        resetCaptureUI();
+        showStepModal();
+      });
+    });
+  }
+
+  function resetCaptureUI() {
+    _img = null; _crop = null;
+    document.getElementById('statPasteZone').style.display = '';
+    document.getElementById('statCropWrap').style.display = 'none';
+    document.getElementById('statOcrBtn').disabled = true;
+    document.getElementById('statOcrStatus').textContent = '';
+  }
+
+  function ensureStepOverlay() {
+    let overlay = document.getElementById('statStepOverlay');
+    if (!overlay) {
+      overlay = document.createElement('div');
+      overlay.id = 'statStepOverlay';
+      overlay.className = 'overlay';
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    }
+    return overlay;
+  }
+
+  function showStepModal() {
+    if (!_steps.length) return;
+    const overlay = ensureStepOverlay();
+    const allDone = _stepDone.every(Boolean);
+    const cur = _steps[_stepIdx];
+    const body = allDone
+      ? `<p style="margin:0">모든 단계 촬영이 끝났어요. 우측 표에서 값을 확인·수정한 뒤 콘솔코드를 복사하세요.</p>`
+      : `<p style="margin:0">[${_stepIdx+1}/${_steps.length}] <b>${esc(cur.label)}</b></p>
+         <p style="margin-top:8px;color:var(--text-sub);font-size:.85rem">${cur.type === 'main'
+            ? 'STAT 창 전체가 나오게 캡쳐한 뒤, 아래에서 붙여넣고 범위를 선택해 인식하세요.'
+            : 'STAT 창에서 해당 항목을 클릭해 STAT INFO 팝업을 띄운 뒤 캡쳐하세요.'}</p>`;
+    overlay.innerHTML = `
+      <div class="modal" style="width:min(420px,92vw)">
+        <div class="modal__head">
+          <span class="modal__title">${allDone ? '캡쳐 완료' : '단계별 캡쳐 안내'}</span>
+          <button class="modal__close" id="statStepModalClose">×</button>
+        </div>
+        <div class="modal__body">${body}</div>
+        <div class="modal__foot"><button class="sbtn sbtn--primary" id="statStepModalOk">확인</button></div>
+      </div>`;
+    const close = () => overlay.classList.remove('open');
+    document.getElementById('statStepModalClose').addEventListener('click', close);
+    document.getElementById('statStepModalOk').addEventListener('click', close);
+    overlay.classList.add('open');
+  }
+
+  function esc(s) { return String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
 
   /* 이미지 로드 */
   const pasteZone = document.getElementById('statPasteZone');
@@ -396,9 +509,29 @@ function initStatOCR() {
       const { data: { text } } = await worker.recognize(ocrCanvas);
       await worker.terminate();
 
-      _parsed = parseStatWindow(text);
+      const step = _steps[_stepIdx];
+      if (!step) { status.textContent = '❌ 오류: 진행 중인 단계가 없어요. 직업을 다시 선택하세요.'; btn.disabled = false; return; }
+
+      if (step.type === 'main') {
+        Object.assign(_parsed, parseStatWindow(text));
+      } else {
+        const d = parseStatDetailPopup(text);
+        const key = step.stat === 'AP' ? 'AP' : step.stat;
+        if (d.base)       _parsed[`${key}_BASE`]       = d.base;
+        if (d.pct)        _parsed[`${key}_PCT`]        = d.pct;
+        if (d.notApplied) _parsed[`${key}_NOTAPPLIED`] = d.notApplied;
+      }
+      _stepDone[_stepIdx] = true;
+      _stepIdx = _stepDone.findIndex(x => !x);
+      if (_stepIdx === -1) _stepIdx = _steps.length;
+
+      renderStepList();
+      resetCaptureUI();
       renderTable(_parsed);
-      status.textContent = '✅ 완료 — 값을 확인·수정 후 콘솔코드를 복사하세요.';
+      showStepModal();
+      status.textContent = _stepDone.every(Boolean)
+        ? '✅ 모든 단계 완료 — 값을 확인·수정 후 콘솔코드를 복사하세요.'
+        : '✅ 이 단계 인식 완료 — 다음 단계를 진행하세요.';
     } catch(e) {
       status.textContent = '❌ 오류: ' + e.message;
     } finally {
@@ -442,6 +575,8 @@ function initStatOCR() {
       setTimeout(()=>{ btn.textContent = '콘솔코드 복사'; }, 2000);
     });
   });
+
+  startSteps();
 }
 
 initStatOCR();

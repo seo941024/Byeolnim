@@ -1851,6 +1851,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .stat-val-inp { width: 120px; padding: 4px 8px; font-size: .82rem; }
 .stat-warn { border-color: var(--danger) !important; background: rgba(248,113,113,.08) !important; }
 tbody tr:hover { background: rgba(var(--hue),.05); }
+.stat-step { padding: 5px 8px; border-radius: 6px; color: var(--text-sub); transition: background .15s, color .15s; }
+.stat-step:hover { background: rgba(var(--hue),.08); color: var(--text); }
 
 /* ════════════════════════════════════════════════════════
    ✨ PREMIUM POLISH LAYER — 전부 transform/opacity 기반

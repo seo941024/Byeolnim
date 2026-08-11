@@ -405,8 +405,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
    버리고 50% 50%로 되돌아갔다(실측으로 확인). 넥슨 아바타는 96x96 정사각형이라
    object-fit:contain에 애초에 여백을 만들 레터박스가 안 생기므로 object-position은
    의미가 없었음 — margin-bottom을 이미지 자체에 줘서 크기 계산과 완전히 분리했다.) */
-.char-card__portrait img:not(.portrait-bg) { width: 81%; height: 81%; object-fit: contain; object-position: bottom center; margin-bottom: 6%; }
-.char-card__portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; margin-bottom: 6%; }
+.char-card__portrait img:not(.portrait-bg) { width: 92%; height: 92%; object-fit: contain; object-position: bottom center; margin-bottom: 1%; }
+.char-card__portrait--no img:not(.portrait-bg) { width: 92%; height: 92%; object-position: bottom center; margin-bottom: 1%; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -1583,9 +1583,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    바닥 여백은 margin-bottom으로 준다 — padding(부모)은 width/height %의 기준이
    갈라져 캐릭터가 작아졌고, 3-value object-position은 문법 무효라 무시됐음
    (넥슨 아바타가 96x96 정사각이라 애초에 object-position이 먹을 레터박스도 없었음). */
-.cg-portrait img:not(.portrait-bg) { width:81%; height:81%; object-fit:contain; object-position:bottom center; margin-bottom:6%; position:relative; z-index:1; }
+.cg-portrait img:not(.portrait-bg) { width:92%; height:92%; object-fit:contain; object-position:bottom center; margin-bottom:1%; position:relative; z-index:1; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
-.cg-portrait--no img:not(.portrait-bg) { width: 89%; height: 89%; object-position: bottom center; margin-bottom: 6%; }
+.cg-portrait--no img:not(.portrait-bg) { width: 92%; height: 92%; object-position: bottom center; margin-bottom: 1%; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }

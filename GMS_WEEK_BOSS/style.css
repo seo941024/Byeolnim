@@ -1537,8 +1537,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 가로형 카드 2열 고정 → 캐릭터가 늘면 아래로 행이 추가된다.
    카드는 창 너비를 꽉 채우며, 일러스트가 정사각 비율이라 폭이 커지면 높이도 함께 커진다. */
 .cg-grid {
-  display:grid; grid-template-columns:repeat(2,minmax(0,1fr));
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
   gap:10px; padding:8px 0 12px;
+  max-width: 1830px; /* 카드 폭이 무한정 안 늘어나게 4열까지만 — 넘는 공간은 우측 여백으로 남긴다(가운데 정렬 X) */
 }
 .cg-card {
   position: relative;

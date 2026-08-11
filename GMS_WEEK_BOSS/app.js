@@ -580,7 +580,7 @@ function renderCardBgGrid() {
   });
 }
 
-/* ── 캐릭터 카드를 이미지(명함)로 저장 ──
+/* ── 캐릭터 카드를 이미지로 저장 ──
    넥슨 아바타는 다른 출처(msavatar1.nexon.net)라 캔버스에 그대로 그리면
    캔버스가 오염(tainted)되어 toDataURL이 막힌다. /api/img 프록시를 거쳐
    같은 출처처럼 받아온다(api/img.js, serve.js 둘 다 구현돼 있음). */
@@ -775,7 +775,7 @@ async function exportCharCard(idx) {
 
   const a = document.createElement('a');
   a.href = canvas.toDataURL('image/png');
-  a.download = `${(ch.name || 'character').replace(/[\\/:*?"<>|]/g, '_')}_명함.png`;
+  a.download = `${(ch.name || 'character').replace(/[\\/:*?"<>|]/g, '_')}_카드.png`;
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -1141,7 +1141,7 @@ function renderCharInfo() {
     const region = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
-    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 명함 이미지 저장(html2canvas)이
+    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 카드 이미지 저장(html2canvas)이
     // 캔버스에 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
     // 모습은 완전히 동일(프록시가 원본 그대로 스트리밍).
     const portrait = f?.img

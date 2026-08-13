@@ -103,18 +103,19 @@ async function dtRefreshStaleChars() {
   });
   if (!staleIds.length) return;
 
+  // 순차로 기다리면 캐릭터 수만큼 지연이 누적되므로(각자 독립 요청) 동시에 보낸다.
   let changed = false;
-  for (const id of staleIds) {
+  await Promise.all(staleIds.map(async id => {
     const rec = all.items[id];
     try {
       const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
       const j = await r.json();
-      if (!j.ok || !j.data) continue;
+      if (!j.ok || !j.data) return;
       rec.img = j.data.img || rec.img;
       rec.syncedAt = now;
       changed = true;
     } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
-  }
+  }));
   if (changed) {
     _dtSaveAll(all);
     const sec = document.getElementById('sec-dailytasks');

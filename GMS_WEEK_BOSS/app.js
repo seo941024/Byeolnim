@@ -773,8 +773,18 @@ async function exportCharCard(idx) {
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
+  let dataUrl;
+  try {
+    dataUrl = canvas.toDataURL('image/png');
+  } catch (e) {
+    // 다른 출처 이미지가 프록시를 안 거치고 캔버스에 그려지면(예: f.img가
+    // 넥슨 도메인이 아닌 경우) 캔버스가 오염돼 여기서 SecurityError가 난다.
+    // 그냥 실패해서 아무 반응 없는 것처럼 보이지 않게 알려준다.
+    alert('명함 이미지를 만드는 중 오류가 발생했습니다: ' + e.message);
+    return;
+  }
   const a = document.createElement('a');
-  a.href = canvas.toDataURL('image/png');
+  a.href = dataUrl;
   a.download = `${(ch.name || 'character').replace(/[\\/:*?"<>|]/g, '_')}_카드.png`;
   document.body.appendChild(a);
   a.click();

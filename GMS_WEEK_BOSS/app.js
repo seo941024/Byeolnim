@@ -28,6 +28,26 @@ function load() {
     if (c.fetched && JOB_NAME_CANON[c.fetched.job]) { c.fetched.job = JOB_NAME_CANON[c.fetched.job]; migrated = true; }
   });
   if (migrated) save();
+  migrateCardBgIndices();
+}
+
+/* 카드 배경 58장 리넘버링(81df258)으로 bg0과 중복이던 bg1을 지우고 bg2~58을
+   한 칸씩 당겼다. 그 전에 저장된 cardBg 값은 이제 다른 그림을 가리키므로,
+   딱 한 번만(플래그로 막음) 예전 번호를 새 번호로 옮겨준다 — bg1은 원래
+   bg0의 중복이었으니 bg0으로, bgN(N>=2)은 bg(N-1)로. */
+const CARDBG_MIGRATION_KEY = 'gms_cardbg_migrated_81df258';
+function migrateCardBgIndices() {
+  if (localStorage.getItem(CARDBG_MIGRATION_KEY)) return;
+  let changed = false;
+  state.chars.forEach(c => {
+    const m = typeof c.cardBg === 'string' && /^bg(\d+)$/.exec(c.cardBg);
+    if (!m) return;
+    const n = parseInt(m[1], 10);
+    if (n === 1) { c.cardBg = 'bg0'; changed = true; }
+    else if (n >= 2) { c.cardBg = 'bg' + (n - 1); changed = true; }
+  });
+  if (changed) save();
+  localStorage.setItem(CARDBG_MIGRATION_KEY, '1');
 }
 
 /* ── 서버(NA/EU) 토글 ── */

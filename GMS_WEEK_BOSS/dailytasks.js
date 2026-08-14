@@ -103,24 +103,39 @@ async function dtRefreshStaleChars() {
   });
   if (!staleIds.length) return;
 
-  // 순차로 기다리면 캐릭터 수만큼 지연이 누적되므로(각자 독립 요청) 동시에 보낸다.
-  let changed = false;
-  await Promise.all(staleIds.map(async id => {
-    const rec = all.items[id];
-    try {
-      const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
-      const j = await r.json();
-      if (!j.ok || !j.data) return;
-      rec.img = j.data.img || rec.img;
-      rec.syncedAt = now;
-      changed = true;
-    } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
-  }));
-  if (changed) {
-    _dtSaveAll(all);
-    const sec = document.getElementById('sec-dailytasks');
-    if (sec && sec.classList.contains('active')) renderDailyTasks();
+  // 캐릭터마다 /api/lookup이 넥슨 API를 2개씩 부르므로, 전부 한 번에 Promise.all로
+  // 쏘면 캐릭터 수 x2만큼 동시 요청이 나간다(크롤 스크립트도 이 API는 15개로
+  // 묶어서 부름 — 그거랑 똑같이 5개씩 나눠서 보낸다).
+  const CONCURRENCY = 5;
+  const results = [];
+  for (let i = 0; i < staleIds.length; i += CONCURRENCY) {
+    const batch = staleIds.slice(i, i + CONCURRENCY);
+    const batchResults = await Promise.all(batch.map(async id => {
+      const rec = all.items[id];
+      try {
+        const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
+        const j = await r.json();
+        if (!j.ok || !j.data) return null;
+        return { id, img: j.data.img || rec.img };
+      } catch { return null; /* 네트워크 실패 → 다음 진입 때 재시도 */ }
+    }));
+    results.push(...batchResults);
   }
+
+  const updates = results.filter(Boolean);
+  if (!updates.length) return;
+  // 요청이 오가는 동안 사용자가 오늘 완료 체크 등을 눌러서 localStorage가 바뀌었을 수
+  // 있으므로, 캡처해둔 all을 그대로 덮어쓰지 않고 지금 시점의 최신 값을 다시 읽어서
+  // 이미지/동기화 시각만 얹는다.
+  const fresh = _dtLoadAll();
+  updates.forEach(({ id, img }) => {
+    if (!fresh.items[id]) return;
+    fresh.items[id].img = img;
+    fresh.items[id].syncedAt = now;
+  });
+  _dtSaveAll(fresh);
+  const sec = document.getElementById('sec-dailytasks');
+  if (sec && sec.classList.contains('active')) renderDailyTasks();
 }
 // 드래그로 카드 순서 바꾸기: fromId를 toId 자리로 옮긴다.
 function _dtReorder(fromId, toId) {

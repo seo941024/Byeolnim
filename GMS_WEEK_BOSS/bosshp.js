@@ -5,7 +5,46 @@ const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '�
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
-const bhpItemsOpen = new Set(); // 사진 클릭해서 "획득 가능한 아이템" 박스를 열어둔 보스명
+
+/* 보스 이미지 클릭 시 "획득 가능한 아이템" 팝업 (오늘의 채널 추천과 동일한 overlay/modal 패턴) */
+function _bhpEnsureOverlay() {
+  let overlay = document.getElementById('bhpOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'bhpOverlay';
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+  }
+  return overlay;
+}
+
+function _bhpOpenDropsModal(boss, active, dropItems) {
+  const overlay = _bhpEnsureOverlay();
+  const imgHtml = boss.img
+    ? `<img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span>`
+    : '<span class="noimg">BOSS</span>';
+
+  overlay.innerHTML = `
+    <div class="modal" style="width:min(480px,92vw)">
+      <div class="modal__head">
+        <span class="modal__title">${active.nameOverride || boss.name} · 획득 가능한 아이템</span>
+        <button class="modal__close" id="bhpModalClose">×</button>
+      </div>
+      <div class="modal__body">
+        <div class="bhp-drop-modal">
+          <div class="bhp-drop-modal__img">${imgHtml}</div>
+          <div class="bhp-drop-modal__items">
+            <div class="bhp-drops__list">
+              ${dropItems.map(it => `<img class="bhp-drops__icon" src="images/WANT/${it.file}" title="${it.name}" alt="${it.name}" onerror="this.style.display='none'">`).join('')}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  document.getElementById('bhpModalClose').addEventListener('click', () => overlay.classList.remove('open'));
+  overlay.classList.add('open');
+}
 
 function parseBossHpValue(value) {
   if (value == null || value === '' || value === '—') return 0;
@@ -166,18 +205,9 @@ function renderBossHPTable() {
 
     const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
     const hasDrops = dropItems.length > 0;
-    const itemsOpen = bhpItemsOpen.has(boss.name);
-    const dropsHtml = (hasDrops && itemsOpen) ? `
-      <div class="bhp-drops">
-        <div class="bhp-drops__label">획득 가능한 아이템</div>
-        <div class="bhp-drops__list">
-          ${dropItems.map(it => `<img class="bhp-drops__icon" src="images/WANT/${it.file}" title="${it.name}" alt="${it.name}" onerror="this.style.display='none'">`).join('')}
-        </div>
-      </div>` : '';
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
       <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
-      ${dropsHtml}
       <div class="bhp-card__body">
         <div class="bhp-card__top">
           <div class="bhp-name-row">
@@ -211,9 +241,13 @@ function renderBossHPTable() {
   container.querySelectorAll('.bhp-card__img--clickable').forEach(el => {
     el.addEventListener('click', () => {
       const name = el.dataset.boss;
-      if (bhpItemsOpen.has(name)) bhpItemsOpen.delete(name);
-      else bhpItemsOpen.add(name);
-      renderBossHPTable();
+      const boss = groups.find(g => g.name === name);
+      if (!boss) return;
+      const activeDiff = bossHPActiveDiffs[boss.name] || boss.diffs[0]?.diff;
+      const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
+      const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
+      if (!dropItems.length) return;
+      _bhpOpenDropsModal(boss, active, dropItems);
     });
   });
 

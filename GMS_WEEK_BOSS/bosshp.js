@@ -21,9 +21,6 @@ function _bhpEnsureOverlay() {
 
 function _bhpOpenDropsModal(boss, active, dropItems) {
   const overlay = _bhpEnsureOverlay();
-  const imgHtml = boss.img
-    ? `<img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span>`
-    : '<span class="noimg">BOSS</span>';
 
   overlay.innerHTML = `
     <div class="modal" style="width:min(480px,92vw)">
@@ -33,7 +30,10 @@ function _bhpOpenDropsModal(boss, active, dropItems) {
       </div>
       <div class="modal__body">
         <div class="bhp-drop-modal">
-          <div class="bhp-drop-modal__img">${imgHtml}</div>
+          <div class="bhp-drop-modal__img">
+            <img id="bhpModalImg" alt="${boss.name}" />
+            <span class="noimg" id="bhpModalNoimg" style="display:none">BOSS</span>
+          </div>
           <div class="bhp-drop-modal__items">
             <div class="bhp-drops__list">
               ${dropItems.map(it => `<img class="bhp-drops__icon" src="images/WANT/${it.file}" title="${it.name}" alt="${it.name}" onerror="this.style.display='none'">`).join('')}
@@ -44,6 +44,25 @@ function _bhpOpenDropsModal(boss, active, dropItems) {
     </div>`;
   document.getElementById('bhpModalClose').addEventListener('click', () => overlay.classList.remove('open'));
   overlay.classList.add('open');
+
+  // 정적 이미지 대신 움직이는 보스 사진(gif)을 우선 시도하고, 없으면 기존 정적 이미지로 대체
+  const stemMatch = boss.img && boss.img.match(/([^/]+)\.\w+$/);
+  const gifSrc = stemMatch ? `images/bosses_gif/${stemMatch[1]}.gif` : '';
+  const imgEl = document.getElementById('bhpModalImg');
+  const noimgEl = document.getElementById('bhpModalNoimg');
+  const showNoimg = () => { imgEl.style.display = 'none'; noimgEl.style.display = 'flex'; };
+  if (!gifSrc && !boss.img) {
+    showNoimg();
+  } else {
+    imgEl.addEventListener('error', () => {
+      if (gifSrc && imgEl.src.includes('bosses_gif')) {
+        if (boss.img) imgEl.src = boss.img; else showNoimg();
+      } else {
+        showNoimg();
+      }
+    });
+    imgEl.src = gifSrc || boss.img;
+  }
 }
 
 function parseBossHpValue(value) {

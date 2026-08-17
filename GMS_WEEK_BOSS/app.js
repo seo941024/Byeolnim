@@ -1356,29 +1356,46 @@ window.addEventListener('resize', applyRootFontSize);
 /* ── 첫 방문 공지 카드 ──
    ※ 배포(커밋/푸시)할 때마다 여기에 이번에 바뀐 내용을 정리해 넣는다.
       id를 새 값으로 바꿔야 예전에 "확인"을 누른 사람에게도 새 공지가 다시 뜬다. */
+// 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
+const NOTICE_LOG = [
+  {
+    date: '2026. 08. 18.',
+    items: [
+      {
+        head: '메이플 캘린더 추가',
+        desc: '캐릭터별로 달력에 획득한 아이템을 기록할 수 있습니다. 캐릭터와 날짜를 고른 뒤 아이템 이미지를 클릭하면 저장됩니다.',
+      },
+      {
+        head: '보스 일정 등록',
+        desc: '날짜에 보스 일정을 시간과 함께 적어둘 수 있습니다. 일정마다 라벨 색을 직접 골라 표시할 수 있습니다.',
+      },
+    ],
+  },
+  {
+    date: '2026. 08. 17.',
+    items: [
+      {
+        head: '보스 카드 업데이트',
+        desc: '노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.',
+      },
+      {
+        head: '벨로나 추가',
+        desc: '보스 정보에 벨로나가 추가되었습니다. 오늘의 채널 추천에도 굶주리는 핏빛 원혼이 추가되었습니다.',
+      },
+    ],
+  },
+];
+// 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
+const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-18-calendar',
-  date: '2026. 08. 18.',
+  id: '2026-08-18-calendar',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
-  items: [
-    {
-      head: '메이플 캘린더 추가',
-      desc: '캐릭터별로 달력에 획득한 아이템을 기록할 수 있습니다. 캐릭터와 날짜를 고른 뒤 아이템 이미지를 클릭하면 저장됩니다.',
-    },
-    {
-      head: '보스 일정 등록',
-      desc: '날짜에 보스 일정을 시간과 함께 적어둘 수 있습니다. 일정마다 라벨 색을 직접 골라 표시할 수 있습니다.',
-    },
-    {
-      head: '보스 카드 업데이트',
-      desc: '노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.',
-    },
-  ],
+  days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };
 const NOTICE_SEEN_KEY = 'gms_notice_seen';
 
 function showNoticeModal() {
-  if (!NOTICE.items.length) return;
+  if (!NOTICE.days.length) return;
   if (localStorage.getItem(NOTICE_SEEN_KEY) === NOTICE.id) return;
 
   const esc = s => s.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
@@ -1395,12 +1412,15 @@ function showNoticeModal() {
         <span class="modal__title modal__title--notice">${esc(NOTICE.title)}</span>
       </div>
       <div class="modal__body">
-        ${NOTICE.items.map(it => `
-          <div class="notice-item">
-            <div class="notice-item__head">${esc(it.head)}</div>
-            <div class="notice-item__desc">${esc(it.desc)}</div>
+        ${NOTICE.days.map(day => `
+          <div class="notice-day">
+            <div class="notice-date">${esc(day.date)}</div>
+            ${day.items.map(it => `
+              <div class="notice-item">
+                <div class="notice-item__head">${esc(it.head)}</div>
+                <div class="notice-item__desc">${esc(it.desc)}</div>
+              </div>`).join('')}
           </div>`).join('')}
-        <div class="notice-date">${esc(NOTICE.date)}</div>
       </div>
       <div class="modal__foot">
         <button class="sbtn sbtn--primary" id="noticeOk">확인</button>

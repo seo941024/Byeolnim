@@ -33,12 +33,20 @@ function mcStore(data) {
 }
 
 /* ── 화면 상태 ── */
+const MC_ALL = 'all';   // 캐릭터 선택에서 "전체" — 모든 캐릭터의 기록을 겹쳐 본다
 const mcState = {
   y: new Date().getFullYear(),
   m: new Date().getMonth(),   // 0-11
   sel: null,                  // 선택한 날짜 'YYYY-MM-DD'
-  charId: null,               // 선택한 캐릭터 id
+  charId: null,               // 선택한 캐릭터 id, 또는 MC_ALL
 };
+
+/* 캘린더는 캐릭터별로 따로 보인다. "전체"일 때만 전부 겹쳐 보여준다. */
+function mcVisible(recs) {
+  if (!recs) return [];
+  if (mcState.charId === MC_ALL) return recs;
+  return recs.filter(r => r.c === mcState.charId);
+}
 
 function mcDateStr(y, m, d) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
@@ -59,7 +67,7 @@ function renderMapleCalendar() {
   if (!sec) return;
 
   // 선택 상태가 유효하지 않으면(캐릭터 삭제 등) 첫 캐릭터로 되돌린다
-  if (!mcChar(mcState.charId)) mcState.charId = state.chars[0]?.id ?? null;
+  if (mcState.charId !== MC_ALL && !mcChar(mcState.charId)) mcState.charId = state.chars[0]?.id ?? null;
   if (!mcState.sel) mcState.sel = todayStr();
 
   sec.innerHTML = `
@@ -122,7 +130,7 @@ function mcRenderChars() {
     box.innerHTML = '<p class="empty">사이드바에서 캐릭터를 먼저 추가하세요.</p>';
     return;
   }
-  box.innerHTML = state.chars.map(ch => {
+  const chars = state.chars.map(ch => {
     const face = mcCharFace(ch);
     return `
       <button class="mc-char${ch.id === mcState.charId ? ' sel' : ''}" data-cid="${ch.id}" title="${mcEsc(ch.name)}">
@@ -132,11 +140,18 @@ function mcRenderChars() {
         <span class="mc-char__name">${mcEsc(ch.name)}</span>
       </button>`;
   }).join('');
+  // 캐릭터가 둘 이상일 때만 "전체"가 의미가 있다
+  const all = state.chars.length > 1 ? `
+      <button class="mc-char mc-char--all${mcState.charId === MC_ALL ? ' sel' : ''}" data-cid="${MC_ALL}" title="전체">
+        <span class="mc-char__face"><span class="mc-char__allmark">全</span></span>
+        <span class="mc-char__name">전체</span>
+      </button>` : '';
+  box.innerHTML = all + chars;
 
   box.querySelectorAll('.mc-char').forEach(btn => {
     btn.addEventListener('click', () => {
-      mcState.charId = Number(btn.dataset.cid);
-      mcRenderChars();
+      mcState.charId = btn.dataset.cid === MC_ALL ? MC_ALL : Number(btn.dataset.cid);
+      mcRenderChars(); mcRenderGrid(); mcRenderLog(); mcRenderSelLabel();
     });
   });
 }
@@ -159,7 +174,7 @@ function mcRenderGrid() {
 
   for (let d = 1; d <= days; d++) {
     const ds = mcDateStr(mcState.y, mcState.m, d);
-    const recs = data[ds] || [];
+    const recs = mcVisible(data[ds]);
     const dow = (first + d - 1) % 7;
     const cls = ['mc-cell'];
     if (ds === today) cls.push('today');
@@ -212,6 +227,7 @@ function mcRenderItems() {
 }
 
 function mcAdd(file) {
+  if (mcState.charId === MC_ALL) return alert('기록할 캐릭터를 선택하세요. (전체 보기에서는 추가할 수 없습니다)');
   if (!mcState.charId) return alert('먼저 캐릭터를 선택하세요.');
   if (!mcState.sel) return alert('먼저 날짜를 선택하세요.');
   const data = mcLoad();
@@ -238,18 +254,26 @@ function mcRemove(date, id) {
 
 function mcRenderSelLabel() {
   const el = document.getElementById('mcSelLabel');
-  if (el) el.textContent = mcState.sel ? `→ ${mcState.sel}에 기록` : '';
+  if (!el) return;
+  if (!mcState.sel) { el.textContent = ''; return; }
+  if (mcState.charId === MC_ALL) { el.textContent = '→ 기록할 캐릭터를 선택하세요'; return; }
+  const who = mcChar(mcState.charId)?.name;
+  el.textContent = who ? `→ ${who} / ${mcState.sel}에 기록` : `→ ${mcState.sel}에 기록`;
 }
 
 function mcRenderLog() {
   const box = document.getElementById('mcLog');
   const label = document.getElementById('mcLogLabel');
   if (!box) return;
-  if (label) label.textContent = mcState.sel || '';
+  if (label) {
+    const who = mcState.charId === MC_ALL ? '전체' : mcChar(mcState.charId)?.name;
+    label.textContent = [who, mcState.sel].filter(Boolean).join(' · ');
+  }
 
-  const recs = (mcLoad()[mcState.sel] || []);
+  const recs = mcVisible(mcLoad()[mcState.sel]);
   if (!recs.length) {
-    box.innerHTML = '<p class="empty">이 날짜에 기록된 아이템이 없습니다.</p>';
+    const who = mcState.charId === MC_ALL ? '' : mcChar(mcState.charId)?.name;
+    box.innerHTML = `<p class="empty">이 날짜에 ${who ? mcEsc(who) + '가 ' : ''}기록한 아이템이 없습니다.</p>`;
     return;
   }
   box.innerHTML = recs.map(r => {

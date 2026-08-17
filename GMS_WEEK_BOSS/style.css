@@ -220,9 +220,14 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
    주의 2) gif를 그대로 쓰면 첫 프레임만 나온다(애니메이션 안 됨). 움직이게 하려면 JS로
            요소를 마우스에 따라다니게 해야 하는데 그건 mousemove마다 리렌더가 걸려 실제로 렉이 생긴다.
    주의 3) 끝의 `, auto` 폴백을 빼면 규칙 자체가 무효가 된다.
-   글자 입력칸의 I빔과 색 선택기의 십자선은 각각 아래/클래스 규칙에서 그대로 유지된다. */
+   글자 입력칸의 I빔과 색 선택기의 십자선은 각각 아래/클래스 규칙에서 그대로 유지된다.
+
+   ※ 현재 비활성화 상태(사용자 요청). 이미지 파일(cursor32.png, corsor.gif)은 지우지 않았으니
+     아래 두 줄의 주석만 풀면 바로 다시 켜진다. */
+/*
 body, body * { cursor: url('images/icons/cursor32.png') 4 4, auto; }
 input[type="text"], input[type="number"], input[type="search"], textarea { cursor: text; }
+*/
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(var(--hue),.3); border-radius: 99px; }

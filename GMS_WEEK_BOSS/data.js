@@ -66,6 +66,7 @@ const STORAGE_KEYS = {
   hexaBoost:   'hx_boost',
   hexaCommon:  'hx_common',
   dailyTasks:  'daily_tasks_v1',
+  mapleCal:    'mc_drops_v1',
 };
 
 const JOB_LIST = [

@@ -98,6 +98,7 @@ function navigateTo(sec) {
   if (sec === 'serverstatus') renderServerStatus();
   if (sec === 'dailytasks') renderDailyTasks();
   if (sec === 'wantchannel') renderWantChannel();
+  if (sec === 'mcalendar') renderMapleCalendar();
   if (sec === 'statocr' && typeof statOcrOnEnter === 'function') statOcrOnEnter();
   if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
   if (sec === 'hexa')      renderAllHexaLists();
@@ -1384,7 +1385,6 @@ function showNoticeModal() {
     <div class="modal" style="width:min(520px,94vw)">
       <div class="modal__head">
         <span class="modal__title modal__title--notice">${esc(NOTICE.title)}</span>
-        <button class="modal__close" id="noticeClose">×</button>
       </div>
       <div class="modal__body">
         <span class="notice-tag">UPDATE</span>
@@ -1401,14 +1401,11 @@ function showNoticeModal() {
     </div>`;
   overlay.classList.add('open');
 
-  // 확인을 눌러야 다시 안 뜬다. ×나 바깥 클릭으로 닫으면 다음 방문에 또 보여준다.
-  const close = (remember) => {
-    if (remember) localStorage.setItem(NOTICE_SEEN_KEY, NOTICE.id);
+  // 닫는 길은 "확인" 하나뿐이다. 바깥을 눌러도 닫히지 않으므로 실수로 넘길 일이 없다.
+  document.getElementById('noticeOk').addEventListener('click', () => {
+    localStorage.setItem(NOTICE_SEEN_KEY, NOTICE.id);
     overlay.classList.remove('open');
-  };
-  document.getElementById('noticeOk').addEventListener('click', () => close(true));
-  document.getElementById('noticeClose').addEventListener('click', () => close(false));
-  overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
+  });
 }
 document.addEventListener('DOMContentLoaded', showNoticeModal);
 

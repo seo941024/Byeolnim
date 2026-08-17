@@ -1307,6 +1307,110 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: flex; justify-content: flex-end; gap: 10px;
   background: var(--bg3);
 }
+/* ── 메이플 캘린더 ── */
+.mc-panel {
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 16px 18px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.mc-step__label { font-size: 1.02rem; font-weight: 900; color: var(--text); }
+.mc-step__sub { font-size: .86rem; font-weight: 700; color: var(--text-dim); margin-left: 6px; }
+
+/* 캐릭터 고르기 */
+.mc-chars { display: flex; flex-wrap: wrap; gap: 10px; }
+.mc-char {
+  display: flex; flex-direction: column; align-items: center; gap: 5px;
+  width: 78px; padding: 8px 4px;
+  background: var(--bg3); border: 2px solid transparent;
+  border-radius: var(--radius-sm); transition: .15s;
+}
+.mc-char:hover { border-color: var(--border-hl); }
+.mc-char.sel { border-color: var(--primary); background: rgba(var(--hue),.14); }
+.mc-char__face {
+  width: 52px; height: 52px; overflow: hidden;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.mc-char__face img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.mc-char__name {
+  font-size: .74rem; font-weight: 700; color: var(--text-sub);
+  max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+/* 달력 */
+.mc-cal__head { display: flex; align-items: center; gap: 10px; }
+.mc-cal__title { font-size: 1.16rem; font-weight: 900; min-width: 8.5em; text-align: center; }
+.mc-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.mc-dow {
+  text-align: center; padding: 5px 0;
+  font-size: .84rem; font-weight: 800; color: var(--text-dim);
+}
+.mc-dow.sun, .mc-cell.sun .mc-cell__d { color: var(--danger); }
+.mc-dow.sat, .mc-cell.sat .mc-cell__d { color: #6ea8ff; }
+.mc-cell {
+  min-height: 82px; padding: 5px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  background: var(--bg3); border: 2px solid transparent;
+  border-radius: var(--radius-sm); text-align: left; transition: .12s;
+}
+.mc-cell--pad { background: transparent; pointer-events: none; }
+.mc-cell:hover { border-color: var(--border-hl); }
+.mc-cell.today { background: rgba(var(--hue),.10); }
+.mc-cell.sel { border-color: var(--primary); }
+.mc-cell__d { font-size: .84rem; font-weight: 800; color: var(--text-sub); }
+.mc-cell__icons { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
+.mc-cell__icons img { width: 21px; height: 21px; object-fit: contain; }
+.mc-cell__more { font-size: .7rem; font-weight: 800; color: var(--text-dim); }
+
+/* 아이템 고르기 */
+.mc-cat { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
+.mc-cat__title { font-size: .92rem; font-weight: 800; color: var(--text-sub); }
+.mc-itemlist { display: flex; flex-wrap: wrap; gap: 8px; }
+.mc-item { position: relative; display: block; line-height: 0; }
+.mc-item img {
+  width: 46px; height: 46px; object-fit: contain; padding: 5px;
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); transition: .12s;
+}
+.mc-item:hover img { border-color: var(--primary); background: rgba(var(--hue),.14); }
+.mc-item:active img { transform: scale(.93); }
+.mc-item__name {
+  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
+  z-index: 5; padding: 6px 12px; border-radius: 8px;
+  background: var(--bg-card, var(--bg2)); border: 2px solid var(--border-hl, var(--primary));
+  box-shadow: 0 5px 18px rgba(0,0,0,.5);
+  font-size: .92rem; font-weight: 800; line-height: 1.25; color: var(--text);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .13s;
+}
+.mc-item:hover .mc-item__name { opacity: 1; visibility: visible; }
+
+/* 기록 목록 */
+.mc-log { display: flex; flex-direction: column; gap: 6px; }
+.mc-logrow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 10px; background: var(--bg3);
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.mc-logrow__item { width: 30px; height: 30px; object-fit: contain; flex-shrink: 0; }
+.mc-logrow__name { font-size: .94rem; font-weight: 700; flex: 1; min-width: 0; }
+.mc-logrow__char {
+  display: flex; align-items: center; gap: 6px;
+  font-size: .86rem; font-weight: 700; color: var(--text-sub);
+}
+.mc-logrow__char img { width: 26px; height: 26px; object-fit: contain; }
+.mc-logrow__del {
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-dim); transition: .15s;
+}
+.mc-logrow__del:hover { background: var(--danger-l); color: var(--danger); }
+
+@media (max-width: 768px) {
+  .mc-cell { min-height: 62px; }
+  .mc-cell__icons img { width: 16px; height: 16px; }
+  .mc-item img { width: 40px; height: 40px; }
+}
+
 /* ── 첫 방문 공지 카드 ── */
 .modal__title.modal__title--notice { font-size: 1.4rem; font-weight: 900; letter-spacing: -.3px; }
 .notice-tag {

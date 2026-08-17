@@ -24,21 +24,43 @@ function _bhpBossHasAnyDrops(bossName) {
   const prefix = bossName + '_';
   return Object.keys(BOSS_DROP_ITEMS).some(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length);
 }
-/* 드랍이 있는 난이도 이름들 (예: ['하드','익스트림']) */
-function _bhpDropDiffs(bossName) {
-  const prefix = bossName + '_';
-  return Object.keys(BOSS_DROP_ITEMS)
+/* 드랍이 있는 난이도를, 보스가 실제로 가진 난이도 순서(이지→익스트림)대로 */
+function _bhpDropDiffs(boss) {
+  const prefix = boss.name + '_';
+  const own = (boss.diffs || []).map(d => d.diff);
+  const keys = Object.keys(BOSS_DROP_ITEMS)
     .filter(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length)
     .map(k => k.slice(prefix.length));
+  // 카드가 가진 난이도 순서를 그대로 따르고, 혹시 빠진 게 있으면 뒤에 붙인다
+  const ordered = own.filter(d => keys.includes(d));
+  keys.forEach(d => { if (!ordered.includes(d)) ordered.push(d); });
+  return ordered;
 }
 
-function _bhpOpenDropsModal(boss, active, dropItems) {
+function _bhpOpenDropsModal(boss) {
   const overlay = _bhpEnsureOverlay();
+  // 난이도를 따로 고르게 하지 않고, 블로그 표처럼 이지/노말/하드… 전부 한 번에 보여준다
+  const diffs = _bhpDropDiffs(boss);
+
+  const sectionHtml = diffs.map(d => {
+    const items = BOSS_DROP_ITEMS[boss.name + '_' + d] || [];
+    return `
+      <div class="bhp-drop-sec">
+        <div class="bhp-drop-sec__diff diff-${DIFF_KR_TO_ENG[d] || 'normal'}">${d}</div>
+        <div class="bhp-drop-modal__itemlist">
+          ${items.map(it => `
+            <div class="bhp-drop-item">
+              <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="" onerror="this.style.visibility='hidden'">
+              <span class="bhp-drop-item__name">${it.name}</span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+  }).join('');
 
   overlay.innerHTML = `
     <div class="modal modal--boss-drop">
       <div class="modal__head">
-        <span class="modal__title modal__title--boss">${active.nameOverride || boss.name}</span>
+        <span class="modal__title modal__title--boss">${boss.name}</span>
         <button class="modal__close" id="bhpModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -49,19 +71,7 @@ function _bhpOpenDropsModal(boss, active, dropItems) {
           </div>
           <div class="bhp-drop-modal__items">
             <div class="bhp-drop-modal__itemshead">획득 가능한 아이템 목록</div>
-            ${dropItems.length ? `
-              <div class="bhp-drop-modal__diff">${active.diff}</div>
-              <div class="bhp-drop-modal__itemlist">
-                ${dropItems.map(it => `
-                  <div class="bhp-drop-item">
-                    <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="" onerror="this.style.visibility='hidden'">
-                    <span class="bhp-drop-item__name">${it.name}</span>
-                  </div>`).join('')}
-              </div>` : `
-              <p class="bhp-drop-modal__empty">
-                ${active.diff}에서는 획득 가능한 아이템이 없어요.<br>
-                <b>${_bhpDropDiffs(boss.name).join(' · ')}</b> 난이도부터 나와요.
-              </p>`}
+            ${sectionHtml || '<p class="bhp-drop-modal__empty">등록된 획득 아이템 정보가 없어요.</p>'}
           </div>
         </div>
       </div>
@@ -288,11 +298,8 @@ function renderBossHPTable() {
       const name = el.dataset.boss;
       const boss = groups.find(g => g.name === name);
       if (!boss) return;
-      const activeDiff = bossHPActiveDiffs[boss.name] || boss.diffs[0]?.diff;
-      const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
-      const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
-      // 고른 난이도에 드랍이 없어도 모달은 띄운다 — 대신 어느 난이도부터 나오는지 안내.
-      _bhpOpenDropsModal(boss, active, dropItems);
+      // 선택된 난이도와 무관하게 모든 난이도를 한 번에 보여준다
+      _bhpOpenDropsModal(boss);
     });
   });
 

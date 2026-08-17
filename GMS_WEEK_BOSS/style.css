@@ -1305,6 +1305,38 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sym-card .inp { margin-top: 4px; }
 .sym-card__result { margin-top: 6px; font-size: .86rem; font-weight: 700; color: var(--accent); }
 
+/* ── 앱 설치 안내 배너 ──
+   화면 아래에 붙는다. 홈 인디케이터에 가리지 않게 safe-area만큼 더 띄운다. */
+.pwa-install {
+  display: none;
+  position: fixed; z-index: 1200;
+  left: 12px; right: 12px; bottom: calc(12px + var(--safe-bottom));
+  padding: 12px 14px;
+  background: var(--bg2); border: 1px solid var(--border-hl);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  align-items: center; gap: 12px;
+  animation: pwaUp .25s cubic-bezier(.2,.8,.2,1);
+}
+.pwa-install.open { display: flex; }
+@keyframes pwaUp { from { opacity:0; transform:translateY(16px) } to { opacity:1; transform:none } }
+.pwa-install__icon { width: 44px; height: 44px; border-radius: 10px; flex: none; }
+.pwa-install__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
+.pwa-install__txt b { font-size: .9rem; font-weight: 900; color: var(--text); }
+.pwa-install__txt span { font-size: .76rem; color: var(--text-sub); line-height: 1.35; }
+.pwa-install .sbtn { flex: none; }
+.pwa-install__close { color: var(--text-dim); }
+/* 좁은 화면에서는 버튼이 옆으로 밀려 글씨가 찌그러지므로 버튼만 아래로 내린다.
+   아이콘과 글씨는 같은 줄에 둬야 배너가 불필요하게 높아지지 않는다. */
+@media (max-width: 520px) {
+  .pwa-install { flex-wrap: wrap; }
+  .pwa-install__icon { order: 0; }
+  .pwa-install__txt { order: 1; flex: 1 1 0; }
+  .pwa-install .sbtn { order: 2; }
+  .pwa-install #pwaGo { margin-left: auto; }
+}
+/* 홈 화면 앱으로 실행 중이면 설치 안내는 의미가 없다 */
+@media (display-mode: standalone) { .pwa-install { display: none !important; } }
+
 /* ── MODAL ── */
 .overlay {
   display: none; position: fixed; inset: 0;

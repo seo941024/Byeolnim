@@ -244,9 +244,12 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   to   { transform: translateX(-50%); }
 }
 .ticker__msg {
-  font-size: .92rem; font-weight: 800; letter-spacing: .2px;
-  color: #ffd000;
-  text-shadow: 0 0 9px rgba(255,208,0,.7);
+  font-size: .92rem; font-weight: 900; letter-spacing: .2px;
+  /* 노랑은 명도를 올리면 채도가 깎여 흰색이 된다. 대신 가장 밝게 보이는 60° 쪽으로
+     색상을 옮겨 채도 100%를 유지한 채 휘도만 올렸다. */
+  color: #ffee00;
+  /* 글로우 반경이 크면 글자 테두리가 번져 오히려 흐려 보인다 → 좁고 진하게 */
+  text-shadow: 0 0 5px rgba(255,238,0,.85);
   padding-right: 64px;
 }
 .ticker__msg::before {

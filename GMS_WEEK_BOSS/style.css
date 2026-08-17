@@ -1413,14 +1413,6 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* ── 첫 방문 공지 카드 ── */
 .modal__title.modal__title--notice { font-size: 1.4rem; font-weight: 900; letter-spacing: -.3px; }
-.notice-tag {
-  align-self: flex-start;
-  padding: 4px 12px; border-radius: 999px;
-  background: rgba(255,238,0,.14);
-  border: 1px solid rgba(255,238,0,.4);
-  color: #ffee00;
-  font-size: .78rem; font-weight: 900; letter-spacing: .6px;
-}
 .notice-item { display: flex; flex-direction: column; gap: 5px; }
 .notice-item__head { font-size: 1.06rem; font-weight: 900; color: var(--text); }
 .notice-item__desc { font-size: .95rem; line-height: 1.6; color: var(--text-sub); }

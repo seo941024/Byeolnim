@@ -1387,7 +1387,6 @@ function showNoticeModal() {
         <span class="modal__title modal__title--notice">${esc(NOTICE.title)}</span>
       </div>
       <div class="modal__body">
-        <span class="notice-tag">UPDATE</span>
         ${NOTICE.items.map(it => `
           <div class="notice-item">
             <div class="notice-item__head">${esc(it.head)}</div>

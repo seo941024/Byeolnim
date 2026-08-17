@@ -1473,9 +1473,17 @@ function applyTheme(name) {
   }
   const label = document.getElementById('themeLabel');
   if (label) label.textContent = t === 'light' ? '화이트 모드' : '다크 모드';
+  // 설정 모달의 테마 버튼도 같은 상태를 보여줘야 한다(헤더 토글은 모바일에서 숨겨진다)
+  document.querySelectorAll('[data-theme-set]').forEach(b => {
+    b.classList.toggle('sbtn--primary', b.dataset.themeSet === t);
+  });
 }
 document.getElementById('themeToggle')?.addEventListener('click', () => {
   applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
+});
+// 모바일은 헤더 폭이 모자라 토글을 숨기므로 설정에서 고른다
+document.querySelectorAll('[data-theme-set]').forEach(btn => {
+  btn.addEventListener('click', () => applyTheme(btn.dataset.themeSet));
 });
 applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
 

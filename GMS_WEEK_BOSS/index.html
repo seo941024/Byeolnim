@@ -6,11 +6,11 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Byeolnim.app</title>
-  <link rel="stylesheet" href="style.css?v=20260818q" />
+  <link rel="stylesheet" href="style.css?v=20260818r" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
-  <link rel="manifest" href="manifest.json?v=20260818q" />
+  <link rel="manifest" href="manifest.json?v=20260818r" />
   <meta name="theme-color" content="#0d0922" />
   <!-- 아이폰 사파리는 manifest를 보지 않아서 아래 태그들이 따로 필요하다 -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -562,6 +562,13 @@
     </div>
     <div class="modal__body settings-grid">
       <div class="settings-box">
+        <div class="settings-box__title">화면 테마</div>
+        <div class="settings-font-btns">
+          <button class="sbtn" data-theme-set="dark">다크 모드</button>
+          <button class="sbtn" data-theme-set="light">화이트 모드</button>
+        </div>
+      </div>
+      <div class="settings-box">
         <div class="settings-box__title">글꼴</div>
         <div class="settings-font-btns">
           <button class="sbtn" data-font="고딕" style="font-family:'고딕',sans-serif">고딕</button>
@@ -603,27 +610,27 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="data.js?v=20260818q"></script>
-<script src="data_hexa.js?v=20260818q"></script>
-<script src="data_bosshp.js?v=20260818q"></script>
-<script src="data_liberation.js?v=20260818q"></script>
-<script src="cube_table.js?v=20260818q"></script>
-<script src="starforce.js?v=20260818q"></script>
-<script src="app.js?v=20260818q"></script>
-<script src="hexa.js?v=20260818q"></script>
-<script src="liberation.js?v=20260818q"></script>
-<script src="starforce_sim.js?v=20260818q"></script>
-<script src="cube.js?v=20260818q"></script>
-<script src="addoption.js?v=20260818q"></script>
-<script src="stat.js?v=20260818q"></script>
-<script src="bosshp.js?v=20260818q"></script>
-<script src="serverstatus.js?v=20260818q"></script>
-<script src="dailytasks.js?v=20260818q"></script>
-<script src="wantchannel.js?v=20260818q"></script>
+<script src="data.js?v=20260818r"></script>
+<script src="data_hexa.js?v=20260818r"></script>
+<script src="data_bosshp.js?v=20260818r"></script>
+<script src="data_liberation.js?v=20260818r"></script>
+<script src="cube_table.js?v=20260818r"></script>
+<script src="starforce.js?v=20260818r"></script>
+<script src="app.js?v=20260818r"></script>
+<script src="hexa.js?v=20260818r"></script>
+<script src="liberation.js?v=20260818r"></script>
+<script src="starforce_sim.js?v=20260818r"></script>
+<script src="cube.js?v=20260818r"></script>
+<script src="addoption.js?v=20260818r"></script>
+<script src="stat.js?v=20260818r"></script>
+<script src="bosshp.js?v=20260818r"></script>
+<script src="serverstatus.js?v=20260818r"></script>
+<script src="dailytasks.js?v=20260818r"></script>
+<script src="wantchannel.js?v=20260818r"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
-<script src="mcalendar.js?v=20260818q"></script>
+<script src="mcalendar.js?v=20260818r"></script>
 <!-- "앱으로 설치" 배너 -->
-<script src="pwa.js?v=20260818q"></script>
+<script src="pwa.js?v=20260818r"></script>
 
 <!-- 서비스 워커 등록 — 홈 화면에 추가(설치)와 오프라인 지원을 켠다.
      load 이후에 등록해서 첫 화면 로딩과 경쟁하지 않게 한다.

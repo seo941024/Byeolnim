@@ -2,10 +2,21 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport-fit=cover: 홈 화면에서 실행할 때 아이폰 노치/하단 바 영역까지 화면을 쓰고,
+       가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Byeolnim.app</title>
   <link rel="stylesheet" href="style.css?v=20260818p" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
+
+  <!-- ── PWA (홈 화면에 추가) ── -->
+  <link rel="manifest" href="manifest.json?v=20260818p" />
+  <meta name="theme-color" content="#0d0922" />
+  <!-- 아이폰 사파리는 manifest를 보지 않아서 아래 태그들이 따로 필요하다 -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="별님" />
+  <link rel="apple-touch-icon" href="images/pwa/apple-touch-icon.png" />
 </head>
 <body>
 
@@ -611,5 +622,16 @@
 <script src="wantchannel.js?v=20260818p"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
 <script src="mcalendar.js?v=20260818p"></script>
+
+<!-- 서비스 워커 등록 — 홈 화면에 추가(설치)와 오프라인 지원을 켠다.
+     load 이후에 등록해서 첫 화면 로딩과 경쟁하지 않게 한다.
+     http(로컬 IP 등)에서는 SW가 아예 안 돌아가므로 조용히 넘어간다. -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+</script>
 </body>
 </html>

@@ -1,0 +1,33 @@
+{
+  "name": "Byeolnim.app",
+  "short_name": "별님",
+  "description": "메이플스토리 GMS 보스 수익·헥사·해방 계산기와 보스 정보, 숙제 트래커, 캘린더",
+  "lang": "ko",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d0922",
+  "theme_color": "#0d0922",
+  "icons": [
+    {
+      "src": "images/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "images/pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

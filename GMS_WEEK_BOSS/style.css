@@ -26,10 +26,17 @@
      테마를 따라가게 한다. 이게 없으면 다크 모드에서도 흰 위젯이 나온다. */
   color-scheme: dark;
 
+  /* 홈 화면에 추가해서 실행하면(PWA standalone) 상태바·홈 인디케이터 밑까지
+     화면이 넓어져서 그대로 두면 헤더가 시계에 가린다. 그만큼을 띄우는 값.
+     브라우저 탭에서 열거나 노치가 없는 기기면 env()가 0이라 아무 영향이 없다. */
+  --safe-top:    env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+
   /* 상단 고정 영역 높이. 사이드바/콘텐츠가 "헤더 아래"에 붙는 기준값이다.
-     헤더 밑에 띠를 하나 더 깔게 되면 --top-h에 그 높이만 더하면 된다. */
+     헤더 밑에 띠를 하나 더 깔게 되면 --top-h에 그 높이만 더하면 된다.
+     --top-h가 안전영역을 포함하므로 이걸 쓰는 사이드바 등은 자동으로 따라온다. */
   --hdr-h:  60px;
-  --top-h:  var(--hdr-h);
+  --top-h:  calc(var(--hdr-h) + var(--safe-top));
 
   /* 배경 — 별님 우주 다크 (보라 채도 낮춤) */
   --bg:      #08060d;
@@ -245,7 +252,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 
 /* ── HEADER ── */
 .header {
-  height: var(--hdr-h);
+  /* 안전영역만큼 위를 비우고 그만큼 키를 키운다 — 내용은 그대로 60px 안에 놓인다 */
+  height: var(--top-h);
+  padding-top: var(--safe-top);
   background: rgba(6,4,15,.75);
   
   
@@ -2164,7 +2173,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
   /* 그리드 해제 → 콘텐츠 전체폭 */
   .app { display: block; min-width: 0; }
-  .content { padding: 14px; min-height: 0; }
+  /* 홈 화면 실행 시 맨 아래 내용이 홈 인디케이터에 가리지 않게 그만큼 더 띄운다 */
+  .content { padding: 14px; padding-bottom: calc(14px + var(--safe-bottom)); min-height: 0; }
 
   /* 사이드바 = 좌측 슬라이드 드로어 */
   .sidebar {

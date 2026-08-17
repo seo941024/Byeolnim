@@ -262,3 +262,99 @@ const BOSS_HP_PHASES = {
     { label:'Phase 3', hp:'24.70Q' },
   ],
 };
+
+// 보스+난이도별 획득 가능한 아이템 (나무위키 "칠흑의 보스 세트" 드랍표 + 정심심 블로그
+// "메이플스토리 보스 주요 보상 모음 2026"(2026-08-13자) 두 출처를 교차 확인해서 등록.
+// 파일이 없으면 onerror로 알아서 숨겨지니, 다른 보스는 여기 추가하기 전에 반드시 드랍표부터 확인할 것.
+const BOSS_DROP_ITEMS = {
+  '스우_하드': [
+    { file: 'Eqp_Berserked.png', name: '루즈 컨트롤 머신 마크' },
+  ],
+  '스우_익스트림': [
+    { file: 'Eqp_Berserked.png', name: '루즈 컨트롤 머신 마크' },
+    { file: 'Eqp_Total_Control.png', name: '컴플리트 언더컨트롤' },
+  ],
+  '데미안_하드': [
+    { file: 'Eqp_Ruin_Force_Shield.png', name: '루인 포스실드' },
+    { file: 'Eqp_Magic_Eyepatch.png', name: '마력이 깃든 안대' },
+  ],
+  '가디언 엔젤 슬라임_노말': [
+    { file: 'Eqp_Guardian_Angel_Ring.png', name: '가디언 엔젤 링' },
+  ],
+  '가디언 엔젤 슬라임_카오스': [
+    { file: 'Eqp_Guardian_Angel_Ring.png', name: '가디언 엔젤 링' },
+  ],
+  '루시드_노말': [
+    { file: 'Eqp_Twilight_Mark.png', name: '트와일라이트 마크' },
+  ],
+  '루시드_하드': [
+    { file: 'Eqp_Twilight_Mark.png', name: '트와일라이트 마크' },
+    { file: 'Eqp_Dreamy_Belt.png', name: '몽환의 벨트' },
+  ],
+  '윌_노말': [
+    { file: 'Eqp_Twilight_Mark.png', name: '트와일라이트 마크' },
+  ],
+  '윌_하드': [
+    { file: 'Eqp_Twilight_Mark.png', name: '트와일라이트 마크' },
+    { file: "Use_Will's_Cursed_Spellbook_Selection_Box.png", name: '저주받은 마도서' },
+  ],
+  '더스크_카오스': [
+    { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },
+    { file: 'Eqp_Endless_Terror.png', name: '거대한 공포' },
+  ],
+  '진 힐라_노말': [
+    { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
+  ],
+  '진 힐라_하드': [
+    { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
+    { file: 'Eqp_Source_of_Suffering.png', name: '고통의 근원' },
+  ],
+  '듄켈_하드': [
+    { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },
+    { file: 'Eqp_Commanding_Force_Earring.png', name: '커맨더 포스 이어링' },
+  ],
+  '검은 마법사_하드': [
+    { file: 'Eqp_Genesis_Badge.png', name: '창세의 뱃지' },
+  ],
+  '검은 마법사_익스트림': [
+    { file: 'Eqp_Genesis_Badge.png', name: '창세의 뱃지' },
+    { file: 'Use_Exceptional_Hammer_(Belt).png', name: '익셉셔널 해머(벨트)' },
+  ],
+  '감시자 칼로스_익스트림': [
+    { file: 'Use_Exceptional_Hammer_(Eye_Acc).png', name: '익셉셔널 해머(눈장식)' },
+  ],
+  '카링_익스트림': [
+    { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머(귀고리)' },
+  ],
+  '림보_하드': [
+    { file: 'Eqp_Whisper_of_the_Source.png', name: '근원의 속삭임' },
+  ],
+  '발드릭스_하드': [
+    { file: 'Eqp_Oath_of_Death.png', name: '죽음의 맹세' },
+  ],
+  '최초의 대적자_하드': [
+    { file: 'Eqp_Immortal_Legacy.png', name: '불멸의 유산' },
+  ],
+  '최초의 대적자_익스트림': [
+    { file: 'Eqp_Immortal_Legacy.png', name: '불멸의 유산' },
+    { file: 'Use_Exceptional_Hammer_(Medal).png', name: '익셉셔널 해머(훈장)' },
+  ],
+  '찬란한 흉성_하드': [
+    { file: 'Eqp_Blissful_Nightmare.png', name: '황홀한 악몽' },
+  ],
+  '유피테르_하드': [
+    { file: 'Eqp_Original_Sin_of_Pride.png', name: '오만의 원죄' },
+  ],
+  '선택받은 세렌_노말': [
+    { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
+  ],
+  '선택받은 세렌_하드': [
+    { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
+    { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노' },
+  ],
+  '선택받은 세렌_익스트림': [
+    { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
+    { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노' },
+    { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머(얼굴장식)' },
+  ],
+};

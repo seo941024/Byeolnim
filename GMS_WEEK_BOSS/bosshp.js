@@ -5,6 +5,7 @@ const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '�
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
+const bhpItemsOpen = new Set(); // 사진 클릭해서 "획득 가능한 아이템" 박스를 열어둔 보스명
 
 function parseBossHpValue(value) {
   if (value == null || value === '' || value === '—') return 0;
@@ -163,8 +164,20 @@ function renderBossHPTable() {
 
     const isOn = busChecked.has(boss.name);
 
+    const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
+    const hasDrops = dropItems.length > 0;
+    const itemsOpen = bhpItemsOpen.has(boss.name);
+    const dropsHtml = (hasDrops && itemsOpen) ? `
+      <div class="bhp-drops">
+        <div class="bhp-drops__label">획득 가능한 아이템</div>
+        <div class="bhp-drops__list">
+          ${dropItems.map(it => `<img class="bhp-drops__icon" src="images/WANT/${it.file}" title="${it.name}" alt="${it.name}" onerror="this.style.display='none'">`).join('')}
+        </div>
+      </div>` : '';
+
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
-      <div class="bhp-card__img">${imgHtml}</div>
+      <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
+      ${dropsHtml}
       <div class="bhp-card__body">
         <div class="bhp-card__top">
           <div class="bhp-name-row">
@@ -191,6 +204,15 @@ function renderBossHPTable() {
   container.querySelectorAll('.bhp-diff-sel').forEach(sel => {
     sel.addEventListener('change', () => {
       bossHPActiveDiffs[sel.dataset.boss] = sel.value;
+      renderBossHPTable();
+    });
+  });
+
+  container.querySelectorAll('.bhp-card__img--clickable').forEach(el => {
+    el.addEventListener('click', () => {
+      const name = el.dataset.boss;
+      if (bhpItemsOpen.has(name)) bhpItemsOpen.delete(name);
+      else bhpItemsOpen.add(name);
       renderBossHPTable();
     });
   });

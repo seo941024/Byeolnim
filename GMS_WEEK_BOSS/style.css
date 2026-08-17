@@ -1355,6 +1355,26 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-charchip__body { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .mc-charchip__name { font-size: 1.1rem; font-weight: 900; color: var(--text); }
 .mc-charchip__sub { font-size: .8rem; font-weight: 700; color: var(--text-dim); }
+.mc-topbar__left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+/* 전체 보기 중에는 "기록할 캐릭터"가 잠시 물러난다는 걸 눈으로 알려준다 */
+.mc-charchip.dim { opacity: .55; }
+
+/* 전체 보기의 날짜 모달 — 캐릭터별 묶음 */
+.mc-allblock {
+  display: flex; flex-direction: column; gap: 6px;
+  padding-bottom: 14px; border-bottom: 1px solid var(--border);
+}
+.mc-allblock:last-of-type { padding-bottom: 0; border-bottom: none; }
+.mc-allblock__head {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 1.02rem; font-weight: 900; color: var(--text);
+}
+.mc-allblock__head img { width: 34px; height: 34px; object-fit: contain; }
+.mc-allblock__items { display: flex; flex-wrap: wrap; gap: 6px; }
+.mc-allblock__item {
+  width: 40px; height: 40px; object-fit: contain; padding: 4px;
+  background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
 
 /* 캐릭터 고르기 */
 .mc-chars { display: flex; flex-wrap: wrap; gap: 12px; }
@@ -1449,6 +1469,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-ev__colon { font-weight: 900; color: var(--text-dim); }
 .mc-ev__color { display: flex; align-items: flex-end; gap: 10px; }
 .mc-ev__add { flex-shrink: 0; }
+.mc-ev__repeat {
+  display: flex; align-items: center; gap: 7px; cursor: pointer;
+  font-size: .92rem; font-weight: 700; color: var(--text-sub);
+  padding-bottom: 9px;   /* 아래끝 정렬된 버튼과 눈높이를 맞춘다 */
+}
+.mc-ev__repeat input { accent-color: var(--primary); width: 16px; height: 16px; }
+.mc-ev__repeat b { color: var(--text-dim); font-weight: 800; }
 
 /* 색 고르기 — 위 사각형은 채도/명도, 아래 띠는 색상 */
 .mc-pick { display: flex; flex-direction: column; gap: 6px; width: 150px; }

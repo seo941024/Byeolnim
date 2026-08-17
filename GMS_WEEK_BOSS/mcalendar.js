@@ -23,7 +23,10 @@ function mcItem(file) { return MC_ITEMS.find(i => i.file === file); }
 const MC_DOW = ['일', '월', '화', '수', '목', '금', '토'];
 
 // 한 날짜/한 캐릭터에 붙일 수 있는 일정 라벨 수. 칸이 정사각형이라 이 이상은 넘친다.
+// 전체 보기에서 여러 캐릭터의 라벨이 겹쳐도 이 한도는 "캐릭터당"이라 충돌하지 않는다.
 const MC_MAX_EVENTS = 4;
+// "매주 반복"이 몇 주치를 만들지. 보스는 주 단위로 도는 게 보통이라 기본 12주(약 3개월).
+const MC_REPEAT_WEEKS = 12;
 
 /* ── 저장 ──
    아이템: { 'YYYY-MM-DD': [{ id, c: 캐릭터id, f: 아이템파일 }] }
@@ -66,15 +69,19 @@ const mcState = {
   y: new Date().getFullYear(),
   m: new Date().getMonth(),   // 0-11
   sel: null,                  // 선택한 날짜 'YYYY-MM-DD'
-  charId: null,               // 선택한 캐릭터 id
+  charId: null,               // 기록할 캐릭터 id (전체 보기 중에도 그대로 유지된다)
+  viewAll: false,             // 전체 보기 — 모든 캐릭터의 기록을 겹쳐서 본다(읽기 전용)
   tab: 'ev',                  // 날짜 모달에서 마지막에 본 탭 ('ev' | 'item')
   hue: 4, sat: .78, val: .95, // 라벨 색 (색판 드래그로 바뀐다)
 };
 function mcColorHex() { return mcRgbToHex(mcHsvToRgb(mcState.hue, mcState.sat, mcState.val)); }
 
-/* 캘린더는 캐릭터별로 따로 보인다 — 선택한 캐릭터의 기록만 남긴다. */
+/* 캘린더는 캐릭터별로 따로 보인다. 전체 보기일 때만 전부 겹쳐서 보여준다.
+   라벨 한도(MC_MAX_EVENTS)는 "캐릭터당 하루" 기준이라, 전체 보기에서 여러 캐릭터의
+   라벨이 겹쳐도 한도 충돌은 없다 — 칸에 다 안 들어가면 +N으로 접기만 한다. */
 function mcVisible(recs) {
   if (!recs) return [];
+  if (mcState.viewAll) return recs;
   return recs.filter(r => r.c === mcState.charId);
 }
 
@@ -110,7 +117,10 @@ function renderMapleCalendar() {
 
     <div class="mc-panel">
       <div class="mc-topbar">
-        <button class="mc-charchip" id="mcCharChip"></button>
+        <div class="mc-topbar__left">
+          <button class="mc-charchip" id="mcCharChip"></button>
+          <button class="sbtn sbtn--ghost mc-allbtn" id="mcAllBtn">전체 보기</button>
+        </div>
         <div class="mc-cal__head">
           <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
           <span class="mc-cal__title" id="mcTitle"></span>
@@ -129,6 +139,10 @@ function renderMapleCalendar() {
     mcRenderGrid();
   });
   document.getElementById('mcCharChip').addEventListener('click', mcOpenCharPicker);
+  document.getElementById('mcAllBtn').addEventListener('click', () => {
+    mcState.viewAll = !mcState.viewAll;
+    mcRenderCharChip(); mcRenderGrid();
+  });
 
   mcRenderCharChip();
   mcRenderGrid();
@@ -145,6 +159,17 @@ function mcShiftMonth(delta) {
 function mcRenderCharChip() {
   const chip = document.getElementById('mcCharChip');
   if (!chip) return;
+
+  const allBtn = document.getElementById('mcAllBtn');
+  if (allBtn) {
+    // 캐릭터가 둘 이상일 때만 전체 보기가 의미가 있다
+    allBtn.style.display = state.chars.length > 1 ? '' : 'none';
+    allBtn.classList.toggle('sbtn--primary', mcState.viewAll);
+    allBtn.classList.toggle('sbtn--ghost', !mcState.viewAll);
+    allBtn.textContent = mcState.viewAll ? '전체 보기 끄기' : '전체 보기';
+  }
+  chip.classList.toggle('dim', mcState.viewAll);
+
   const ch = mcChar(mcState.charId);
   if (!ch) {
     chip.innerHTML = '<span class="mc-charchip__name">사이드바에서 캐릭터를 먼저 추가하세요</span>';
@@ -239,16 +264,21 @@ function mcRenderGrid() {
     // 칸이 터지지 않게 아이콘은 6개까지만 보여주고 나머지는 +N으로 줄인다
     const shown = recs.slice(0, 6);
     const rest = recs.length - shown.length;
+    // 전체 보기에서는 여러 캐릭터의 라벨이 겹치므로 3개까지만 펼치고 나머지는 접는다
+    const evCap = mcState.viewAll ? 3 : MC_MAX_EVENTS;
+    const evShown = evs.slice(0, evCap);
+    const evRest = evs.length - evShown.length;
     // 일정 라벨은 위에서부터 차례로, 아이템은 항상 칸 맨 아래에 깔린다
     html += `
       <button class="${cls.join(' ')}" data-date="${ds}">
         <span class="mc-cell__d">${d}</span>
         <span class="mc-cell__evs">
-          ${evs.map(ev => `
+          ${evShown.map(ev => `
             <span class="mc-cell__ev" style="background:${mcEsc(ev.color)};color:${mcTextOn(ev.color)}"
                   title="${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}">
               ${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}
             </span>`).join('')}
+          ${evRest > 0 ? `<span class="mc-cell__more">일정 +${evRest}</span>` : ''}
         </span>
         <span class="mc-cell__icons">
           ${shown.map(r => {
@@ -270,6 +300,7 @@ function mcRenderGrid() {
 function mcOpenDay(date) {
   if (!mcState.charId) return alert('사이드바에서 캐릭터를 먼저 추가하세요.');
   mcState.sel = date;
+  if (mcState.viewAll) return mcOpenDayAll(date);
   const ch = mcChar(mcState.charId);
   const dow = MC_DOW[new Date(date + 'T00:00:00').getDay()];
 
@@ -313,6 +344,10 @@ function mcOpenDay(date) {
                 <span class="mc-pick__val" id="mcPickVal"></span>
               </div>
             </div>
+            <label class="mc-ev__repeat">
+              <input type="checkbox" id="mcEvRepeat">
+              <span>매주 반복 <b>(${MC_REPEAT_WEEKS}주)</b></span>
+            </label>
             <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
             </div>
           </div>
@@ -344,6 +379,64 @@ function mcOpenDay(date) {
   mcRenderItems();
   mcRenderLog();
   mcRenderEvSub();
+}
+
+/* ── 전체 보기의 날짜 모달 ──
+   그날 모든 캐릭터의 일정과 아이템을 캐릭터별로 묶어서 보여준다.
+   어느 캐릭터에 넣을지 알 수 없으므로 추가/삭제 없이 읽기만 한다. */
+function mcOpenDayAll(date) {
+  const dow = MC_DOW[new Date(date + 'T00:00:00').getDay()];
+  const evs = mcLoadEv()[date] || [];
+  const recs = mcLoad()[date] || [];
+
+  // 캐릭터 목록 순서대로 묶는다. 삭제된 캐릭터의 기록도 빠뜨리지 않고 맨 뒤에 모은다.
+  const ids = state.chars.map(c => c.id).filter(id => evs.some(e => e.c === id) || recs.some(r => r.c === id));
+  const orphan = [...evs, ...recs].some(x => !mcChar(x.c));
+  if (orphan) ids.push(null);
+
+  const blocks = ids.map(id => {
+    const mineEv = evs.filter(e => (id === null ? !mcChar(e.c) : e.c === id));
+    const mineIt = recs.filter(r => (id === null ? !mcChar(r.c) : r.c === id));
+    const ch = id === null ? null : mcChar(id);
+    const face = ch ? mcCharFace(ch) : '';
+    return `
+      <div class="mc-allblock">
+        <div class="mc-allblock__head">
+          ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
+          <span>${mcEsc(ch ? ch.name : '삭제된 캐릭터')}</span>
+        </div>
+        ${mineEv.map(ev => `
+          <div class="mc-logrow">
+            <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
+            <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
+            <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
+          </div>`).join('')}
+        ${mineIt.length ? `
+          <div class="mc-allblock__items">
+            ${mineIt.map(r => {
+              const it = mcItem(r.f);
+              return `<img class="mc-allblock__item" src="images/WANT/${mcEsc(r.f)}"
+                        alt="${mcEsc(it?.name || '')}" title="${mcEsc(it?.name || r.f)}"
+                        onerror="this.style.visibility='hidden'">`;
+            }).join('')}
+          </div>` : ''}
+      </div>`;
+  }).join('');
+
+  const ov = mcOverlay('mcDayOverlay');
+  ov.innerHTML = `
+    <div class="modal modal--mc-day">
+      <div class="modal__head">
+        <span class="modal__title modal__title--mc">${mcEsc(date)} (${dow}) · 전체</span>
+        <button class="modal__close" id="mcDayClose">×</button>
+      </div>
+      <div class="modal__body">
+        ${blocks || '<p class="empty">이 날짜에 기록한 일정과 아이템이 없습니다.</p>'}
+        <p class="dt-help">전체 보기에서는 읽기만 됩니다. 기록하려면 전체 보기를 끄고 캐릭터를 고르세요.</p>
+      </div>
+    </div>`;
+  ov.classList.add('open');
+  document.getElementById('mcDayClose').addEventListener('click', () => ov.classList.remove('open'));
 }
 
 /* 탭 전환. 마지막에 본 탭은 mcState.tab에 남아서 다음에 열 때도 그 탭으로 열린다. */
@@ -433,18 +526,36 @@ function mcAddEvent() {
     return alert(`하루에 일정은 ${MC_MAX_EVENTS}개까지만 추가할 수 있습니다.`);
   }
 
-  (data[mcState.sel] ||= []).push({
-    id: Date.now() + Math.random(),
-    c: mcState.charId,
-    text, ampm: document.getElementById('mcEvAmpm').value,
-    h, mi, color: mcColorHex(),
-  });
+  // 매주 반복 — 같은 요일/같은 시간으로 앞으로 몇 주치를 한꺼번에 넣는다.
+  const repeat = document.getElementById('mcEvRepeat').checked;
+  const weeks = repeat ? MC_REPEAT_WEEKS : 1;
+  const ampm = document.getElementById('mcEvAmpm').value;
+  const base = new Date(mcState.sel + 'T00:00:00');
+  let added = 0, skipped = 0;
+
+  for (let w = 0; w < weeks; w++) {
+    const d = new Date(base);
+    d.setDate(d.getDate() + w * 7);
+    const ds = mcDateStr(d.getFullYear(), d.getMonth(), d.getDate());
+    const list = (data[ds] ||= []);
+    // 이미 그 날 한도를 채운 캐릭터는 건너뛴다 — 반복 때문에 한도가 무너지면 안 된다
+    if (list.filter(e => e.c === mcState.charId).length >= MC_MAX_EVENTS) { skipped++; continue; }
+    list.push({
+      id: Date.now() + Math.random() + w,
+      c: mcState.charId,
+      text, ampm, h, mi, color: mcColorHex(),
+    });
+    added++;
+  }
+
   mcStoreEv(data);
   document.getElementById('mcEvText').value = '';
   document.getElementById('mcEvH').value = '00';
   document.getElementById('mcEvM').value = '00';
   mcRenderGrid(); mcRenderLog(); mcRenderEvSub();
-  mcToast(`${text} 일정 추가 완료!`);
+  mcToast(repeat
+    ? `${text} ${added}주 반복 추가 완료!${skipped ? ` (${skipped}주는 한도 초과로 건너뜀)` : ''}`
+    : `${text} 일정 추가 완료!`);
 }
 
 function mcRemoveEvent(date, id) {

@@ -294,8 +294,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 
 /* ── APP ── */
-/* 340px — 300px는 실제 브라우저에서 여유가 0px라 폰트 렌더링差로 줄바꿈 재발 → 여유를 크게 늘림 */
-.app { display: grid; grid-template-columns: 340px 1fr; flex: 1; min-height: calc(100vh - 60px);  }
+/* 340px — 300px는 실제 브라우저에서 여유가 0px라 폰트 렌더링差로 줄바꿈 재발 → 여유를 크게 늘림.
+   px로 고정하면 글자 크기(root font-size)를 키웠을 때 사이드바만 그대로라 긴 직업명
+   ("Arch Mage (Ice, Lightning)")이 다시 줄바꿈된다 → rem으로 바꿔 글자와 같이 커지게 함.
+   22.67rem × 15px = 340px 로 기존 값과 동일. */
+.app { display: grid; grid-template-columns: 22.67rem 1fr; flex: 1; min-height: calc(100vh - 60px);  }
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -427,7 +430,11 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   font-size: .7rem; color: var(--text-sub); font-weight: 600;
 }
 .char-card__world-line img { width: 16px; height: 16px; object-fit: contain; margin: -2px 0; }
-.char-card__job-line { font-size: .68rem; color: var(--text-dim); }
+/* 넘칠 땐 줄바꿈 대신 말줄임 — 줄바꿈되면 카드 높이가 튀어 레이아웃이 깨진다 */
+.char-card__job-line {
+  font-size: .68rem; color: var(--text-dim);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
 .char-card__btns { display: flex; flex-direction: row; gap: 5px; margin-top: auto; padding-top: 6px; }
 .ccbtn {
   padding: 3px 10px; border-radius: 6px;
@@ -1175,11 +1182,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 /* 이름은 평소엔 숨기고 마우스를 올릴 때만 툴팁으로 */
 .bhp-drop-item__name {
-  position: absolute; left: 50%; bottom: calc(100% + 7px); transform: translateX(-50%);
-  z-index: 5; padding: 5px 10px; border-radius: 6px;
-  background: var(--bg-card); border: 1px solid var(--border);
-  box-shadow: 0 4px 14px rgba(0,0,0,.4);
-  font-size: .82rem; font-weight: 700; line-height: 1.2; color: var(--text);
+  position: absolute; left: 50%; bottom: calc(100% + 9px); transform: translateX(-50%);
+  z-index: 5; padding: 7px 13px; border-radius: 8px;
+  background: var(--bg-card); border: 2px solid var(--border-hl, var(--primary));
+  box-shadow: 0 5px 18px rgba(0,0,0,.5);
+  font-size: 1rem; font-weight: 800; line-height: 1.25; color: var(--text);
   white-space: nowrap; pointer-events: none;
   opacity: 0; visibility: hidden; transition: opacity .13s;
 }

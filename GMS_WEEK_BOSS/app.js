@@ -1343,7 +1343,7 @@ document.getElementById('btnResetAll').addEventListener('click', () => {
 const MOBILE_MQ = window.matchMedia('(max-width: 768px)');
 function rootFontPx() {
   const base = document.body.dataset.font === '고딕' ? 15 : 16;
-  return MOBILE_MQ.matches ? base : base + 2;
+  return MOBILE_MQ.matches ? base : base + 3;
 }
 function applyRootFontSize() {
   document.documentElement.style.fontSize = rootFontPx() + 'px';

@@ -2,8 +2,11 @@
    보스 HP 카드
 ═══════════════════════════════════════════════ */
 const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '카오스':'chaos', '익스트림':'extreme' };
-// BOSS_DATA(보스 수익 계산기)엔 없고 보스 정보 페이지에만 있는 보스의 이미지
-const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses_gif/bellona.gif' };
+// BOSS_DATA(보스 수익 계산기)엔 없고 보스 정보 페이지에만 있는 보스의 이미지.
+// 카드 썸네일은 다른 보스와 같은 정적 컷을 쓰고, 팝업의 움직이는 gif는
+// 파일명 stem(Bellona)으로 images/bosses_gif/Bellona.gif 를 자동으로 찾아간다.
+// 배포 환경(리눅스)은 대소문자를 구분하므로 png/gif의 stem 대소문자가 정확히 같아야 한다.
+const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses/Bellona.png' };
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택

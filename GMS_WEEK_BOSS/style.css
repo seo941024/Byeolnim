@@ -1354,8 +1354,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-dow.sun, .mc-cell.sun .mc-cell__d { color: var(--danger); }
 .mc-dow.sat, .mc-cell.sat .mc-cell__d { color: #6ea8ff; }
 .mc-cell {
-  min-height: 82px; padding: 5px;
-  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  aspect-ratio: 1 / 1; padding: 5px; overflow: hidden;
+  display: flex; flex-direction: column; align-items: stretch; gap: 3px;
   background: var(--bg3); border: 2px solid transparent;
   border-radius: var(--radius-sm); text-align: left; transition: .12s;
 }
@@ -1363,10 +1363,64 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-cell:hover { border-color: var(--border-hl); }
 .mc-cell.today { background: rgba(var(--hue),.10); }
 .mc-cell.sel { border-color: var(--primary); }
-.mc-cell__d { font-size: .84rem; font-weight: 800; color: var(--text-sub); }
-.mc-cell__icons { display: flex; flex-wrap: wrap; gap: 2px; align-items: center; }
+.mc-cell__d { font-size: .84rem; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
+/* 일정 라벨은 날짜 바로 밑에서부터 위→아래로 채운다 */
+.mc-cell__evs { display: flex; flex-direction: column; gap: 2px; min-height: 0; overflow: hidden; }
+.mc-cell__ev {
+  display: block; padding: 1px 5px; border-radius: 4px;
+  font-size: .68rem; font-weight: 800; line-height: 1.5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* margin-top:auto → 아이템은 라벨이 몇 개든 항상 칸 맨 아래에 붙는다 */
+.mc-cell__icons {
+  display: flex; flex-wrap: wrap; gap: 2px; align-items: center;
+  margin-top: auto; flex-shrink: 0;
+}
 .mc-cell__icons img { width: 21px; height: 21px; object-fit: contain; }
 .mc-cell__more { font-size: .7rem; font-weight: 800; color: var(--text-dim); }
+
+/* 일정 입력 */
+.mc-ev-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
+.mc-ev__text { flex: 1 1 260px; min-width: 200px; }
+.mc-ev__time { display: flex; align-items: center; gap: 6px; }
+.mc-ev__ampm { width: 5.4em; }
+.mc-ev__num { width: 4.4em; text-align: center; }
+.mc-ev__colon { font-weight: 900; color: var(--text-dim); }
+.mc-ev__color { display: flex; align-items: flex-end; gap: 10px; }
+.mc-ev__add { flex-shrink: 0; }
+
+/* 색 고르기 — 위 사각형은 채도/명도, 아래 띠는 색상 */
+.mc-pick { display: flex; flex-direction: column; gap: 6px; width: 150px; }
+.mc-pick__sv {
+  --mc-hue: #ff0000;
+  position: relative; height: 76px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border); cursor: crosshair; touch-action: none;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, var(--mc-hue));
+}
+.mc-pick__hue {
+  position: relative; height: 13px; border-radius: 999px;
+  border: 1px solid var(--border); cursor: pointer; touch-action: none;
+  background: linear-gradient(to right,
+    #f00 0%, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00 100%);
+}
+.mc-pick__dot, .mc-pick__hdot {
+  position: absolute; pointer-events: none;
+  border: 2px solid #fff; border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.55);
+}
+.mc-pick__dot { width: 12px; height: 12px; transform: translate(-50%, -50%); }
+.mc-pick__hdot { width: 13px; height: 13px; top: 50%; transform: translate(-50%, -50%); }
+.mc-pick__out { display: flex; flex-direction: column; gap: 6px; }
+.mc-pick__prev {
+  width: 42px; height: 42px; border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+}
+.mc-pick__val { font-size: .78rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; }
+
+.mc-logrow__chip { width: 14px; height: 26px; border-radius: 4px; flex-shrink: 0; }
+.mc-logrow__time { font-size: .86rem; font-weight: 800; color: var(--text-sub); flex-shrink: 0; }
 
 /* 아이템 고르기 */
 .mc-cat { display: flex; flex-direction: column; gap: 7px; margin-bottom: 12px; }
@@ -1413,9 +1467,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-logrow__del:hover { background: var(--danger-l); color: var(--danger); }
 
 @media (max-width: 768px) {
-  .mc-cell { min-height: 62px; }
-  .mc-cell__icons img { width: 16px; height: 16px; }
+  .mc-cell { padding: 3px; }
+  .mc-cell__icons img { width: 14px; height: 14px; }
+  .mc-cell__ev { font-size: .58rem; padding: 0 3px; }
   .mc-item img { width: 40px; height: 40px; }
+  .mc-ev-form { gap: 10px; }
+  .mc-ev__text { flex-basis: 100%; }
 }
 
 /* ── 첫 방문 공지 카드 ── */

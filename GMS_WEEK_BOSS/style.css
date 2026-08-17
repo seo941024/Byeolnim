@@ -1115,27 +1115,26 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-card__img img { width: 100%; height: 100%; object-fit: cover; }
 .bhp-card__img--clickable { cursor: pointer; position: relative; }
 .bhp-card__img--clickable:hover img { filter: brightness(1.1); }
-.bhp-card__img--clickable::after {
-  content: '🎁'; position: absolute; right: 8px; bottom: 8px; font-size: .85rem;
-  background: rgba(0,0,0,.55); border-radius: 50%; width: 22px; height: 22px;
-  display: flex; align-items: center; justify-content: center; pointer-events: none;
-}
 .bhp-drops__list { display: flex; flex-wrap: wrap; gap: 6px; }
 .bhp-drops__icon {
   width: 44px; height: 44px; object-fit: contain; padding: 4px;
   background: rgba(var(--hue),.08); border: 1px solid var(--border); border-radius: 6px;
   cursor: default;
 }
-.bhp-drop-modal { display: flex; gap: 16px; align-items: flex-start; }
+.modal.modal--boss-drop { width: min(960px, 95vw); }
+.modal--boss-drop .modal__body { max-height: 92vh; }
+.bhp-drop-modal { display: flex; gap: 24px; align-items: flex-start; }
 .bhp-drop-modal__img {
-  flex: 0 0 130px; width: 130px; height: 130px; border-radius: var(--radius-md,10px);
+  flex: 0 0 clamp(240px, 42vw, 520px);
+  width: clamp(240px, 42vw, 520px); height: clamp(240px, 42vw, 520px);
+  border-radius: var(--radius-md,10px);
   background: linear-gradient(160deg,#1e3545 0%,#0c1a28 100%);
   border: 1px solid var(--border);
   display: flex; align-items: center; justify-content: center; overflow: hidden;
 }
 .bhp-drop-modal__img img { width: 100%; height: 100%; object-fit: cover; }
 .bhp-drop-modal__items { flex: 1; min-width: 0; }
-@media (max-width: 480px) {
+@media (max-width: 640px) {
   .bhp-drop-modal { flex-direction: column; align-items: center; }
 }
 .bhp-card__body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }

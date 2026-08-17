@@ -23,7 +23,7 @@ function _bhpOpenDropsModal(boss, active, dropItems) {
   const overlay = _bhpEnsureOverlay();
 
   overlay.innerHTML = `
-    <div class="modal" style="width:min(480px,92vw)">
+    <div class="modal modal--boss-drop">
       <div class="modal__head">
         <span class="modal__title">${active.nameOverride || boss.name} · 획득 가능한 아이템</span>
         <button class="modal__close" id="bhpModalClose">×</button>

@@ -540,6 +540,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sb-nav__item[data-sec="serverstatus"]    .sb-nav__icon { width: 30px; height: 30px; }
 .sb-nav__item[data-sec="statocr"]    .sb-nav__icon { width: 29px; height: 29px; }
 .sb-nav__item[data-sec="wantchannel"] .sb-nav__icon { width: 33px; height: 33px; }
+/* 가이드북 그림은 여백 없이 캔버스를 꽉 채워서, 같은 28px이어도 유독 커 보인다 → 더 줄임 */
+.sb-nav__item[data-sec="mcalendar"] .sb-nav__icon { width: 24px; height: 24px; }
 /* CSS 아이콘 (기존 유지 — img 태그에는 적용 안 됨) */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:var(--primary);top:3px}
@@ -1363,6 +1365,28 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .modal--mc-day .modal__body { max-height: 78vh; gap: 22px; }
 .modal__title.modal__title--mc { font-size: 1.3rem; font-weight: 900; letter-spacing: -.3px; }
 
+/* 일정 / 아이템 탭 */
+.mc-tabs {
+  display: flex; gap: 4px; padding: 0 22px;
+  background: var(--bg3); border-bottom: 1px solid var(--border);
+}
+.mc-tab {
+  padding: 12px 20px; margin-bottom: -1px;
+  border-bottom: 3px solid transparent;
+  font-size: 1rem; font-weight: 800; color: var(--text-dim);
+  transition: .15s;
+}
+.mc-tab:hover { color: var(--text-sub); }
+.mc-tab.sel { color: var(--primary); border-bottom-color: var(--primary); }
+/* 안 보이는 탭은 완전히 빼서 모달 높이에 영향을 주지 않게 한다 */
+.mc-pane { display: none; flex-direction: column; gap: 12px; }
+.mc-pane.on { display: flex; }
+.mc-sec__label--sub {
+  margin-top: 6px; padding-top: 14px;
+  border-top: 1px solid var(--border);
+  font-size: .98rem;
+}
+
 /* 달력 */
 .mc-cal__head { display: flex; align-items: center; gap: 10px; }
 .mc-cal__title { font-size: 1.16rem; font-weight: 900; min-width: 8.5em; text-align: center; }
@@ -1454,16 +1478,36 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .mc-item:hover img { border-color: var(--primary); background: rgba(var(--hue),.14); }
 .mc-item:active img { transform: scale(.93); }
-.mc-item__name {
-  position: absolute; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%);
-  z-index: 5; padding: 6px 12px; border-radius: 8px;
-  background: var(--bg-card, var(--bg2)); border: 2px solid var(--border-hl, var(--primary));
+/* 이름은 body 직속 .mc-tip이 대신 띄운다 (모달 스크롤 영역에 잘리지 않게) */
+.mc-item__name { display: none; }
+
+.mc-tip {
+  position: fixed; left: 0; top: 0; z-index: 2000;
+  padding: 6px 12px; border-radius: 8px;
+  background: var(--bg2); border: 2px solid var(--border-hl, var(--primary));
   box-shadow: 0 5px 18px rgba(0,0,0,.5);
   font-size: .92rem; font-weight: 800; line-height: 1.25; color: var(--text);
   white-space: nowrap; pointer-events: none;
   opacity: 0; visibility: hidden; transition: opacity .13s;
 }
-.mc-item:hover .mc-item__name { opacity: 1; visibility: visible; }
+.mc-tip.on { opacity: 1; visibility: visible; }
+
+/* 추가됐다는 걸 알려주는 토스트 */
+.mc-toasts {
+  position: fixed; left: 50%; bottom: 32px; transform: translateX(-50%);
+  z-index: 2100; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+.mc-toast {
+  padding: 11px 22px; border-radius: 999px;
+  background: var(--bg2); border: 2px solid var(--primary);
+  box-shadow: 0 6px 24px rgba(0,0,0,.5);
+  font-size: .98rem; font-weight: 800; color: var(--text);
+  white-space: nowrap;
+  animation: mcToastIn .18s cubic-bezier(.2,.8,.2,1);
+}
+.mc-toast.out { opacity: 0; transform: translateY(6px); transition: opacity .3s, transform .3s; }
+@keyframes mcToastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
 
 /* 기록 목록 */
 .mc-log { display: flex; flex-direction: column; gap: 6px; }

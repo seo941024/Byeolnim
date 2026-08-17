@@ -67,6 +67,7 @@ const mcState = {
   m: new Date().getMonth(),   // 0-11
   sel: null,                  // 선택한 날짜 'YYYY-MM-DD'
   charId: null,               // 선택한 캐릭터 id
+  tab: 'ev',                  // 날짜 모달에서 마지막에 본 탭 ('ev' | 'item')
   hue: 4, sat: .78, val: .95, // 라벨 색 (색판 드래그로 바뀐다)
 };
 function mcColorHex() { return mcRgbToHex(mcHsvToRgb(mcState.hue, mcState.sat, mcState.val)); }
@@ -279,8 +280,12 @@ function mcOpenDay(date) {
         <span class="modal__title modal__title--mc">${mcEsc(date)} (${dow}) · ${mcEsc(ch.name)}</span>
         <button class="modal__close" id="mcDayClose">×</button>
       </div>
+      <div class="mc-tabs">
+        <button class="mc-tab" data-tab="ev">보스 일정</button>
+        <button class="mc-tab" data-tab="item">획득한 아이템</button>
+      </div>
       <div class="modal__body">
-        <div class="mc-sec">
+        <div class="mc-pane" data-pane="ev">
           <div class="mc-sec__label">
             보스 일정
             <span class="mc-sec__sub">라벨은 ${MC_MAX_EVENTS}개까지 추가 가능합니다 <b id="mcEvSub"></b></span>
@@ -309,22 +314,25 @@ function mcOpenDay(date) {
             </div>
             <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
           </div>
+          <div class="mc-sec__label mc-sec__label--sub">등록한 일정</div>
+          <div class="mc-log" id="mcEvLog"></div>
         </div>
 
-        <div class="mc-sec">
+        <div class="mc-pane" data-pane="item">
           <div class="mc-sec__label">획득한 아이템</div>
           <div id="mcItems"></div>
-        </div>
-
-        <div class="mc-sec">
-          <div class="mc-sec__label">기록</div>
-          <div class="mc-log" id="mcLog"></div>
+          <div class="mc-sec__label mc-sec__label--sub">기록한 아이템</div>
+          <div class="mc-log" id="mcItemLog"></div>
         </div>
       </div>
     </div>`;
   ov.classList.add('open');
 
   document.getElementById('mcDayClose').addEventListener('click', () => ov.classList.remove('open'));
+  ov.querySelectorAll('.mc-tab').forEach(btn => {
+    btn.addEventListener('click', () => mcSetTab(btn.dataset.tab));
+  });
+  mcSetTab(mcState.tab);
   document.getElementById('mcEvAdd').addEventListener('click', mcAddEvent);
   // 00~12 / 00~59. 두 자리로 맞춰 넣어야 09시, 00분처럼 적힌다.
   mcTimeInput(document.getElementById('mcEvH'), 12);
@@ -334,6 +342,15 @@ function mcOpenDay(date) {
   mcRenderItems();
   mcRenderLog();
   mcRenderEvSub();
+}
+
+/* 탭 전환. 마지막에 본 탭은 mcState.tab에 남아서 다음에 열 때도 그 탭으로 열린다. */
+function mcSetTab(tab) {
+  mcState.tab = tab;
+  const ov = document.getElementById('mcDayOverlay');
+  if (!ov) return;
+  ov.querySelectorAll('.mc-tab').forEach(b => b.classList.toggle('sel', b.dataset.tab === tab));
+  ov.querySelectorAll('.mc-pane').forEach(p => p.classList.toggle('on', p.dataset.pane === tab));
 }
 
 /* 숫자만, 두 자리로, 범위 밖은 아예 못 적게. 다 지우면 00으로 되돌린다. */
@@ -425,6 +442,7 @@ function mcAddEvent() {
   document.getElementById('mcEvH').value = '00';
   document.getElementById('mcEvM').value = '00';
   mcRenderGrid(); mcRenderLog(); mcRenderEvSub();
+  mcToast(`${text} 일정 추가 완료!`);
 }
 
 function mcRemoveEvent(date, id) {
@@ -462,7 +480,59 @@ function mcRenderItems() {
 
   box.querySelectorAll('.mc-item').forEach(btn => {
     btn.addEventListener('click', () => mcAdd(btn.dataset.file));
+    // 툴팁을 버튼 안에 두면 모달 본문(overflow:auto)에 잘린다 → body에 띄우고 화면 기준으로 위치
+    btn.addEventListener('mouseenter', () => mcShowTip(btn, mcItem(btn.dataset.file)?.name || ''));
+    btn.addEventListener('focus', () => mcShowTip(btn, mcItem(btn.dataset.file)?.name || ''));
+    btn.addEventListener('mouseleave', mcHideTip);
+    btn.addEventListener('blur', mcHideTip);
   });
+}
+
+/* ── 아이템 이름 툴팁 (body 직속, position:fixed) ── */
+function mcTipEl() {
+  let el = document.getElementById('mcTip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'mcTip';
+    el.className = 'mc-tip';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function mcShowTip(anchor, text) {
+  if (!text) return;
+  const el = mcTipEl();
+  el.textContent = text;
+  el.classList.add('on');
+  const a = anchor.getBoundingClientRect();
+  const t = el.getBoundingClientRect();
+  // 화면 밖으로 나가지 않게 좌우를 물려 넣는다 — 첫 칸/마지막 칸에서 글자가 잘리던 원인
+  const x = Math.min(window.innerWidth - t.width - 8, Math.max(8, a.left + a.width / 2 - t.width / 2));
+  // 위쪽에 자리가 없으면 아래로 뒤집는다
+  const above = a.top - t.height - 10;
+  el.style.left = x + 'px';
+  el.style.top = (above >= 8 ? above : a.bottom + 10) + 'px';
+}
+function mcHideTip() {
+  document.getElementById('mcTip')?.classList.remove('on');
+}
+
+/* ── 추가됐다는 걸 눈으로 알려주는 토스트 ── */
+function mcToast(msg) {
+  let box = document.getElementById('mcToasts');
+  if (!box) {
+    box = document.createElement('div');
+    box.id = 'mcToasts';
+    box.className = 'mc-toasts';
+    document.body.appendChild(box);
+  }
+  const t = document.createElement('div');
+  t.className = 'mc-toast';
+  t.textContent = msg;
+  box.appendChild(t);
+  // 애니메이션이 끝나면 알아서 사라진다
+  setTimeout(() => t.classList.add('out'), 1400);
+  setTimeout(() => t.remove(), 1750);
 }
 
 function mcAdd(file) {
@@ -474,6 +544,7 @@ function mcAdd(file) {
   });
   mcStore(data);
   mcRenderGrid(); mcRenderLog();
+  mcToast(`${mcItem(file)?.name || file} 추가 완료!`);
 }
 
 function mcRemove(date, id) {
@@ -488,27 +559,24 @@ function mcRemove(date, id) {
   mcRenderGrid(); mcRenderLog();
 }
 
-/* ── 그날의 기록 ── */
+/* ── 그날의 기록 — 탭이 나뉘어 있으므로 목록도 각 탭 안에 따로 둔다 ── */
 function mcRenderLog() {
-  const box = document.getElementById('mcLog');
-  if (!box) return;
+  const evBox = document.getElementById('mcEvLog');
+  const itemBox = document.getElementById('mcItemLog');
+  if (!evBox || !itemBox) return;
 
   const evs = mcEventsOf(mcState.sel);
-  const recs = mcVisible(mcLoad()[mcState.sel]);
-  if (!recs.length && !evs.length) {
-    box.innerHTML = '<p class="empty">이 날짜에 기록한 일정과 아이템이 없습니다.</p>';
-    return;
-  }
-
-  const evHtml = evs.map(ev => `
+  evBox.innerHTML = evs.length ? evs.map(ev => `
       <div class="mc-logrow">
         <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
         <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
         <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
         <button class="mc-logrow__del" data-ev="${mcEsc(ev.id)}" title="삭제">×</button>
-      </div>`).join('');
+      </div>`).join('')
+    : '<p class="empty">이 날짜에 등록한 일정이 없습니다.</p>';
 
-  box.innerHTML = evHtml + recs.map(r => {
+  const recs = mcVisible(mcLoad()[mcState.sel]);
+  itemBox.innerHTML = recs.length ? recs.map(r => {
     const it = mcItem(r.f);
     return `
       <div class="mc-logrow">
@@ -516,12 +584,12 @@ function mcRenderLog() {
         <span class="mc-logrow__name">${mcEsc(it?.name || r.f)}</span>
         <button class="mc-logrow__del" data-id="${mcEsc(r.id)}" title="삭제">×</button>
       </div>`;
-  }).join('');
+  }).join('') : '<p class="empty">이 날짜에 기록한 아이템이 없습니다.</p>';
 
-  box.querySelectorAll('.mc-logrow__del').forEach(btn => {
+  [evBox, itemBox].forEach(box => box.querySelectorAll('.mc-logrow__del').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.ev != null) mcRemoveEvent(mcState.sel, btn.dataset.ev);
       else mcRemove(mcState.sel, btn.dataset.id);
     });
-  });
+  }));
 }

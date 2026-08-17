@@ -731,7 +731,7 @@ async function exportCharCard(idx) {
   const hasReal = !!f.img;
   const charImg = await loadFirstAvailable(hasReal ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
   if (charImg) {
-    const pct = hasReal && charImg.src.includes('/api/img') ? 0.81 : 0.89;
+    const pct = 0.92;
     const boxW = PW * pct, boxH = H * pct;
     drawImgContainBottom(ctx, charImg, (PW - boxW) / 2, H - boxH, boxW, boxH);
   }

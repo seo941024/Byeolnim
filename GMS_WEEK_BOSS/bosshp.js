@@ -2,6 +2,8 @@
    보스 HP 카드
 ═══════════════════════════════════════════════ */
 const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '카오스':'chaos', '익스트림':'extreme' };
+// BOSS_DATA(보스 수익 계산기)엔 없고 보스 정보 페이지에만 있는 보스의 이미지
+const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses_gif/bellona.gif' };
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
@@ -44,13 +46,15 @@ function _bhpOpenDropsModal(boss) {
 
   const sectionHtml = diffs.map(d => {
     const items = BOSS_DROP_ITEMS[boss.name + '_' + d] || [];
+    // 난이도 표기는 앱 공용 난이도 필(.dpill)을 그대로 재사용 → EASY/NORMAL/HARD... 영문 표기
+    const meta = DIFF_META[DIFF_KR_TO_ENG[d]] || DIFF_META.normal;
     return `
       <div class="bhp-drop-sec">
-        <div class="bhp-drop-sec__diff diff-${DIFF_KR_TO_ENG[d] || 'normal'}">${d}</div>
+        <div class="bhp-drop-sec__diff"><span class="dpill ${meta.cls} sel"><span class="dpill__t">${meta.label}</span></span></div>
         <div class="bhp-drop-modal__itemlist">
           ${items.map(it => `
-            <div class="bhp-drop-item">
-              <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="" onerror="this.style.visibility='hidden'">
+            <div class="bhp-drop-item" tabindex="0">
+              <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="${it.name}" onerror="this.style.visibility='hidden'">
               <span class="bhp-drop-item__name">${it.name}</span>
             </div>`).join('')}
         </div>
@@ -204,6 +208,11 @@ function renderBossHPTable() {
   BOSS_DATA.forEach(bd => {
     const key = Object.keys(seen).find(k => norm(k) === norm(bd.name));
     if (key) { seen[key].img = bd.img; seen[key].monthly = !!bd.monthly; }
+  });
+  // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지.
+  // 벨로나는 정적 컷이 따로 없어서 gif를 그대로 카드 이미지로 쓴다(이름 글씨 없는 원본).
+  Object.entries(BOSS_IMG_EXTRA).forEach(([n, src]) => {
+    if (seen[n] && !seen[n].img) seen[n].img = src;
   });
 
   renderBusPanel(groups);

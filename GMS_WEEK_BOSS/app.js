@@ -1337,10 +1337,25 @@ document.getElementById('btnResetAll').addEventListener('click', () => {
   };
 });
 
+/* 글자 크기 기준값(rem의 기준). 거의 모든 크기가 rem이라 여기만 올리면 전체가 같이 커진다.
+   PC에서 글씨가 작다는 피드백이 있어 데스크톱만 2px 올린다 — 모바일/앱은 기존 크기 유지.
+   '고딕'(ONE_Mobile_Title)은 원래 폭이 넓게 렌더링돼 15px로 낮춰뒀던 값이라 그 차이는 유지. */
+const MOBILE_MQ = window.matchMedia('(max-width: 768px)');
+function rootFontPx() {
+  const base = document.body.dataset.font === '고딕' ? 15 : 16;
+  return MOBILE_MQ.matches ? base : base + 2;
+}
+function applyRootFontSize() {
+  document.documentElement.style.fontSize = rootFontPx() + 'px';
+}
+// resize 이벤트만 보면 창 크기 변경을 놓치는 경우가 있어 미디어쿼리 변화도 같이 구독
+MOBILE_MQ.addEventListener('change', applyRootFontSize);
+window.addEventListener('resize', applyRootFontSize);
+
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
   document.body.dataset.font = name;
-  document.documentElement.style.fontSize = name === '고딕' ? '15px' : '';
+  applyRootFontSize();
   localStorage.setItem(FONT_KEY, name);
   document.querySelectorAll('.settings-font-btns [data-font]').forEach(b => {
     b.classList.toggle('sbtn--primary', b.dataset.font === name);

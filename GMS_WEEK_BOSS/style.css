@@ -554,15 +554,16 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 .sec.active { display: flex; }
 
 /* section header */
-.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 6px; }
+.sec-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+/* 제목과 본문 크기 차이가 작아 구분이 잘 안 된다는 피드백 → 제목을 키우고 아래 여백을 넓힘 */
 .sec-title {
-  font-size: 1.25rem; font-weight: 900; letter-spacing: -.3px;
-  position: relative; padding-left: 14px; color: var(--text);
+  font-size: 1.85rem; font-weight: 900; letter-spacing: -.5px; line-height: 1.25;
+  position: relative; padding-left: 18px; color: var(--text);
 }
 .sec-title::before {
   content: ''; position: absolute; left: 0; top: 50%;
   transform: translateY(-50%);
-  width: 4px; height: .9em; border-radius: 99px;
+  width: 6px; height: .88em; border-radius: 99px;
   background: linear-gradient(180deg, #f6c744 0%, #ae9aeb 100%);
   box-shadow: 0 0 10px rgba(246,199,68,.5), 0 0 20px rgba(var(--hue-l),.3);
 }
@@ -1129,8 +1130,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .modal__title.modal__title--boss { font-size: 1.6rem; font-weight: 900; letter-spacing: -.3px; }
 .bhp-drop-modal { display: flex; gap: 24px; align-items: flex-start; }
 .bhp-drop-modal__img {
-  flex: 0 0 clamp(300px, 46vw, 620px);
-  width: clamp(300px, 46vw, 620px); height: clamp(300px, 46vw, 620px);
+  /* 세로가 너무 커지면 모달이 스크롤돼서 아이템을 보려고 내려야 한다 → 화면 높이에도 맞춤 */
+  flex: 0 0 clamp(280px, min(44vw, 68vh), 620px);
+  width: clamp(280px, min(44vw, 68vh), 620px); height: clamp(280px, min(44vw, 68vh), 620px);
   border-radius: var(--radius-md,10px);
   /* 흰 배경 고정(테마 무관) — 어두운 배경에선 보스 외곽이 뭉개져 보였음 */
   background: #fff;
@@ -1142,36 +1144,43 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-drop-modal__img img { width: 100%; height: 100%; object-fit: contain; }
 .bhp-drop-modal__items { flex: 1; min-width: 0; }
 .bhp-drop-modal__itemshead {
-  font-size: 1.02rem; font-weight: 900; color: var(--text);
-  padding-bottom: 9px; margin-bottom: 12px; border-bottom: 1px solid var(--border);
+  font-size: 1.32rem; font-weight: 900; color: var(--text);
+  padding-bottom: 11px; margin-bottom: 14px; border-bottom: 1px solid var(--border);
 }
 /* 난이도별 구획 — 이지/노말/하드…를 한 화면에 전부 나열 */
 .bhp-drop-sec { margin-bottom: 16px; }
 .bhp-drop-sec:last-child { margin-bottom: 0; }
-.bhp-drop-sec__diff {
-  display: inline-block; margin-bottom: 9px; padding: 3px 12px;
-  font-size: .74rem; font-weight: 900; letter-spacing: .3px; border-radius: 999px;
-  font-family: 'Segoe UI', 'Malgun Gothic', sans-serif;
-  background: var(--bg3); color: var(--text);
-}
-/* 기존 .diff-* 색은 .dpill 안에서만 먹게 돼 있어서, 뱃지용으로 따로 지정 */
-.bhp-drop-sec__diff.diff-easy    { background: var(--easy-bg);    color: var(--easy-fg); }
-.bhp-drop-sec__diff.diff-normal  { background: var(--normal-bg);  color: var(--normal-fg); }
-.bhp-drop-sec__diff.diff-hard    { background: var(--hard-bg);    color: var(--hard-fg); }
-.bhp-drop-sec__diff.diff-chaos   { background: var(--chaos-bg);   color: var(--chaos-fg); }
-.bhp-drop-sec__diff.diff-extreme { background: var(--extreme-bg); color: var(--extreme-fg); }
+/* 난이도 표기는 앱 공용 .dpill 재사용 (EASY/NORMAL/HARD…) */
+.bhp-drop-sec__diff { margin-bottom: 10px; }
+.bhp-drop-sec__diff .dpill { cursor: default; pointer-events: none; }
+/* 기본 폰트 '고딕'(ONE_Mobile_Title)은 폭이 넓어 EXTREME 같은 긴 글자가 잘린다
+   — 보스 테이블 필과 동일하게 UI 폰트로 고정 */
+.bhp-drop-sec__diff .dpill__t { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; }
 .bhp-drop-modal__empty { margin: 0; font-size: .88rem; line-height: 1.6; color: var(--text-sub); }
-/* 아이콘과 이름을 한 줄씩 세로로 정렬 */
-.bhp-drop-modal__itemlist { display: flex; flex-direction: column; gap: 7px; }
-.bhp-drop-item { display: flex; align-items: center; gap: 11px; min-width: 0; }
+/* 아이콘을 옆으로 나열하다 넘치면 다음 줄로 — 세로로 길어져 스크롤 생기던 것 해소 */
+.bhp-drop-modal__itemlist { display: flex; flex-wrap: wrap; gap: 9px; }
+.bhp-drop-item { position: relative; display: block; line-height: 0; }
 .bhp-drop-item__icon {
-  width: 44px; height: 44px; object-fit: contain; padding: 4px; flex-shrink: 0;
-  background: rgba(var(--hue),.08); border: 1px solid var(--border); border-radius: 6px;
+  width: 58px; height: 58px; object-fit: contain; padding: 6px;
+  background: rgba(var(--hue),.08); border: 1px solid var(--border); border-radius: 8px;
+  transition: border-color .13s, transform .13s;
 }
+.bhp-drop-item:hover .bhp-drop-item__icon,
+.bhp-drop-item:focus-visible .bhp-drop-item__icon {
+  border-color: var(--primary); transform: translateY(-2px);
+}
+/* 이름은 평소엔 숨기고 마우스를 올릴 때만 툴팁으로 */
 .bhp-drop-item__name {
-  font-size: .92rem; font-weight: 700; color: var(--text);
-  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  position: absolute; left: 50%; bottom: calc(100% + 7px); transform: translateX(-50%);
+  z-index: 5; padding: 5px 10px; border-radius: 6px;
+  background: var(--bg-card); border: 1px solid var(--border);
+  box-shadow: 0 4px 14px rgba(0,0,0,.4);
+  font-size: .82rem; font-weight: 700; line-height: 1.2; color: var(--text);
+  white-space: nowrap; pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .13s;
 }
+.bhp-drop-item:hover .bhp-drop-item__name,
+.bhp-drop-item:focus-visible .bhp-drop-item__name { opacity: 1; visibility: visible; }
 @media (max-width: 640px) {
   .bhp-drop-modal { flex-direction: column; align-items: center; }
   .bhp-drop-modal__items { width: 100%; }
@@ -2160,10 +2169,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 
 /* ── 오늘의 채널 추천 ── */
-.wc-category { margin-bottom: 18px; }
+.wc-category { margin-bottom: 22px; }
 .wc-category__title {
-  font-size: .82rem; font-weight: 800; color: var(--primary); margin-bottom: 8px;
-  border-left: 3px solid var(--primary); padding-left: 8px;
+  font-size: 1.12rem; font-weight: 900; color: var(--primary); margin-bottom: 11px;
+  border-left: 4px solid var(--primary); padding-left: 10px; line-height: 1.3;
 }
 .wc-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
 .wc-item {

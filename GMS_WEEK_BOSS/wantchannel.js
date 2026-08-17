@@ -28,6 +28,7 @@ const WANT_CATEGORIES = [
       { file: 'Eqp_Blissful_Nightmare.png',       name: '황홀한 악몽' },
       { file: 'Eqp_Oath_of_Death.png',            name: '죽음의 맹세' },
       { file: 'Eqp_Immortal_Legacy.png',          name: '불멸의 유산' },
+      { file: 'Eqp_Starving_Blood_Spirit.png',    name: '굶주리는 핏빛 원혼' },
     ],
   },
   {

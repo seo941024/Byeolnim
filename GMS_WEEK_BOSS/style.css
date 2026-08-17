@@ -22,11 +22,10 @@
 /* ── CSS 변수 ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  /* 상단 고정 영역 높이. 헤더 + 공지 전광판.
-     사이드바/콘텐츠가 "헤더 아래"에 붙는 기준값이라 전광판을 없애면 --tick-h만 0으로 두면 된다. */
+  /* 상단 고정 영역 높이. 사이드바/콘텐츠가 "헤더 아래"에 붙는 기준값이다.
+     헤더 밑에 띠를 하나 더 깔게 되면 --top-h에 그 높이만 더하면 된다. */
   --hdr-h:  60px;
-  --tick-h: 34px;
-  --top-h:  calc(var(--hdr-h) + var(--tick-h));
+  --top-h:  var(--hdr-h);
 
   /* 배경 — 별님 우주 다크 (보라 채도 낮춤) */
   --bg:      #08060d;
@@ -220,49 +219,6 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 @media (max-width: 768px) {
   ::-webkit-scrollbar { display: none; }
   * { scrollbar-width: none; -ms-overflow-style: none; }
-}
-
-/* ── 공지 전광판 (헤더 바로 아래, 우 → 좌 흐르는 LED 스타일) ── */
-.ticker {
-  height: var(--tick-h);
-  position: sticky; top: var(--hdr-h); z-index: 99;
-  flex-shrink: 0;
-  background: #000;
-  border-bottom: 1px solid rgba(246,199,68,.35);
-  overflow: hidden;
-  display: flex; align-items: center;
-}
-.ticker__track {
-  display: flex; flex-shrink: 0;
-  white-space: nowrap;
-  will-change: transform;
-  animation: ticker-scroll 26s linear infinite;
-}
-/* 같은 문구를 두 벌 이어 붙여 놓고 -50%까지 밀면 끊김 없이 이어진다 */
-@keyframes ticker-scroll {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.ticker__msg {
-  font-size: .92rem; font-weight: 900; letter-spacing: .2px;
-  /* 노랑은 명도를 올리면 채도가 깎여 흰색이 된다. 대신 가장 밝게 보이는 60° 쪽으로
-     색상을 옮겨 채도 100%를 유지한 채 휘도만 올렸다. */
-  color: #ffee00;
-  /* 글로우가 세면 안개처럼 깔려 오버레이로 보이고, 아예 없으면 전광판 느낌이 죽는다.
-     반경/농도를 절반쯤으로 낮춰 윤곽은 살리고 번짐만 걷어낸 중간값. */
-  text-shadow: 0 0 4px rgba(255,238,0,.42);
-  padding-right: 64px;
-}
-.ticker__msg::before {
-  content: '●';
-  color: rgba(255,210,63,.45);
-  font-size: .6em;
-  vertical-align: middle;
-  margin-right: 12px;
-}
-.ticker:hover .ticker__track { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) {
-  .ticker__track { animation: none; }
 }
 
 /* ── HEADER ── */
@@ -1351,6 +1307,21 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: flex; justify-content: flex-end; gap: 10px;
   background: var(--bg3);
 }
+/* ── 첫 방문 공지 카드 ── */
+.modal__title.modal__title--notice { font-size: 1.4rem; font-weight: 900; letter-spacing: -.3px; }
+.notice-tag {
+  align-self: flex-start;
+  padding: 4px 12px; border-radius: 999px;
+  background: rgba(255,238,0,.14);
+  border: 1px solid rgba(255,238,0,.4);
+  color: #ffee00;
+  font-size: .78rem; font-weight: 900; letter-spacing: .6px;
+}
+.notice-item { display: flex; flex-direction: column; gap: 5px; }
+.notice-item__head { font-size: 1.06rem; font-weight: 900; color: var(--text); }
+.notice-item__desc { font-size: .95rem; line-height: 1.6; color: var(--text-sub); }
+.notice-date { font-size: .84rem; color: var(--text-dim); }
+
 .job-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(66px,1fr)); gap: 6px; max-height: 210px; overflow-y: auto; padding: 2px; }
 .job-grid--hidden { display: none; }
 .job-item {

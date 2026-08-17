@@ -1352,29 +1352,65 @@ function applyRootFontSize() {
 MOBILE_MQ.addEventListener('change', applyRootFontSize);
 window.addEventListener('resize', applyRootFontSize);
 
-/* ── 공지 전광판 ──
-   업데이트할 때 이 배열에 문구를 추가/교체하면 된다. 여러 개면 순서대로 이어서 흐른다. */
-const TICKER_NOTICES = [
-  '보스 카드 업데이트가 완료되었습니다. 노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.',
-];
+/* ── 첫 방문 공지 카드 ──
+   업데이트할 때: id를 새 값으로 바꾸고 date/items를 고치면 된다.
+   id가 바뀌면 예전에 "확인"을 누른 사람에게도 새 공지가 한 번 다시 뜬다. */
+const NOTICE = {
+  id: '2026-08-17-boss-drops',
+  date: '2026. 08. 17.',
+  title: '업데이트 안내',
+  items: [
+    {
+      head: '보스 카드 업데이트',
+      desc: '노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.',
+    },
+  ],
+};
+const NOTICE_SEEN_KEY = 'gms_notice_seen';
 
-function renderTicker() {
-  const track = document.getElementById('tickerTrack');
-  const bar = document.getElementById('ticker');
-  if (!track || !bar) return;
-  if (!TICKER_NOTICES.length) { bar.style.display = 'none'; return; }
+function showNoticeModal() {
+  if (!NOTICE.items.length) return;
+  if (localStorage.getItem(NOTICE_SEEN_KEY) === NOTICE.id) return;
+
   const esc = s => s.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
-  const one = TICKER_NOTICES.map(m => `<span class="ticker__msg">${esc(m)}</span>`).join('');
-  // 한 벌이 화면보다 좁으면 -50%로 밀었을 때 뒤가 비어 보인다 → 화면을 덮을 만큼 채운 뒤
-  // 그걸 두 벌 넣어야 -50% 지점이 시작과 같아져 끊김 없이 순환한다.
-  track.innerHTML = one;
-  const oneW = track.scrollWidth;
-  const need = oneW > 0 ? Math.max(1, Math.ceil(bar.clientWidth / oneW)) : 1;
-  const block = one.repeat(need);
-  track.innerHTML = block + block;
+  let overlay = document.getElementById('noticeOverlay');
+  if (!overlay) {
+    overlay = document.createElement('div');
+    overlay.id = 'noticeOverlay';
+    overlay.className = 'overlay';
+    document.body.appendChild(overlay);
+  }
+  overlay.innerHTML = `
+    <div class="modal" style="width:min(520px,94vw)">
+      <div class="modal__head">
+        <span class="modal__title modal__title--notice">${esc(NOTICE.title)}</span>
+        <button class="modal__close" id="noticeClose">×</button>
+      </div>
+      <div class="modal__body">
+        <span class="notice-tag">UPDATE</span>
+        ${NOTICE.items.map(it => `
+          <div class="notice-item">
+            <div class="notice-item__head">${esc(it.head)}</div>
+            <div class="notice-item__desc">${esc(it.desc)}</div>
+          </div>`).join('')}
+        <div class="notice-date">${esc(NOTICE.date)}</div>
+      </div>
+      <div class="modal__foot">
+        <button class="sbtn sbtn--primary" id="noticeOk">확인</button>
+      </div>
+    </div>`;
+  overlay.classList.add('open');
+
+  // 확인을 눌러야 다시 안 뜬다. ×나 바깥 클릭으로 닫으면 다음 방문에 또 보여준다.
+  const close = (remember) => {
+    if (remember) localStorage.setItem(NOTICE_SEEN_KEY, NOTICE.id);
+    overlay.classList.remove('open');
+  };
+  document.getElementById('noticeOk').addEventListener('click', () => close(true));
+  document.getElementById('noticeClose').addEventListener('click', () => close(false));
+  overlay.addEventListener('click', e => { if (e.target === overlay) close(false); });
 }
-document.addEventListener('DOMContentLoaded', renderTicker);
-window.addEventListener('resize', renderTicker);
+document.addEventListener('DOMContentLoaded', showNoticeModal);
 
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;

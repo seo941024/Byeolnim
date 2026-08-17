@@ -22,6 +22,12 @@
 /* ── CSS 변수 ── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
+  /* 상단 고정 영역 높이. 헤더 + 공지 전광판.
+     사이드바/콘텐츠가 "헤더 아래"에 붙는 기준값이라 전광판을 없애면 --tick-h만 0으로 두면 된다. */
+  --hdr-h:  60px;
+  --tick-h: 34px;
+  --top-h:  calc(var(--hdr-h) + var(--tick-h));
+
   /* 배경 — 별님 우주 다크 (보라 채도 낮춤) */
   --bg:      #08060d;
   --bg2:     #100e1b;
@@ -216,9 +222,48 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   * { scrollbar-width: none; -ms-overflow-style: none; }
 }
 
+/* ── 공지 전광판 (헤더 바로 아래, 우 → 좌 흐르는 LED 스타일) ── */
+.ticker {
+  height: var(--tick-h);
+  position: sticky; top: var(--hdr-h); z-index: 99;
+  flex-shrink: 0;
+  background: #000;
+  border-bottom: 1px solid rgba(246,199,68,.35);
+  overflow: hidden;
+  display: flex; align-items: center;
+}
+.ticker__track {
+  display: flex; flex-shrink: 0;
+  white-space: nowrap;
+  will-change: transform;
+  animation: ticker-scroll 26s linear infinite;
+}
+/* 같은 문구를 두 벌 이어 붙여 놓고 -50%까지 밀면 끊김 없이 이어진다 */
+@keyframes ticker-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ticker__msg {
+  font-size: .92rem; font-weight: 800; letter-spacing: .2px;
+  color: #ffd23f;
+  text-shadow: 0 0 8px rgba(255,210,63,.55);
+  padding-right: 64px;
+}
+.ticker__msg::before {
+  content: '●';
+  color: rgba(255,210,63,.45);
+  font-size: .6em;
+  vertical-align: middle;
+  margin-right: 12px;
+}
+.ticker:hover .ticker__track { animation-play-state: paused; }
+@media (prefers-reduced-motion: reduce) {
+  .ticker__track { animation: none; }
+}
+
 /* ── HEADER ── */
 .header {
-  height: 60px;
+  height: var(--hdr-h);
   background: rgba(6,4,15,.75);
   
   
@@ -298,7 +343,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
    px로 고정하면 글자 크기(root font-size)를 키웠을 때 사이드바만 그대로라 긴 직업명
    ("Arch Mage (Ice, Lightning)")이 다시 줄바꿈된다 → rem으로 바꿔 글자와 같이 커지게 함.
    22.67rem × 15px = 340px 로 기존 값과 동일. */
-.app { display: grid; grid-template-columns: 22.67rem 1fr; flex: 1; min-height: calc(100vh - 60px);  }
+.app { display: grid; grid-template-columns: 22.67rem 1fr; flex: 1; min-height: calc(100vh - var(--top-h));  }
 
 /* ── SIDEBAR ── */
 .sidebar {
@@ -307,8 +352,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   
   border-right: 1px solid rgba(var(--hue),.18);
   display: flex; flex-direction: column;
-  position: sticky; top: 60px;
-  height: calc(100vh - 60px); overflow-y: auto;
+  position: sticky; top: var(--top-h);
+  height: calc(100vh - var(--top-h)); overflow-y: auto;
   box-shadow: 2px 0 24px rgba(0,0,0,.4);
 }
 
@@ -554,7 +599,7 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   padding: 24px;
   display: flex; flex-direction: column; gap: 0;
   background: transparent;
-  min-height: calc(100vh - 60px);
+  min-height: calc(100vh - var(--top-h));
   min-width: 0;   /* 넓은 자식이 레이아웃을 밀지 않고 자체 스크롤하도록 */
 }
 .sec { display: none; flex-direction: column; gap: 16px; min-width: 0; }
@@ -1811,8 +1856,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
   /* 사이드바 = 좌측 슬라이드 드로어 */
   .sidebar {
-    position: fixed; top: 60px; left: 0; z-index: 90;
-    width: 80vw; max-width: 300px; height: calc(100vh - 60px);
+    position: fixed; top: var(--top-h); left: 0; z-index: 90;
+    width: 80vw; max-width: 300px; height: calc(100vh - var(--top-h));
     transform: translateX(-100%);
     transition: transform .28s ease;
     overflow-y: auto; -webkit-overflow-scrolling: touch;

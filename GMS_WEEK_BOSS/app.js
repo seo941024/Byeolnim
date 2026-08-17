@@ -1352,6 +1352,30 @@ function applyRootFontSize() {
 MOBILE_MQ.addEventListener('change', applyRootFontSize);
 window.addEventListener('resize', applyRootFontSize);
 
+/* ── 공지 전광판 ──
+   업데이트할 때 이 배열에 문구를 추가/교체하면 된다. 여러 개면 순서대로 이어서 흐른다. */
+const TICKER_NOTICES = [
+  '보스 카드 업데이트가 완료되었습니다. 노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.',
+];
+
+function renderTicker() {
+  const track = document.getElementById('tickerTrack');
+  const bar = document.getElementById('ticker');
+  if (!track || !bar) return;
+  if (!TICKER_NOTICES.length) { bar.style.display = 'none'; return; }
+  const esc = s => s.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+  const one = TICKER_NOTICES.map(m => `<span class="ticker__msg">${esc(m)}</span>`).join('');
+  // 한 벌이 화면보다 좁으면 -50%로 밀었을 때 뒤가 비어 보인다 → 화면을 덮을 만큼 채운 뒤
+  // 그걸 두 벌 넣어야 -50% 지점이 시작과 같아져 끊김 없이 순환한다.
+  track.innerHTML = one;
+  const oneW = track.scrollWidth;
+  const need = oneW > 0 ? Math.max(1, Math.ceil(bar.clientWidth / oneW)) : 1;
+  const block = one.repeat(need);
+  track.innerHTML = block + block;
+}
+document.addEventListener('DOMContentLoaded', renderTicker);
+window.addEventListener('resize', renderTicker);
+
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
   document.body.dataset.font = name;

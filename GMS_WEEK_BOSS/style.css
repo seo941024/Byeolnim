@@ -2113,6 +2113,15 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .pm, .pp { min-width: 36px; min-height: 36px; }
   .cg-card__save { min-height: 34px; }
 
+  /* 달력 날짜 칸 키우기 — 375px에서 칸이 40px밖에 안 나와 누르기 힘들었다.
+     칸은 정사각형(aspect-ratio)이라 세로만 늘릴 수 없고, min-height를 주면
+     폭보다 커져서 칸끼리 겹친다. 결국 좌우 여백에서 폭을 회수하는 수밖에 없어
+     패널 여백(18→8)·칸 간격(5→4)을 줄이고 패널을 좌우로 4px씩 내밀어
+     40 → 약 45px을 확보한다. */
+  .mc-panel { padding: 14px 8px; margin-left: -4px; margin-right: -4px; }
+  .mc-grid { gap: 4px; }
+  .mc-cell { padding: 4px; }
+
   /* 그리드 해제 → 콘텐츠 전체폭 */
   .app { display: block; min-width: 0; }
   .content { padding: 14px; min-height: 0; }

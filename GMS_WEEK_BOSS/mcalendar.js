@@ -90,7 +90,9 @@ function mcCharFace(ch) {
   return ch.fetched?.img || charJobHeadSrc(ch) || '';
 }
 
-/* ── 렌더 ── */
+
+/* ═══════════ 달력 화면 ═══════════
+   달력이 주인공이고, 캐릭터 선택과 기록 입력은 눌렀을 때 모달로 연다. */
 function renderMapleCalendar() {
   const sec = document.getElementById('sec-mcalendar');
   if (!sec) return;
@@ -103,94 +105,32 @@ function renderMapleCalendar() {
     <div class="sec-head">
       <h2 class="sec-title">메이플 캘린더</h2>
     </div>
-    <p class="dt-help">캐릭터를 고르고 날짜를 고른 뒤, 아이템 이미지를 클릭하면 그 날짜에 기록됩니다.</p>
+    <p class="dt-help">날짜를 클릭하면 보스 일정과 획득한 아이템을 기록할 수 있습니다.</p>
 
     <div class="mc-panel">
-      <div class="mc-step__label">1. 캐릭터</div>
-      <div class="mc-chars" id="mcChars"></div>
-    </div>
-
-    <div class="mc-panel">
-      <div class="mc-cal__head">
-        <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
-        <span class="mc-cal__title" id="mcTitle"></span>
-        <button class="sbtn sbtn--ghost" id="mcNext">›</button>
-        <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday">오늘</button>
+      <div class="mc-topbar">
+        <button class="mc-charchip" id="mcCharChip"></button>
+        <div class="mc-cal__head">
+          <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
+          <span class="mc-cal__title" id="mcTitle"></span>
+          <button class="sbtn sbtn--ghost" id="mcNext">›</button>
+          <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday">오늘</button>
+        </div>
       </div>
       <div class="mc-grid" id="mcGrid"></div>
-    </div>
-
-    <div class="mc-panel">
-      <div class="mc-step__label">3. 보스 일정 <span class="mc-step__sub" id="mcEvSub"></span></div>
-      <div class="mc-ev-form">
-        <input class="inp mc-ev__text" id="mcEvText" type="text" maxlength="40"
-               placeholder="보스 명과 시간을 간략하게 입력해주세요">
-        <div class="mc-ev__time">
-          <select class="inp mc-ev__ampm" id="mcEvAmpm">
-            <option value="오전">오전</option>
-            <option value="오후">오후</option>
-          </select>
-          <input class="inp mc-ev__num" id="mcEvH" type="number" min="0" max="12" step="1" placeholder="시">
-          <span class="mc-ev__colon">:</span>
-          <input class="inp mc-ev__num" id="mcEvM" type="number" min="0" max="59" step="1" placeholder="분">
-        </div>
-        <div class="mc-ev__color">
-          <div class="mc-pick">
-            <div class="mc-pick__sv" id="mcPickSv"><span class="mc-pick__dot" id="mcPickSvDot"></span></div>
-            <div class="mc-pick__hue" id="mcPickHue"><span class="mc-pick__hdot" id="mcPickHueDot"></span></div>
-          </div>
-          <div class="mc-pick__out">
-            <span class="mc-pick__prev" id="mcPickPrev"></span>
-            <span class="mc-pick__val" id="mcPickVal"></span>
-          </div>
-        </div>
-        <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
-      </div>
-    </div>
-
-    <div class="mc-panel">
-      <div class="mc-step__label">4. 획득한 아이템 <span class="mc-step__sub" id="mcSelLabel"></span></div>
-      <div id="mcItems"></div>
-    </div>
-
-    <div class="mc-panel">
-      <div class="mc-step__label">기록 <span class="mc-step__sub" id="mcLogLabel"></span></div>
-      <div class="mc-log" id="mcLog"></div>
     </div>`;
 
   document.getElementById('mcPrev').addEventListener('click', () => mcShiftMonth(-1));
   document.getElementById('mcNext').addEventListener('click', () => mcShiftMonth(1));
   document.getElementById('mcToday').addEventListener('click', () => {
     const now = new Date();
-    mcState.y = now.getFullYear(); mcState.m = now.getMonth(); mcState.sel = todayStr();
-    mcRenderGrid(); mcRenderLog(); mcRenderSelLabel(); mcRenderEvSub();
+    mcState.y = now.getFullYear(); mcState.m = now.getMonth();
+    mcRenderGrid();
   });
+  document.getElementById('mcCharChip').addEventListener('click', mcOpenCharPicker);
 
-  mcInitPicker();
-  document.getElementById('mcEvAdd').addEventListener('click', mcAddEvent);
-  // 숫자칸은 키보드로도 범위를 벗어날 수 있어서(min/max는 스피너만 막는다) 직접 다듬는다
-  mcClampInput(document.getElementById('mcEvH'), 0, 12);
-  mcClampInput(document.getElementById('mcEvM'), 0, 59);
-
-  mcRenderChars();
+  mcRenderCharChip();
   mcRenderGrid();
-  mcRenderItems();
-  mcRenderLog();
-  mcRenderSelLabel();
-  mcRenderEvSub();
-}
-
-/* 범위를 벗어난 값 자체를 못 적게 한다. 지우는 중(빈 칸)은 건드리지 않는다. */
-function mcClampInput(el, min, max) {
-  const fix = () => {
-    if (el.value === '') return;
-    let n = parseInt(el.value.replace(/\D/g, ''), 10);
-    if (isNaN(n)) { el.value = ''; return; }
-    n = Math.max(min, Math.min(max, n));
-    el.value = String(n);
-  };
-  el.addEventListener('input', fix);
-  el.addEventListener('blur', fix);
 }
 
 function mcShiftMonth(delta) {
@@ -198,6 +138,216 @@ function mcShiftMonth(delta) {
   mcState.y = d.getFullYear();
   mcState.m = d.getMonth();
   mcRenderGrid();
+}
+
+/* ── 지금 보고 있는 캐릭터 ── */
+function mcRenderCharChip() {
+  const chip = document.getElementById('mcCharChip');
+  if (!chip) return;
+  const ch = mcChar(mcState.charId);
+  if (!ch) {
+    chip.innerHTML = '<span class="mc-charchip__name">사이드바에서 캐릭터를 먼저 추가하세요</span>';
+    return;
+  }
+  const face = mcCharFace(ch);
+  chip.innerHTML = `
+    <span class="mc-charchip__face">
+      ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
+    </span>
+    <span class="mc-charchip__body">
+      <span class="mc-charchip__name">${mcEsc(ch.name)}</span>
+      <span class="mc-charchip__sub">캐릭터 변경</span>
+    </span>`;
+}
+
+/* ── 캐릭터 선택 모달 ── */
+function mcOverlay(id) {
+  let ov = document.getElementById(id);
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = id;
+    ov.className = 'overlay';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+  }
+  return ov;
+}
+
+function mcOpenCharPicker() {
+  if (!state.chars.length) return alert('사이드바에서 캐릭터를 먼저 추가하세요.');
+  const ov = mcOverlay('mcCharOverlay');
+  ov.innerHTML = `
+    <div class="modal" style="width:min(680px,94vw)">
+      <div class="modal__head">
+        <span class="modal__title modal__title--mc">캐릭터 선택</span>
+        <button class="modal__close" id="mcCharClose">×</button>
+      </div>
+      <div class="modal__body">
+        <div class="mc-chars">
+          ${state.chars.map(ch => {
+            const face = mcCharFace(ch);
+            return `
+              <button class="mc-char${ch.id === mcState.charId ? ' sel' : ''}" data-cid="${ch.id}" title="${mcEsc(ch.name)}">
+                <span class="mc-char__face">
+                  ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
+                </span>
+                <span class="mc-char__name">${mcEsc(ch.name)}</span>
+              </button>`;
+          }).join('')}
+        </div>
+      </div>
+    </div>`;
+  ov.classList.add('open');
+  document.getElementById('mcCharClose').addEventListener('click', () => ov.classList.remove('open'));
+  ov.querySelectorAll('.mc-char').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mcState.charId = Number(btn.dataset.cid);
+      ov.classList.remove('open');
+      mcRenderCharChip(); mcRenderGrid();
+    });
+  });
+}
+
+/* ── 달력 ── */
+function mcRenderGrid() {
+  const grid = document.getElementById('mcGrid');
+  const title = document.getElementById('mcTitle');
+  if (!grid) return;
+  title.textContent = `${mcState.y}년 ${mcState.m + 1}월`;
+
+  const data = mcLoad();
+  const evData = mcLoadEv();
+  const first = new Date(mcState.y, mcState.m, 1).getDay();
+  const days = new Date(mcState.y, mcState.m + 1, 0).getDate();
+  const today = todayStr();
+
+  let html = MC_DOW.map((d, i) =>
+    `<div class="mc-dow${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${d}</div>`).join('');
+  // 1일이 무슨 요일인지에 맞춰 앞을 비운다
+  html += '<div class="mc-cell mc-cell--pad"></div>'.repeat(first);
+
+  for (let d = 1; d <= days; d++) {
+    const ds = mcDateStr(mcState.y, mcState.m, d);
+    const recs = mcVisible(data[ds]);
+    const evs = mcVisible(evData[ds]);
+    const dow = (first + d - 1) % 7;
+    const cls = ['mc-cell'];
+    if (ds === today) cls.push('today');
+    if (dow === 0) cls.push('sun');
+    if (dow === 6) cls.push('sat');
+    // 칸이 터지지 않게 아이콘은 6개까지만 보여주고 나머지는 +N으로 줄인다
+    const shown = recs.slice(0, 6);
+    const rest = recs.length - shown.length;
+    // 일정 라벨은 위에서부터 차례로, 아이템은 항상 칸 맨 아래에 깔린다
+    html += `
+      <button class="${cls.join(' ')}" data-date="${ds}">
+        <span class="mc-cell__d">${d}</span>
+        <span class="mc-cell__evs">
+          ${evs.map(ev => `
+            <span class="mc-cell__ev" style="background:${mcEsc(ev.color)};color:${mcTextOn(ev.color)}"
+                  title="${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}">
+              ${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}
+            </span>`).join('')}
+        </span>
+        <span class="mc-cell__icons">
+          ${shown.map(r => {
+            const it = mcItem(r.f);
+            return `<img src="images/WANT/${mcEsc(r.f)}" alt="${mcEsc(it?.name || '')}" onerror="this.style.display='none'">`;
+          }).join('')}
+          ${rest > 0 ? `<span class="mc-cell__more">+${rest}</span>` : ''}
+        </span>
+      </button>`;
+  }
+  grid.innerHTML = html;
+
+  grid.querySelectorAll('.mc-cell[data-date]').forEach(cell => {
+    cell.addEventListener('click', () => mcOpenDay(cell.dataset.date));
+  });
+}
+
+/* ═══════════ 날짜 모달 — 여기서 일정과 아이템을 기록한다 ═══════════ */
+function mcOpenDay(date) {
+  if (!mcState.charId) return alert('사이드바에서 캐릭터를 먼저 추가하세요.');
+  mcState.sel = date;
+  const ch = mcChar(mcState.charId);
+  const dow = MC_DOW[new Date(date + 'T00:00:00').getDay()];
+
+  const ov = mcOverlay('mcDayOverlay');
+  ov.innerHTML = `
+    <div class="modal modal--mc-day">
+      <div class="modal__head">
+        <span class="modal__title modal__title--mc">${mcEsc(date)} (${dow}) · ${mcEsc(ch.name)}</span>
+        <button class="modal__close" id="mcDayClose">×</button>
+      </div>
+      <div class="modal__body">
+        <div class="mc-sec">
+          <div class="mc-sec__label">
+            보스 일정
+            <span class="mc-sec__sub">라벨은 ${MC_MAX_EVENTS}개까지 추가 가능합니다 <b id="mcEvSub"></b></span>
+          </div>
+          <div class="mc-ev-form">
+            <input class="inp mc-ev__text" id="mcEvText" type="text" maxlength="40"
+                   placeholder="보스 명 혹은 파티 명을 간단하게 적어주세요.">
+            <div class="mc-ev__time">
+              <select class="inp mc-ev__ampm" id="mcEvAmpm">
+                <option value="오전">오전</option>
+                <option value="오후">오후</option>
+              </select>
+              <input class="inp mc-ev__num" id="mcEvH" type="text" inputmode="numeric" maxlength="2" value="00">
+              <span class="mc-ev__colon">:</span>
+              <input class="inp mc-ev__num" id="mcEvM" type="text" inputmode="numeric" maxlength="2" value="00">
+            </div>
+            <div class="mc-ev__color">
+              <div class="mc-pick">
+                <div class="mc-pick__sv" id="mcPickSv"><span class="mc-pick__dot" id="mcPickSvDot"></span></div>
+                <div class="mc-pick__hue" id="mcPickHue"><span class="mc-pick__hdot" id="mcPickHueDot"></span></div>
+              </div>
+              <div class="mc-pick__out">
+                <span class="mc-pick__prev" id="mcPickPrev"></span>
+                <span class="mc-pick__val" id="mcPickVal"></span>
+              </div>
+            </div>
+            <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
+          </div>
+        </div>
+
+        <div class="mc-sec">
+          <div class="mc-sec__label">획득한 아이템</div>
+          <div id="mcItems"></div>
+        </div>
+
+        <div class="mc-sec">
+          <div class="mc-sec__label">기록</div>
+          <div class="mc-log" id="mcLog"></div>
+        </div>
+      </div>
+    </div>`;
+  ov.classList.add('open');
+
+  document.getElementById('mcDayClose').addEventListener('click', () => ov.classList.remove('open'));
+  document.getElementById('mcEvAdd').addEventListener('click', mcAddEvent);
+  // 00~12 / 00~59. 두 자리로 맞춰 넣어야 09시, 00분처럼 적힌다.
+  mcTimeInput(document.getElementById('mcEvH'), 12);
+  mcTimeInput(document.getElementById('mcEvM'), 59);
+
+  mcInitPicker();
+  mcRenderItems();
+  mcRenderLog();
+  mcRenderEvSub();
+}
+
+/* 숫자만, 두 자리로, 범위 밖은 아예 못 적게. 다 지우면 00으로 되돌린다. */
+function mcTimeInput(el, max) {
+  el.addEventListener('input', () => {
+    let v = el.value.replace(/\D/g, '').slice(0, 2);
+    if (v !== '' && parseInt(v, 10) > max) v = String(max).padStart(2, '0');
+    el.value = v;
+  });
+  el.addEventListener('blur', () => {
+    const n = parseInt(el.value, 10);
+    el.value = isNaN(n) ? '00' : String(Math.min(max, Math.max(0, n))).padStart(2, '0');
+  });
+  el.addEventListener('focus', () => el.select());
 }
 
 /* ── 라벨 색 고르기 ──
@@ -248,23 +398,15 @@ function mcRenderPicker() {
 function mcEventsOf(date) { return mcVisible(mcLoadEv()[date]); }
 
 function mcFmtTime(ev) {
-  return `${ev.ampm} ${ev.h}:${String(ev.mi).padStart(2, '0')}`;
+  return `${ev.ampm} ${String(ev.h).padStart(2, '0')}:${String(ev.mi).padStart(2, '0')}`;
 }
 
 function mcAddEvent() {
-  if (!mcState.charId) return alert('먼저 캐릭터를 선택하세요.');
-  if (!mcState.sel) return alert('먼저 날짜를 선택하세요.');
-
   const text = document.getElementById('mcEvText').value.trim();
-  const hEl = document.getElementById('mcEvH');
-  const mEl = document.getElementById('mcEvM');
-  if (!text) return alert('보스 명과 시간을 간략하게 입력해주세요.');
-  if (hEl.value === '' || mEl.value === '') return alert('시간을 입력하세요.');
+  if (!text) return alert('보스 명 혹은 파티 명을 간단하게 적어주세요.');
 
-  const h = parseInt(hEl.value, 10);
-  const mi = parseInt(mEl.value, 10);
-  if (isNaN(h) || h < 0 || h > 12) return alert('시는 0~12까지만 입력할 수 있습니다.');
-  if (isNaN(mi) || mi < 0 || mi > 59) return alert('분은 0~59까지만 입력할 수 있습니다.');
+  const h = parseInt(document.getElementById('mcEvH').value, 10) || 0;
+  const mi = parseInt(document.getElementById('mcEvM').value, 10) || 0;
 
   const data = mcLoadEv();
   const mine = (data[mcState.sel] || []).filter(e => e.c === mcState.charId);
@@ -280,7 +422,8 @@ function mcAddEvent() {
   });
   mcStoreEv(data);
   document.getElementById('mcEvText').value = '';
-  hEl.value = ''; mEl.value = '';
+  document.getElementById('mcEvH').value = '00';
+  document.getElementById('mcEvM').value = '00';
   mcRenderGrid(); mcRenderLog(); mcRenderEvSub();
 }
 
@@ -298,98 +441,10 @@ function mcRemoveEvent(date, id) {
 
 function mcRenderEvSub() {
   const el = document.getElementById('mcEvSub');
-  if (!el) return;
-  const n = mcEventsOf(mcState.sel).length;
-  el.textContent = `${mcState.sel || ''} · ${n}/${MC_MAX_EVENTS}`;
+  if (el) el.textContent = `(${mcEventsOf(mcState.sel).length}/${MC_MAX_EVENTS})`;
 }
 
-function mcRenderChars() {
-  const box = document.getElementById('mcChars');
-  if (!box) return;
-  if (!state.chars.length) {
-    box.innerHTML = '<p class="empty">사이드바에서 캐릭터를 먼저 추가하세요.</p>';
-    return;
-  }
-  const chars = state.chars.map(ch => {
-    const face = mcCharFace(ch);
-    return `
-      <button class="mc-char${ch.id === mcState.charId ? ' sel' : ''}" data-cid="${ch.id}" title="${mcEsc(ch.name)}">
-        <span class="mc-char__face">
-          ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
-        </span>
-        <span class="mc-char__name">${mcEsc(ch.name)}</span>
-      </button>`;
-  }).join('');
-  box.innerHTML = chars;
-
-  box.querySelectorAll('.mc-char').forEach(btn => {
-    btn.addEventListener('click', () => {
-      mcState.charId = Number(btn.dataset.cid);
-      mcRenderChars(); mcRenderGrid(); mcRenderLog(); mcRenderSelLabel(); mcRenderEvSub();
-    });
-  });
-}
-
-function mcRenderGrid() {
-  const grid = document.getElementById('mcGrid');
-  const title = document.getElementById('mcTitle');
-  if (!grid) return;
-  title.textContent = `${mcState.y}년 ${mcState.m + 1}월`;
-
-  const data = mcLoad();
-  const evData = mcLoadEv();
-  const first = new Date(mcState.y, mcState.m, 1).getDay();
-  const days = new Date(mcState.y, mcState.m + 1, 0).getDate();
-  const today = todayStr();
-
-  let html = MC_DOW.map((d, i) =>
-    `<div class="mc-dow${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${d}</div>`).join('');
-  // 1일이 무슨 요일인지에 맞춰 앞을 비운다
-  html += '<div class="mc-cell mc-cell--pad"></div>'.repeat(first);
-
-  for (let d = 1; d <= days; d++) {
-    const ds = mcDateStr(mcState.y, mcState.m, d);
-    const recs = mcVisible(data[ds]);
-    const evs = mcVisible(evData[ds]);
-    const dow = (first + d - 1) % 7;
-    const cls = ['mc-cell'];
-    if (ds === today) cls.push('today');
-    if (ds === mcState.sel) cls.push('sel');
-    if (dow === 0) cls.push('sun');
-    if (dow === 6) cls.push('sat');
-    // 칸이 터지지 않게 아이콘은 6개까지만 보여주고 나머지는 +N으로 줄인다
-    const shown = recs.slice(0, 6);
-    const rest = recs.length - shown.length;
-    // 일정 라벨은 위에서부터 차례로, 아이템은 항상 칸 맨 아래에 깔린다
-    html += `
-      <button class="${cls.join(' ')}" data-date="${ds}">
-        <span class="mc-cell__d">${d}</span>
-        <span class="mc-cell__evs">
-          ${evs.map(ev => `
-            <span class="mc-cell__ev" style="background:${mcEsc(ev.color)};color:${mcTextOn(ev.color)}"
-                  title="${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}">
-              ${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}
-            </span>`).join('')}
-        </span>
-        <span class="mc-cell__icons">
-          ${shown.map(r => {
-            const it = mcItem(r.f);
-            return `<img src="images/WANT/${mcEsc(r.f)}" alt="${mcEsc(it?.name || '')}" onerror="this.style.display='none'">`;
-          }).join('')}
-          ${rest > 0 ? `<span class="mc-cell__more">+${rest}</span>` : ''}
-        </span>
-      </button>`;
-  }
-  grid.innerHTML = html;
-
-  grid.querySelectorAll('.mc-cell[data-date]').forEach(cell => {
-    cell.addEventListener('click', () => {
-      mcState.sel = cell.dataset.date;
-      mcRenderGrid(); mcRenderLog(); mcRenderSelLabel(); mcRenderEvSub();
-    });
-  });
-}
-
+/* ── 아이템 ── */
 function mcRenderItems() {
   const box = document.getElementById('mcItems');
   if (!box) return;
@@ -411,8 +466,6 @@ function mcRenderItems() {
 }
 
 function mcAdd(file) {
-  if (!mcState.charId) return alert('먼저 캐릭터를 선택하세요.');
-  if (!mcState.sel) return alert('먼저 날짜를 선택하세요.');
   const data = mcLoad();
   (data[mcState.sel] ||= []).push({
     id: Date.now() + Math.random(),
@@ -435,55 +488,32 @@ function mcRemove(date, id) {
   mcRenderGrid(); mcRenderLog();
 }
 
-function mcRenderSelLabel() {
-  const el = document.getElementById('mcSelLabel');
-  if (!el) return;
-  if (!mcState.sel) { el.textContent = ''; return; }
-  const who = mcChar(mcState.charId)?.name;
-  el.textContent = who ? `→ ${who} / ${mcState.sel}에 기록` : `→ ${mcState.sel}에 기록`;
-}
-
+/* ── 그날의 기록 ── */
 function mcRenderLog() {
   const box = document.getElementById('mcLog');
-  const label = document.getElementById('mcLogLabel');
   if (!box) return;
-  if (label) {
-    const who = mcChar(mcState.charId)?.name;
-    label.textContent = [who, mcState.sel].filter(Boolean).join(' · ');
-  }
 
   const evs = mcEventsOf(mcState.sel);
   const recs = mcVisible(mcLoad()[mcState.sel]);
   if (!recs.length && !evs.length) {
-    const who = mcChar(mcState.charId)?.name;
-    box.innerHTML = `<p class="empty">이 날짜에 ${who ? mcEsc(who) + '가 ' : ''}기록한 일정과 아이템이 없습니다.</p>`;
+    box.innerHTML = '<p class="empty">이 날짜에 기록한 일정과 아이템이 없습니다.</p>';
     return;
   }
 
-  const evHtml = evs.map(ev => {
-    const ch = mcChar(ev.c);
-    return `
+  const evHtml = evs.map(ev => `
       <div class="mc-logrow">
         <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
         <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
         <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
-        <span class="mc-logrow__char"><span>${mcEsc(ch?.name || '삭제된 캐릭터')}</span></span>
         <button class="mc-logrow__del" data-ev="${mcEsc(ev.id)}" title="삭제">×</button>
-      </div>`;
-  }).join('');
+      </div>`).join('');
 
   box.innerHTML = evHtml + recs.map(r => {
     const it = mcItem(r.f);
-    const ch = mcChar(r.c);
-    const face = ch ? mcCharFace(ch) : '';
     return `
       <div class="mc-logrow">
         <img class="mc-logrow__item" src="images/WANT/${mcEsc(r.f)}" alt="" onerror="this.style.visibility='hidden'">
         <span class="mc-logrow__name">${mcEsc(it?.name || r.f)}</span>
-        <span class="mc-logrow__char">
-          ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
-          <span>${mcEsc(ch?.name || '삭제된 캐릭터')}</span>
-        </span>
         <button class="mc-logrow__del" data-id="${mcEsc(r.id)}" title="삭제">×</button>
       </div>`;
   }).join('');

@@ -62,20 +62,18 @@ function mcTextOn(hex) {
 }
 
 /* ── 화면 상태 ── */
-const MC_ALL = 'all';   // 캐릭터 선택에서 "전체" — 모든 캐릭터의 기록을 겹쳐 본다
 const mcState = {
   y: new Date().getFullYear(),
   m: new Date().getMonth(),   // 0-11
   sel: null,                  // 선택한 날짜 'YYYY-MM-DD'
-  charId: null,               // 선택한 캐릭터 id, 또는 MC_ALL
+  charId: null,               // 선택한 캐릭터 id
   hue: 4, sat: .78, val: .95, // 라벨 색 (색판 드래그로 바뀐다)
 };
 function mcColorHex() { return mcRgbToHex(mcHsvToRgb(mcState.hue, mcState.sat, mcState.val)); }
 
-/* 캘린더는 캐릭터별로 따로 보인다. "전체"일 때만 전부 겹쳐 보여준다. */
+/* 캘린더는 캐릭터별로 따로 보인다 — 선택한 캐릭터의 기록만 남긴다. */
 function mcVisible(recs) {
   if (!recs) return [];
-  if (mcState.charId === MC_ALL) return recs;
   return recs.filter(r => r.c === mcState.charId);
 }
 
@@ -98,7 +96,7 @@ function renderMapleCalendar() {
   if (!sec) return;
 
   // 선택 상태가 유효하지 않으면(캐릭터 삭제 등) 첫 캐릭터로 되돌린다
-  if (mcState.charId !== MC_ALL && !mcChar(mcState.charId)) mcState.charId = state.chars[0]?.id ?? null;
+  if (!mcChar(mcState.charId)) mcState.charId = state.chars[0]?.id ?? null;
   if (!mcState.sel) mcState.sel = todayStr();
 
   sec.innerHTML = `
@@ -254,7 +252,6 @@ function mcFmtTime(ev) {
 }
 
 function mcAddEvent() {
-  if (mcState.charId === MC_ALL) return alert('기록할 캐릭터를 선택하세요. (전체 보기에서는 추가할 수 없습니다)');
   if (!mcState.charId) return alert('먼저 캐릭터를 선택하세요.');
   if (!mcState.sel) return alert('먼저 날짜를 선택하세요.');
 
@@ -302,7 +299,6 @@ function mcRemoveEvent(date, id) {
 function mcRenderEvSub() {
   const el = document.getElementById('mcEvSub');
   if (!el) return;
-  if (mcState.charId === MC_ALL) { el.textContent = '전체 보기에서는 추가할 수 없습니다'; return; }
   const n = mcEventsOf(mcState.sel).length;
   el.textContent = `${mcState.sel || ''} · ${n}/${MC_MAX_EVENTS}`;
 }
@@ -324,17 +320,11 @@ function mcRenderChars() {
         <span class="mc-char__name">${mcEsc(ch.name)}</span>
       </button>`;
   }).join('');
-  // 캐릭터가 둘 이상일 때만 "전체"가 의미가 있다
-  const all = state.chars.length > 1 ? `
-      <button class="mc-char mc-char--all${mcState.charId === MC_ALL ? ' sel' : ''}" data-cid="${MC_ALL}" title="전체">
-        <span class="mc-char__face"><span class="mc-char__allmark">全</span></span>
-        <span class="mc-char__name">전체</span>
-      </button>` : '';
-  box.innerHTML = all + chars;
+  box.innerHTML = chars;
 
   box.querySelectorAll('.mc-char').forEach(btn => {
     btn.addEventListener('click', () => {
-      mcState.charId = btn.dataset.cid === MC_ALL ? MC_ALL : Number(btn.dataset.cid);
+      mcState.charId = Number(btn.dataset.cid);
       mcRenderChars(); mcRenderGrid(); mcRenderLog(); mcRenderSelLabel(); mcRenderEvSub();
     });
   });
@@ -421,7 +411,6 @@ function mcRenderItems() {
 }
 
 function mcAdd(file) {
-  if (mcState.charId === MC_ALL) return alert('기록할 캐릭터를 선택하세요. (전체 보기에서는 추가할 수 없습니다)');
   if (!mcState.charId) return alert('먼저 캐릭터를 선택하세요.');
   if (!mcState.sel) return alert('먼저 날짜를 선택하세요.');
   const data = mcLoad();
@@ -450,7 +439,6 @@ function mcRenderSelLabel() {
   const el = document.getElementById('mcSelLabel');
   if (!el) return;
   if (!mcState.sel) { el.textContent = ''; return; }
-  if (mcState.charId === MC_ALL) { el.textContent = '→ 기록할 캐릭터를 선택하세요'; return; }
   const who = mcChar(mcState.charId)?.name;
   el.textContent = who ? `→ ${who} / ${mcState.sel}에 기록` : `→ ${mcState.sel}에 기록`;
 }
@@ -460,14 +448,14 @@ function mcRenderLog() {
   const label = document.getElementById('mcLogLabel');
   if (!box) return;
   if (label) {
-    const who = mcState.charId === MC_ALL ? '전체' : mcChar(mcState.charId)?.name;
+    const who = mcChar(mcState.charId)?.name;
     label.textContent = [who, mcState.sel].filter(Boolean).join(' · ');
   }
 
   const evs = mcEventsOf(mcState.sel);
   const recs = mcVisible(mcLoad()[mcState.sel]);
   if (!recs.length && !evs.length) {
-    const who = mcState.charId === MC_ALL ? '' : mcChar(mcState.charId)?.name;
+    const who = mcChar(mcState.charId)?.name;
     box.innerHTML = `<p class="empty">이 날짜에 ${who ? mcEsc(who) + '가 ' : ''}기록한 일정과 아이템이 없습니다.</p>`;
     return;
   }

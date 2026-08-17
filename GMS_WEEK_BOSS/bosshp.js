@@ -19,13 +19,26 @@ function _bhpEnsureOverlay() {
   return overlay;
 }
 
+/* 이 보스가 어느 난이도에서든 드랍 목록을 갖고 있는지 */
+function _bhpBossHasAnyDrops(bossName) {
+  const prefix = bossName + '_';
+  return Object.keys(BOSS_DROP_ITEMS).some(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length);
+}
+/* 드랍이 있는 난이도 이름들 (예: ['하드','익스트림']) */
+function _bhpDropDiffs(bossName) {
+  const prefix = bossName + '_';
+  return Object.keys(BOSS_DROP_ITEMS)
+    .filter(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length)
+    .map(k => k.slice(prefix.length));
+}
+
 function _bhpOpenDropsModal(boss, active, dropItems) {
   const overlay = _bhpEnsureOverlay();
 
   overlay.innerHTML = `
     <div class="modal modal--boss-drop">
       <div class="modal__head">
-        <span class="modal__title">${active.nameOverride || boss.name} · 획득 가능한 아이템</span>
+        <span class="modal__title modal__title--boss">${active.nameOverride || boss.name}</span>
         <button class="modal__close" id="bhpModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -35,9 +48,20 @@ function _bhpOpenDropsModal(boss, active, dropItems) {
             <span class="noimg" id="bhpModalNoimg" style="display:none">BOSS</span>
           </div>
           <div class="bhp-drop-modal__items">
-            <div class="bhp-drops__list">
-              ${dropItems.map(it => `<img class="bhp-drops__icon" src="images/WANT/${it.file}" title="${it.name}" alt="${it.name}" onerror="this.style.display='none'">`).join('')}
-            </div>
+            <div class="bhp-drop-modal__itemshead">획득 가능한 아이템 목록</div>
+            ${dropItems.length ? `
+              <div class="bhp-drop-modal__diff">${active.diff}</div>
+              <div class="bhp-drop-modal__itemlist">
+                ${dropItems.map(it => `
+                  <div class="bhp-drop-item">
+                    <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="" onerror="this.style.visibility='hidden'">
+                    <span class="bhp-drop-item__name">${it.name}</span>
+                  </div>`).join('')}
+              </div>` : `
+              <p class="bhp-drop-modal__empty">
+                ${active.diff}에서는 획득 가능한 아이템이 없어요.<br>
+                <b>${_bhpDropDiffs(boss.name).join(' · ')}</b> 난이도부터 나와요.
+              </p>`}
           </div>
         </div>
       </div>
@@ -222,8 +246,10 @@ function renderBossHPTable() {
 
     const isOn = busChecked.has(boss.name);
 
-    const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
-    const hasDrops = dropItems.length > 0;
+    // 클릭 가능 여부는 "지금 고른 난이도"가 아니라 "이 보스가 어느 난이도에서든 드랍이
+    // 있는지"로 판단한다. 예전엔 선택 난이도로만 봐서, 스우처럼 노말엔 드랍이 없고
+    // 하드/익스트림에만 있는 보스가 기본 난이도에선 아예 안 눌리는 것처럼 보였다.
+    const hasDrops = _bhpBossHasAnyDrops(boss.name);
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
       <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
@@ -265,7 +291,7 @@ function renderBossHPTable() {
       const activeDiff = bossHPActiveDiffs[boss.name] || boss.diffs[0]?.diff;
       const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
       const dropItems = BOSS_DROP_ITEMS[boss.name + '_' + active.diff] || [];
-      if (!dropItems.length) return;
+      // 고른 난이도에 드랍이 없어도 모달은 띄운다 — 대신 어느 난이도부터 나오는지 안내.
       _bhpOpenDropsModal(boss, active, dropItems);
     });
   });

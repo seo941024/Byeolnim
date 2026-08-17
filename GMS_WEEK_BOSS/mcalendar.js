@@ -252,6 +252,30 @@ function mcRenderGrid() {
   const days = new Date(mcState.y, mcState.m + 1, 0).getDate();
   const today = todayStr();
 
+  /* 칸에 몇 개를 그릴지는 "화면 폭"이 아니라 "칸 크기"로 정해야 한다.
+     칸은 정사각형이라 폭=높이인데, 전체 보기로 여러 캐릭터가 겹치면 창이 조금만
+     좁아져도(1000px 등) 아이콘이 줄바꿈되며 칸을 뚫고 나가 통째로 잘렸다.
+     아이콘 줄(.mc-cell__icons)은 flex-shrink:0이라 스스로 줄지 않기 때문.
+     그래서 그리기 전에 칸 폭을 계산해 한 줄에 들어갈 만큼만 그린다. */
+  const gridGap = parseFloat(getComputedStyle(grid).columnGap) || 4;
+  const cellW = (grid.clientWidth - gridGap * 6) / 7;
+  // 라벨 글씨를 읽을 수 없는 크기면 색 막대만 보여주는 압축 모드로 전환
+  const compact = cellW < 92;
+  grid.classList.toggle('mc-grid--compact', compact);
+
+  // 아래 숫자들은 .mc-grid--compact CSS의 값과 짝이다 — 한쪽만 바꾸면 계산이 어긋난다
+  const cellPad = compact ? 4 : 5;
+  const iconPx = compact ? 14 : 21;
+  const iconGap = 2;
+  const innerW = cellW - cellPad * 2;
+  // 한 줄에 들어가는 아이콘 수 (줄바꿈은 무조건 막는다)
+  const iconFit = Math.max(1, Math.floor((innerW + iconGap) / (iconPx + iconGap)));
+  // 압축 모드는 라벨이 색 막대 한 줄로 눕기 때문에 개수 제한이 필요 없다.
+  // 아닐 때만 라벨이 세로로 쌓이므로 남는 높이만큼만 편다.
+  const dateH = compact ? 13 : 20, rowGap = compact ? 1 : 3, labelH = 20;
+  const freeH = cellW - cellPad * 2 - dateH - rowGap * 2 - iconPx;
+  const fitEvCap = compact ? Infinity : Math.max(1, Math.floor(freeH / labelH));
+
   let html = MC_DOW.map((d, i) =>
     `<div class="mc-dow${i === 0 ? ' sun' : i === 6 ? ' sat' : ''}">${d}</div>`).join('');
   // 1일이 무슨 요일인지에 맞춰 앞을 비운다
@@ -266,11 +290,16 @@ function mcRenderGrid() {
     if (ds === today) cls.push('today');
     if (dow === 0) cls.push('sun');
     if (dow === 6) cls.push('sat');
-    // 칸이 터지지 않게 아이콘은 6개까지만 보여주고 나머지는 +N으로 줄인다
-    const shown = recs.slice(0, 6);
-    const rest = recs.length - shown.length;
-    // 전체 보기에서는 여러 캐릭터의 라벨이 겹치므로 3개까지만 펼치고 나머지는 접는다
-    const evCap = mcState.viewAll ? 3 : MC_MAX_EVENTS;
+    // 아이콘은 한 줄에 들어갈 만큼만. 더 있으면 마지막 한 칸을 "+N" 자리로 양보한다.
+    let shown = recs.slice(0, iconFit);
+    let rest = recs.length - shown.length;
+    if (rest > 0) {
+      shown = recs.slice(0, Math.max(1, iconFit - 1));
+      rest = recs.length - shown.length;
+    }
+    // 전체 보기에서는 여러 캐릭터의 라벨이 겹치므로 더 적게 편다.
+    // 어느 쪽이든 칸 높이에 실제로 들어가는 수(fitEvCap)를 넘지 않는다.
+    const evCap = Math.min(mcState.viewAll ? 3 : MC_MAX_EVENTS, fitEvCap);
     const evShown = evs.slice(0, evCap);
     const evRest = evs.length - evShown.length;
     // 일정 라벨은 위에서부터 차례로, 아이템은 항상 칸 맨 아래에 깔린다
@@ -709,3 +738,15 @@ function mcRenderLog() {
     });
   }));
 }
+
+/* 칸에 몇 개를 그릴지는 칸 폭에 달려 있어서(mcRenderGrid 참고), 창 크기가 바뀌면
+   다시 그려야 압축 모드와 아이콘 개수가 맞는다. 리사이즈는 연속으로 들어오므로
+   프레임 단위로 한 번만 처리한다. */
+let mcResizeRaf = 0;
+window.addEventListener('resize', () => {
+  if (mcResizeRaf) return;
+  mcResizeRaf = requestAnimationFrame(() => {
+    mcResizeRaf = 0;
+    if (document.getElementById('mcGrid')) mcRenderGrid();
+  });
+});

@@ -1152,7 +1152,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .bhp-drop-sec:last-child { margin-bottom: 0; }
 /* 난이도 표기는 앱 공용 .dpill 재사용 (EASY/NORMAL/HARD…) */
 .bhp-drop-sec__diff { margin-bottom: 10px; }
-.bhp-drop-sec__diff .dpill { cursor: default; pointer-events: none; }
+/* 글자 길이가 달라도(EASY vs EXTREME) 박스 크기는 같게 — 폭 고정 */
+.bhp-drop-sec__diff .dpill {
+  cursor: default; pointer-events: none;
+  width: 108px; padding-left: 4px; padding-right: 4px; overflow: hidden;
+}
 /* 기본 폰트 '고딕'(ONE_Mobile_Title)은 폭이 넓어 EXTREME 같은 긴 글자가 잘린다
    — 보스 테이블 필과 동일하게 UI 폰트로 고정 */
 .bhp-drop-sec__diff .dpill__t { font-family: 'Segoe UI', 'Malgun Gothic', sans-serif; }

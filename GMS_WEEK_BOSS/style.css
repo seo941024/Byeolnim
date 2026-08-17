@@ -248,8 +248,9 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
   /* 노랑은 명도를 올리면 채도가 깎여 흰색이 된다. 대신 가장 밝게 보이는 60° 쪽으로
      색상을 옮겨 채도 100%를 유지한 채 휘도만 올렸다. */
   color: #ffee00;
-  /* 글로우 반경이 크면 글자 테두리가 번져 오히려 흐려 보인다 → 좁고 진하게 */
-  text-shadow: 0 0 5px rgba(255,238,0,.85);
+  /* 글로우(text-shadow)를 넣으면 글자 주변에 반투명 안개가 깔려 오버레이처럼 보이고
+     윤곽이 뭉개져 오히려 흐려 보인다 → 검은 배경에는 그림자 없이 생색이 가장 쨍하다 */
+  text-shadow: none;
   padding-right: 64px;
 }
 .ticker__msg::before {

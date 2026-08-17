@@ -1355,7 +1355,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-charchip__body { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .mc-charchip__name { font-size: 1.1rem; font-weight: 900; color: var(--text); }
 .mc-charchip__sub { font-size: .8rem; font-weight: 700; color: var(--text-dim); }
-.mc-topbar__left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.mc-allbtn { margin-left: auto; }   /* 전체 보기는 오른쪽 끝에 */
+.sbtn.is-off { opacity: .4; cursor: default; }
 /* 전체 보기 중에는 "기록할 캐릭터"가 잠시 물러난다는 걸 눈으로 알려준다 */
 .mc-charchip.dim { opacity: .55; }
 
@@ -1459,9 +1460,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-cell__icons img { width: 21px; height: 21px; object-fit: contain; }
 .mc-cell__more { font-size: .7rem; font-weight: 800; color: var(--text-dim); }
 
-/* 일정 입력 — 설명은 한 줄 통째로 쓰고, 시간/색/버튼은 그 아래 줄에 */
-.mc-ev-form { display: flex; flex-direction: column; gap: 14px; }
-.mc-ev__row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+/* 일정 입력 — 설명 → 시간 → 반복 → 색 → 버튼 순으로 한 항목씩 아래로 쌓는다.
+   한 줄에 몰아넣으면 좁은 화면에서 서로 밀려 글씨가 잘린다. */
+.mc-ev-form { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; }
 .mc-ev__text { width: 100%; }
 .mc-ev__time { display: flex; align-items: center; gap: 6px; }
 .mc-ev__ampm { width: 5.4em; }
@@ -1472,7 +1473,6 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-ev__repeat {
   display: flex; align-items: center; gap: 7px; cursor: pointer;
   font-size: .92rem; font-weight: 700; color: var(--text-sub);
-  padding-bottom: 9px;   /* 아래끝 정렬된 버튼과 눈높이를 맞춘다 */
 }
 .mc-ev__repeat input { accent-color: var(--primary); width: 16px; height: 16px; }
 .mc-ev__repeat b { color: var(--text-dim); font-weight: 800; }

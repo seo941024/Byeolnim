@@ -117,16 +117,14 @@ function renderMapleCalendar() {
 
     <div class="mc-panel">
       <div class="mc-topbar">
-        <div class="mc-topbar__left">
-          <button class="mc-charchip" id="mcCharChip"></button>
-          <button class="sbtn sbtn--ghost mc-allbtn" id="mcAllBtn">전체 보기</button>
-        </div>
-        <div class="mc-cal__head">
-          <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
-          <span class="mc-cal__title" id="mcTitle"></span>
-          <button class="sbtn sbtn--ghost" id="mcNext">›</button>
-          <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday">오늘</button>
-        </div>
+        <button class="mc-charchip" id="mcCharChip"></button>
+        <button class="sbtn sbtn--ghost mc-allbtn" id="mcAllBtn">전체 보기</button>
+      </div>
+      <div class="mc-cal__head">
+        <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
+        <span class="mc-cal__title" id="mcTitle"></span>
+        <button class="sbtn sbtn--ghost" id="mcNext">›</button>
+        <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday" title="이번 달 달력으로 돌아갑니다">이번 달</button>
       </div>
       <div class="mc-grid" id="mcGrid"></div>
     </div>`;
@@ -241,6 +239,13 @@ function mcRenderGrid() {
   if (!grid) return;
   title.textContent = `${mcState.y}년 ${mcState.m + 1}월`;
 
+  // 이미 이번 달을 보고 있으면 "이번 달" 버튼은 할 일이 없다 → 눌러도 아무 일이 없다는 걸
+  // 눈으로 알 수 있게 꺼둔다(예전엔 멀쩡해 보이는데 반응이 없어 오해를 샀다)
+  const nowD = new Date();
+  const atNow = mcState.y === nowD.getFullYear() && mcState.m === nowD.getMonth();
+  const todayBtn = document.getElementById('mcToday');
+  if (todayBtn) { todayBtn.disabled = atNow; todayBtn.classList.toggle('is-off', atNow); }
+
   const data = mcLoad();
   const evData = mcLoadEv();
   const first = new Date(mcState.y, mcState.m, 1).getDay();
@@ -324,7 +329,6 @@ function mcOpenDay(date) {
           <div class="mc-ev-form">
             <input class="inp mc-ev__text" id="mcEvText" type="text" maxlength="40"
                    placeholder="보스 명 혹은 파티 명을 간단하게 적어주세요.">
-            <div class="mc-ev__row">
             <div class="mc-ev__time">
               <select class="inp mc-ev__ampm" id="mcEvAmpm">
                 <option value="오전">오전</option>
@@ -334,6 +338,10 @@ function mcOpenDay(date) {
               <span class="mc-ev__colon">:</span>
               <input class="inp mc-ev__num" id="mcEvM" type="text" inputmode="numeric" maxlength="2" value="00">
             </div>
+            <label class="mc-ev__repeat">
+              <input type="checkbox" id="mcEvRepeat">
+              <span>매주 반복 <b>(${MC_REPEAT_WEEKS}주)</b></span>
+            </label>
             <div class="mc-ev__color">
               <div class="mc-pick">
                 <div class="mc-pick__sv" id="mcPickSv"><span class="mc-pick__dot" id="mcPickSvDot"></span></div>
@@ -344,12 +352,7 @@ function mcOpenDay(date) {
                 <span class="mc-pick__val" id="mcPickVal"></span>
               </div>
             </div>
-            <label class="mc-ev__repeat">
-              <input type="checkbox" id="mcEvRepeat">
-              <span>매주 반복 <b>(${MC_REPEAT_WEEKS}주)</b></span>
-            </label>
             <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
-            </div>
           </div>
           <div class="mc-sec__label mc-sec__label--sub">등록한 일정</div>
           <div class="mc-log" id="mcEvLog"></div>

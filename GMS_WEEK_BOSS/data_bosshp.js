@@ -274,6 +274,9 @@ const BOSS_DROP_ITEMS = {
     { file: 'Eqp_Berserked.png', name: '루즈 컨트롤 머신 마크' },
     { file: 'Eqp_Total_Control.png', name: '컴플리트 언더컨트롤' },
   ],
+  '데미안_노말': [
+    { file: 'Eqp_Ruin_Force_Shield.png', name: '루인 포스실드' },
+  ],
   '데미안_하드': [
     { file: 'Eqp_Ruin_Force_Shield.png', name: '루인 포스실드' },
     { file: 'Eqp_Magic_Eyepatch.png', name: '마력이 깃든 안대' },
@@ -298,6 +301,9 @@ const BOSS_DROP_ITEMS = {
     { file: 'Eqp_Twilight_Mark.png', name: '트와일라이트 마크' },
     { file: "Use_Will's_Cursed_Spellbook_Selection_Box.png", name: '저주받은 마도서' },
   ],
+  '더스크_노말': [
+    { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },
+  ],
   '더스크_카오스': [
     { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },
     { file: 'Eqp_Endless_Terror.png', name: '거대한 공포' },
@@ -308,6 +314,9 @@ const BOSS_DROP_ITEMS = {
   '진 힐라_하드': [
     { file: 'Eqp_Daybreak_Pendant.png', name: '데이브레이크 펜던트' },
     { file: 'Eqp_Source_of_Suffering.png', name: '고통의 근원' },
+  ],
+  '듄켈_노말': [
+    { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },
   ],
   '듄켈_하드': [
     { file: 'Eqp_Estella_Earrings.png', name: '에스텔라 이어링' },

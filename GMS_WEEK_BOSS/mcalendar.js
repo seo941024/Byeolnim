@@ -124,7 +124,7 @@ function renderMapleCalendar() {
         <button class="sbtn sbtn--ghost" id="mcPrev">‹</button>
         <span class="mc-cal__title" id="mcTitle"></span>
         <button class="sbtn sbtn--ghost" id="mcNext">›</button>
-        <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday" title="이번 달 달력으로 돌아갑니다">이번 달</button>
+        <button class="sbtn sbtn--ghost sbtn--sm" id="mcToday">이번 달로 이동</button>
       </div>
       <div class="mc-grid" id="mcGrid"></div>
     </div>`;

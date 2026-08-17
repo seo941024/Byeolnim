@@ -86,23 +86,26 @@ function _bhpOpenDropsModal(boss) {
   document.getElementById('bhpModalClose').addEventListener('click', () => overlay.classList.remove('open'));
   overlay.classList.add('open');
 
-  // 정적 이미지 대신 움직이는 보스 사진(gif)을 우선 시도하고, 없으면 기존 정적 이미지로 대체
+  // 움직이는 보스 사진(gif) → 팝업 전용 정지컷(png) → 카드 썸네일 순으로 시도한다.
+  // gif가 없는 보스는 images/bosses_gif/<stem>.png 를 넣어두면 그걸 쓴다.
   const stemMatch = boss.img && boss.img.match(/([^/]+)\.\w+$/);
-  const gifSrc = stemMatch ? `images/bosses_gif/${stemMatch[1]}.gif` : '';
+  const stem = stemMatch ? stemMatch[1] : '';
+  const candidates = [];
+  if (stem) candidates.push(`images/bosses_gif/${stem}.gif`, `images/bosses_gif/${stem}.png`);
+  if (boss.img) candidates.push(boss.img);
   const imgEl = document.getElementById('bhpModalImg');
   const noimgEl = document.getElementById('bhpModalNoimg');
   const showNoimg = () => { imgEl.style.display = 'none'; noimgEl.style.display = 'flex'; };
-  if (!gifSrc && !boss.img) {
+  let ci = 0;
+  if (!candidates.length) {
     showNoimg();
   } else {
     imgEl.addEventListener('error', () => {
-      if (gifSrc && imgEl.src.includes('bosses_gif')) {
-        if (boss.img) imgEl.src = boss.img; else showNoimg();
-      } else {
-        showNoimg();
-      }
+      ci += 1;
+      if (ci < candidates.length) imgEl.src = candidates[ci];
+      else showNoimg();
     });
-    imgEl.src = gifSrc || boss.img;
+    imgEl.src = candidates[0];
   }
 }
 

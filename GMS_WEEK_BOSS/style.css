@@ -245,8 +245,8 @@ button { cursor: pointer; border: none; background: none; font: inherit; color: 
 }
 .ticker__msg {
   font-size: .92rem; font-weight: 800; letter-spacing: .2px;
-  color: #ffd23f;
-  text-shadow: 0 0 8px rgba(255,210,63,.55);
+  color: #ffd000;
+  text-shadow: 0 0 9px rgba(255,208,0,.7);
   padding-right: 64px;
 }
 .ticker__msg::before {

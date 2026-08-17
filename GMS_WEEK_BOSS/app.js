@@ -115,8 +115,26 @@ document.getElementById('btnHamburger')?.addEventListener('click', () => {
 document.getElementById('sidebarOverlay')?.addEventListener('click', closeSidebar);
 
 /* ── 유틸 ── */
+// 조/억/만 단위로 끊어서 표기 — 숫자가 커지면서 "13,860,000,000 메소"처럼 자릿수를
+// 세야만 읽히던 걸 "138억 6000만 메소"처럼 바로 읽히게 한다.
 function fmtMeso(n) {
-  return Math.round(n).toLocaleString() + ' 메소';
+  n = Math.round(n);
+  const neg = n < 0;
+  n = Math.abs(n);
+  if (n < 10000) return (neg ? '-' : '') + n.toLocaleString() + ' 메소';
+
+  const jo  = Math.floor(n / 1e12);
+  const eok = Math.floor((n % 1e12) / 1e8);
+  const man = Math.floor((n % 1e8) / 1e4);
+  const rest = n % 1e4;
+
+  const parts = [];
+  if (jo)  parts.push(jo.toLocaleString() + '조');
+  if (eok) parts.push(eok.toLocaleString() + '억');
+  if (man) parts.push(man.toLocaleString() + '만');
+  if (rest) parts.push(rest.toLocaleString());
+
+  return (neg ? '-' : '') + parts.join(' ') + ' 메소';
 }
 
 /* ── 토스트 알림 ── */

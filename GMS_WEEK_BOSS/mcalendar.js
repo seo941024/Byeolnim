@@ -293,6 +293,7 @@ function mcOpenDay(date) {
           <div class="mc-ev-form">
             <input class="inp mc-ev__text" id="mcEvText" type="text" maxlength="40"
                    placeholder="보스 명 혹은 파티 명을 간단하게 적어주세요.">
+            <div class="mc-ev__row">
             <div class="mc-ev__time">
               <select class="inp mc-ev__ampm" id="mcEvAmpm">
                 <option value="오전">오전</option>
@@ -313,6 +314,7 @@ function mcOpenDay(date) {
               </div>
             </div>
             <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
+            </div>
           </div>
           <div class="mc-sec__label mc-sec__label--sub">등록한 일정</div>
           <div class="mc-log" id="mcEvLog"></div>

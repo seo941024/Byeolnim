@@ -212,6 +212,17 @@ body {
 ul { list-style: none; }
 img { display: block; }
 button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
+
+/* ── 전용 커서 ──
+   corsor.gif의 첫 프레임을 32px 이내 png로 뽑아 쓴다(images/icons/cursor32.png).
+   커서는 OS가 그리는 레이어라 페이지 렌더링과 분리돼 있어 이 방식은 렉이 없다.
+   주의 1) 크롬은 32px을 넘는 커서 이미지를 통째로 무시한다 → 원본 38x36을 32x30으로 줄임.
+   주의 2) gif를 그대로 쓰면 첫 프레임만 나온다(애니메이션 안 됨). 움직이게 하려면 JS로
+           요소를 마우스에 따라다니게 해야 하는데 그건 mousemove마다 리렌더가 걸려 실제로 렉이 생긴다.
+   주의 3) 끝의 `, auto` 폴백을 빼면 규칙 자체가 무효가 된다.
+   글자 입력칸의 I빔과 색 선택기의 십자선은 각각 아래/클래스 규칙에서 그대로 유지된다. */
+body, body * { cursor: url('images/icons/cursor32.png') 4 4, auto; }
+input[type="text"], input[type="number"], input[type="search"], textarea { cursor: text; }
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: rgba(var(--hue),.3); border-radius: 99px; }
@@ -1423,9 +1434,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-cell__icons img { width: 21px; height: 21px; object-fit: contain; }
 .mc-cell__more { font-size: .7rem; font-weight: 800; color: var(--text-dim); }
 
-/* 일정 입력 */
-.mc-ev-form { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px; }
-.mc-ev__text { flex: 1 1 260px; min-width: 200px; }
+/* 일정 입력 — 설명은 한 줄 통째로 쓰고, 시간/색/버튼은 그 아래 줄에 */
+.mc-ev-form { display: flex; flex-direction: column; gap: 14px; }
+.mc-ev__row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px; }
+.mc-ev__text { width: 100%; }
 .mc-ev__time { display: flex; align-items: center; gap: 6px; }
 .mc-ev__ampm { width: 5.4em; }
 .mc-ev__num { width: 3.4em; text-align: center; font-variant-numeric: tabular-nums; }

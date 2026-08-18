@@ -191,12 +191,10 @@ function bpShowPrompt() {
   // 다만 문구에 "폰으로"라고 쓰면 데스크톱에서 틀린 말이 되므로 기기를 특정하지 않는다.
 
   const el = bpEnsurePromptBanner();
-  // 스누즈를 확인/닫기와 같은 줄에 absolute로 얹으면 줄이 좁아질 때 버튼 위로
-  // 겹친다. 독립된 한 줄로 빼서 배너 높이 자체가 늘어나게 한다(pwa.js와 동일 구조).
-  // 문구 줄과 버튼 줄도 분리해서, 문구가 버튼 높이에 눌리지 않고 자기 줄에서
+  // 스누즈를 확인/닫기와 같은 높이의 버튼으로 만들어 확인 앞에 둔다(pwa.js와 동일 구조).
+  // 문구 줄과 버튼 줄은 분리해서, 문구가 버튼 높이에 눌리지 않고 자기 줄에서
   // 세로 중앙에 오게 한다.
   el.innerHTML = `
-    <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
     <div class="pwa-install__row">
       <div class="pwa-install__info">
         <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
@@ -206,6 +204,7 @@ function bpShowPrompt() {
         </div>
       </div>
       <div class="pwa-install__actions">
+        <button class="sbtn sbtn--ghost" id="bpPromptSnooze">일주일간 보지 않기</button>
         <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
         <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>
       </div>

@@ -50,7 +50,13 @@ const WANT_CATEGORIES = [
   },
 ];
 const WANT_ITEMS = WANT_CATEGORIES.flatMap(c => c.items);
-const WC_WORLD = 'Kronos';
+const WC_DEFAULT_WORLD = 'Kronos'; // 선택된 캐릭터가 없을 때만 쓰는 기본값
+
+/* 지금 선택된 캐릭터가 어느 서버인지에 따라 추천 채널을 바꾼다.
+   캐릭터 정보를 조회해둔 적이 없으면(fetched.world 없음) 기본값으로 대체한다. */
+function _wcCurrentWorld() {
+  return state.chars[state.activeChar]?.fetched?.world || WC_DEFAULT_WORLD;
+}
 
 function _wcImgSrc(item) { return `images/WANT/${item.file}`; }
 

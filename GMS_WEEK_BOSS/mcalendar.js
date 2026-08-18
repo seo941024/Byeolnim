@@ -6,10 +6,10 @@
 // 보스 반지 상자류. 오늘의 채널 추천에는 없어서 캘린더에만 따로 둔다.
 const MC_RING_BOXES = [
   { file: 'Use_Life_Boss_Ring_Box.png',       name: '생명의 보스 반지 상자' },
-  { file: 'Use_Green_Jade_Boss_Ring_Box.png', name: '녹옥의 보스 반지 상자' },
-  { file: 'Use_Red_Jade_Boss_Ring_Box.png',   name: '홍옥의 보스 반지 상자' },
-  { file: 'Use_Black_Jade_Boss_Ring_Box.png', name: '흑옥의 보스 반지 상자' },
   { file: 'Use_White_Jade_Boss_Ring_Box.png', name: '백옥의 보스 반지 상자' },
+  { file: 'Use_Black_Jade_Boss_Ring_Box.png', name: '흑옥의 보스 반지 상자' },
+  { file: 'Use_Red_Jade_Boss_Ring_Box.png',   name: '홍옥의 보스 반지 상자' },
+  { file: 'Use_Green_Jade_Boss_Ring_Box.png', name: '녹옥의 보스 반지 상자' },
 ];
 
 // 오늘의 채널 추천의 아이템 전부 + 반지 상자류

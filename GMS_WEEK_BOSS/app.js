@@ -30,12 +30,17 @@ function load() {
   if (!state.chars) state.chars = [];
   if (state.activeChar === undefined) state.activeChar = -1;
   if (!state.region) state.region = 'na';
-  if (state.bmCrystalIncluded === undefined) state.bmCrystalIncluded = true; // 기본값: 기존과 동일하게 결정석 개수에 포함
-  // 기존 저장 데이터의 약칭 직업명을 정식 이름으로 마이그레이션
+  // 기존 저장 데이터의 약칭 직업명을 정식 이름으로 마이그레이션 +
+  // 검마 결정석 포함 여부를 캐릭터별로 이전(예전엔 state 전역 하나였다 —
+  // 그래서 토글이 "이 캐릭터만"이 아니라 전체 캐릭터에 적용되는 버그가 있었다).
   let migrated = false;
   state.chars.forEach(c => {
     if (c.fetched && JOB_NAME_CANON[c.fetched.job]) { c.fetched.job = JOB_NAME_CANON[c.fetched.job]; migrated = true; }
+    if (c.bmCrystalIncluded === undefined) {
+      c.bmCrystalIncluded = state.bmCrystalIncluded !== undefined ? state.bmCrystalIncluded : true;
+    }
   });
+  delete state.bmCrystalIncluded;
   if (migrated) save();
   migrateCardBgIndices();
 }
@@ -235,8 +240,11 @@ function charMonthlyMeso(ch) {
 function updateCrystalBar() {
   const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
   const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
-  const bmCount = state.chars.reduce((s, c) => s + countBossCrystals(c, 'blackmage'), 0);
-  const cappedM = state.bmCrystalIncluded ? totalM : totalM - bmCount;
+  // 캐릭터별로 토글이 꺼진 것만 뺀다 — 전부 하나의 값으로 묶여 있으면
+  // 어느 캐릭터에서 토글해도 전체에 적용되는 버그가 난다.
+  const bmExcluded = state.chars.reduce((s, c) =>
+    s + (c.bmCrystalIncluded === false ? countBossCrystals(c, 'blackmage') : 0), 0);
+  const cappedM = totalM - bmExcluded;
   const total  = Math.min(totalW + cappedM, MAX_CRYSTALS);
   document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
   document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
@@ -367,7 +375,7 @@ function renderBossTable() {
     // showToast로 같은 설명을 띄운다.
     const bmToggleHtml = boss.id === 'blackmage'
       ? `<button class="bm-crystal-info" id="bmCrystalInfo" type="button" aria-label="설명 보기">ⓘ</button>
-         <button class="bm-crystal-toggle ${state.bmCrystalIncluded ? 'on' : 'off'}" id="bmCrystalToggle"
+         <button class="bm-crystal-toggle ${ch.bmCrystalIncluded !== false ? 'on' : 'off'}" id="bmCrystalToggle"
                 title="결정석을 주간 개수에 포함시키기">
            <span class="bm-crystal-toggle__knob"></span>
            <span class="bm-crystal-toggle__txt bm-crystal-toggle__txt--on">ON</span>
@@ -388,7 +396,7 @@ function renderBossTable() {
   });
 
   document.getElementById('bmCrystalToggle')?.addEventListener('click', () => {
-    state.bmCrystalIncluded = !state.bmCrystalIncluded;
+    ch.bmCrystalIncluded = ch.bmCrystalIncluded === false; // 캐릭터 하나만 토글
     save();
     renderBossTable();
     updateCrystalBar();

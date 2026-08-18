@@ -197,7 +197,7 @@ function bpShowPrompt() {
   el.innerHTML = `
     <div class="pwa-install__row">
       <div class="pwa-install__info">
-        <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
+        <img class="pwa-install__icon" src="images/icons/Etc_Alliance_Report.png" alt="" onerror="this.style.display='none'" />
         <div class="pwa-install__txt">
           <b>캘린더 알림을 받으시겠어요?</b>
           <span>등록한 일정 시각에 알림으로 알려드려요.</span>

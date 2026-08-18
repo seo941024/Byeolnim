@@ -580,7 +580,6 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .sb-nav__item[data-sec="addoption"]    .sb-nav__icon { width: 32px; height: 32px; }
 .sb-nav__item[data-sec="starforce"]    .sb-nav__icon { width: 32px; height: 32px; }
 .sb-nav__item[data-sec="cube"]         .sb-nav__icon { width: 34px; height: 34px; }
-.sb-nav__item[data-sec="statocr"]      .sb-nav__icon { width: 33px; height: 33px; }
 .sb-nav__item[data-sec="bosshp"]       .sb-nav__icon { width: 32px; height: 32px; }
 .sb-nav__item[data-sec="serverstatus"] .sb-nav__icon { width: 35px; height: 35px; }
 /* CSS 아이콘 (기존 유지 — img 태그에는 적용 안 됨) */
@@ -2418,22 +2417,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .flame-th-prob { font-size: .72rem; font-weight: 400; color: var(--text-sub); }
 .flame-type-icon { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
 
-/* ── 환산주스탯 ── */
-.stat-paste-zone {
-  border: 2px dashed rgba(var(--hue),.4); border-radius: 12px;
-  padding: 32px 16px; text-align: center; cursor: pointer;
-  color: var(--text-sub); font-size: .85rem; transition: .2s;
-  margin-top: 8px;
-}
-.stat-paste-zone:hover { border-color: var(--primary); color: var(--text); background: rgba(var(--hue),.06); }
-.stat-lbl { padding: 6px 8px; font-size: .82rem; color: var(--text); vertical-align: middle; white-space: nowrap; }
-.stat-note { font-size: .7rem; color: var(--text-sub); font-weight: 400; }
-.stat-idx { padding: 4px 8px; font-size: .7rem; color: var(--text-sub); vertical-align: middle; }
-.stat-val-inp { width: 120px; padding: 4px 8px; font-size: .82rem; }
-.stat-warn { border-color: var(--danger) !important; background: rgba(248,113,113,.08) !important; }
 tbody tr:hover { background: rgba(var(--hue),.05); }
-.stat-step { padding: 5px 8px; border-radius: 6px; color: var(--text-sub); transition: background .15s, color .15s; }
-.stat-step:hover { background: rgba(var(--hue),.08); color: var(--text); }
 
 /* ════════════════════════════════════════════════════════
    ✨ PREMIUM POLISH LAYER — 전부 transform/opacity 기반

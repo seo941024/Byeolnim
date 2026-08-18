@@ -99,7 +99,6 @@ function navigateTo(sec) {
   if (sec === 'dailytasks') renderDailyTasks();
   if (sec === 'wantchannel') renderWantChannel();
   if (sec === 'mcalendar') renderMapleCalendar();
-  if (sec === 'statocr' && typeof statOcrOnEnter === 'function') statOcrOnEnter();
   if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
   if (sec === 'hexa')      renderAllHexaLists();
 }

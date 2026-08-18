@@ -1050,6 +1050,8 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   save();
   document.getElementById('overlayChar').classList.remove('open');
   renderCharList(); renderBossTable(); renderCharInfo();
+  // 캘린더의 캐릭터 선택 목록에도 새 캐릭터가 바로 보이게 한다
+  if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
   if (useFetched) syncServerHistThenRender(state.chars[state.activeChar]);
 });
 
@@ -1066,6 +1068,8 @@ document.getElementById('charList').addEventListener('click', e => {
     if (state.activeChar >= state.chars.length) state.activeChar = state.chars.length - 1;
     save(); document.getElementById('overlayConfirm').classList.remove('open');
     renderCharList(); renderBossTable();
+    // 지운 캐릭터가 캘린더에 그대로 남지 않게 같이 다시 그린다
+    if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
   };
 });
 ['confirmClose','confirmCancel'].forEach(id => {
@@ -1171,7 +1175,12 @@ async function refreshStaleChars() {
       changed = true;
     } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
   }
-  if (changed) { save(); renderCharList(); renderCharInfo(); }
+  // 캘린더도 캐릭터 이름·얼굴을 쓰므로 같이 다시 그린다.
+  // 빠뜨리면 사이드바만 새 값이고 캘린더는 옛 이름이 남는다(실제로 그랬다).
+  if (changed) {
+    save(); renderCharList(); renderCharInfo();
+    if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
+  }
 }
 
 function renderCharInfo() {

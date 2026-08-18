@@ -190,13 +190,13 @@ function bpShowPrompt() {
 
   const el = bpEnsurePromptBanner();
   el.innerHTML = `
-    <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
     <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
     <div class="pwa-install__txt">
       <b>캘린더 알림을 받으시겠어요?</b>
       <span>등록한 일정 시각에 알림으로 알려드려요.</span>
     </div>
     <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
+    <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
     <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;
 
   // 설치 배너와 자리가 겹친다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로

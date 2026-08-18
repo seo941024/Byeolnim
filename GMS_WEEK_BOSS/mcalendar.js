@@ -167,7 +167,13 @@ function renderMapleCalendar() {
   mcRenderPushBtn();
   // 버튼만 만들어두고 기다리면 아무도 안 눌러서, 캘린더에 들어올 때 먼저 물어본다.
   // 렌더 직후 바로 물어보면 화면이 채 그려지기 전이라 어색해 살짝 늦춘다.
-  if (typeof bpShowPrompt === 'function') setTimeout(bpShowPrompt, 500);
+  // ※ 이 함수는 캐릭터를 추가·삭제할 때도 불린다(그때 캘린더의 캐릭터 정보도 같이
+  //   갱신해야 하므로). 그런 경우엔 사용자가 캘린더를 보고 있지 않으므로
+  //   엉뚱한 화면에서 유도창이 뜨지 않게 지금 보이는 화면일 때만 예약한다.
+  if (typeof bpShowPrompt === 'function'
+      && document.getElementById('sec-mcalendar')?.classList.contains('active')) {
+    setTimeout(bpShowPrompt, 500);
+  }
 
   mcRenderCharChip();
   mcRenderGrid();

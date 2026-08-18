@@ -132,7 +132,10 @@ function pwaShowBanner(mode, force) {
   if (!force && pwaRecentlyDismissed()) return;
 
   const el = pwaEnsureBanner();
-  const CLOSE = `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
+  // 스누즈와 닫기는 항상 버튼 줄 끝에 같이 붙는다
+  const CLOSE =
+    `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>` +
+    `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
   // "아래/위" 같은 위치는 아이폰(하단)과 아이패드(상단)가 달라 일부러 쓰지 않는다.
   // 공유 시트에서 '홈 화면에 추가'가 접혀 있어 못 찾는 경우가 가장 많아 스크롤을 짚어준다.
   const body = mode === 'ios'
@@ -164,9 +167,7 @@ function pwaShowBanner(mode, force) {
        </div>
        <button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`;
 
-  el.innerHTML =
-    `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>` +
-    `<img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}`;
+  el.innerHTML = `<img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}`;
   el.classList.add('open');
 
   const close = document.getElementById('pwaClose');

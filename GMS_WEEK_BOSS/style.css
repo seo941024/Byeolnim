@@ -1329,9 +1329,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: none;
   position: fixed; z-index: 1200;
   left: 12px; right: 12px; top: calc(var(--top-h) + 10px);
-  /* 위쪽은 "일주일간 보지 않기" 자리를 비워둔다. 아래도 그만큼은 아니어도
-     충분히 띄워야 버튼이 테두리에 붙어 답답해 보이지 않는다. */
-  padding: 30px 14px 18px;
+  /* 위아래를 같게 준다. 예전엔 "일주일간 보지 않기"를 위쪽 구석에 절대배치하느라
+     위 여백만 크게 잡았는데, 그러면 아래를 아무리 늘려도 위아래가 안 맞았다.
+     그 버튼을 버튼 줄로 내려서 이 문제를 없앴다. */
+  padding: 14px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
   align-items: center; gap: 12px;
@@ -1347,11 +1348,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    좁은 배너 안에서 혼자 떠 보이면 어색하다. */
 .pwa-install .sbtn--primary { box-shadow: none; }
 .pwa-install .sbtn--primary:hover { box-shadow: none; transform: none; }
-/* 우측 상단 "일주일간 보지 않기". 닫기와 달리 기간을 두고 숨기는 동작이라
-   눈에 덜 띄게 두되, 누르기 어렵지 않을 만큼의 영역은 준다. */
+/* "일주일간 보지 않기". 닫기와 달리 기간을 두고 숨기는 동작이라 눈에 덜 띄게 두되,
+   누르기 어렵지 않을 만큼의 영역은 준다.
+   절대배치를 쓰지 않는 이유: 구석에 띄우면 그만큼 위 여백을 따로 잡아야 해서
+   배너 위아래 여백이 영영 안 맞는다. 그냥 버튼 줄에 같이 둔다. */
 .pwa-install__snooze {
-  position: absolute; top: 2px; right: 8px;
-  padding: 6px 6px; min-height: 28px;
+  padding: 6px 8px; min-height: 28px; flex: none;
   background: none; border: none;
   font: inherit; font-size: .66rem; font-weight: 700;
   color: var(--text-dim); white-space: nowrap; cursor: pointer;
@@ -1370,8 +1372,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   .pwa-install { flex-wrap: wrap; }
   .pwa-install__icon { order: 0; }
   .pwa-install__txt { order: 1; flex: 1 1 auto; min-width: 150px; }
-  .pwa-install .sbtn { order: 2; white-space: nowrap; }
-  .pwa-install #pwaGo, .pwa-install #pwaChrome, .pwa-install #pwaSafari { margin-left: auto; }
+  .pwa-install .sbtn, .pwa-install__snooze { order: 2; white-space: nowrap; }
+  .pwa-install #pwaGo, .pwa-install #pwaChrome,
+  .pwa-install #pwaSafari, .pwa-install #bpPromptGo { margin-left: auto; }
 }
 /* 홈 화면 앱으로 실행 중이면 설치 안내는 의미가 없다 */
 @media (display-mode: standalone) { .pwa-install { display: none !important; } }

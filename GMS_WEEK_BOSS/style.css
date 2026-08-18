@@ -1325,6 +1325,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .pwa-install__txt span { font-size: .76rem; color: var(--text-sub); line-height: 1.35; }
 .pwa-install .sbtn { flex: none; }
 .pwa-install__close { color: var(--text-dim); }
+/* 문장 안에 들어가는 공유 버튼 모양. 글자 크기·색을 그대로 따라가게 둔다 */
+.pwa-glyph {
+  width: 1em; height: 1em; vertical-align: -0.15em;
+  margin: 0 1px; color: var(--text);
+}
 /* 좁은 화면에서는 버튼이 옆으로 밀려 글씨가 찌그러지므로 버튼만 아래로 내린다.
    아이콘과 글씨는 같은 줄에 둬야 배너가 불필요하게 높아지지 않는다. */
 @media (max-width: 520px) {

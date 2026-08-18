@@ -1148,7 +1148,16 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 5열 고정이었더니 창을 좁히면 칸이 강제로 짓눌려 이름이 "유\n피\n테\n르"처럼
    한 글자씩 세로로 쪼개졌다(모바일 캘린더에서 겪었던 것과 같은 유형의 버그).
    auto-fill로 바꿔 칸이 최소 폭 밑으로는 안 줄고, 대신 알아서 다음 줄로 내려가게 한다. */
-.bhp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
+/* 8열을 상한으로 두고, 그보다 넓어지면 카드가 계속 커지는 게 아니라 오른쪽에
+   여백만 남긴다. auto-fill+minmax만 쓰면 화면이 넓을수록 9열, 10열로 끝없이
+   늘어나므로(실제로 그랬음) 그리드가 커질 수 있는 폭 자체를 막아둔다.
+   상한 폭 = 8칸 × 190px + 칸사이 7개 × 12px = 1604px.
+   좁아지면 auto-fill이 알아서 7,6,…,2,1열로 줄인다
+   (캐릭터 카드 .cg-grid에서 이미 쓰던 것과 같은 패턴). */
+.bhp-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; max-width: 1604px;
+}
 .bhp-card {
   background: var(--panel-veil);
   

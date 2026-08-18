@@ -1104,10 +1104,10 @@ document.getElementById('btnExport').addEventListener('click', () => {
     if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
     extra[k] = localStorage.getItem(k);
   }
-  const bundle = { _mappu: 1, state, extra };
+  const bundle = { _mapbbu: 1, state, extra };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
-  a.download = `mappu_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `mapbbu_data_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 });
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileImport').click());
@@ -1117,7 +1117,7 @@ document.getElementById('fileImport').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (data && (data._mappu || data._byeolnim)) {
+      if (data && (data._mapbbu || data._mappu)) {
         // 신규 통합 포맷: state + 전 모듈 localStorage 복원
         if (data.state) { state = data.state; save(); }
         Object.entries(data.extra || {}).forEach(([k, v]) => {

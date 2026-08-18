@@ -1145,7 +1145,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 
 /* ── 난이도 셀렉트 (보스 트래커) ── */
 /* ── BOSS HP 카드 ── */
-.bhp-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+/* 5열 고정이었더니 창을 좁히면 칸이 강제로 짓눌려 이름이 "유\n피\n테\n르"처럼
+   한 글자씩 세로로 쪼개졌다(모바일 캘린더에서 겪었던 것과 같은 유형의 버그).
+   auto-fill로 바꿔 칸이 최소 폭 밑으로는 안 줄고, 대신 알아서 다음 줄로 내려가게 한다. */
+.bhp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; }
 .bhp-card {
   background: var(--panel-veil);
   

@@ -370,9 +370,11 @@ function mcRenderGrid() {
       shown = recs.slice(0, Math.max(1, iconFit - 1));
       rest = recs.length - shown.length;
     }
-    // 전체 보기에서는 여러 캐릭터의 라벨이 겹치므로 더 적게 편다.
-    // 어느 쪽이든 칸 높이에 실제로 들어가는 수(fitEvCap)를 넘지 않는다.
-    const evCap = Math.min(mcState.viewAll ? 3 : MC_MAX_EVENTS, fitEvCap);
+    // 칸 높이에 실제로 들어가는 수(fitEvCap)를 넘지 않는 선에서, 전체 보기든
+    // 아니든 같은 기준(MC_MAX_EVENTS)을 쓴다. 예전엔 전체 보기일 때 무조건 3개로
+    // 더 낮춰서, 오히려 캐릭터별로 볼 때(최대 4개)보다 더 적게 보이는 게
+    // 이상하다는 지적을 받았다.
+    const evCap = Math.min(MC_MAX_EVENTS, fitEvCap);
     const evShown = evs.slice(0, evCap);
     const evRest = evs.length - evShown.length;
     // 일정 라벨은 위에서부터 차례로, 아이템은 항상 칸 맨 아래에 깔린다

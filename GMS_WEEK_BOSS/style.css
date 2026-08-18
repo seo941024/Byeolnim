@@ -1347,18 +1347,27 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      "붙는" 상태가 되는 순간 서로 겹친다 — sticky는 형제 sticky끼리 서로를
      밀어주지 않고 각자 독립적으로 같은 위치에 붙기 때문이다(실제로 겪음).
      바깥 통을 하나만 sticky로 만들면 안은 그냥 보통 흐름이라 겹칠 수가 없다. */
-.top-banners { position: sticky; top: var(--top-h); z-index: 5; display: flex; flex-direction: column; }
+/* 사이드바까지 포함한 전체 폭(.app 바깥)이라, 헤더와 같은 좌우 여백(24px, 좁은
+   화면은 14px)을 줘야 카드 목록 좌우 끝과 줄이 맞는다. */
+.top-banners {
+  position: sticky; top: var(--top-h); z-index: 5;
+  display: flex; flex-direction: column;
+  padding: 10px 24px 0;
+}
+@media (max-width: 520px) { .top-banners { padding: 8px 14px 0; } }
 .pwa-install {
   display: none;
   flex-direction: column;
   margin: 0 0 14px;
-  padding: 10px 14px 14px;
+  padding: 14px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
   gap: 6px;
 }
 .pwa-install.open { display: flex; }
-.pwa-install__row { display: flex; align-items: center; gap: 12px; }
+/* 문구(왼쪽)와 버튼(오른쪽)을 양끝으로 갈라 확실히 분리한다.
+   align-items:center라 문구가 row 높이 안에서 항상 세로 중앙에 온다. */
+.pwa-install__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .pwa-install__icon { width: 44px; height: 44px; border-radius: 10px; flex: none; }
 .pwa-install__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .pwa-install__txt b { font-size: .9rem; font-weight: 900; color: var(--text); }

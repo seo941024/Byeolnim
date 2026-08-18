@@ -78,18 +78,12 @@ function pwaOpenInChrome() {
   location.href = 'intent://' + rest + '#Intent;scheme=' + scheme + ';package=com.android.chrome;end';
 }
 
-/* .content 맨 위, 설치 배너와 알림 배너를 함께 담는 통(.top-banners)을 만들거나 찾는다.
+/* 설치 배너와 알림 배너를 함께 담는 통(#topBanners, index.html에서 header 바로
+   아래·.app 바깥에 이미 있다 — 사이드바까지 포함한 전체 폭을 쓰기 위해서다).
    이 통 하나만 sticky로 헤더 밑에 붙여서(style.css 참고), 안의 배너들은 그냥
    순서대로 쌓이게 한다 — 그래야 배너 두 개가 동시에 떠도 서로 안 겹친다. */
 function pwaEnsureTopBanners() {
-  let wrap = document.getElementById('topBanners');
-  if (wrap) return wrap;
-  wrap = document.createElement('div');
-  wrap.id = 'topBanners';
-  wrap.className = 'top-banners';
-  const content = document.querySelector('main.content');
-  (content || document.body).prepend(wrap);
-  return wrap;
+  return document.getElementById('topBanners') || document.body;
 }
 
 function pwaEnsureBanner() {

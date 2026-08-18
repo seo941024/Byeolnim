@@ -38,7 +38,7 @@
   --hdr-h:  60px;
   --top-h:  calc(var(--hdr-h) + var(--safe-top));
 
-  /* 배경 — 별님 우주 다크 (보라 채도 낮춤) */
+  /* 배경 — 우주 다크 톤 (보라 채도 낮춤) */
   --bg:      #08060d;
   --bg2:     #100e1b;
   --bg3:     #181523;
@@ -267,11 +267,15 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .header__logo { display: flex; align-items: center; gap: 8px; }
 .header__maple-img { width: 28px; height: 28px; object-fit: contain; }
 .header__title {
+  display: flex; align-items: baseline; gap: 6px;
   font-size: 1rem; font-weight: 800; letter-spacing: .5px;
   background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* 영문 서브 표기. 좁은 화면(모바일 헤더)에서 예전에 "byeolni..."처럼 잘리던
+   문제가 있었다 — 그 자리에 다시 긴 글자를 얹지 않도록 여기선 숨긴다. */
+.header__title-en { font-size: .68rem; font-weight: 700; opacity: .75; }
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .header__rlabel { font-size: .75rem; color: var(--text-sub); font-weight: 600; }
 
@@ -704,9 +708,16 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .boss-table td { padding: 8px 18px; vertical-align: middle; color: var(--text); }
 
 .boss-name-cell { display: flex; align-items: center; gap: 12px; }
+/* title(호버 툴팁)은 모바일에서 볼 방법이 없어 탭 가능한 ⓘ를 따로 둔다 */
+.bm-crystal-info {
+  margin-left: auto; flex: none;
+  width: 20px; height: 20px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text-sub);
+  font-size: .7rem; line-height: 1; cursor: pointer;
+}
 .bm-crystal-toggle {
   position: relative; display: inline-flex; align-items: center; width: 62px; height: 24px;
-  border-radius: 999px; border: 1.5px solid var(--border); cursor: pointer; padding: 0; margin-left: auto; flex: none;
+  border-radius: 999px; border: 1.5px solid var(--border); cursor: pointer; padding: 0; flex: none;
   background: var(--bg2); transition: background .15s;
 }
 .bm-crystal-toggle.on { background: rgba(var(--hue),.55); border-color: rgba(var(--hue),.55); }
@@ -2260,6 +2271,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   /* 로고는 폭이 모자라면 줄어들되 말줄임으로 처리 — 우측 초기화/타이머를 밀어내지 않게 */
   .header__logo { min-width: 0; overflow: hidden; }
   .header__title { font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* 좁은 헤더에서 영문 서브 표기까지 넣으면 예전처럼 잘린다. 한글 이름만 남긴다 */
+  .header__title-en { display: none; }
   .header__center { gap: 6px; flex-shrink: 0; }
   /* nowrap이 없으면 "초기화"/타이머가 글자 단위로 세로로 쪼개진다 */
   .header__rlabel { display: inline; font-size: .68rem; white-space: nowrap; }

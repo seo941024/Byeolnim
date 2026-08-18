@@ -354,8 +354,11 @@ function renderBossTable() {
       ? `<span class="rev-val">${fmtMeso(price)}</span>`
       : `<span class="rev-dash">-</span>`;
 
+    // title(호버 툴팁)만으로는 모바일에서 설명을 볼 방법이 없다 — ⓘ를 탭하면
+    // showToast로 같은 설명을 띄운다.
     const bmToggleHtml = boss.id === 'blackmage'
-      ? `<button class="bm-crystal-toggle ${state.bmCrystalIncluded ? 'on' : 'off'}" id="bmCrystalToggle"
+      ? `<button class="bm-crystal-info" id="bmCrystalInfo" type="button" aria-label="설명 보기">ⓘ</button>
+         <button class="bm-crystal-toggle ${state.bmCrystalIncluded ? 'on' : 'off'}" id="bmCrystalToggle"
                 title="결정석을 주간 개수에 포함시키기">
            <span class="bm-crystal-toggle__knob"></span>
            <span class="bm-crystal-toggle__txt bm-crystal-toggle__txt--on">ON</span>
@@ -380,6 +383,9 @@ function renderBossTable() {
     save();
     renderBossTable();
     updateCrystalBar();
+  });
+  document.getElementById('bmCrystalInfo')?.addEventListener('click', () => {
+    showToast('결정석을 주간 개수에 포함시키기');
   });
 
   const wCost = rentalWeeklyCost();
@@ -1089,10 +1095,10 @@ document.getElementById('btnExport').addEventListener('click', () => {
     if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
     extra[k] = localStorage.getItem(k);
   }
-  const bundle = { _byeolnim: 1, state, extra };
+  const bundle = { _mappu: 1, state, extra };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
-  a.download = `byeolnim_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `mappu_data_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 });
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileImport').click());
@@ -1102,7 +1108,7 @@ document.getElementById('fileImport').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (data && data._byeolnim) {
+      if (data && (data._mappu || data._byeolnim)) {
         // 신규 통합 포맷: state + 전 모듈 localStorage 복원
         if (data.state) { state = data.state; save(); }
         Object.entries(data.extra || {}).forEach(([k, v]) => {

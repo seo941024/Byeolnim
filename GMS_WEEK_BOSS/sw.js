@@ -12,7 +12,7 @@
 ═══════════════════════════════════════════════ */
 
 // 캐시 이름을 바꾸면 이전 캐시는 activate에서 전부 지워진다.
-const CACHE = 'byeolnim-v1';
+const CACHE = 'mappu-v1';
 
 // 오프라인일 때 최소한 화면은 뜨도록 미리 받아두는 것들
 const PRECACHE = ['/', '/index.html'];

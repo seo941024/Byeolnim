@@ -85,7 +85,14 @@ function pwaEnsureBanner() {
   el = document.createElement('div');
   el.id = 'pwaInstall';
   el.className = 'pwa-install';
-  document.body.appendChild(el);
+  // ★ 예전엔 body에 붙이고 position:fixed로 화면 위에 "띄웠다". 그러면 배너가
+  //   차지하는 공간만큼 아래 내용을 밀어낼 방법이 없어서, 계산으로 top 값을
+  //   흉내 내야 했고 그 계산이 틀릴 때마다 카드 목록과 겹쳤다(실제로 반복 발생).
+  //   본문 영역(.content) 맨 위에 "평범한 블록"으로 넣으면, 배너가 있으면
+  //   그만큼 자동으로 아래가 밀리고 없으면 자동으로 그 자리가 없어진다.
+  //   계산이 필요 없다.
+  const content = document.querySelector('main.content');
+  (content || document.body).prepend(el);
   return el;
 }
 

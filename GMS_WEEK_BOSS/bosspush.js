@@ -172,7 +172,16 @@ function bpEnsurePromptBanner() {
     el = document.createElement('div');
     el.id = 'bpPrompt';
     el.className = 'pwa-install';
-    document.body.appendChild(el);
+    // pwa.js와 같은 이유로 body가 아니라 .content 맨 위에 평범한 블록으로 둔다.
+    // 설치 배너(#pwaInstall)가 있으면 그 바로 다음, 없으면 맨 앞.
+    // 순서를 여기서 한 번만 정해두면 그 뒤엔 둘 다 그냥 쌓이므로 높이 계산이 필요 없다.
+    const content = document.querySelector('main.content');
+    const install = document.getElementById('pwaInstall');
+    if (install && install.parentElement === (content || document.body)) {
+      install.after(el);
+    } else {
+      (content || document.body).prepend(el);
+    }
   }
   return el;
 }
@@ -199,17 +208,11 @@ function bpShowPrompt() {
     <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
     <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;
 
-  // 설치 배너와 자리가 겹친다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로
+  // 설치 배너와 자리가 겹칠 수 있다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로
   // 캘린더에 다시 안 들어오면 영영 못 보게 되는 문제가 있었다(실제 제보).
-  // 건너뛰는 대신 설치 배너 바로 밑에 이어 붙인다.
-  const install = document.getElementById('pwaInstall');
-  if (install && install.classList.contains('open')) {
-    const gap = install.getBoundingClientRect().height + 10;
-    el.style.top = `calc(var(--top-h) + 10px + ${gap}px)`;
-  } else {
-    el.style.top = '';
-  }
-
+  // 지금은 둘 다 .content 안의 평범한 블록이라(bpEnsurePromptBanner가 항상
+  // #pwaInstall 바로 다음에 놓는다) 따로 위치를 계산할 필요가 없다 — 설치 배너가
+  // 열려 있으면 그 아래에, 없으면 그 자리에 자연스럽게 온다.
   el.classList.add('open');
 
   document.getElementById('bpPromptClose').addEventListener('click', bpHidePrompt);

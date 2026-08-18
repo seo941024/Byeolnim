@@ -1328,19 +1328,17 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sym-card__result { margin-top: 6px; font-size: .86rem; font-weight: 700; color: var(--accent); }
 
 /* ── 앱 설치 안내 배너 ──
-   ★ 헤더 바로 아래(화면 위쪽)에 붙인다. 원래 화면 아래에 뒀더니 "스크롤을 해야
-     보인다"는 문제가 있었다 — 네이버 같은 인앱 브라우저는 하단 툴바가 스크롤에
-     따라 접혔다 펴지는데, 그 툴바 뒤에 배너가 가려서 처음엔 안 보였다.
-     위쪽은 그런 게 없어 로드 직후부터 확실히 보인다.
-   ★ 등장 애니메이션도 뺐다. 애니메이션이 첫 프레임(투명)에서 멈추면 배너가
-     통째로 안 보이는데, 배너는 "보이는 것"이 존재 이유라 그 위험을 감수할 이유가
-     없다. 즉시 나타나도 어색하지 않다. */
+   ★ 화면 위에 "띄우는"(position:fixed) 방식은 그만뒀다. 띄우면 그 밑 내용과
+     겹치지 않게 하려고 top 값을 직접 계산해야 하는데, 그 계산이 배너 높이가
+     바뀔 때마다(스누즈 버튼 줄바꿈, 배너 2개 겹침 등) 틀어져서 캐릭터 카드
+     목록과 계속 겹쳤다(실제로 반복 제보됨).
+     대신 .content 맨 위에 있는 "평범한 블록"으로 둔다. 배너가 있으면 그만큼
+     자동으로 아래 내용이 밀리고, 없으면(display:none) 자리도 없다. 계산 없이
+     항상 맞는다. */
 .pwa-install {
   display: none;
-  position: fixed; z-index: 1200;
-  left: 12px; right: 12px; top: calc(var(--top-h) + 10px);
-  /* 위아래 여백은 같게(14px). 우상단의 "일주일간 보지 않기"는 absolute라
-     높이를 차지하지 않으므로, 예전처럼 위 여백을 따로 키울 필요가 없다. */
+  position: relative;
+  margin: 0 0 14px;
   padding: 14px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
@@ -1849,7 +1847,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-server { display: flex; align-items: center; gap: 5px; font-size: clamp(.7rem, .5rem + 1.1cqw, 1.05rem); font-weight: 700; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* 원본이 57x62인데 최대 24px이라 38%까지 줄어 있었다. 카드 폭에 비례(cqw)하는 건
    유지하되(좁은 카드에서 글자를 밀지 않게) 하한과 상한을 원본에 가깝게 올린다. */
-.ci-servericon { width: clamp(20px, 6.2cqw, 34px); height: clamp(20px, 6.2cqw, 34px); object-fit: contain; }
+.ci-servericon { width: clamp(24px, 7.2cqw, 40px); height: clamp(24px, 7.2cqw, 40px); object-fit: contain; }
 .ci-main { display: flex; flex-direction: column; gap: 16px; }
 .ci-cody img { width: 96px; height: 96px; }
 .ci-panel {
@@ -2562,7 +2560,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .char-card__world-line img[src*="Challengers"] { width: 21px; height: 21px; margin: -4px -2px; }
 /* Challengers 아이콘은 그림이 작게 그려져 있어 광학적으로 맞추려고 더 키운 값 —
    기본값을 올린 만큼 같은 비율(약 1.29배)로 함께 올린다 */
-.ci-servericon[src*="Challengers"] { width: clamp(26px, 8cqw, 44px); height: clamp(26px, 8cqw, 44px); margin: -2px; }
+.ci-servericon[src*="Challengers"] { width: clamp(31px, 9.3cqw, 52px); height: clamp(31px, 9.3cqw, 52px); margin: -2px; }
 .ss-card__badge {
   font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px;
   background: rgba(255,255,255,.06); color: var(--text-sub); white-space: nowrap;

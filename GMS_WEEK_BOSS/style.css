@@ -2273,9 +2273,13 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .header { padding: 0 14px; gap: 10px; }
   /* 로고는 폭이 모자라면 줄어들되 말줄임으로 처리 — 우측 초기화/타이머를 밀어내지 않게 */
   .header__logo { min-width: 0; overflow: hidden; }
-  .header__title { font-size: .8rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  /* 좁은 헤더에서 영문 서브 표기까지 넣으면 예전처럼 잘린다. 한글 이름만 남긴다 */
-  .header__title-en { display: none; }
+  /* ★ 예전엔 .header__title 자체(줄 두 개를 담는 flex column)에 nowrap+ellipsis를
+     걸었다. 그건 "가로로 한 줄"에만 뜻이 있는 속성이라 세로로 쌓인 줄에는 안 먹혀서
+     결국 영문 줄을 통째로 숨기는 걸로 때웠었다. 이제 한글/영문 줄을 각각 감싸서
+     그 줄 안에서만 말줄임되게 한다 — 폭이 모자라도 그 줄만 "메이뿌…"처럼 줄고
+     둘째 줄은 그대로 남는다. */
+  .header__title { font-size: .8rem; min-width: 0; }
+  .header__title-kr, .header__title-en { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .header__center { gap: 6px; flex-shrink: 0; }
   /* nowrap이 없으면 "초기화"/타이머가 글자 단위로 세로로 쪼개진다 */
   .header__rlabel { display: inline; font-size: .68rem; white-space: nowrap; }

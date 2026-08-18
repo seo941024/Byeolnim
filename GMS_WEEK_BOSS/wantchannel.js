@@ -1,6 +1,7 @@
 /* ═══════════════════════════════════════════════
-   오늘의 채널 추천 — 갖고 싶은 아이템을 고르면 팝업으로 Kronos 서버의
-   지금 점검 중이 아닌 채널 중 하나를 무작위로 추천해준다.
+   오늘의 채널 추천 — 갖고 싶은 아이템을 고르면 팝업으로, 지금 선택된
+   캐릭터가 속한 서버의 점검 중이 아닌 채널 중 하나를 무작위로 추천해준다.
+   캐릭터가 없거나 서버 정보를 조회한 적이 없으면 기본값(Kronos)을 쓴다.
 ═══════════════════════════════════════════════ */
 
 const WANT_CATEGORIES = [
@@ -57,6 +58,12 @@ const WC_DEFAULT_WORLD = 'Kronos'; // 선택된 캐릭터가 없을 때만 쓰�
 function _wcCurrentWorld() {
   return state.chars[state.activeChar]?.fetched?.world || WC_DEFAULT_WORLD;
 }
+/* 서버 상태 조회는 가능하면 이름 문자열이 아니라 worldID로 맞춘다 — 넥슨 쪽
+   표기가 살짝 달라도(대소문자·공백 등) 안 틀리게. 캐릭터를 조회해둔 적이
+   없으면 null이라, 이땐 이름으로만 찾는다(기본값 Kronos). */
+function _wcCurrentWorldID() {
+  return state.chars[state.activeChar]?.fetched?.worldID ?? null;
+}
 
 function _wcImgSrc(item) { return `images/WANT/${item.file}`; }
 
@@ -80,14 +87,14 @@ function _wcModalBodyHtml(item, state) {
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
         <div class="wc-result__item">${item.name}</div>
-        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${WC_WORLD} - ${state.channel}채널</span></div>
+        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${_wcCurrentWorld()} - ${state.channel}채널</span></div>
       </div>
     </div>`;
 }
 
 // 추천 채널 앞에 서버 아이콘. 아이콘 파일이 없으면 빈 문자열이라 글자만 나온다.
 function _wcWorldIconHtml() {
-  const src = serverIconSrc(WC_WORLD);
+  const src = serverIconSrc(_wcCurrentWorld());
   return src ? `<img class="wc-result__world" src="${src}" alt="" onerror="this.style.display='none'">` : '';
 }
 
@@ -114,7 +121,10 @@ async function _wcFetchRecommend(item) {
     const r = await fetch(`/api/server-status?region=na`);
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '조회 실패');
-    const world = j.worlds.find(w => w.world === WC_WORLD);
+    const wid = _wcCurrentWorldID();
+    const world = wid != null
+      ? j.worlds.find(w => w.worldId === wid)
+      : j.worlds.find(w => w.world === _wcCurrentWorld());
     const upChannels = (world?.channelList || []).filter(c => c.up);
     if (!world || !world.up || !upChannels.length) return 'error';
     const channel = upChannels[Math.floor(Math.random() * upChannels.length)];

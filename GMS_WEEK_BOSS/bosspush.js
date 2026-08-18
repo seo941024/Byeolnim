@@ -147,3 +147,63 @@ async function bpSync() {
 // 앱을 열 때마다 한 번 맞춰둔다 — 다른 기기에서 일정을 바꿨거나 시간이 지나
 // 목록이 낡았을 수 있기 때문
 window.addEventListener('load', () => { bpSync().catch(() => {}); });
+
+/* ── 알림 켜기 유도 배너 ──
+   버튼만 만들어두고 기다리면 아무도 안 누른다. 캘린더에 들어올 때 먼저 물어본다.
+   설치 배너(pwa.js)와 같은 확인/닫기/일주일간 보지 않기 구조를 그대로 쓴다. */
+const BP_PROMPT_DISMISS_KEY = 'boss_push_prompt_dismissed';
+const BP_PROMPT_DISMISS_DAYS = 7;
+
+function bpPromptRecentlyDismissed() {
+  try {
+    const t = Number(localStorage.getItem(BP_PROMPT_DISMISS_KEY) || 0);
+    return t > 0 && Date.now() - t < BP_PROMPT_DISMISS_DAYS * 86400000;
+  } catch { return false; }
+}
+
+function bpEnsurePromptBanner() {
+  let el = document.getElementById('bpPrompt');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bpPrompt';
+    el.className = 'pwa-install';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+
+function bpHidePrompt() {
+  document.getElementById('bpPrompt')?.classList.remove('open');
+}
+
+function bpShowPrompt() {
+  if (!bpSupported() || bpIsEnabled()) return;
+  if (Notification.permission === 'denied') return;   // 이미 차단됨 — 물어봐도 소용없다
+  if (bpPromptRecentlyDismissed()) return;
+  // 설치 배너와 자리가 겹치므로, 그게 떠 있으면 이번엔 건너뛴다(다음에 다시 시도됨)
+  if (document.getElementById('pwaInstall')?.classList.contains('open')) return;
+
+  const el = bpEnsurePromptBanner();
+  el.innerHTML = `
+    <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
+    <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
+    <div class="pwa-install__txt">
+      <b>캘린더 알림을 받으시겠어요?</b>
+      <span>등록한 보스 일정 시각에 폰으로 알려드려요.</span>
+    </div>
+    <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
+    <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;
+  el.classList.add('open');
+
+  document.getElementById('bpPromptClose').addEventListener('click', bpHidePrompt);
+  document.getElementById('bpPromptSnooze').addEventListener('click', () => {
+    try { localStorage.setItem(BP_PROMPT_DISMISS_KEY, String(Date.now())); } catch {}
+    bpHidePrompt();
+  });
+  document.getElementById('bpPromptGo').addEventListener('click', async () => {
+    bpHidePrompt();
+    const r = await bpEnable();
+    if (!r.ok) alert(r.msg);
+    else if (typeof mcRenderPushBtn === 'function') mcRenderPushBtn();
+  });
+}

@@ -148,6 +148,9 @@ function renderMapleCalendar() {
   });
   document.getElementById('mcPushBtn').addEventListener('click', mcTogglePush);
   mcRenderPushBtn();
+  // 버튼만 만들어두고 기다리면 아무도 안 눌러서, 캘린더에 들어올 때 먼저 물어본다.
+  // 렌더 직후 바로 물어보면 화면이 채 그려지기 전이라 어색해 살짝 늦춘다.
+  if (typeof bpShowPrompt === 'function') setTimeout(bpShowPrompt, 500);
 
   mcRenderCharChip();
   mcRenderGrid();

@@ -1414,7 +1414,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   padding: 14px 22px; border-top: 1px solid var(--border);
   display: flex; justify-content: flex-end; gap: 10px;
   background: var(--bg3);
+  /* 버튼 글자가 길면(예: "다음 업데이트까지 보지 않기") 좁은 화면에서 한 글자씩
+     세로로 쪼개진다. 줄바꿈을 허용해 버튼째로 아랫줄로 내려가게 한다. */
+  flex-wrap: wrap;
 }
+.modal__foot .sbtn { white-space: nowrap; }
 /* ── 메이플 캘린더 ── */
 .mc-panel {
   background: var(--bg2); border: 1px solid var(--border);

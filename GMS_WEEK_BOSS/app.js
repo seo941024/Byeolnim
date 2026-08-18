@@ -1456,13 +1456,20 @@ function showNoticeModal() {
           </div>`).join('')}
       </div>
       <div class="modal__foot">
+        <button class="sbtn sbtn--ghost" id="noticeLater">다음 업데이트까지 보지 않기</button>
         <button class="sbtn sbtn--primary" id="noticeOk">확인</button>
       </div>
     </div>`;
   overlay.classList.add('open');
 
-  // 닫는 길은 "확인" 하나뿐이다. 바깥을 눌러도 닫히지 않으므로 실수로 넘길 일이 없다.
+  // 바깥을 눌러도 닫히지 않으므로 실수로 넘길 일은 없다.
+  // 두 버튼의 의미가 다르다:
+  //   확인 — 이번 방문에서만 닫는다. 다시 들어오면 또 보인다.
+  //   다음 업데이트까지 보지 않기 — 지금 id를 저장해, 다음 배포로 id가 바뀔 때까지 숨긴다.
   document.getElementById('noticeOk').addEventListener('click', () => {
+    overlay.classList.remove('open');
+  });
+  document.getElementById('noticeLater').addEventListener('click', () => {
     localStorage.setItem(NOTICE_SEEN_KEY, NOTICE.id);
     overlay.classList.remove('open');
   });

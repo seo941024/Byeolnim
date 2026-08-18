@@ -1579,7 +1579,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-ev__num { width: 3.4em; text-align: center; font-variant-numeric: tabular-nums; }
 .mc-ev__colon { font-weight: 900; color: var(--text-dim); }
 .mc-ev__color { display: flex; align-items: flex-end; gap: 10px; }
-.mc-ev__add { flex-shrink: 0; }
+.mc-ev__btns { display: flex; gap: 8px; }
+.mc-ev__add, .mc-ev__cancel { flex-shrink: 0; }
 .mc-ev__repeat {
   display: flex; align-items: center; gap: 7px; cursor: pointer;
   font-size: .92rem; font-weight: 700; color: var(--text-sub);
@@ -1677,12 +1678,15 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   font-size: .86rem; font-weight: 700; color: var(--text-sub);
 }
 .mc-logrow__char img { width: 26px; height: 26px; object-fit: contain; }
-.mc-logrow__del {
+.mc-logrow__del, .mc-logrow__edit {
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
-  color: var(--text-dim); transition: .15s;
+  color: var(--text-dim); transition: .15s; font-size: .9rem;
 }
 .mc-logrow__del:hover { background: var(--danger-l); color: var(--danger); }
+.mc-logrow__edit:hover { background: rgba(var(--hue-l),.15); color: var(--primary); }
+/* 지금 폼에 올라와 수정 중인 항목이라는 걸 표시 */
+.mc-logrow--editing { border-color: var(--primary); background: rgba(var(--hue-l),.08); }
 
 @media (max-width: 768px) {
   .mc-cell { padding: 3px; }

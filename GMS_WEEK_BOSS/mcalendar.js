@@ -61,6 +61,22 @@ function mcHsvToRgb(h, s, v) {
 function mcRgbToHex([r, g, b]) {
   return '#' + [r,g,b].map(n => n.toString(16).padStart(2,'0')).join('');
 }
+/* 저장은 hex 하나뿐이라, 수정 시 색판을 그 색 그대로 열어주려면 거꾸로 hsv로
+   되돌려야 한다(hex -> hsv). mcHsvToRgb의 역연산. */
+function mcHexToHsv(hex) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = ((n >> 16) & 255) / 255, g = ((n >> 8) & 255) / 255, b = (n & 255) / 255;
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return { h, s: max === 0 ? 0 : d / max, v: max };
+}
 /* 라벨 배경이 밝으면 검은 글씨, 어두우면 흰 글씨 — 어느 색을 골라도 글자가 읽히게 */
 function mcTextOn(hex) {
   const n = parseInt(hex.slice(1), 16);
@@ -77,6 +93,7 @@ const mcState = {
   viewAll: false,             // 전체 보기 — 모든 캐릭터의 기록을 겹쳐서 본다(읽기 전용)
   tab: 'ev',                  // 날짜 모달에서 마지막에 본 탭 ('ev' | 'item')
   hue: 4, sat: .78, val: .95, // 라벨 색 (색판 드래그로 바뀐다)
+  editEvId: null,             // 지금 수정 중인 일정의 id. null이면 "추가" 모드
 };
 function mcColorHex() { return mcRgbToHex(mcHsvToRgb(mcState.hue, mcState.sat, mcState.val)); }
 
@@ -384,6 +401,7 @@ function mcRenderGrid() {
 function mcOpenDay(date) {
   if (!mcState.charId) return alert('사이드바에서 캐릭터를 먼저 추가하세요.');
   mcState.sel = date;
+  mcState.editEvId = null;   // 다른 날짜를 열면 이전 날짜의 수정 상태는 버린다
   if (mcState.viewAll) return mcOpenDayAll(date);
   const ch = mcChar(mcState.charId);
   const dow = MC_DOW[new Date(date + 'T00:00:00').getDay()];
@@ -431,7 +449,10 @@ function mcOpenDay(date) {
                 <span class="mc-pick__val" id="mcPickVal"></span>
               </div>
             </div>
-            <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
+            <div class="mc-ev__btns">
+              <button class="sbtn sbtn--primary mc-ev__add" id="mcEvAdd">일정 추가</button>
+              <button class="sbtn sbtn--ghost mc-ev__cancel" id="mcEvEditCancel" style="display:none">수정 취소</button>
+            </div>
           </div>
           <div class="mc-sec__label mc-sec__label--sub">등록한 일정</div>
           <div class="mc-log" id="mcEvLog"></div>
@@ -453,6 +474,7 @@ function mcOpenDay(date) {
   });
   mcSetTab(mcState.tab);
   document.getElementById('mcEvAdd').addEventListener('click', mcAddEvent);
+  document.getElementById('mcEvEditCancel').addEventListener('click', mcCancelEditEvent);
   // 00~12 / 00~59. 두 자리로 맞춰 넣어야 09시, 00분처럼 적힌다.
   mcTimeInput(document.getElementById('mcEvH'), 12);
   mcTimeInput(document.getElementById('mcEvM'), 59);
@@ -595,12 +617,66 @@ function mcFmtTime(ev) {
   return `${ev.ampm} ${String(ev.h).padStart(2, '0')}:${String(ev.mi).padStart(2, '0')}`;
 }
 
+/* 목록의 ✎ 버튼 — 폼에 기존 값을 채워 넣고 "추가" 버튼을 "수정 완료"로 바꾼다.
+   반복 등록은 여러 날짜에 걸친 일이라 "이 한 건만 고친다"는 수정과는 안 맞으므로
+   수정 중엔 숨긴다. */
+function mcEditEvent(date, id) {
+  const list = mcLoadEv()[date] || [];
+  const ev = list.find(e => String(e.id) === String(id));
+  if (!ev) return;
+
+  mcState.editEvId = ev.id;
+  mcRenderLog();   // 목록에 "수정 중" 표시가 바로 보이게
+  document.getElementById('mcEvText').value = ev.text;
+  document.getElementById('mcEvAmpm').value = ev.ampm;
+  document.getElementById('mcEvH').value = String(ev.h).padStart(2, '0');
+  document.getElementById('mcEvM').value = String(ev.mi).padStart(2, '0');
+
+  const hsv = mcHexToHsv(ev.color);
+  mcState.hue = hsv.h; mcState.sat = hsv.s; mcState.val = hsv.v || 1;
+  mcRenderPicker();
+
+  const repeatBox = document.getElementById('mcEvRepeat');
+  repeatBox.checked = false;
+  repeatBox.closest('.mc-ev__repeat').style.display = 'none';
+  document.getElementById('mcEvAdd').textContent = '수정 완료';
+  document.getElementById('mcEvEditCancel').style.display = '';
+  document.getElementById('mcEvText').focus();
+}
+
+function mcCancelEditEvent() {
+  mcState.editEvId = null;
+  document.getElementById('mcEvText').value = '';
+  document.getElementById('mcEvAmpm').value = '오전';
+  document.getElementById('mcEvH').value = '00';
+  document.getElementById('mcEvM').value = '00';
+  document.getElementById('mcEvAdd').textContent = '일정 추가';
+  document.getElementById('mcEvEditCancel').style.display = 'none';
+  document.getElementById('mcEvRepeat').closest('.mc-ev__repeat').style.display = '';
+}
+
 function mcAddEvent() {
   const text = document.getElementById('mcEvText').value.trim();
   if (!text) return alert('보스 명 혹은 파티 명을 간단하게 적어주세요.');
 
   const h = parseInt(document.getElementById('mcEvH').value, 10) || 0;
   const mi = parseInt(document.getElementById('mcEvM').value, 10) || 0;
+  const ampm = document.getElementById('mcEvAmpm').value;
+
+  // 수정 모드 — 새로 추가하지 않고 기존 항목을 그대로 덮어쓴다
+  if (mcState.editEvId != null) {
+    const data = mcLoadEv();
+    const list = data[mcState.sel] || [];
+    const ev = list.find(e => String(e.id) === String(mcState.editEvId));
+    if (ev) {
+      Object.assign(ev, { text, ampm, h, mi, color: mcColorHex() });
+      mcStoreEv(data);
+      mcToast(`${text} 일정 수정 완료!`);
+    }
+    mcCancelEditEvent();
+    mcRenderGrid(); mcRenderLog(); mcRenderEvSub();
+    return;
+  }
 
   const data = mcLoadEv();
   const mine = (data[mcState.sel] || []).filter(e => e.c === mcState.charId);
@@ -611,7 +687,6 @@ function mcAddEvent() {
   // 매주 반복 — 같은 요일/같은 시간으로 앞으로 몇 주치를 한꺼번에 넣는다.
   const repeat = document.getElementById('mcEvRepeat').checked;
   const weeks = repeat ? MC_REPEAT_WEEKS : 1;
-  const ampm = document.getElementById('mcEvAmpm').value;
   const base = new Date(mcState.sel + 'T00:00:00');
   let added = 0, skipped = 0;
 
@@ -649,6 +724,8 @@ function mcRemoveEvent(date, id) {
   list.splice(i, 1);
   if (!list.length) delete data[date];
   mcStoreEv(data);
+  // 지금 수정 중이던 걸 지웠다면 폼이 고아 상태로 남으므로 원상 복귀한다
+  if (String(mcState.editEvId) === String(id)) mcCancelEditEvent();
   mcRenderGrid(); mcRenderLog(); mcRenderEvSub();
 }
 
@@ -762,10 +839,11 @@ function mcRenderLog() {
 
   const evs = mcEventsOf(mcState.sel);
   evBox.innerHTML = evs.length ? evs.map(ev => `
-      <div class="mc-logrow">
+      <div class="mc-logrow${String(ev.id) === String(mcState.editEvId) ? ' mc-logrow--editing' : ''}">
         <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
         <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
         <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
+        <button class="mc-logrow__edit" data-ev-edit="${mcEsc(ev.id)}" title="수정">✎</button>
         <button class="mc-logrow__del" data-ev="${mcEsc(ev.id)}" title="삭제">×</button>
       </div>`).join('')
     : '<p class="empty">이 날짜에 등록한 일정이 없습니다.</p>';
@@ -787,6 +865,9 @@ function mcRenderLog() {
       else mcRemove(mcState.sel, btn.dataset.id);
     });
   }));
+  evBox.querySelectorAll('.mc-logrow__edit').forEach(btn => {
+    btn.addEventListener('click', () => mcEditEvent(mcState.sel, btn.dataset.evEdit));
+  });
 }
 
 /* 칸에 몇 개를 그릴지는 칸 폭에 달려 있어서(mcRenderGrid 참고), 창 크기가 바뀌면

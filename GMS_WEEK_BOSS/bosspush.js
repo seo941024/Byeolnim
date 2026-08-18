@@ -210,12 +210,12 @@ function bpShowPrompt() {
       </div>
     </div>`;
 
-  // 설치 배너와 자리가 겹칠 수 있다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로
-  // 캘린더에 다시 안 들어오면 영영 못 보게 되는 문제가 있었다(실제 제보).
-  // 지금은 둘 다 .content 안의 평범한 블록이라(bpEnsurePromptBanner가 항상
-  // #pwaInstall 바로 다음에 놓는다) 따로 위치를 계산할 필요가 없다 — 설치 배너가
-  // 열려 있으면 그 아래에, 없으면 그 자리에 자연스럽게 온다.
+  // #topBanners가 fixed라 설치 배너와 같은 통 안에서 위아래로 자연스럽게
+  // 쌓인다(bpEnsurePromptBanner가 항상 #pwaInstall 바로 다음에 놓는다) —
+  // 설치 배너가 열려 있으면 그 아래에, 없으면 그 자리에 온다.
   el.classList.add('open');
+  el.classList.remove('opening'); void el.offsetWidth; el.classList.add('opening');
+  el.addEventListener('animationend', () => el.classList.remove('opening'), { once: true });
 
   document.getElementById('bpPromptClose').addEventListener('click', bpHidePrompt);
   document.getElementById('bpPromptSnooze').addEventListener('click', () => {

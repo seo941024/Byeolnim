@@ -172,6 +172,10 @@ function pwaShowBanner(mode, force) {
       <div class="pwa-install__actions">${actions}</div>
     </div>`;
   el.classList.add('open');
+  // 위에서 떨어지는 애니메이션은 뜨는 순간에만 재생 — 계속 붙어 있으면
+  // 클래스가 이미 있어서 다음번엔 재생되지 않으므로 끝나면 떼어낸다.
+  el.classList.remove('opening'); void el.offsetWidth; el.classList.add('opening');
+  el.addEventListener('animationend', () => el.classList.remove('opening'), { once: true });
 
   const close = document.getElementById('pwaClose');
   if (close) close.addEventListener('click', pwaDismiss);

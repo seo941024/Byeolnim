@@ -6,11 +6,11 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Byeolnim.app</title>
-  <link rel="stylesheet" href="style.css?v=20260819d" />
+  <link rel="stylesheet" href="style.css?v=20260819e" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
-  <link rel="manifest" href="manifest.json?v=20260819d" />
+  <link rel="manifest" href="manifest.json?v=20260819e" />
   <meta name="theme-color" content="#0d0922" />
   <!-- 아이폰 사파리는 manifest를 보지 않아서 아래 태그들이 따로 필요하다 -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -615,37 +615,63 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="data.js?v=20260819d"></script>
-<script src="data_hexa.js?v=20260819d"></script>
-<script src="data_bosshp.js?v=20260819d"></script>
-<script src="data_liberation.js?v=20260819d"></script>
-<script src="cube_table.js?v=20260819d"></script>
-<script src="starforce.js?v=20260819d"></script>
-<script src="app.js?v=20260819d"></script>
-<script src="hexa.js?v=20260819d"></script>
-<script src="liberation.js?v=20260819d"></script>
-<script src="starforce_sim.js?v=20260819d"></script>
-<script src="cube.js?v=20260819d"></script>
-<script src="addoption.js?v=20260819d"></script>
-<script src="stat.js?v=20260819d"></script>
-<script src="bosshp.js?v=20260819d"></script>
-<script src="serverstatus.js?v=20260819d"></script>
-<script src="dailytasks.js?v=20260819d"></script>
-<script src="wantchannel.js?v=20260819d"></script>
+<script src="data.js?v=20260819e"></script>
+<script src="data_hexa.js?v=20260819e"></script>
+<script src="data_bosshp.js?v=20260819e"></script>
+<script src="data_liberation.js?v=20260819e"></script>
+<script src="cube_table.js?v=20260819e"></script>
+<script src="starforce.js?v=20260819e"></script>
+<script src="app.js?v=20260819e"></script>
+<script src="hexa.js?v=20260819e"></script>
+<script src="liberation.js?v=20260819e"></script>
+<script src="starforce_sim.js?v=20260819e"></script>
+<script src="cube.js?v=20260819e"></script>
+<script src="addoption.js?v=20260819e"></script>
+<script src="stat.js?v=20260819e"></script>
+<script src="bosshp.js?v=20260819e"></script>
+<script src="serverstatus.js?v=20260819e"></script>
+<script src="dailytasks.js?v=20260819e"></script>
+<script src="wantchannel.js?v=20260819e"></script>
 <!-- 캘린더가 알림 켜기/끄기를 호출하므로 mcalendar.js보다 먼저 와야 한다 -->
-<script src="bosspush.js?v=20260819d"></script>
+<script src="bosspush.js?v=20260819e"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
-<script src="mcalendar.js?v=20260819d"></script>
+<script src="mcalendar.js?v=20260819e"></script>
 <!-- "앱으로 설치" 배너 -->
-<script src="pwa.js?v=20260819d"></script>
+<script src="pwa.js?v=20260819e"></script>
 
 <!-- 서비스 워커 등록 — 홈 화면에 추가(설치)와 오프라인 지원을 켠다.
      load 이후에 등록해서 첫 화면 로딩과 경쟁하지 않게 한다.
-     http(로컬 IP 등)에서는 SW가 아예 안 돌아가므로 조용히 넘어간다. -->
+     http(로컬 IP 등)에서는 SW가 아예 안 돌아가므로 조용히 넘어간다.
+
+     ★ 설치한 앱은 껐다 켜도 "최근 앱"에 남아 있으면 페이지를 새로 로드하지 않고
+       그대로 재개한다. 그러면 파일 요청 자체가 안 일어나서 새로 배포한 코드가
+       반영되지 않고 옛 화면이 계속 보인다(실제로 겪음: 문구를 고쳐 배포했는데
+       앱에서는 옛 문구가 그대로 떴다). 그래서 아래 두 가지를 직접 해준다.
+       1) 앱이 다시 보일 때마다 새 버전이 있는지 검사한다
+       2) 새 버전이 실제로 넘겨받으면 그때 한 번 새로고침한다 -->
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+      navigator.serviceWorker.register('/sw.js').then(reg => {
+        // 앱을 다시 열거나 탭으로 돌아올 때마다 갱신 여부를 확인한다
+        const checkUpdate = () => {
+          if (document.visibilityState === 'visible') reg.update().catch(() => {});
+        };
+        document.addEventListener('visibilitychange', checkUpdate);
+        window.addEventListener('focus', checkUpdate);
+      }).catch(() => {});
+
+      // 새 서비스 워커가 제어권을 넘겨받은 순간이 곧 "새 버전 준비됨"이다.
+      // 처음 설치될 때도 이 이벤트가 오므로, 이미 제어 중이던 경우에만 새로고침한다
+      // (첫 방문에 쓸데없이 한 번 리로드되는 걸 막는다).
+      if (navigator.serviceWorker.controller) {
+        let reloading = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+          if (reloading) return;   // 리로드 도중 또 불려서 무한 새로고침 되는 걸 막는다
+          reloading = true;
+          location.reload();
+        });
+      }
     });
   }
 </script>

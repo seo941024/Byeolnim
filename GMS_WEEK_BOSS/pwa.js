@@ -190,10 +190,17 @@ function pwaShowBanner(mode, force) {
 }
 
 /* 안드로이드·크롬: 설치 가능해지는 순간 이벤트가 온다.
-   preventDefault를 해야 브라우저 기본 배너 대신 우리 배너를 쓸 수 있다. */
+   preventDefault를 해야 브라우저 기본 배너 대신 우리 배너를 쓸 수 있다.
+
+   ★ 이 이벤트가 온다는 것 자체가 "지금은 설치돼 있지 않다"는 확실한 신호다
+   (이미 설치된 상태면 브라우저가 이 이벤트를 안 준다). 그런데 설치 완료 기록은
+   한 번 남기면 지우질 않아서, 설치했다가 앱을 지워도 그 기록이 그대로 남아
+   배너가 영영 다시 뜨지 않는 문제가 있었다(실제로 겪음: 설치→삭제→재방문해도
+   배너가 안 뜸). 이 이벤트를 받은 순간 그 낡은 기록부터 지운다. */
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   pwaDeferredPrompt = e;
+  try { localStorage.removeItem(PWA_INSTALLED_KEY); } catch {}
   pwaShowBanner('android');
 });
 

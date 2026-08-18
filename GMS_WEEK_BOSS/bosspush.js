@@ -88,7 +88,12 @@ async function bpEnable() {
   let perm = Notification.permission;
   if (perm === 'default') perm = await Notification.requestPermission();
   if (perm !== 'granted') {
-    return { ok: false, msg: '알림이 차단되어 있어요. 브라우저 설정에서 알림을 허용해주세요.' };
+    // 한 번 차단되면 브라우저가 스스로 그 상태를 지키기 때문에(보안상 자바스크립트로
+    // 다시 물어볼 방법이 없다), 직접 풀어야 하는 위치를 구체적으로 안내한다.
+    return { ok: false, msg:
+      '알림이 차단되어 있어요.\n' +
+      '주소창의 자물쇠(또는 ⓘ) 아이콘 → 알림 → 허용으로 바꾼 뒤\n' +
+      '새로고침하고 다시 시도해주세요.' };
   }
 
   const keyRes = await fetch('/api/push-key').then(r => r.json()).catch(() => null);

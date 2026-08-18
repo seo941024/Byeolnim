@@ -185,9 +185,8 @@ function bpShowPrompt() {
   if (!bpSupported() || bpIsEnabled()) return;
   if (Notification.permission === 'denied') return;   // 이미 차단됨 — 물어봐도 소용없다
   if (bpPromptRecentlyDismissed()) return;
-  // 폰으로 받는 알림이라 데스크톱에서 저절로 물어보면 방해가 된다.
-  // 데스크톱에서도 켜고 싶으면 캘린더의 "알림 받기" 버튼으로 언제든 켤 수 있다.
-  if (typeof pwaIsNarrow === 'function' && !pwaIsNarrow()) return;
+  // 알림은 데스크톱 브라우저에서도 그대로 오므로 화면 크기로 막지 않는다.
+  // 다만 문구에 "폰으로"라고 쓰면 데스크톱에서 틀린 말이 되므로 기기를 특정하지 않는다.
 
   const el = bpEnsurePromptBanner();
   el.innerHTML = `
@@ -195,7 +194,7 @@ function bpShowPrompt() {
     <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
     <div class="pwa-install__txt">
       <b>캘린더 알림을 받으시겠어요?</b>
-      <span>등록한 일정 시각에 폰으로 알려드려요.</span>
+      <span>등록한 일정 시각에 알림으로 알려드려요.</span>
     </div>
     <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
     <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;

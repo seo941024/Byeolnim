@@ -1329,8 +1329,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: none;
   position: fixed; z-index: 1200;
   left: 12px; right: 12px; top: calc(var(--top-h) + 10px);
-  /* 위쪽은 "일주일간 보지 않기" 자리를 비워둔다 */
-  padding: 28px 14px 12px;
+  /* 위쪽은 "일주일간 보지 않기" 자리를 비워둔다. 아래도 그만큼은 아니어도
+     충분히 띄워야 버튼이 테두리에 붙어 답답해 보이지 않는다. */
+  padding: 30px 14px 18px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
   align-items: center; gap: 12px;

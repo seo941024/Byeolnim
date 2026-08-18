@@ -1362,12 +1362,19 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      바깥 통을 하나만 sticky로 만들면 안은 그냥 보통 흐름이라 겹칠 수가 없다. */
 /* 사이드바까지 포함한 전체 폭(.app 바깥)이라, 헤더와 같은 좌우 여백(24px, 좁은
    화면은 14px)을 줘야 카드 목록 좌우 끝과 줄이 맞는다. */
+/* ★ 위쪽 padding을 여기 고정으로 주면, 배너가 하나도 안 떠 있을 때도
+   그 padding만큼 높이가 남아서 헤더와 사이드바 사이에 빈 틈이 생긴다
+   (실제로 그렇게 보였다). :has()로 열린 배너가 있을 때만 위 여백을 준다. */
 .top-banners {
   position: sticky; top: var(--top-h); z-index: 5;
   display: flex; flex-direction: column;
-  padding: 10px 24px 0;
+  padding: 0 24px;
 }
-@media (max-width: 520px) { .top-banners { padding: 8px 14px 0; } }
+.top-banners:has(.pwa-install.open) { padding-top: 10px; }
+@media (max-width: 520px) {
+  .top-banners { padding: 0 14px; }
+  .top-banners:has(.pwa-install.open) { padding-top: 8px; }
+}
 .pwa-install {
   display: none;
   flex-direction: column;

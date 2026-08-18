@@ -2,6 +2,15 @@
    app.js — 네비게이션 + 주보 트래커
    ============================================= */
 
+/* 이미지 우클릭(저장)·드래그 저장 막기. 텍스트 선택/복사는 그대로 둔다 —
+   막는 대상은 이미지뿐이라 캐릭터 정보·메소 값 등은 평소처럼 긁을 수 있다. */
+document.addEventListener('contextmenu', e => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
+document.addEventListener('dragstart', e => {
+  if (e.target.tagName === 'IMG') e.preventDefault();
+});
+
 /* ── state ── */
 let state = { chars: [], activeChar: -1, region: 'na' };
 const STORAGE_KEY = STORAGE_KEYS.boss;

@@ -223,7 +223,9 @@ body {
   line-height: 1.55;
 }
 ul { list-style: none; }
-img { display: block; }
+/* 우클릭 저장 방지(app.js)와 짝을 맞춰 드래그로 빼가는 것도 막는다.
+   -webkit-touch-callout은 아이폰에서 길게 눌러 저장하는 걸 막는다. */
+img { display: block; -webkit-user-drag: none; user-drag: none; -webkit-touch-callout: none; }
 button { cursor: pointer; border: none; background: none; font: inherit; color: inherit; }
 
 /* ── 전용 커서 ──

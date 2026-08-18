@@ -185,6 +185,9 @@ function bpShowPrompt() {
   if (!bpSupported() || bpIsEnabled()) return;
   if (Notification.permission === 'denied') return;   // 이미 차단됨 — 물어봐도 소용없다
   if (bpPromptRecentlyDismissed()) return;
+  // 폰으로 받는 알림이라 데스크톱에서 저절로 물어보면 방해가 된다.
+  // 데스크톱에서도 켜고 싶으면 캘린더의 "알림 받기" 버튼으로 언제든 켤 수 있다.
+  if (typeof pwaIsNarrow === 'function' && !pwaIsNarrow()) return;
 
   const el = bpEnsurePromptBanner();
   el.innerHTML = `

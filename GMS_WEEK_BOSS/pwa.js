@@ -50,6 +50,12 @@ function pwaIsAndroid() {
   return /Android/i.test(navigator.userAgent);
 }
 
+/* 좁은 화면(= 사실상 폰)인지. 설치 안내와 알림 유도는 폰에서만 저절로 띄운다.
+   웹/모바일 사이트를 따로 만들 필요 없이 이 조건 하나로 갈린다. */
+function pwaIsNarrow() {
+  return window.matchMedia('(max-width: 768px)').matches;
+}
+
 /* 네이버·카카오톡 같은 앱 안의 브라우저.
    이들은 WebView라서 안드로이드여도 beforeinstallprompt가 아예 오지 않고
    홈 화면 추가도 막혀 있다. 그래서 "설치" 버튼을 줄 수 없고,
@@ -120,6 +126,9 @@ function pwaOpenInSafari() {
 function pwaShowBanner(mode, force) {
   // 이미 설치했으면 안내가 필요 없다. 설정에서 직접 부른 경우(force)는 닫은 이력을 무시한다.
   if (pwaAlreadyInstalled()) return;
+  // 홈 화면에 추가하는 건 폰에서 하는 일이라, 데스크톱에서 저절로 뜨면 방해만 된다.
+  // 설정에서 직접 부른 경우(force)는 본인이 원한 것이므로 화면 크기와 무관하게 보여준다.
+  if (!force && !pwaIsNarrow()) return;
   if (!force && pwaRecentlyDismissed()) return;
 
   const el = pwaEnsureBanner();

@@ -1,6 +1,7 @@
 {
   "name": "별님앱",
   "short_name": "별님앱",
+  "id": "/",
   "description": "메이플스토리 GMS 보스 수익·헥사·해방 계산기와 보스 정보, 숙제 트래커, 캘린더",
   "lang": "ko",
   "dir": "ltr",

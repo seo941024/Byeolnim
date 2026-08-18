@@ -1197,12 +1197,16 @@ async function refreshStaleChars() {
   }
 }
 
+const CHARINFO_HEAD = `
+  <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>
+  <p class="dt-help">추가한 캐릭터들을 카드로 모아 보여줍니다. 카드를 눌러 캐릭터를 선택하고, 드래그로 순서를 바꿀 수 있습니다.</p>`;
+
 function renderCharInfo() {
   const box = document.getElementById('charInfoBody');
   if (!box) return;
 
   if (!state.chars.length) {
-    box.innerHTML = '<div class="ci-empty">캐릭터를 추가하세요.</div>';
+    box.innerHTML = `${CHARINFO_HEAD}<div class="ci-empty">캐릭터를 추가하세요.</div>`;
     return;
   }
 
@@ -1248,7 +1252,7 @@ function renderCharInfo() {
       </div>`;
   }).join('');
 
-  box.innerHTML = `<div class="cg-grid">${cards}</div>`;
+  box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>`;
   box.querySelectorAll('.cg-card__save').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();

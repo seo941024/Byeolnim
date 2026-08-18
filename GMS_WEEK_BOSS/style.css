@@ -320,21 +320,15 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   color: var(--primary);
   background: linear-gradient(135deg, rgba(var(--hue-d),.35) 0%, rgba(var(--hue-d),.55) 100%);
   border: 1.5px solid rgba(var(--hue),.45);
-  transition: background .2s, border-color .2s, color .2s, box-shadow .2s, transform .18s;
-  box-shadow: 0 0 0 0 transparent, var(--shadow), inset 0 1px 0 rgba(255,255,255,.08);
+  transition: background .2s, border-color .2s, color .2s;
 }
 #headerBtnSettings { color: var(--text-sub); }
 .hbtn:hover {
   background: linear-gradient(135deg, rgba(var(--hue-d),.5) 0%, rgba(var(--hue-d),.7) 100%);
   border-color: var(--primary);
   color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 0 16px rgba(var(--hue),.45), var(--shadow), inset 0 1px 0 rgba(255,255,255,.1);
 }
-.hbtn:active {
-  transform: scale(.96);
-  box-shadow: 0 0 8px rgba(var(--hue),.3);
-}
+.hbtn:active { transform: scale(.96); }
 
 /* ── APP ── */
 /* 340px — 300px는 실제 브라우저에서 여유가 0px라 폰트 렌더링差로 줄바꿈 재발 → 여유를 크게 늘림.
@@ -400,8 +394,7 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   border: 1px solid rgba(var(--hue),.2);
   border-radius: var(--radius);
   cursor: pointer; overflow: hidden;
-  transition: transform .2s, box-shadow .2s, border-color .2s;
-  box-shadow: 0 2px 12px rgba(0,0,0,.4);
+  transition: border-color .2s;
 }
 /* 카드 배경 이미지(선택 사항) — 캐릭터가 cardBg를 고르면 이 <img>가 일러스트 박스
    위를 덮는다. "없음"을 고르면 이 <img> 자체가 안 그려지므로, 박스는 자기 CSS의
@@ -412,18 +405,13 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
    더 떠 보였음(실측 확인) — 캐릭터 크기(92%) 수정만으로 이미 발이 배경 바닥에
    닿아 보여서, 배경은 단순 cover로 되돌린다. */
 .portrait-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; pointer-events: none; }
-.char-card:hover { transform: translateY(-2px); box-shadow: 0 6px 24px rgba(0,0,0,.55), 0 0 14px rgba(var(--hue),.15); border-color: rgba(var(--hue-l),.4); }
+.char-card:hover { border-color: rgba(var(--hue-l),.4); }
 .char-card.dragging { opacity: .35; cursor: grabbing; }
 .char-card.drag-over { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
 .char-card[draggable="true"] { cursor: grab; }
 .char-card.active {
   border-color: #f5c842;
-  box-shadow: 0 0 0 1px #f5c842, 0 0 20px rgba(245,200,66,.25), 0 4px 16px rgba(0,0,0,.5);
-  animation: card-sparkle 2.4s ease-in-out infinite;
-}
-@keyframes card-sparkle {
-  0%,100% { box-shadow: 0 0 0 1px #f5c842, 0 0 14px rgba(245,200,66,.3), 0 4px 16px rgba(0,0,0,.5); }
-  50%      { box-shadow: 0 0 0 1px #f5c842, 0 0 32px rgba(245,200,66,.7), 0 0 60px rgba(245,200,66,.25), 0 4px 16px rgba(0,0,0,.5); }
+  box-shadow: 0 0 0 1px #f5c842;
 }
 
 /* 카드 내부: 좌=텍스트+버튼, 우=portrait */
@@ -646,7 +634,7 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   padding: 20px 22px;
   box-shadow: 0 4px 24px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.05);
   position: relative; overflow: hidden;
-  transition: box-shadow .25s, border-color .25s, transform .25s;
+  transition: border-color .25s;
 }
 .card::before {
   content: '';
@@ -654,11 +642,7 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   background: linear-gradient(135deg, rgba(var(--hue-l),.04) 0%, transparent 50%, rgba(246,199,68,.03) 100%);
   pointer-events: none;
 }
-.card:hover {
-  box-shadow: 0 8px 40px rgba(0,0,0,.6), 0 0 20px rgba(var(--hue),.12), inset 0 1px 0 rgba(255,255,255,.07);
-  border-color: rgba(var(--hue-l),.38);
-  transform: translateY(-1px);
-}
+.card:hover { border-color: rgba(var(--hue-l),.38); }
 .card__title {
   font-size: 1.2rem; font-weight: 800;
   text-transform: uppercase; letter-spacing: .6px;
@@ -854,7 +838,7 @@ tr.done .boss-thumb img { filter: none; }
 .sbtn {
   padding: 9px 20px; border-radius: 6px;
   font-size: .84rem; font-weight: 700; text-align: center;
-  transition: transform .18s, box-shadow .18s, filter .18s;
+  transition: background .18s, color .18s, filter .18s;
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid transparent;
 }
@@ -864,22 +848,21 @@ tr.done .boss-thumb img { filter: none; }
   box-shadow: 0 3px 10px rgba(0,0,0,.35);
   border-color: rgba(var(--hue-l),.25);
 }
-.sbtn--add:hover { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.45); filter: brightness(1.1); }
+.sbtn--add:hover { filter: brightness(1.1); }
 .sbtn--primary {
   background: var(--grad); color: var(--on-grad);
   box-shadow: 0 4px 14px rgba(0,0,0,.4);
   border-color: rgba(var(--hue-l),.25);
 }
-.sbtn--primary:hover { transform: translateY(-1px); box-shadow: 0 8px 22px rgba(0,0,0,.5); filter: brightness(1.1); }
-.sbtn--primary:active { transform: translateY(0); }
+.sbtn--primary:hover { filter: brightness(1.1); }
 .sbtn--ghost {
   background: rgba(255,255,255,.06);
   color: var(--text-sub);
   border-color: var(--border);
 }
-.sbtn--ghost:hover { background: rgba(255,255,255,.12); color: var(--text); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.45); }
+.sbtn--ghost:hover { background: rgba(255,255,255,.12); color: var(--text); }
 .sbtn--danger { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(240,80,96,.3); }
-.sbtn--danger:hover { transform: translateY(-1px); filter: brightness(1.1); }
+.sbtn--danger:hover { filter: brightness(1.1); }
 .w100 { width: 100%; justify-content: center; }
 
 /* ── FORM ── */
@@ -1188,9 +1171,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border: 1px solid rgba(var(--hue),.22);
   border-radius: var(--radius-lg); overflow: hidden;
   box-shadow: var(--shadow); display: flex; flex-direction: column;
-  transition: transform .22s, box-shadow .22s; color: var(--text);
+  transition: border-color .22s; color: var(--text);
 }
-.bhp-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); border-color: var(--border-hl); }
+.bhp-card:hover { border-color: var(--border-hl); }
 .bhp-card--monthly { border: 2px solid rgba(216,177,90,.8); }
 .bhp-card__img {
   width: 100%; aspect-ratio: 1/1;
@@ -1891,10 +1874,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-avg {
   background: var(--bg3); border: 1px solid var(--border);
   border-radius: 12px; padding: 13px 12px;
-  transition: transform .2s, box-shadow .2s;
+  transition: border-color .2s;
   display: flex; flex-direction: column;
 }
-.ci-avg:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+.ci-avg:hover { border-color: var(--border-hl); }
 .ci-avg--hl {
   background: var(--grad); border-color: transparent;
   color: var(--accent); box-shadow: 0 6px 20px rgba(0,0,0,.4);
@@ -2104,12 +2087,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   /* 행을 명시해야 일러스트의 grid-row:1/-1 이 두 행을 걸친다 */
   /* 일러스트 칼럼은 240px에서 상한 — 초광폭 화면에서 카드가 무한정 커지지 않도록 */
   display: grid; grid-template-columns: minmax(130px, min(36%, 240px)) 1fr; grid-template-rows: 1fr auto; align-items: stretch;
-  transition: transform .18s, box-shadow .18s, border-color .18s;
-  box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  transition: border-color .18s;
   /* 카드 폭 기준 컨테이너 쿼리 단위(cqw) → 카드가 커지면 글씨/아이콘도 함께 커진다 */
   container-type: inline-size;
 }
-.cg-card:hover { transform:translateY(-3px); border-color:rgba(var(--hue-l),.5); box-shadow:0 6px 20px rgba(0,0,0,.5), 0 0 14px rgba(var(--hue),.15); }
+.cg-card:hover { border-color:rgba(var(--hue-l),.5); }
 /* 카드 이미지로 저장 버튼 — 평소엔 옅게, 카드 hover 시에만 또렷하게 (카드 정보를 안 가리도록) */
 .cg-card__save {
   position: absolute; top: 6px; left: 6px; z-index: 2;
@@ -2123,7 +2105,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cg-card__save:disabled { opacity: .6; cursor: default; }
 .cg-card--active {
   border-color: var(--primary);
-  animation: card-sparkle 2.4s ease-in-out infinite;
+  box-shadow: 0 0 0 1px var(--primary);
 }
 /* 일러스트는 왼쪽에서 카드 전체 높이를 차지 */
 /* 정사각 비율 → 카드가 넓어지면 높이도 따라 커진다 */
@@ -2243,12 +2225,9 @@ body.sidebar-open .hamburger span:nth-child(2) { opacity: 0; }
 body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rotate(-45deg); }
 .sidebar-overlay { display: none; }
 
-/* ── 모바일/저성능 환경: 무한 애니메이션·다중 글로우 끄기 (버벅임 방지) ── */
+/* ── 모바일/저성능 환경: 무한 애니메이션 끄기 (버벅임 방지) ── */
 @media (hover:none), (max-width:768px), (prefers-reduced-motion:reduce) {
-  .char-card.active, .cg-card--active { animation: none; }
   .sb-nav__item.active, .gen-cfg-card--pass.on { animation: none; }
-  /* 그림자는 단일 레이어로 단순화해 매 프레임 페인트 비용 절감 */
-  .char-card.active, .cg-card--active { box-shadow: 0 0 0 1px #f5c842, 0 2px 10px rgba(0,0,0,.5); }
 }
 
 /* ══════════════ 데스크톱 사이드바(340px) + 고정폭 320px 우측 패널 조합에서
@@ -2485,19 +2464,11 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   animation: none !important; background-size: auto !important;
 }
 
-/* ── 8. 활성 캐릭터 카드: box-shadow 펄스 → opacity 펄스 글로우(컴포지터) ── */
+/* ── 8. 활성 캐릭터 카드: 펄스 글로우 제거, 테두리 링 하나로 단순화 ── */
 .char-card.active, .cg-card--active {
   animation: none !important;
-  box-shadow: 0 0 0 1px #f5c842, 0 4px 18px rgba(0,0,0,.5) !important;
-  position: relative;
+  box-shadow: 0 0 0 1px #f5c842 !important;
 }
-.char-card.active::before, .cg-card--active::before {
-  content: ''; position: absolute; inset: -2px; border-radius: inherit; z-index: -1;
-  background: linear-gradient(135deg, rgba(245,200,66,.9), rgba(var(--hue-l),.7));
-  filter: blur(9px); opacity: .5; will-change: opacity;
-  animation: glowpulse 2.8s ease-in-out infinite;
-}
-@keyframes glowpulse { 0%,100%{opacity:.32} 50%{opacity:.7} }
 
 /* ── 9. 버튼 클릭 눌림감 (빛 스윕 제거) ── */
 .hbtn:active, .sbtn:active { transform: translateY(1px) scale(.97); }
@@ -2550,8 +2521,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* ── 11. 저성능/모션축소 환경: 드리프트·스윕 전부 정지 ── */
 @media (hover:none), (max-width:768px), (prefers-reduced-motion:reduce) {
-  .char-card.active::before,
-  .cg-card--active::before { animation: none !important; }
   .header, .sidebar { backdrop-filter: none; -webkit-backdrop-filter: none; }
 }
 

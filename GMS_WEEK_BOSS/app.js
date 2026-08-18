@@ -1383,6 +1383,19 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 08. 20.',
+    items: [
+      {
+        head: '메이뿌덩으로 이름이 바뀌었습니다',
+        desc: '길드 전용이 아니라 누구나 쓸 수 있게 이름과 주소를 바꿨습니다(mapbbu.app). 기존 데이터는 그대로 안전합니다.',
+      },
+      {
+        head: '설치한 앱을 지울 때 주의하세요',
+        desc: '브라우저에 따라 홈 화면에 설치한 앱을 삭제하면 저장된 데이터까지 함께 지워질 수 있습니다. 앱을 지우기 전에는 설정 → 데이터 저장으로 미리 백업해두세요.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 19.',
     items: [
       {
@@ -1445,7 +1458,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-19-pwa-push',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-20-mappu-rebrand',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

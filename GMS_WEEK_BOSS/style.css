@@ -2540,6 +2540,11 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   line-height: 1.5;
   flex: 1;
 }
+.settings-box__warn {
+  font-size: .74rem;
+  color: var(--danger);
+  line-height: 1.5;
+}
 .settings-font-btns {
   display: flex;
   flex-direction: column;

@@ -1335,16 +1335,30 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      대신 .content 맨 위에 있는 "평범한 블록"으로 둔다. 배너가 있으면 그만큼
      자동으로 아래 내용이 밀리고, 없으면(display:none) 자리도 없다. 계산 없이
      항상 맞는다. */
+/* ★ "일주일간 보지 않기"를 예전엔 position:absolute로 우상단에 얹었다. absolute는
+   layout에서 자기 자리를 차지하지 않으므로, 확인/닫기 줄이 좁아져 두 줄로 접히면
+   그 위에 그냥 겹쳐 보였다(실제로 겹침 반복 제보). 겹칠 자리 자체를 없애려면
+   스누즈를 진짜 한 줄로 넣어야 한다 — 그래서 배너를 세로로 쌓아(column) 스누즈를
+   위쪽 독립된 줄로 두고, 아이콘·문구·버튼은 그 아래 별도 줄(.pwa-install__row)에
+   둔다. 배너가 필요한 만큼 위아래로 늘어나며 절대 겹치지 않는다. */
+/* 설치 배너 + 알림 배너를 함께 담는 통. 이 통 하나만 sticky로 헤더 밑에 붙이고,
+   안의 배너 두 개는 그냥 평범하게 위아래로 쌓인다.
+   ★ 배너 하나하나를 각각 sticky로 만들면(top 값이 같으므로) 스크롤해서 둘 다
+     "붙는" 상태가 되는 순간 서로 겹친다 — sticky는 형제 sticky끼리 서로를
+     밀어주지 않고 각자 독립적으로 같은 위치에 붙기 때문이다(실제로 겪음).
+     바깥 통을 하나만 sticky로 만들면 안은 그냥 보통 흐름이라 겹칠 수가 없다. */
+.top-banners { position: sticky; top: var(--top-h); z-index: 5; display: flex; flex-direction: column; }
 .pwa-install {
   display: none;
-  position: relative;
+  flex-direction: column;
   margin: 0 0 14px;
-  padding: 14px;
+  padding: 10px 14px 14px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
-  align-items: center; gap: 12px;
+  gap: 6px;
 }
 .pwa-install.open { display: flex; }
+.pwa-install__row { display: flex; align-items: center; gap: 12px; }
 .pwa-install__icon { width: 44px; height: 44px; border-radius: 10px; flex: none; }
 .pwa-install__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .pwa-install__txt b { font-size: .9rem; font-weight: 900; color: var(--text); }
@@ -1355,12 +1369,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    좁은 배너 안에서 혼자 떠 보이면 어색하다. */
 .pwa-install .sbtn--primary { box-shadow: none; }
 .pwa-install .sbtn--primary:hover { box-shadow: none; transform: none; }
-/* "일주일간 보지 않기" — 우상단 구석에 둔다. 확인/닫기와 성격이 다른 동작이라
-   버튼 줄에 나란히 두면 셋 중 뭘 눌러야 할지 헷갈린다.
-   absolute라 배너 높이에 영향을 주지 않으므로 위아래 여백은 그대로 유지된다. */
+/* "일주일간 보지 않기" — 자기 줄에서 오른쪽 끝에 붙인다. 확인/닫기와 성격이 다른
+   동작이라 버튼 줄에 나란히 두면 셋 중 뭘 눌러야 할지 헷갈린다. */
 .pwa-install__snooze {
-  position: absolute; top: 6px; right: 10px;
-  padding: 4px 6px; flex: none;
+  align-self: flex-end;
+  padding: 2px 4px; flex: none;
   background: none; border: none;
   font: inherit; font-size: .66rem; font-weight: 700;
   color: var(--text-dim); white-space: nowrap; cursor: pointer;
@@ -1376,12 +1389,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      한 줄에 다 들어간다"고 계산해서 줄바꿈이 일어나지 않고, 대신 글씨 영역이
      40px대로 짓눌려 글자가 세로로 쪼개진다(실제로 그렇게 깨졌었다). */
 @media (max-width: 520px) {
-  /* 좁으면 우상단 "일주일간 보지 않기"가 글씨 위로 겹친다 → 그 줄만큼 위를 비운다.
-     넓은 화면에서는 글씨 오른쪽에 자리가 남아 겹치지 않으므로 그대로 둔다. */
-  .pwa-install { flex-wrap: wrap; padding-top: 30px; }
+  /* 스누즈는 이제 자기 줄이 따로 있어 겹칠 일이 없다. 좁을 때는 그 아래
+     .pwa-install__row 안에서 버튼만 다음 줄로 내린다. */
+  .pwa-install__row { flex-wrap: wrap; }
   .pwa-install__icon { order: 0; }
   .pwa-install__txt { order: 1; flex: 1 1 auto; min-width: 150px; }
-  .pwa-install .sbtn, .pwa-install__snooze { order: 2; white-space: nowrap; }
+  .pwa-install__row .sbtn { order: 2; white-space: nowrap; }
   .pwa-install #pwaGo, .pwa-install #pwaChrome,
   .pwa-install #pwaSafari, .pwa-install #bpPromptGo { margin-left: auto; }
 }

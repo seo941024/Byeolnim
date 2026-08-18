@@ -172,16 +172,9 @@ function bpEnsurePromptBanner() {
     el = document.createElement('div');
     el.id = 'bpPrompt';
     el.className = 'pwa-install';
-    // pwa.js와 같은 이유로 body가 아니라 .content 맨 위에 평범한 블록으로 둔다.
-    // 설치 배너(#pwaInstall)가 있으면 그 바로 다음, 없으면 맨 앞.
-    // 순서를 여기서 한 번만 정해두면 그 뒤엔 둘 다 그냥 쌓이므로 높이 계산이 필요 없다.
-    const content = document.querySelector('main.content');
-    const install = document.getElementById('pwaInstall');
-    if (install && install.parentElement === (content || document.body)) {
-      install.after(el);
-    } else {
-      (content || document.body).prepend(el);
-    }
+    // pwa.js의 .top-banners 통 안에 넣는다 — 설치 배너와 같은 통 안이라야
+    // 스크롤해도 겹치지 않고 같이 헤더 밑에 붙는다.
+    (typeof pwaEnsureTopBanners === 'function' ? pwaEnsureTopBanners() : document.querySelector('main.content') || document.body).appendChild(el);
   }
   return el;
 }
@@ -198,15 +191,19 @@ function bpShowPrompt() {
   // 다만 문구에 "폰으로"라고 쓰면 데스크톱에서 틀린 말이 되므로 기기를 특정하지 않는다.
 
   const el = bpEnsurePromptBanner();
+  // 스누즈를 확인/닫기와 같은 줄에 absolute로 얹으면 줄이 좁아질 때 버튼 위로
+  // 겹친다. 독립된 한 줄로 빼서 배너 높이 자체가 늘어나게 한다(pwa.js와 동일 구조).
   el.innerHTML = `
     <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
-    <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
-    <div class="pwa-install__txt">
-      <b>캘린더 알림을 받으시겠어요?</b>
-      <span>등록한 일정 시각에 알림으로 알려드려요.</span>
-    </div>
-    <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
-    <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;
+    <div class="pwa-install__row">
+      <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
+      <div class="pwa-install__txt">
+        <b>캘린더 알림을 받으시겠어요?</b>
+        <span>등록한 일정 시각에 알림으로 알려드려요.</span>
+      </div>
+      <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
+      <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>
+    </div>`;
 
   // 설치 배너와 자리가 겹칠 수 있다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로
   // 캘린더에 다시 안 들어오면 영영 못 보게 되는 문제가 있었다(실제 제보).

@@ -78,6 +78,20 @@ function pwaOpenInChrome() {
   location.href = 'intent://' + rest + '#Intent;scheme=' + scheme + ';package=com.android.chrome;end';
 }
 
+/* .content 맨 위, 설치 배너와 알림 배너를 함께 담는 통(.top-banners)을 만들거나 찾는다.
+   이 통 하나만 sticky로 헤더 밑에 붙여서(style.css 참고), 안의 배너들은 그냥
+   순서대로 쌓이게 한다 — 그래야 배너 두 개가 동시에 떠도 서로 안 겹친다. */
+function pwaEnsureTopBanners() {
+  let wrap = document.getElementById('topBanners');
+  if (wrap) return wrap;
+  wrap = document.createElement('div');
+  wrap.id = 'topBanners';
+  wrap.className = 'top-banners';
+  const content = document.querySelector('main.content');
+  (content || document.body).prepend(wrap);
+  return wrap;
+}
+
 function pwaEnsureBanner() {
   let el = document.getElementById('pwaInstall');
   if (el) return el;
@@ -85,14 +99,7 @@ function pwaEnsureBanner() {
   el = document.createElement('div');
   el.id = 'pwaInstall';
   el.className = 'pwa-install';
-  // ★ 예전엔 body에 붙이고 position:fixed로 화면 위에 "띄웠다". 그러면 배너가
-  //   차지하는 공간만큼 아래 내용을 밀어낼 방법이 없어서, 계산으로 top 값을
-  //   흉내 내야 했고 그 계산이 틀릴 때마다 카드 목록과 겹쳤다(실제로 반복 발생).
-  //   본문 영역(.content) 맨 위에 "평범한 블록"으로 넣으면, 배너가 있으면
-  //   그만큼 자동으로 아래가 밀리고 없으면 자동으로 그 자리가 없어진다.
-  //   계산이 필요 없다.
-  const content = document.querySelector('main.content');
-  (content || document.body).prepend(el);
+  pwaEnsureTopBanners().appendChild(el);
   return el;
 }
 
@@ -139,10 +146,12 @@ function pwaShowBanner(mode, force) {
   if (!force && pwaRecentlyDismissed()) return;
 
   const el = pwaEnsureBanner();
-  // 스누즈와 닫기는 항상 버튼 줄 끝에 같이 붙는다
-  const CLOSE =
-    `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>` +
-    `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
+  // ★ 스누즈를 absolute로 우상단에 "얹어" 놓으면 자기 자리를 차지하지 않는다.
+  //   그래서 버튼 줄이 좁아져 확인/닫기가 두 줄로 접히면 스누즈가 그 위에 겹쳤다
+  //   (실제로 그렇게 겹쳐 보였다). 겹칠 자리를 아예 안 만들려면 스누즈를 진짜
+  //   한 줄로 넣어서 배너 높이 자체를 늘려야 한다 — 그래서 맨 위에 독립된 줄로 뺐다.
+  const SNOOZE = `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>`;
+  const CLOSE = `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
   // "아래/위" 같은 위치는 아이폰(하단)과 아이패드(상단)가 달라 일부러 쓰지 않는다.
   // 공유 시트에서 '홈 화면에 추가'가 접혀 있어 못 찾는 경우가 가장 많아 스크롤을 짚어준다.
   const body = mode === 'ios'
@@ -174,7 +183,7 @@ function pwaShowBanner(mode, force) {
        </div>
        <button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`;
 
-  el.innerHTML = `<img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}`;
+  el.innerHTML = `${SNOOZE}<div class="pwa-install__row"><img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}</div>`;
   el.classList.add('open');
 
   const close = document.getElementById('pwaClose');

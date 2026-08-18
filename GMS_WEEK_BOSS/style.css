@@ -1317,7 +1317,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: none;
   position: fixed; z-index: 1200;
   left: 12px; right: 12px; top: calc(var(--top-h) + 10px);
-  padding: 12px 14px;
+  /* 위쪽은 "일주일간 보지 않기" 자리를 비워둔다 */
+  padding: 28px 14px 12px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
   align-items: center; gap: 12px;
@@ -1329,6 +1330,20 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .pwa-install__txt span { font-size: .76rem; color: var(--text-sub); line-height: 1.35; }
 .pwa-install .sbtn { flex: none; }
 .pwa-install__close { color: var(--text-dim); }
+/* 배너 안에서는 주 버튼도 그림자를 빼서 닫기 버튼과 같은 평면으로 맞춘다.
+   좁은 배너 안에서 혼자 떠 보이면 어색하다. */
+.pwa-install .sbtn--primary { box-shadow: none; }
+.pwa-install .sbtn--primary:hover { box-shadow: none; transform: none; }
+/* 우측 상단 "일주일간 보지 않기". 닫기와 달리 기간을 두고 숨기는 동작이라
+   눈에 덜 띄게 두되, 누르기 어렵지 않을 만큼의 영역은 준다. */
+.pwa-install__snooze {
+  position: absolute; top: 2px; right: 8px;
+  padding: 6px 6px; min-height: 28px;
+  background: none; border: none;
+  font: inherit; font-size: .66rem; font-weight: 700;
+  color: var(--text-dim); white-space: nowrap; cursor: pointer;
+}
+.pwa-install__snooze:hover { color: var(--text-sub); text-decoration: underline; }
 /* 문장 안에 들어가는 공유 버튼 모양. 글자 크기·색을 그대로 따라가게 둔다 */
 .pwa-glyph {
   width: 1em; height: 1em; vertical-align: -0.15em;

@@ -10,9 +10,27 @@
    "공유 → 홈 화면에 추가"를 직접 안내하는 수밖에 없다.
 ═══════════════════════════════════════════════ */
 
-const PWA_DISMISS_KEY = 'pwa_install_dismissed';
+const PWA_DISMISS_KEY = 'pwa_install_dismissed';   // 닫기 누른 시각(ms). 기간이 지나면 다시 뜬다
+const PWA_INSTALLED_KEY = 'pwa_installed';        // 진짜 설치가 끝났을 때만 기록
+const PWA_DISMISS_DAYS = 7;
 
 let pwaDeferredPrompt = null;
+
+/* 닫기를 눌렀어도 영영 숨기지는 않는다. 한 번 놓치면 다시 볼 방법이 없어지기 때문. */
+function pwaRecentlyDismissed() {
+  try {
+    const t = Number(localStorage.getItem(PWA_DISMISS_KEY) || 0);
+    if (!t) return false;
+    return Date.now() - t < PWA_DISMISS_DAYS * 86400000;
+  } catch { return false; }
+}
+
+/* 설치 완료 여부. 브라우저 탭으로 열면 standalone이 아니라서 화면만으로는 알 수 없어
+   appinstalled 이벤트가 왔을 때 남겨둔 기록도 같이 본다. */
+function pwaAlreadyInstalled() {
+  if (pwaIsInstalled()) return true;
+  try { return localStorage.getItem(PWA_INSTALLED_KEY) === '1'; } catch { return false; }
+}
 
 /* 이미 홈 화면 앱으로 실행 중이면 설치 안내가 필요 없다.
    iOS는 display-mode를 제대로 안 알려주는 경우가 있어 navigator.standalone도 같이 본다. */
@@ -70,8 +88,15 @@ function pwaHide() {
   if (el) el.classList.remove('open');
 }
 
+/* 닫기 — 지금 화면에서만 치운다. 다음에 들어오면 다시 뜬다.
+   한 번 닫았다고 영영 숨기면 나중에 설치하고 싶어졌을 때 방법이 없어진다. */
 function pwaDismiss() {
-  try { localStorage.setItem(PWA_DISMISS_KEY, '1'); } catch {}
+  pwaHide();
+}
+
+/* 일주일간 보지 않기 — 이걸 눌렀을 때만 기간을 두고 숨긴다 */
+function pwaSnooze() {
+  try { localStorage.setItem(PWA_DISMISS_KEY, String(Date.now())); } catch {}
   pwaHide();
 }
 
@@ -94,8 +119,8 @@ function pwaOpenInSafari() {
 
 function pwaShowBanner(mode, force) {
   // 이미 설치했으면 안내가 필요 없다. 설정에서 직접 부른 경우(force)는 닫은 이력을 무시한다.
-  if (pwaIsInstalled()) return;
-  if (!force) { try { if (localStorage.getItem(PWA_DISMISS_KEY)) return; } catch {} }
+  if (pwaAlreadyInstalled()) return;
+  if (!force && pwaRecentlyDismissed()) return;
 
   const el = pwaEnsureBanner();
   const CLOSE = `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
@@ -130,11 +155,16 @@ function pwaShowBanner(mode, force) {
        </div>
        <button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`;
 
-  el.innerHTML = `<img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}`;
+  el.innerHTML =
+    `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>` +
+    `<img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}`;
   el.classList.add('open');
 
   const close = document.getElementById('pwaClose');
   if (close) close.addEventListener('click', pwaDismiss);
+
+  const snooze = document.getElementById('pwaSnooze');
+  if (snooze) snooze.addEventListener('click', pwaSnooze);
 
   const chrome = document.getElementById('pwaChrome');
   if (chrome) chrome.addEventListener('click', pwaOpenInChrome);
@@ -144,13 +174,18 @@ function pwaShowBanner(mode, force) {
 
   const go = document.getElementById('pwaGo');
   if (go) go.addEventListener('click', async () => {
-    if (!pwaDeferredPrompt) return pwaHide();
+    // 설치 이벤트를 이미 써버렸거나 못 받은 경우. 아무 반응이 없으면 사용자가
+    // 뭘 잘못했나 싶으므로, 브라우저 메뉴로 설치하는 방법을 대신 안내한다.
+    if (!pwaDeferredPrompt) return pwaShowBanner('unsupported', true);
+
     pwaDeferredPrompt.prompt();
-    const { outcome } = await pwaDeferredPrompt.userChoice;
+    await pwaDeferredPrompt.userChoice;
+    // prompt()는 한 번만 쓸 수 있어 결과와 무관하게 버린다
     pwaDeferredPrompt = null;
-    // 거절했더라도 계속 띄우면 성가시므로 이번 방문에는 감춘다
+    // ★ "설치를 눌렀다"와 "설치가 끝났다"는 다르다. 눌러도 마지막 단계에서
+    //   실패하는 일이 실제로 있었고, 그때 설치된 것으로 기록해버리면 앱은 없는데
+    //   안내는 영영 안 뜨는 상태가 된다. 완료 기록은 appinstalled에서만 남긴다.
     pwaHide();
-    if (outcome === 'accepted') { try { localStorage.setItem(PWA_DISMISS_KEY, '1'); } catch {} }
   });
 }
 
@@ -162,9 +197,10 @@ window.addEventListener('beforeinstallprompt', e => {
   pwaShowBanner('android');
 });
 
+// 설치가 진짜로 끝났을 때만 온다. 여기서만 "설치됨"을 기록한다.
 window.addEventListener('appinstalled', () => {
   pwaDeferredPrompt = null;
-  try { localStorage.setItem(PWA_DISMISS_KEY, '1'); } catch {}
+  try { localStorage.setItem(PWA_INSTALLED_KEY, '1'); } catch {}
   pwaHide();
 });
 

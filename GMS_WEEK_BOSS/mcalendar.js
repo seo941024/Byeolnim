@@ -156,7 +156,8 @@ function renderMapleCalendar() {
   mcRenderGrid();
 }
 
-/* ── 보스 알림 켜기/끄기 ──
+/* ── 일정 알림 켜기/끄기 ──
+   보스든 파티든 등록한 일정이면 전부 대상이다("보스 알림"이 아니다).
    앱이 닫혀 있어도 오는 알림이라 서버에 일정 시각을 올려야 한다(bosspush.js 참고). */
 function mcRenderPushBtn() {
   const btn = document.getElementById('mcPushBtn');
@@ -181,13 +182,13 @@ async function mcTogglePush() {
   try {
     if (wasOn) {
       await bpDisable();
-      mcToast('보스 알림을 껐습니다.');
+      mcToast('알림을 껐습니다.');
+      // 꺼서 다시 물어볼 만한 상태가 됐으니, 바로 옆에서 다시 켤 기회를 준다
+      if (typeof bpShowPrompt === 'function') setTimeout(bpShowPrompt, 400);
     } else {
       const r = await bpEnable();
       if (!r.ok) { alert(r.msg); return; }
-      mcToast(r.count > 0
-        ? `보스 알림을 켰습니다. 예정된 일정 ${r.count}건에 알려드릴게요.`
-        : '보스 알림을 켰습니다. 일정을 추가하면 그 시각에 알려드릴게요.');
+      mcToast('알림을 켰습니다.');
     }
   } finally {
     btn.disabled = false;

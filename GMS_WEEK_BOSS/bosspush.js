@@ -185,8 +185,6 @@ function bpShowPrompt() {
   if (!bpSupported() || bpIsEnabled()) return;
   if (Notification.permission === 'denied') return;   // 이미 차단됨 — 물어봐도 소용없다
   if (bpPromptRecentlyDismissed()) return;
-  // 설치 배너와 자리가 겹치므로, 그게 떠 있으면 이번엔 건너뛴다(다음에 다시 시도됨)
-  if (document.getElementById('pwaInstall')?.classList.contains('open')) return;
 
   const el = bpEnsurePromptBanner();
   el.innerHTML = `
@@ -194,10 +192,22 @@ function bpShowPrompt() {
     <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
     <div class="pwa-install__txt">
       <b>캘린더 알림을 받으시겠어요?</b>
-      <span>등록한 보스 일정 시각에 폰으로 알려드려요.</span>
+      <span>등록한 일정 시각에 폰으로 알려드려요.</span>
     </div>
     <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
     <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>`;
+
+  // 설치 배너와 자리가 겹친다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로
+  // 캘린더에 다시 안 들어오면 영영 못 보게 되는 문제가 있었다(실제 제보).
+  // 건너뛰는 대신 설치 배너 바로 밑에 이어 붙인다.
+  const install = document.getElementById('pwaInstall');
+  if (install && install.classList.contains('open')) {
+    const gap = install.getBoundingClientRect().height + 10;
+    el.style.top = `calc(var(--top-h) + 10px + ${gap}px)`;
+  } else {
+    el.style.top = '';
+  }
+
   el.classList.add('open');
 
   document.getElementById('bpPromptClose').addEventListener('click', bpHidePrompt);

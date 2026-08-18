@@ -35,6 +35,40 @@ self.addEventListener('activate', e => {
   );
 });
 
+/* ── 보스 알림 ──
+   서버(api/push-tick)가 밀어준 알림을 띄운다. 앱이 닫혀 있어도 이 워커는 깨어나
+   실행되기 때문에, 폰이 잠겨 있어도 알림이 뜬다. */
+self.addEventListener('push', e => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = {}; }
+
+  e.waitUntil(self.registration.showNotification(d.title || '보스 시간', {
+    body: d.body || '',
+    icon: 'images/pwa/icon-192.png',
+    badge: 'images/pwa/icon-192.png',
+    // 같은 일정이 여러 번 와도 알림이 쌓이지 않게 하나로 합친다
+    tag: d.tag || 'boss',
+    renotify: true,
+    data: { url: d.url || '/' },
+  }));
+});
+
+/* 알림을 누르면 이미 열려 있는 창을 앞으로 가져오고, 없으면 새로 연다.
+   무조건 새 창을 열면 탭이 계속 쌓인다. */
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  const target = (e.notification.data && e.notification.data.url) || '/';
+
+  e.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) {
+        if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus();
+      }
+      return self.clients.openWindow(target);
+    })
+  );
+});
+
 /* 이미지·폰트인지 (cache-first 대상). 보스 gif가 수 MB라 캐싱 효과가 크고,
    파일명이 바뀌지 않는 정적 리소스라 오래 캐싱해도 안전하다. */
 function isAsset(req, url) {

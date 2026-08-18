@@ -44,6 +44,10 @@ function mcLoadEv() {
 }
 function mcStoreEv(data) {
   localStorage.setItem(STORAGE_KEYS.mapleCalEvents, JSON.stringify(data));
+  // 일정이 바뀌면 서버가 들고 있는 알림 시각도 같이 맞춰야 한다.
+  // 저장 경로가 전부 이 함수를 지나가므로 여기 한 곳만 걸어두면 된다.
+  // 알림이 꺼져 있으면 bpSync가 알아서 아무것도 하지 않는다.
+  if (typeof bpSync === 'function') bpSync().catch(() => {});
 }
 
 /* ── 색상 (HSV → RGB) ──
@@ -118,6 +122,7 @@ function renderMapleCalendar() {
     <div class="mc-panel">
       <div class="mc-topbar">
         <button class="mc-charchip" id="mcCharChip"></button>
+        <button class="sbtn sbtn--ghost mc-pushbtn" id="mcPushBtn">알림 받기</button>
         <button class="sbtn sbtn--ghost mc-allbtn" id="mcAllBtn">전체 보기</button>
       </div>
       <div class="mc-cal__head">
@@ -141,9 +146,50 @@ function renderMapleCalendar() {
     mcState.viewAll = !mcState.viewAll;
     mcRenderCharChip(); mcRenderGrid();
   });
+  document.getElementById('mcPushBtn').addEventListener('click', mcTogglePush);
+  mcRenderPushBtn();
 
   mcRenderCharChip();
   mcRenderGrid();
+}
+
+/* ── 보스 알림 켜기/끄기 ──
+   앱이 닫혀 있어도 오는 알림이라 서버에 일정 시각을 올려야 한다(bosspush.js 참고). */
+function mcRenderPushBtn() {
+  const btn = document.getElementById('mcPushBtn');
+  if (!btn) return;
+  if (typeof bpSupported !== 'function' || !bpSupported()) {
+    btn.style.display = 'none';
+    return;
+  }
+  btn.style.display = '';
+  const on = bpIsEnabled();
+  btn.textContent = on ? '알림 끄기' : '알림 받기';
+  btn.classList.toggle('sbtn--primary', on);
+  btn.classList.toggle('sbtn--ghost', !on);
+}
+
+async function mcTogglePush() {
+  const btn = document.getElementById('mcPushBtn');
+  if (!btn) return;
+  const wasOn = bpIsEnabled();
+  btn.disabled = true;
+
+  try {
+    if (wasOn) {
+      await bpDisable();
+      mcToast('보스 알림을 껐습니다.');
+    } else {
+      const r = await bpEnable();
+      if (!r.ok) { alert(r.msg); return; }
+      mcToast(r.count > 0
+        ? `보스 알림을 켰습니다. 예정된 일정 ${r.count}건에 알려드릴게요.`
+        : '보스 알림을 켰습니다. 일정을 추가하면 그 시각에 알려드릴게요.');
+    }
+  } finally {
+    btn.disabled = false;
+    mcRenderPushBtn();
+  }
 }
 
 function mcShiftMonth(delta) {

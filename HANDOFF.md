@@ -1,13 +1,19 @@
-# Byeolnim.app 작업 인계 문서
+# 메이뿌덩(Mappu.app) 작업 인계 문서
 
 다른 컴퓨터(또는 새 Claude Code 세션)에서 이어서 작업할 때 이 파일을 먼저 읽게 하면 됩니다.
 "HANDOFF.md 읽고 이어서 작업해줘" 라고 시작하면 됩니다.
 
+**2026-08-20: "Byeolnim.app/별님앱" → "메이뿌덩/Mappu"로 완전히 리브랜딩됨.**
+아래 문서 안에 옛 이름이 남아있는 곳(특히 이 문단 아래 오래된 기록들)이
+있을 수 있는데, 전부 리브랜딩 이전 기록이라 그렇다 — 지금 코드에는 옛
+이름이 전혀 없다(전수 확인함). 자세한 경위는 아래 "최신 세션에서 한 일
+(2026-08-20 이어서)" 항목 참고.
+
 ## 프로젝트 개요
 
-- **Byeolnim.app** — 한국어 메이플스토리 GMS(북미/유럽 서버) 유틸리티 웹앱
-- 저장소: `GMS_Calc` (실제 GitHub 위치는 이동됨 → `github.com/seo941024/Byeolnim.git`. `git push`는 그대로 기존 origin으로 하면 리다이렉트됨)
-- 배포: Vercel, `https://byeolnim.vercel.app` (master 브랜치 푸시 시 자동 배포)
+- **메이뿌덩(Mappu.app)** — 한국어 메이플스토리 GMS(북미/유럽 서버) 유틸리티 웹앱. 원래 길드 전용("별님앱")이었다가 누구나 쓰는 서비스로 전환함
+- 저장소: `GMS_Calc` (실제 GitHub 위치는 이동됨 → `github.com/seo941024/Byeolnim.git`. 레포 이름 자체는 아직 Byeolnim이지만 배포 도메인만 바뀐 것 — `git push`는 그대로 기존 origin으로 하면 됨)
+- 배포: Vercel, **`https://mapbbu.vercel.app`** (master 브랜치 푸시 시 자동 배포). 예전 `byeolnim.vercel.app`은 사용자가 Vercel Domains에서 삭제함 — 되살릴 필요 없음
 - 실제 코드 위치: 레포 루트가 아니라 **`GMS_WEEK_BOSS/`** 서브폴더
 - 순수 바닐라 JS — 프레임워크/번들러 없음. `index.html`에 `<script>` 태그로 전역 로드
 - 로컬 개발 서버: `GMS_WEEK_BOSS/serve.js` (Node 내장 http 모듈, 포트 3001). `.claude/launch.json`에 등록되어 있어 Claude Code의 Browser 프리뷰 도구로 `preview_start({name:"GMS_WEEK_BOSS"})` 하면 뜸
@@ -47,6 +53,31 @@
 카드에는 최근 `NOTICE_SHOW_DAYS`(현재 3)일치만 보여주고, 그 이전 기록은 `NOTICE_LOG`에 남아만 있는다.
 공지 카드는 **"확인" 버튼으로만 닫힌다** (× 없음, 바깥 클릭으로도 안 닫힘) — 실수로 넘겨서
 공지를 못 보는 걸 막으려고 일부러 그렇게 만든 것이니 되돌리지 말 것.
+
+## 최신 세션에서 한 일 (2026-08-20 마무리, 커밋 `6d1ace7` ~ `f60167d`)
+
+바로 아래 "2026-08-20 이어서" 섹션 이후로 추가된 것들.
+
+1. **그림자(box-shadow) 정리** — `6d1ace7`. 버튼/카드 hover의 lift+glow
+   효과를 전부 제거하고 border-color/filter 변화만 남김. 자세한 내용은
+   아래 "### 11. 그림자 정리" 참고.
+2. **캘린더 전체 보기 일정 개수 버그** — `626182f`. 전체 보기일 때만
+   일정 라벨을 무조건 3개로 낮췄던 특별 취급을 없앰. 지금은 캐릭터별
+   보기든 전체 보기든 `Math.min(MC_MAX_EVENTS, fitEvCap)` 하나로 통일
+   (`mcalendar.js`).
+3. **검은 마법사 결정석 포함 토글이 캐릭터별이 아니라 전체에 적용되던
+   버그** — `f60167d`. `state.bmCrystalIncluded`가 전역 값 하나였어서
+   보스 테이블에선 캐릭터별 토글처럼 보였지만 실제로는 모든 캐릭터에
+   같은 값이 적용됐다. **캐릭터 객체(`ch.bmCrystalIncluded`)로 옮겼다**
+   — 앞으로 캐릭터별 설정을 또 추가할 일이 있으면 `state`에 바로 두지
+   말고 처음부터 캐릭터 객체에 둘 것. `updateCrystalBar()`의 전체
+   결정석 합산도 캐릭터별로 꺼진 사람 것만 빼도록 같이 고쳤다
+   (`app.js`의 `bmExcluded` reduce).
+4. **캘린더 알림 배너 아이콘**이 예전 캘린더 nav 아이콘
+   (`Etc_Leafre_Guidebook.png`) 그대로 남아있던 것을, 지금 캘린더 nav가
+   쓰는 `Etc_Alliance_Report.png`로 맞춤(`bosspush.js`). **nav 아이콘을
+   또 바꾸면 `bosspush.js`의 알림 배너 아이콘도 같이 확인할 것** —
+   서로 다른 파일이라 자동으로 안 따라간다.
 
 ## 최신 세션에서 한 일 (2026-08-20 이어서, 커밋 `b8fce33` ~ `a1b0fae`)
 

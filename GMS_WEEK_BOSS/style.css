@@ -552,22 +552,37 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 12px rgba(246,199,68,.08);
   text-shadow: 0 0 8px rgba(246,199,68,.35);
 }
-/* 아이콘(32px)이 들어가고도 남을 만큼 — 좁으면 아이콘이 그릇을 벗어나 라벨을 밀어낸다 */
+/* 가장 큰 아이콘(38px)이 들어가고도 남을 만큼 — 좁으면 아이콘이 그릇을 벗어나
+   라벨을 밀어낸다 */
 .sb-nav__icon-wrap {
-  width: 34px; height: 34px; flex-shrink: 0;
+  width: 40px; height: 40px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
 }
 /* ── nav 아이콘 크기 ──
-   ★ 전부 같은 32px 상자에 맞춘다(object-fit:contain이라 그림 비율은 유지된다).
-     예전엔 그림마다 24~33px로 제각각이라 어떤 건 유독 작아 보였고, 게임에서 보던
-     것보다 작다는 지적도 있었다. 하나로 통일해야 줄이 가지런하다.
-     32px을 상한으로 잡은 이유: 원본이 28~40px이라 이보다 키우면 작은 그림들이
-     확대되며 픽셀아트가 뭉개진다. 원본이 큰 그림(hexa 148px 등)은 여기 맞춰 줄어든다.
-     data-sec별 예외를 다시 두지 말 것 — 그게 크기가 제각각이던 원인이었다. */
-.sb-nav__icon {
-  object-fit: contain;
-  width: 32px; height: 32px;
-}
+   ★ 값이 제각각인 이유가 있다. 다 32px로 똑같이 줬더니 오히려 크기가 들쭉날쭉해
+     보였는데, object-fit:contain이 맞추는 건 "그림"이 아니라 "캔버스"이기 때문이다.
+     마플 아이콘은 파일마다 투명 여백이 달라서(캔버스를 꽉 채운 것도 있고 여백이
+     넓은 것도 있다) 같은 32px 상자에 넣어도 실제 그림은 27~32px로 벌어졌다.
+     그래서 파일별로 그림(불투명 영역)의 실제 크기를 재서, 화면에 보이는 그림이
+     모두 32px이 되도록 역산한 값을 넣었다. 작은 쪽에 맞춰 줄이지 않고 가장 크게
+     보이던 32px에 맞춰 올린 것이다.
+     ※ 아이콘 파일을 교체하면 이 값도 다시 계산해야 한다. 계산식:
+       필요값 = 32 × (캔버스 긴 변) ÷ (그림 긴 변) */
+.sb-nav__icon { object-fit: contain; width: 32px; height: 32px; }
+
+.sb-nav__item[data-sec="wantchannel"]  .sb-nav__icon { width: 38px; height: 38px; }
+.sb-nav__item[data-sec="charinfo"]     .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="mcalendar"]    .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="boss"]         .sb-nav__icon { width: 34px; height: 34px; }
+.sb-nav__item[data-sec="dailytasks"]   .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="hexa"]         .sb-nav__icon { width: 34px; height: 34px; }
+.sb-nav__item[data-sec="liberation"]   .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="addoption"]    .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="starforce"]    .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="cube"]         .sb-nav__icon { width: 34px; height: 34px; }
+.sb-nav__item[data-sec="statocr"]      .sb-nav__icon { width: 33px; height: 33px; }
+.sb-nav__item[data-sec="bosshp"]       .sb-nav__icon { width: 32px; height: 32px; }
+.sb-nav__item[data-sec="serverstatus"] .sb-nav__icon { width: 35px; height: 35px; }
 /* CSS 아이콘 (기존 유지 — img 태그에는 적용 안 됨) */
 .sb-nav__icon::before,.sb-nav__icon::after{content:'';position:absolute;display:block}
 .sb-nav__icon--char::before{width:10px;height:10px;border-radius:50%;background:var(--primary);top:3px}
@@ -1324,9 +1339,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: none;
   position: fixed; z-index: 1200;
   left: 12px; right: 12px; top: calc(var(--top-h) + 10px);
-  /* 위아래를 같게 준다. 예전엔 "일주일간 보지 않기"를 위쪽 구석에 절대배치하느라
-     위 여백만 크게 잡았는데, 그러면 아래를 아무리 늘려도 위아래가 안 맞았다.
-     그 버튼을 버튼 줄로 내려서 이 문제를 없앴다. */
+  /* 위아래 여백은 같게(14px). 우상단의 "일주일간 보지 않기"는 absolute라
+     높이를 차지하지 않으므로, 예전처럼 위 여백을 따로 키울 필요가 없다. */
   padding: 14px;
   background: var(--bg2); border: 1px solid var(--border-hl);
   border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
@@ -1343,12 +1357,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    좁은 배너 안에서 혼자 떠 보이면 어색하다. */
 .pwa-install .sbtn--primary { box-shadow: none; }
 .pwa-install .sbtn--primary:hover { box-shadow: none; transform: none; }
-/* "일주일간 보지 않기". 닫기와 달리 기간을 두고 숨기는 동작이라 눈에 덜 띄게 두되,
-   누르기 어렵지 않을 만큼의 영역은 준다.
-   절대배치를 쓰지 않는 이유: 구석에 띄우면 그만큼 위 여백을 따로 잡아야 해서
-   배너 위아래 여백이 영영 안 맞는다. 그냥 버튼 줄에 같이 둔다. */
+/* "일주일간 보지 않기" — 우상단 구석에 둔다. 확인/닫기와 성격이 다른 동작이라
+   버튼 줄에 나란히 두면 셋 중 뭘 눌러야 할지 헷갈린다.
+   absolute라 배너 높이에 영향을 주지 않으므로 위아래 여백은 그대로 유지된다. */
 .pwa-install__snooze {
-  padding: 6px 8px; min-height: 28px; flex: none;
+  position: absolute; top: 6px; right: 10px;
+  padding: 4px 6px; flex: none;
   background: none; border: none;
   font: inherit; font-size: .66rem; font-weight: 700;
   color: var(--text-dim); white-space: nowrap; cursor: pointer;
@@ -1364,7 +1378,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      한 줄에 다 들어간다"고 계산해서 줄바꿈이 일어나지 않고, 대신 글씨 영역이
      40px대로 짓눌려 글자가 세로로 쪼개진다(실제로 그렇게 깨졌었다). */
 @media (max-width: 520px) {
-  .pwa-install { flex-wrap: wrap; }
+  /* 좁으면 우상단 "일주일간 보지 않기"가 글씨 위로 겹친다 → 그 줄만큼 위를 비운다.
+     넓은 화면에서는 글씨 오른쪽에 자리가 남아 겹치지 않으므로 그대로 둔다. */
+  .pwa-install { flex-wrap: wrap; padding-top: 30px; }
   .pwa-install__icon { order: 0; }
   .pwa-install__txt { order: 1; flex: 1 1 auto; min-width: 150px; }
   .pwa-install .sbtn, .pwa-install__snooze { order: 2; white-space: nowrap; }

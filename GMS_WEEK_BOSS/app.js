@@ -1348,12 +1348,13 @@ document.getElementById('btnResetAll').addEventListener('click', () => {
 });
 
 /* 글자 크기 기준값(rem의 기준). 거의 모든 크기가 rem이라 여기만 올리면 전체가 같이 커진다.
-   PC에서 글씨가 작다는 피드백이 있어 데스크톱만 2px 올린다 — 모바일/앱은 기존 크기 유지.
+   PC에서 글씨가 작다는 피드백에 데스크톱만 +3px까지 올렸다가, 이번엔 너무 커졌다는
+   지적을 받아 +1px로 낮춘다(사이드바 메뉴 글씨가 특히 커 보였다).
    '고딕'(ONE_Mobile_Title)은 원래 폭이 넓게 렌더링돼 15px로 낮춰뒀던 값이라 그 차이는 유지. */
 const MOBILE_MQ = window.matchMedia('(max-width: 768px)');
 function rootFontPx() {
   const base = document.body.dataset.font === '고딕' ? 15 : 16;
-  return MOBILE_MQ.matches ? base : base + 3;
+  return MOBILE_MQ.matches ? base : base + 1;
 }
 function applyRootFontSize() {
   document.documentElement.style.fontSize = rootFontPx() + 'px';

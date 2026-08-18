@@ -301,6 +301,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Use_Red_Jade_Boss_Ring_Box.png", name: '홍옥의 보스 반지 상자' },
     { file: "Eqp_Berserked.png", name: '루즈 컨트롤 머신 마크' },
     { file: "Etc_Lotus_Droid.png", name: '스우 로이드' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '스우_익스트림': [
     { file: "Use_Special_Energy_Core_S.png", name: '특수형 에너지 코어(S)급' },
@@ -311,6 +312,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Eqp_Total_Control.png", name: '컴플리트 언더컨트롤' },
     { file: "Etc_Extreme_Lotus_Droid.png", name: '섬멸병기 스우로이드' },
     { file: "Etc_Soul_Fragment.png", name: '섬멸병기 스우의 소울 조각' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '데미안_노말': [
     { file: "Etc_Twisted_Stigma_Soul_Stone.png", name: '뒤틀린 낙인의 영혼석' },
@@ -327,14 +329,17 @@ const BOSS_DROP_ITEMS = {
     { file: "Etc_Damien_Droid.png", name: '데미안로이드' },
     { file: "Use_AbsoLab_Armor_Box.png", name: '앱솔랩스 방어구 상자' },
     { file: "Use_AbsoLab_Weapon_Box.png", name: '앱솔랩스 무기 상자' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '가디언 엔젤 슬라임_노말': [
     { file: "Eqp_Guardian_Angel_Ring.png", name: '가디언 엔젤 링' },
     { file: "Use_Green_Jade_Boss_Ring_Box.png", name: '녹옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '가디언 엔젤 슬라임_카오스': [
     { file: "Eqp_Guardian_Angel_Ring.png", name: '가디언 엔젤 링' },
     { file: "Use_Black_Jade_Boss_Ring_Box.png", name: '흑옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '루시드_이지': [
     { file: "Etc_Soul_Fragment.png", name: '루시드의 소울 조각' },
@@ -345,6 +350,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Eqp_Twilight_Mark.png", name: '트와일라이트 마크' },
     { file: "Etc_Soul_Fragment.png", name: '루시드의 소울 조각' },
     { file: "Use_Green_Jade_Boss_Ring_Box.png", name: '녹옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '루시드_하드': [
     { file: "Etc_Butterfly_Droplet_Stone.png", name: '나비날개 물방울석' },
@@ -355,6 +361,8 @@ const BOSS_DROP_ITEMS = {
     { file: "Etc_Lucid_Droid.png", name: '루시드로이드' },
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '윌_이지': [
     { file: "Etc_Soul_Fragment.png", name: '윌의 소울 조각' },
@@ -365,6 +373,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Eqp_Twilight_Mark.png", name: '트와일라이트 마크' },
     { file: "Etc_Soul_Fragment.png", name: '윌의 소울 조각' },
     { file: "Use_Green_Jade_Boss_Ring_Box.png", name: '녹옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '윌_하드': [
     { file: "Etc_Cobweb_Droplet_Stone.png", name: '코브웹 물방울석' },
@@ -375,10 +384,12 @@ const BOSS_DROP_ITEMS = {
     { file: "Etc_Mirror_World_Core_Gemstone.png", name: '거울세계의 코어 젬스톤' },
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '더스크_노말': [
     { file: "Eqp_Estella_Earrings.png", name: '에스텔라 이어링' },
     { file: "Use_Green_Jade_Boss_Ring_Box.png", name: '녹옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '더스크_카오스': [
     { file: "Eqp_Estella_Earrings.png", name: '에스텔라 이어링' },
@@ -386,6 +397,8 @@ const BOSS_DROP_ITEMS = {
     { file: "Eqp_Endless_Terror.png", name: '거대한 공포' },
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '진 힐라_노말': [
     { file: "Eqp_Daybreak_Pendant.png", name: '데이브레이크 펜던트' },
@@ -393,6 +406,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
     { file: "Etc_Soul_Fragment.png", name: '진 힐라의 소울 조각' },
     { file: "Use_Red_Jade_Boss_Ring_Box.png", name: '홍옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '진 힐라_하드': [
     { file: "Eqp_Daybreak_Pendant.png", name: '데이브레이크 펜던트' },
@@ -401,11 +415,14 @@ const BOSS_DROP_ITEMS = {
     { file: "Etc_Soul_Fragment.png", name: '진 힐라의 소울 조각' },
     { file: "Use_Black_Jade_Boss_Ring_Box.png", name: '흑옥의 보스 반지 상자' },
     { file: "Eqp_Source_of_Suffering.png", name: '고통의 근원' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '듄켈_노말': [
     { file: "Eqp_Estella_Earrings.png", name: '에스텔라 이어링' },
     { file: "Etc_Soul_Fragment.png", name: '듄켈의 소울 조각' },
     { file: "Use_Green_Jade_Boss_Ring_Box.png", name: '녹옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '듄켈_하드': [
     { file: "Eqp_Estella_Earrings.png", name: '에스텔라 이어링' },
@@ -414,12 +431,15 @@ const BOSS_DROP_ITEMS = {
     { file: "Eqp_Commanding_Force_Earring.png", name: '커맨더 포스 이어링' },
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '검은 마법사_하드': [
     { file: "Use_White_Jade_Boss_Ring_Box.png", name: '백옥의 보스 반지 상자' },
     { file: "Eqp_Genesis_Badge.png", name: '창세의 뱃지' },
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '검은 마법사_익스트림': [
     { file: "Use_White_Jade_Boss_Ring_Box.png", name: '백옥의 보스 반지 상자' },
@@ -427,16 +447,19 @@ const BOSS_DROP_ITEMS = {
     { file: "Use_Arcane_Umbra_Armor_Box.png", name: '아케인셰이드 방어구 상자' },
     { file: "Use_Arcane_Umbra_Weapon_Box.png", name: '아케인셰이드 무기 상자' },
     { file: "Use_Exceptional_Hammer_(Belt).png", name: '익셉셔널 해머 (벨트)' },
+    { file: "Etc_Pitched_Whisper_Crystal.png", name: '칠흑의 속삭임 결정' },
   ],
   '선택받은 세렌_노말': [
     { file: "Eqp_Daybreak_Pendant.png", name: '데이브레이크 펜던트' },
     { file: "Use_Black_Jade_Boss_Ring_Box.png", name: '흑옥의 보스 반지 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '선택받은 세렌_하드': [
     { file: "Eqp_Daybreak_Pendant.png", name: '데이브레이크 펜던트' },
     { file: "Etc_Mitra_Core_Gemstone.png", name: '미트라의 코어 젬스톤' },
     { file: "Use_White_Jade_Boss_Ring_Box.png", name: '백옥의 보스 반지 상자' },
     { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노 선택 상자' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '선택받은 세렌_익스트림': [
     { file: "Eqp_Daybreak_Pendant.png", name: '데이브레이크 펜던트' },
@@ -445,6 +468,7 @@ const BOSS_DROP_ITEMS = {
     { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노 선택 상자' },
     { file: "Use_Exceptional_Hammer_(Face_Acc).png", name: '익셉셔널 해머 (얼굴장식)' },
     { file: "Etc_Vestige_of_Erion.png", name: '에리온의 조각' },
+    { file: "Etc_Dawn_Whisper_Crystal.png", name: '새벽의 속삭임 결정' },
   ],
   '감시자 칼로스_이지': [
     { file: "Etc_Soul_Fragment.png", name: '칼로스의 소울 조각' },

@@ -146,38 +146,33 @@ function pwaShowBanner(mode, force) {
   //   한 줄로 넣어서 배너 높이 자체를 늘려야 한다 — 그래서 맨 위에 독립된 줄로 뺐다.
   const SNOOZE = `<button class="pwa-install__snooze" id="pwaSnooze">일주일간 보지 않기</button>`;
   const CLOSE = `<button class="sbtn sbtn--ghost pwa-install__close" id="pwaClose">닫기</button>`;
+  // 문구(아이콘+글) 줄과 버튼 줄을 아예 분리한다. 한 줄에 같이 있으면 버튼
+  // 높이에 맞춰 글이 눌리므로, 문구는 자기 줄에서 독립적으로 세로 중앙에 온다.
   // "아래/위" 같은 위치는 아이폰(하단)과 아이패드(상단)가 달라 일부러 쓰지 않는다.
   // 공유 시트에서 '홈 화면에 추가'가 접혀 있어 못 찾는 경우가 가장 많아 스크롤을 짚어준다.
-  const body = mode === 'ios'
-    ? `<div class="pwa-install__txt">
-         <b>별님앱을 홈 화면에 추가</b>
+  const [txt, actions] = mode === 'ios'
+    ? [`<b>별님앱을 홈 화면에 추가</b>
          <span>Safari의 공유 ${PWA_SHARE_SVG} 버튼 → 목록을 <b>아래로 내려</b>
-               <b>홈 화면에 추가</b>를 누르세요.</span>
-       </div>${CLOSE}`
+               <b>홈 화면에 추가</b>를 누르세요.</span>`, CLOSE]
     : mode === 'ios-inapp'
-    ? `<div class="pwa-install__txt">
-         <b>별님앱을 홈 화면에 추가</b>
-         <span>Safari에서 공유 ${PWA_SHARE_SVG} → <b>홈 화면에 추가</b>를 누르세요.</span>
-       </div>
-       <button class="sbtn sbtn--primary" id="pwaSafari">Safari로 열기</button>${CLOSE}`
+    ? [`<b>별님앱을 홈 화면에 추가</b>
+         <span>Safari에서 공유 ${PWA_SHARE_SVG} → <b>홈 화면에 추가</b>를 누르세요.</span>`,
+       `<button class="sbtn sbtn--primary" id="pwaSafari">Safari로 열기</button>${CLOSE}`]
     : mode === 'android-inapp'
-    ? `<div class="pwa-install__txt">
-         <b>별님앱 설치하기</b>
-         <span>앱 안의 브라우저에서는 설치가 안 돼요.</span>
-       </div>
-       <button class="sbtn sbtn--primary" id="pwaChrome">크롬으로 열기</button>${CLOSE}`
+    ? [`<b>별님앱 설치하기</b>
+         <span>앱 안의 브라우저에서는 설치가 안 돼요.</span>`,
+       `<button class="sbtn sbtn--primary" id="pwaChrome">크롬으로 열기</button>${CLOSE}`]
     : mode === 'unsupported'
-    ? `<div class="pwa-install__txt">
-         <b>별님앱 설치하기</b>
-         <span>브라우저 메뉴에서 <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 앱처럼 쓸 수 있어요.</span>
-       </div>${CLOSE}`
-    : `<div class="pwa-install__txt">
-         <b>별님앱 설치하기</b>
-         <span>홈 화면에 추가하면 앱처럼 바로 열 수 있어요.</span>
-       </div>
-       <button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`;
+    ? [`<b>별님앱 설치하기</b>
+         <span>브라우저 메뉴에서 <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 앱처럼 쓸 수 있어요.</span>`, CLOSE]
+    : [`<b>별님앱 설치하기</b>
+         <span>홈 화면에 추가하면 앱처럼 바로 열 수 있어요.</span>`,
+       `<button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`];
 
-  el.innerHTML = `${SNOOZE}<div class="pwa-install__row"><img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" />${body}</div>`;
+  el.innerHTML = `${SNOOZE}<div class="pwa-install__row">
+      <div class="pwa-install__info"><img class="pwa-install__icon" src="images/pwa/icon-192.png" alt="" /><div class="pwa-install__txt">${txt}</div></div>
+      <div class="pwa-install__actions">${actions}</div>
+    </div>`;
   el.classList.add('open');
 
   const close = document.getElementById('pwaClose');

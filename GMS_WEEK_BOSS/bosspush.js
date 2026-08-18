@@ -193,16 +193,22 @@ function bpShowPrompt() {
   const el = bpEnsurePromptBanner();
   // 스누즈를 확인/닫기와 같은 줄에 absolute로 얹으면 줄이 좁아질 때 버튼 위로
   // 겹친다. 독립된 한 줄로 빼서 배너 높이 자체가 늘어나게 한다(pwa.js와 동일 구조).
+  // 문구 줄과 버튼 줄도 분리해서, 문구가 버튼 높이에 눌리지 않고 자기 줄에서
+  // 세로 중앙에 오게 한다.
   el.innerHTML = `
     <button class="pwa-install__snooze" id="bpPromptSnooze">일주일간 보지 않기</button>
     <div class="pwa-install__row">
-      <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
-      <div class="pwa-install__txt">
-        <b>캘린더 알림을 받으시겠어요?</b>
-        <span>등록한 일정 시각에 알림으로 알려드려요.</span>
+      <div class="pwa-install__info">
+        <img class="pwa-install__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'" />
+        <div class="pwa-install__txt">
+          <b>캘린더 알림을 받으시겠어요?</b>
+          <span>등록한 일정 시각에 알림으로 알려드려요.</span>
+        </div>
       </div>
-      <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
-      <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>
+      <div class="pwa-install__actions">
+        <button class="sbtn sbtn--primary" id="bpPromptGo">확인</button>
+        <button class="sbtn sbtn--ghost pwa-install__close" id="bpPromptClose">닫기</button>
+      </div>
     </div>`;
 
   // 설치 배너와 자리가 겹칠 수 있다. 예전엔 그게 떠 있으면 이번엔 건너뛰었는데, 그 뒤로

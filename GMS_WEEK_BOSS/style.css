@@ -1364,9 +1364,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   gap: 6px;
 }
 .pwa-install.open { display: flex; }
-/* 문구(왼쪽)와 버튼(오른쪽)을 양끝으로 갈라 확실히 분리한다.
-   align-items:center라 문구가 row 높이 안에서 항상 세로 중앙에 온다. */
-.pwa-install__row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+/* 문구 줄(.pwa-install__info)과 버튼 줄(.pwa-install__actions)을 아예 분리한다.
+   한 줄에 같이 두면 버튼 높이에 맞춰 문구가 눌리는데, 따로 두면 문구가
+   자기 줄 안에서 독립적으로 세로 중앙(그냥 한 줄이라 자연히 중앙)에 온다. */
+.pwa-install__row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.pwa-install__info { display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1; }
+.pwa-install__actions { display: flex; align-items: center; gap: 8px; flex: none; }
 .pwa-install__icon { width: 44px; height: 44px; border-radius: 10px; flex: none; }
 .pwa-install__txt { display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1; }
 .pwa-install__txt b { font-size: .9rem; font-weight: 900; color: var(--text); }
@@ -1397,14 +1400,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
      한 줄에 다 들어간다"고 계산해서 줄바꿈이 일어나지 않고, 대신 글씨 영역이
      40px대로 짓눌려 글자가 세로로 쪼개진다(실제로 그렇게 깨졌었다). */
 @media (max-width: 520px) {
-  /* 스누즈는 이제 자기 줄이 따로 있어 겹칠 일이 없다. 좁을 때는 그 아래
-     .pwa-install__row 안에서 버튼만 다음 줄로 내린다. */
+  /* 스누즈는 이제 자기 줄이 따로 있어 겹칠 일이 없다. 좁을 때는 문구 줄
+     (.pwa-install__info) 아래로 버튼 줄(.pwa-install__actions)을 내린다. */
   .pwa-install__row { flex-wrap: wrap; }
-  .pwa-install__icon { order: 0; }
-  .pwa-install__txt { order: 1; flex: 1 1 auto; min-width: 150px; }
-  .pwa-install__row .sbtn { order: 2; white-space: nowrap; }
-  .pwa-install #pwaGo, .pwa-install #pwaChrome,
-  .pwa-install #pwaSafari, .pwa-install #bpPromptGo { margin-left: auto; }
+  .pwa-install__info { flex: 1 1 100%; min-width: 0; }
+  .pwa-install__txt { min-width: 150px; }
+  .pwa-install__actions { flex: 1 1 100%; justify-content: flex-end; white-space: nowrap; }
 }
 /* 홈 화면 앱으로 실행 중이면 설치 안내는 의미가 없다 */
 @media (display-mode: standalone) { .pwa-install { display: none !important; } }

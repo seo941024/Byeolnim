@@ -84,20 +84,21 @@ module.exports = async function handler(req, res) {
         // 404/410 = 구독이 만료됐거나 사용자가 알림을 끈 것 → 더 보낼 이유가 없다
         const code = e && e.statusCode;
         if (code === 404 || code === 410) {
-          await redis.srem('push:subs', id);
-          await redis.del('push:sub:' + id);
-          pruned++;
+          try { await redis.srem('push:subs', id); await redis.del('push:sub:' + id); pruned++; }
+          catch { /* 지우는 것도 실패하면 다음 tick에서 다시 시도된다 */ }
           break;
         }
       }
     }
 
-    // 보낸 것과 너무 늦은 것을 빼고 남은 것만 저장한다
+    // 보낸 것과 너무 늦은 것을 빼고 남은 것만 저장한다.
+    // 이 저장이 실패해도(예: 쓰기 권한 문제) 이번 구독자 처리만 실패로 남기고
+    // 나머지 구독자들은 계속 처리한다 — 여기서 죽으면 이후 구독자 전원이 못 받는다.
     if (due.length || dropped) {
-      if (keep.length) {
+      try {
         await redis.set('push:sub:' + id, JSON.stringify({ ...rec, items: keep }));
-      } else {
-        await redis.set('push:sub:' + id, JSON.stringify({ ...rec, items: [] }));
+      } catch (e) {
+        failed++;
       }
     }
   }

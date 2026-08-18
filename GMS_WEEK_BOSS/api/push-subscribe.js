@@ -46,33 +46,42 @@ module.exports = async function handler(req, res) {
 
   const id = subId(body.subscription.endpoint);
 
-  // 알림 끄기
-  if (body.unsubscribe) {
-    await redis.srem('push:subs', id);
-    await redis.del('push:sub:' + id);
-    res.status(200).json({ ok: true, removed: true });
-    return;
-  }
+  // 여기서부터는 전부 Redis 쓰기다. 지금까지 배포한 read 경로(push-key, push-tick의
+  // smembers)는 성공했지만 write는 한 번도 실제로 통과한 적이 없어서, try/catch 없이
+  // 두면 여기서 나는 오류가 함수를 통째로 죽인다(FUNCTION_INVOCATION_FAILED로 관찰됨).
+  // 진짜 원인(예: Upstash 토큰이 읽기 전용으로 발급됨)을 특정하려면 오류를 그대로
+  // 삼키지 말고 클라이언트에 보여줘야 하므로 감싸서 처리한다.
+  try {
+    // 알림 끄기
+    if (body.unsubscribe) {
+      await redis.srem('push:subs', id);
+      await redis.del('push:sub:' + id);
+      res.status(200).json({ ok: true, removed: true });
+      return;
+    }
 
-  // 지난 시각은 저장할 필요가 없고, 무한정 쌓이지 않게 개수도 제한한다
-  const now = Date.now();
-  const items = (Array.isArray(body.items) ? body.items : [])
-    .filter(it => it && typeof it.at === 'number' && it.at > now)
-    .sort((a, b) => a.at - b.at)
-    .slice(0, 200)
-    .map(it => ({
-      id: String(it.id),
-      at: it.at,
-      title: String(it.title || '보스 알림').slice(0, 60),
-      body: String(it.body || '').slice(0, 120),
+    // 지난 시각은 저장할 필요가 없고, 무한정 쌓이지 않게 개수도 제한한다
+    const now = Date.now();
+    const items = (Array.isArray(body.items) ? body.items : [])
+      .filter(it => it && typeof it.at === 'number' && it.at > now)
+      .sort((a, b) => a.at - b.at)
+      .slice(0, 200)
+      .map(it => ({
+        id: String(it.id),
+        at: it.at,
+        title: String(it.title || '보스 알림').slice(0, 60),
+        body: String(it.body || '').slice(0, 120),
+      }));
+
+    await redis.set('push:sub:' + id, JSON.stringify({
+      sub: body.subscription,
+      items,
+      updated: now,
     }));
+    await redis.sadd('push:subs', id);
 
-  await redis.set('push:sub:' + id, JSON.stringify({
-    sub: body.subscription,
-    items,
-    updated: now,
-  }));
-  await redis.sadd('push:subs', id);
-
-  res.status(200).json({ ok: true, id, count: items.length });
+    res.status(200).json({ ok: true, id, count: items.length });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: 'redis 쓰기 실패', detail: String(e && e.message || e) });
+  }
 };

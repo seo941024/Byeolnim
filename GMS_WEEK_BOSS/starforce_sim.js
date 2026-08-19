@@ -90,8 +90,7 @@ function sfEnhanceOnce() {
   } else if (r < p.succ + p.fail) {
     nextStar = star > 0 ? star - 1 : star;
     if (star <= 14 || star === 0) nextStar = star; // 0~14성은 유지
-    // 실제론 연속실패 시 강제하락 있지만 jaehoom 로직은 단순 유지
-    nextStar = star; // 실패 = 유지
+    nextStar = star; // 실패 = 유지 (연속실패 강제하락은 미반영)
     result = { type: 'fail', from: star, to: star, cost };
   } else {
     _sfState.destroys++;

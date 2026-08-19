@@ -100,7 +100,16 @@ function tickTimer() {
 tickTimer(); setInterval(tickTimer, 1000);
 
 /* ── 네비게이션 ── */
+// 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
+// Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
+const NAV_LABELS = {
+  wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
+  liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
+  cube: '큐브 시뮬레이터', bosshp: '보스 정보', serverstatus: '서버 상태',
+};
 function navigateTo(sec) {
+  if (typeof va === 'function') va('event', { name: '메뉴 클릭', data: { section: NAV_LABELS[sec] || sec } });
   document.querySelectorAll('.sb-nav__item').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);

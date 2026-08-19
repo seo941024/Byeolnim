@@ -1991,6 +1991,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* 격전의 흔적만 원본이 25px이라(다른 재화 아이콘은 32~33px) 혼자 작아 보인다.
    여백 때문이 아니라 원본 크기가 실제로 작은 것이라, 이것만 33px로 맞춘다. */
 .gen-cfg-card__img[src*="Fierce_Battle"]{width:33px;height:33px}
+/* 제네시스 패스는 44x32짜리 가로로 긴 무기 아이콘이라 혼자 넓다.
+   긴 변을 33px로 맞추되 height는 auto라 비율이 안 찌그러진다. */
+.gen-cfg-card__img[src*="Genesis.png"]{width:33px;height:auto}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
 .gen-cfg-card--pass .gen-cfg-card__title{color:var(--text)}

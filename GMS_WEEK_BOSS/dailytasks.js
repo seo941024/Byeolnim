@@ -13,6 +13,7 @@ const DAILY_TASK_PRESETS = [
   { id: 'dailyquest',  label: '일일퀘스트',    emoji: '📜', img: 'images/dailytasks/dailyquest.png' },
   { id: 'monsterpark', label: '몬스터 파크',   emoji: '🌲', img: 'images/dailytasks/monsterpark.png' },
   { id: 'haste',       label: '헤이스트',      emoji: '⚡', img: 'images/dailytasks/haste.webp' },
+  { id: 'starspeck',   label: '별조각 상자',   emoji: '📦', img: 'images/icons/Use_Mysterious_Star_Speck_Box.png' },
 ];
 const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 

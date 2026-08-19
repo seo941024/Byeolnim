@@ -61,6 +61,7 @@ const STORAGE_KEYS = {
   theme:       'gms_theme',
   genesis:     'lib_genesis_v2',
   destiny:     'lib_destiny_v1',
+  astra:       'lib_astra_v1',
   hexaSkill:   'hx_skill',
   hexaMastery: 'hx_mastery',
   hexaBoost:   'hx_boost',

@@ -876,6 +876,11 @@ tr.done .boss-thumb img { filter: none; }
   color: var(--text); font: inherit; font-size: .86rem;
   outline: none; width: 100%;
   transition: border-color .18s, background .18s, box-shadow .18s;
+  /* ★ 높이를 명시하지 않으면 컨트롤 종류마다 제 폰트 기준으로 높이를 잡아
+     한 줄에 나란히 뒀을 때 서로 어긋난다(실측: date 38 / select 36 / number 40px).
+     min-height로는 기준보다 큰 칸(날짜칸 42.5px)을 못 줄이므로 height로 고정한다.
+     box-sizing이 border-box라 패딩·테두리를 포함한 값이다. */
+  height: 40px;
 }
 .inp:focus, select.sel:focus {
   background: rgba(255,255,255,.1);
@@ -1963,12 +1968,29 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   box-shadow:0 0 32px rgba(246,199,68,.18),0 4px 20px rgba(0,0,0,.5);
 }
 .gen-cfg-card--pass.on::before{background:radial-gradient(ellipse 100% 80% at 0% 0%,rgba(246,199,68,.15) 0%,transparent 65%)}
+/* ★ 라이트 모드에서 단색으로 보이던 이유: 위 그라디언트가 --hue를 쓰는데
+   라이트 테마의 --hue는 금색(184,134,11)이라, 양 끝 금색과 섞여 세 스톱이
+   전부 비슷한 금색이 된다. 다크는 --hue가 보라(147,113,225)라 대비가 생겼던 것.
+   라이트에선 밝기 차가 분명한 금색 계열로 다시 짜고 알파도 올린다. */
+:root[data-theme="light"] .gen-cfg-card--pass.on{
+  background-image:linear-gradient(120deg,rgba(214,160,20,.42) 0%,rgba(255,231,150,.9) 45%,rgba(214,160,20,.42) 100%);
+  border-color:rgba(186,138,16,.75);
+  box-shadow:0 0 26px rgba(246,199,68,.4),0 4px 20px rgba(120,95,20,.15);
+}
+:root[data-theme="light"] .gen-cfg-card--pass.on::before{
+  background:radial-gradient(ellipse 100% 80% at 0% 0%,rgba(255,255,255,.55) 0%,transparent 65%);
+}
 @keyframes pass-grad{
   0%  {background-position:0% 50%}
   50% {background-position:100% 50%}
   100%{background-position:0% 50%}
 }
-.gen-cfg-card__img{width:72px;height:72px;object-fit:contain;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
+/* ★ 원본 픽셀 그대로 그린다(25~44px). 늘리면 뭉개지고 줄이면 작아지므로
+   크기를 지정하지 않는 게 제일 선명하다. */
+.gen-cfg-card__img{width:auto;height:auto;max-width:48px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
+/* 격전의 흔적만 원본이 25px이라(다른 재화 아이콘은 32~33px) 혼자 작아 보인다.
+   여백 때문이 아니라 원본 크기가 실제로 작은 것이라, 이것만 33px로 맞춘다. */
+.gen-cfg-card__img[src*="Fierce_Battle"]{width:33px;height:33px}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
 .gen-cfg-card--pass .gen-cfg-card__title{color:var(--text)}
@@ -2008,9 +2030,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .gen-inputs{display:flex;flex-direction:column;gap:0}
 /* flex-wrap 없으면 768~900px대에서 두 카드가 짜부라짐 → 공간 부족 시 줄바꿈 */
 .gen-input-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
-.gen-input-row .field{flex:1;display:flex;flex-direction:column;gap:5px}
+/* ★ flex:1은 flex-basis가 0이라, wrap이 걸려 있어도 브라우저가 "폭 0까지 줄이면
+   다 들어간다"고 계산해서 줄바꿈을 안 하고 칸을 짓눌러 버린다. 그러면 라벨이
+   "일일 퀘스트 지 / 역"처럼 쪼개진다. min-width가 있어야 실제로 다음 줄로 넘어간다. */
+.gen-input-row .field{flex:1;min-width:150px;display:flex;flex-direction:column;gap:5px}
 .gen-pass-field{flex:0 0 auto!important}
-.gen-inp{font-size:.88rem!important;height:38px}
+.gen-inp{font-size:.88rem!important}
 .gen-pass-field .gen-switch{margin-top:2px}
 
 /* 보스 카드 새 구조 */

@@ -278,7 +278,12 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 /* 영문 서브 표기(도메인). 한글 이름 아래 작은 둘째 줄로 놓는다.
    좁은 화면(모바일 헤더)에서 예전에 "byeolni..."처럼 잘리던 문제가 있었다 —
    그 자리에 다시 긴 글자를 얹지 않도록 여기선 숨긴다. */
-.header__title-en { font-size: .62rem; font-weight: 700; opacity: .75; letter-spacing: .2px; }
+.header__title-en {
+  font-size: .62rem; font-weight: 700; opacity: .75; letter-spacing: .2px;
+  background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 .header__rlabel { font-size: .75rem; color: var(--text-sub); font-weight: 600; }
 

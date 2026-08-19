@@ -5,17 +5,17 @@
   <!-- viewport-fit=cover: 홈 화면에서 실행할 때 아이폰 노치/하단 바 영역까지 화면을 쓰고,
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>메이뿌덩</title>
-  <link rel="stylesheet" href="style.css?v=20260819b" />
+  <title>별님앱</title>
+  <link rel="stylesheet" href="style.css?v=20260819e" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
-  <link rel="manifest" href="manifest.json?v=20260819b" />
+  <link rel="manifest" href="manifest.json?v=20260819e" />
   <meta name="theme-color" content="#0d0922" />
   <!-- 아이폰 사파리는 manifest를 보지 않아서 아래 태그들이 따로 필요하다 -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="메이뿌덩" />
+  <meta name="apple-mobile-web-app-title" content="별님앱" />
   <link rel="apple-touch-icon" href="images/pwa/apple-touch-icon.png" />
 </head>
 <body>
@@ -24,7 +24,7 @@
 <header class="header">
   <button class="hamburger" id="btnHamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
   <div class="header__logo" id="headerLogo" style="cursor:pointer">
-    <span class="header__title"><span class="header__title-kr">메이뿌덩</span><small class="header__title-en">mapbbu.app</small></span>
+    <span class="header__title"><span class="header__title-kr">별님앱</span><small class="header__title-en">byeolnim.app</small></span>
   </div>
   <div class="header__center">
     <span class="theme-toggle-wrap">
@@ -648,7 +648,7 @@
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
 <script src="mcalendar.js?v=20260819b"></script>
 <!-- "앱으로 설치" 배너 -->
-<script src="pwa.js?v=20260819b"></script>
+<script src="pwa.js?v=20260819e"></script>
 
 <!-- 서비스 워커 등록 — 홈 화면에 추가(설치)와 오프라인 지원을 켠다.
      load 이후에 등록해서 첫 화면 로딩과 경쟁하지 않게 한다.

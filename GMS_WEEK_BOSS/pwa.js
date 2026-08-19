@@ -149,21 +149,21 @@ function pwaShowBanner(mode, force) {
   // "아래/위" 같은 위치는 아이폰(하단)과 아이패드(상단)가 달라 일부러 쓰지 않는다.
   // 공유 시트에서 '홈 화면에 추가'가 접혀 있어 못 찾는 경우가 가장 많아 스크롤을 짚어준다.
   const [txt, actions] = mode === 'ios'
-    ? [`<b>메이뿌덩을 홈 화면에 추가</b>
+    ? [`<b>별님앱을 홈 화면에 추가</b>
          <span>Safari의 공유 ${PWA_SHARE_SVG} 버튼 → 목록을 <b>아래로 내려</b>
                <b>홈 화면에 추가</b>를 누르세요.</span>`, SNOOZE + CLOSE]
     : mode === 'ios-inapp'
-    ? [`<b>메이뿌덩을 홈 화면에 추가</b>
+    ? [`<b>별님앱을 홈 화면에 추가</b>
          <span>Safari에서 공유 ${PWA_SHARE_SVG} → <b>홈 화면에 추가</b>를 누르세요.</span>`,
        SNOOZE + `<button class="sbtn sbtn--primary" id="pwaSafari">Safari로 열기</button>${CLOSE}`]
     : mode === 'android-inapp'
-    ? [`<b>메이뿌덩 설치하기</b>
+    ? [`<b>별님앱 설치하기</b>
          <span>앱 안의 브라우저에서는 설치가 안 돼요.</span>`,
        SNOOZE + `<button class="sbtn sbtn--primary" id="pwaChrome">크롬으로 열기</button>${CLOSE}`]
     : mode === 'unsupported'
-    ? [`<b>메이뿌덩 설치하기</b>
+    ? [`<b>별님앱 설치하기</b>
          <span>브라우저 메뉴에서 <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 누르면 앱처럼 쓸 수 있어요.</span>`, SNOOZE + CLOSE]
-    : [`<b>메이뿌덩 설치하기</b>
+    : [`<b>별님앱 설치하기</b>
          <span>홈 화면에 추가하면 앱처럼 바로 열 수 있어요.</span>`,
        SNOOZE + `<button class="sbtn sbtn--primary" id="pwaGo">설치</button>${CLOSE}`];
 

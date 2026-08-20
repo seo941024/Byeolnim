@@ -86,6 +86,8 @@ function sfEnhanceOnce() {
   let result, nextStar;
   if (r < p.succ) {
     nextStar = star + 1;
+    // 23성 이상을 얻었을 때만 그 별을 반짝이게 한다(칸 번호는 0부터라 -1)
+    if (nextStar >= 23) _sfState.pop = nextStar - 1;
     result = { type: 'success', from: star, to: nextStar, cost };
   } else if (r < p.succ + p.fail) {
     nextStar = star > 0 ? star - 1 : star;
@@ -146,11 +148,21 @@ function sfRenderStarPanel(to, done) {
   if (!grid) return;
   const star = _sfState.star;
 
-  grid.innerHTML = Array.from({ length: to },
-    (_, i) => `<span class="sfstar-grid__s${i < star ? ' on' : ''}">★</span>`).join('');
+  /* 방금 성공해서 얻은 별에만 반짝임을 준다. _sfState.pop 은 한 번 쓰고 비워서,
+     설정을 바꿔 다시 그릴 때 애니메이션이 되풀이되지 않게 한다. */
+  const pop = _sfState.pop;
+  _sfState.pop = null;
 
-  // 22성부터는 게임처럼 판 테두리를 금색으로 바꿔 한눈에 구분되게 한다
-  grid.closest('.sfstar-panel')?.classList.toggle('sfstar-panel--hi', star >= 22);
+  /* 칸 수는 목표가 아니라 장비 레벨의 상한을 따른다. 목표를 25로 낮춰도
+     26~30번째 칸이 빈 별로 남아 있어야 게임 강화창과 같아 보인다. */
+  const slots = Math.max(sfMaxStar(_sfGetLevel()), to);
+  grid.innerHTML = Array.from({ length: slots }, (_, i) => {
+    const cls = (i < star ? ' on' : '') + (i === pop ? ' pop' : '');
+    return `<span class="sfstar-grid__s${cls}">★</span>`;
+  }).join('');
+
+  // 23성부터는 게임처럼 판 테두리를 금색으로 바꿔 한눈에 구분되게 한다
+  grid.closest('.sfstar-panel')?.classList.toggle('sfstar-panel--hi', star >= 23);
 
   document.getElementById('sfStarCur').textContent  = star;
   document.getElementById('sfStarNext').textContent = done ? star : star + 1;

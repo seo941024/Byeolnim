@@ -1047,8 +1047,52 @@ select option { background: var(--bg2); color: var(--text); }
 @media (prefers-reduced-motion: reduce) {
   .sfstar-panel--hi::after { animation: none; opacity: .8; }
 }
-.sfstar-grid__s { font-size: 1rem; line-height: 1.15; color: var(--border); transition: color .12s, transform .12s; }
+.sfstar-grid__s { position: relative; font-size: 1rem; line-height: 1.15; color: var(--border); transition: color .12s; }
 .sfstar-grid__s.on { color: #ffd429; text-shadow: 0 0 6px rgba(255,196,41,.55); }
+
+/* ── 23성 이상 성공 시 반짝임 ──
+   transform / opacity 만 움직인다. 별이 튀어오르고(pop), 고리가 퍼지고(burst),
+   불티가 사방으로 흩어진다(spark). 셋 다 GPU 합성이라 리페인트가 없고,
+   0.55초 뒤 끝나는 일회성이라 상시 부하도 없다. */
+.sfstar-grid__s.pop { animation: sfStarPop .5s ease-out; z-index: 1; }
+@keyframes sfStarPop {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.85); }
+  100% { transform: scale(1); }
+}
+/* 퍼지는 고리 */
+.sfstar-grid__s.pop::after {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 24px; height: 24px; margin: -12px 0 0 -12px;
+  border-radius: 50%; border: 2px solid rgba(255,212,41,.9);
+  pointer-events: none;
+  animation: sfStarBurst .55s ease-out forwards;
+}
+@keyframes sfStarBurst {
+  0%   { transform: scale(.25); opacity: 1; }
+  100% { transform: scale(1.5);  opacity: 0; }
+}
+/* 흩어지는 불티 — 점 8개를 box-shadow로 고정해두고 전체를 확대/페이드만 시킨다
+   (점마다 요소를 만들면 그만큼 레이어가 늘어난다) */
+.sfstar-grid__s.pop::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 3px; height: 3px; margin: -1.5px 0 0 -1.5px;
+  border-radius: 50%; pointer-events: none;
+  box-shadow:
+      0 -11px 0 0 #ffe98a,   8px  -8px 0 0 #ffe98a,
+     11px   0   0 0 #ffe98a,  8px   8px 0 0 #ffe98a,
+      0  11px 0 0 #ffe98a,  -8px   8px 0 0 #ffe98a,
+    -11px   0   0 0 #ffe98a, -8px  -8px 0 0 #ffe98a;
+  animation: sfStarSpark .55s ease-out forwards;
+}
+@keyframes sfStarSpark {
+  0%   { transform: scale(.2); opacity: 1; }
+  100% { transform: scale(1.5); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sfstar-grid__s.pop, .sfstar-grid__s.pop::before, .sfstar-grid__s.pop::after { animation: none; }
+  .sfstar-grid__s.pop::before, .sfstar-grid__s.pop::after { display: none; }
+}
 /* 5개 묶음 사이를 살짝 띄워 세는 단위를 만든다 */
 .sfstar-grid__s:nth-child(5n) { margin-right: 6px; }
 .sfstar-grid__s:nth-child(15n) { margin-right: 0; }

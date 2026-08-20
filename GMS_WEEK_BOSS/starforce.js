@@ -50,6 +50,17 @@ const SF_COST_D = [
 
 const SF_SHINING_MAX = 22;
 
+/* 장비 레벨별로 올릴 수 있는 최대 성수. 별 판의 칸 수를 이걸로 잡아야
+   목표를 25로 낮춰도 남은 칸이 빈 별로 보인다. */
+function sfMaxStar(level) {
+  if (level <= 94)  return 5;
+  if (level <= 107) return 8;
+  if (level <= 117) return 10;
+  if (level <= 127) return 15;
+  if (level <= 137) return 20;
+  return 30;
+}
+
 /* ── GMS 전용 스테이지 배율 ── */
 const SF_STAGE_COST_MUL = {
   15: { 1: 1, 2: 1.5, 3: 2.5 },

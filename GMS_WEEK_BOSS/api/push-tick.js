@@ -72,12 +72,16 @@ module.exports = async function handler(req, res) {
 
     for (const it of due) {
       try {
+        /* 보스 알림은 시각이 생명이라 urgency를 high로 준다. 기본값(normal)이면
+           푸시 서비스가 배터리를 아끼려 전송을 미뤄서, 폰을 켤 때까지 안 오다가
+           한꺼번에 도착하는 일이 생긴다.
+           TTL은 GRACE와 맞춰 15분 — 그보다 늦게 도착하는 보스 알림은 의미가 없다. */
         await webpush.sendNotification(rec.sub, JSON.stringify({
           title: it.title,
           body: it.body,
           tag: 'boss-' + it.id,   // 같은 일정이 겹쳐 오면 하나로 합쳐진다
           url: '/',
-        }));
+        }), { urgency: 'high', TTL: GRACE_MIN * 60 });
         sent++;
       } catch (e) {
         failed++;

@@ -106,7 +106,11 @@ module.exports = async function handler(req, res) {
 
   for (const { id, rec } of records) {
     try {
-      await webpush.sendNotification(rec.sub, payload);
+      /* urgency를 안 주면 normal로 나가고, 그러면 푸시 서비스가 배터리를 아끼려고
+         기기가 깰 때까지 전송을 미룬다. 실제로 폰에서 알림이 바로 안 오다가 앱을
+         켜야 한꺼번에 오는 증상이 있었다. 공지는 지금 보는 게 의미이므로 high로 올린다.
+         TTL 하루 — 그 사이에 못 받으면 이제 와서 띄워봐야 의미가 없다. */
+      await webpush.sendNotification(rec.sub, payload, { urgency: 'high', TTL: 86400 });
       sent++;
     } catch (e) {
       failed++;

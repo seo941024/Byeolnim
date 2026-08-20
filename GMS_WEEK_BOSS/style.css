@@ -1625,7 +1625,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   .pwa-install__row { flex-wrap: wrap; }
   .pwa-install__info { flex: 1 1 100%; min-width: 0; }
   .pwa-install__txt { min-width: 150px; }
-  .pwa-install__actions { flex: 1 1 100%; justify-content: flex-end; white-space: nowrap; }
+  /* ★ 여기 white-space:nowrap이 버튼 세 개("일주일간 보지 않기"/확인·설치/닫기)를
+     한 줄에 다 욱여넣으려 해서, 좁은 폰에서 폭을 넘긴 만큼 배너가 옆으로
+     삐져나갔다(실제로 그렇게 깨졌었다). 버튼 자체 글자는 각자 sbtn에서 이미
+     한 줄로 유지되니, 부모는 줄바꿈을 허용해 버튼째로 다음 줄로 내려가게 한다. */
+  .pwa-install__actions { flex: 1 1 100%; justify-content: flex-end; flex-wrap: wrap; row-gap: 6px; }
 }
 /* 홈 화면 앱으로 실행 중이면 설치 안내는 의미가 없다 */
 @media (display-mode: standalone) { .pwa-install { display: none !important; } }

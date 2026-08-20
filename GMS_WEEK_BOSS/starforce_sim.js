@@ -194,8 +194,11 @@ function sfRenderStarPanel(to, done) {
   /* 칸 수는 목표가 아니라 장비 레벨의 상한을 따른다. 목표를 25로 낮춰도
      26~30번째 칸이 빈 별로 남아 있어야 게임 강화창과 같아 보인다. */
   const slots = Math.max(sfMaxStar(_sfGetLevel()), to);
+  /* 목표 성수 칸(아직 못 채운 상태일 때만)은 테두리를 깜빡여 어디까지 가야 하는지
+     눈에 띄게 한다. 이미 목표에 도달했으면 깜빡일 이유가 없다. */
+  const goalIdx = (star < to) ? to - 1 : -1;
   grid.innerHTML = Array.from({ length: slots }, (_, i) => {
-    const cls = (i < star ? ' on' : '') + (i === pop ? ' pop' : '');
+    const cls = (i < star ? ' on' : '') + (i === pop ? ' pop' : '') + (i === goalIdx ? ' goal' : '');
     return `<span class="sfstar-grid__s${cls}">★</span>`;
   }).join('');
 

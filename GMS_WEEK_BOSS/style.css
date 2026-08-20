@@ -1116,6 +1116,23 @@ select option { background: var(--bg2); color: var(--text); }
    transform / opacity 만 움직인다. 별이 튀어오르고(pop), 고리가 퍼지고(burst),
    불티가 사방으로 흩어진다(spark). 셋 다 GPU 합성이라 리페인트가 없고,
    0.55초 뒤 끝나는 일회성이라 상시 부하도 없다. */
+/* 목표 성수 칸 — 아직 못 채운 별의 테두리를 깜빡여 어디까지 가야 하는지 보여준다.
+   ::before로 테두리만 따로 그린다(별 글리프 자체에는 테두리를 못 준다).
+   opacity만 움직여 리페인트 없이 GPU 합성만 일어난다. */
+.sfstar-grid__s.goal { position: relative; }
+.sfstar-grid__s.goal::before {
+  content: ""; position: absolute; left: 50%; top: 50%;
+  width: 20px; height: 20px; margin: -10px 0 0 -10px;
+  border: 2px solid #ffd429; border-radius: 5px;
+  pointer-events: none;
+  animation: sfStarGoal 1.2s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes sfStarGoal { 0%, 100% { opacity: .15; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .sfstar-grid__s.goal::before { animation: none; opacity: .8; }
+}
+
 .sfstar-grid__s.pop { animation: sfStarPop .5s ease-out; z-index: 1; }
 @keyframes sfStarPop {
   0%   { transform: scale(1); }

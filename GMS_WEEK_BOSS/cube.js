@@ -7,7 +7,13 @@ const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 �
 const _CUBE_KEY  = { red:'RED', black:'POTENTIAL' };
 const _GRADE_ORDER = ['RARE','EPIC','UNIQUE','LEGENDARY'];
 const _GRADE_KR    = { RARE:'레어', EPIC:'에픽', UNIQUE:'유니크', LEGENDARY:'레전드리' };
-const _NO_GMS_ADJ  = ['보스 몬스터 공격 시 데미지','몬스터 방어율 무시'];
+/* GMS 160제 +1 보정에서 빠지는 항목. type별로 따로 둔다 — 같은 이름이라도
+   %(pct)과 순수 수치(flat)는 다른 옵션이라 보정 여부가 갈릴 수 있다.
+   실측 확인: 크리티컬 데미지%는 160제여도 8%가 최댓값(9%로 안 오른다),
+   공격력/마력의 순수 수치(%아닌 쪽)도 32가 최댓값(33으로 안 오른다).
+   같은 이름의 %쪽(공격력%, 마력%)은 정상적으로 +1이 붙는다. */
+const _NO_GMS_ADJ_PCT  = ['보스 몬스터 공격 시 데미지','몬스터 방어율 무시','크리티컬 데미지'];
+const _NO_GMS_ADJ_FLAT = ['공격력','마력'];
 
 /* 큐브 1회당 추가로 드는 잠재능력 재설정 비용 — 아이템 레벨의 제곱에 구간별
    계수를 곱한다. 30레벨 이하는 들지 않는다. */
@@ -55,7 +61,10 @@ function _extractUnit(s) { const m=/[가-힣a-zA-Z초%]+$/.exec((s||'').trim());
 
 // GMS는 160제 이상이면 잠재옵션 수치가 +1 (KMS는 250제부터, GMS는 250제도 동일하게 +1)
 function _gmsAdj(p, lv) {
-  return (p.type==='pct'||p.type==='flat') && lv>=160 && !_NO_GMS_ADJ.includes(p.base) ? 1 : 0;
+  if (lv < 160) return 0;
+  if (p.type === 'pct')  return _NO_GMS_ADJ_PCT.includes(p.base)  ? 0 : 1;
+  if (p.type === 'flat') return _NO_GMS_ADJ_FLAT.includes(p.base) ? 0 : 1;
+  return 0;
 }
 
 // GMS 보정 포함 stat 기여값 반환
@@ -369,7 +378,13 @@ function _hrRollLines(grade) {
     ...(lower ? { [lower]: _rawOpts(dk, part, lv, lower) } : {}),
   };
 
-  return [1, 2, 3].map(ln => {
+  /* "<쓸만한 OO> 스킬 사용 가능" 같은 유니크 효과는 한 아이템에 한 줄만 붙는다
+     (실제 게임 제약 — 같은 3줄 안에 두 개가 같이 뜨지 않는다). 그래서 앞선 줄에서
+     이미 유니크가 나왔으면, 그 뒤 줄들은 유니크 종류를 아예 후보에서 빼고
+     나머지 옵션들끼리 확률을 다시 정규화해서 뽑는다. */
+  let hasUnique = false;
+  const lines = [];
+  for (const ln of [1, 2, 3]) {
     const info = og.find(o => o.line === ln);
     const cp = info?.currentGradeProb ?? 0;
     const lp = lower ? (info?.lowerGradeProb ?? 0) : 0;
@@ -377,13 +392,17 @@ function _hrRollLines(grade) {
     // 어느 등급 풀에서 뽑을지 먼저 정한다
     const useLower = _weightedPick([cp, lp]) === 1;
     const pickGrade = useLower ? lower : grade;
-    const pool = pools[pickGrade] || [];
-    if (!pool.length) return null;
+    let pool = pools[pickGrade] || [];
+    if (hasUnique) pool = pool.filter(o => _parse(o.name).type !== 'unique');
+    if (!pool.length) continue;
 
     const idx = _weightedPick(pool.map(o => o.probability));
-    if (idx < 0) return null;
-    return { name: pool[idx].name, grade: pickGrade };
-  }).filter(Boolean);
+    if (idx < 0) continue;
+    const picked = pool[idx];
+    if (_parse(picked.name).type === 'unique') hasUnique = true;
+    lines.push({ name: picked.name, grade: pickGrade });
+  }
+  return lines;
 }
 
 /* ── 목표 옵션 ──
@@ -391,15 +410,30 @@ function _hrRollLines(grade) {
    같은 항목을 한 줄만 적으면 세 줄 합산, 여러 줄에 적으면 그 줄 수만큼 따로 떠야 한다.
    그래야 "공격력 33"(합쳐서 33 이상)과 "공격력 3줄"(각각 한 줄씩)을 같은 칸으로 쓸 수 있다. */
 
+/* 해당 카테고리가 LEGENDARY 등급에서 가질 수 있는 실제 최댓값(GMS 보정 포함).
+   레벨에 따라 표가 구간별로 다르고(160제부터 +1) 160제 미만엔 못 미치므로,
+   프리셋 숫자를 고정해두지 않고 지금 부위·레벨 기준으로 그때그때 계산한다. */
+function _hrMaxStatValue(cat) {
+  const dk = _dataKey(), part = _cubePart(), lv = _cubeLv();
+  let max = null;
+  for (const o of _rawOpts(dk, part, lv, 'LEGENDARY')) {
+    const v = _statContrib(o.name)[cat];
+    if (v != null && (max === null || v > max)) max = v;
+  }
+  return max;
+}
+
 /* 자주 쓰는 조합. part를 같이 지정해서 버튼 하나로 부위까지 맞춘다.
-   rows의 값 1은 "그 옵션이 뜨기만 하면 됨"이라는 뜻(수치 하한이 없음). */
+   perLineMax인 프리셋은 각 줄에 그 카테고리의 실제 최댓값을 넣는다(_hrMaxStatValue) —
+   "일단 뜨기만 하면" 이 아니라 "그 옵션이 최대치로 떴을 때"만 멈추게 하려는 것.
+   재사용 프리셋처럼 값 자체가 목표(총합)인 것은 rows에 고정 숫자를 그대로 둔다. */
 const HR_PRESETS = [
-  { label:'공격력 3줄',    part:'무기',   rows:[['공격력 %',1],['공격력 %',1],['공격력 %',1]] },
-  { label:'마력 3줄',      part:'무기',   rows:[['마력 %',1],['마력 %',1],['마력 %',1]] },
-  { label:'재사용 4초',    part:'모자',   rows:[['모든 스킬의 재사용 대기시간',4]] },
+  { label:'공격력 3줄',    part:'무기', perLineMax:true, cat:'공격력 %',      lines:3 },
+  { label:'마력 3줄',      part:'무기', perLineMax:true, cat:'마력 %',        lines:3 },
+  { label:'재사용 4초',    part:'모자', rows:[['모든 스킬의 재사용 대기시간',4]] },
   { label:'재사용 5초 이상', part:'모자', rows:[['모든 스킬의 재사용 대기시간',5]] },
-  { label:'크리데미지 2줄', part:'장갑',  rows:[['크리티컬 데미지 %',1],['크리티컬 데미지 %',1]] },
-  { label:'크리데미지 3줄', part:'장갑',  rows:[['크리티컬 데미지 %',1],['크리티컬 데미지 %',1],['크리티컬 데미지 %',1]] },
+  { label:'크리데미지 2줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:2 },
+  { label:'크리데미지 3줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:3 },
 ];
 
 function _hrBuildPresets() {
@@ -417,12 +451,18 @@ function _hrApplyPreset(preset) {
   const partSel = document.getElementById('cubePart');
   if (partSel && preset.part) { partSel.value = preset.part; _refreshAllRows(); }
 
-  const rows = [...document.querySelectorAll('#hrGoalRows .cube-goal-row')];
-  rows.forEach((row, i) => {
+  // perLineMax면 부위가 확정된 지금 시점에 실제 최댓값을 구해 rows를 즉석에서 만든다
+  const maxVal = preset.perLineMax ? _hrMaxStatValue(preset.cat) : null;
+  const rows = preset.perLineMax
+    ? Array.from({ length: preset.lines }, () => [preset.cat, maxVal])
+    : preset.rows;
+
+  const rowEls = [...document.querySelectorAll('#hrGoalRows .cube-goal-row')];
+  rowEls.forEach((row, i) => {
     const cat = row.querySelector('.cube-opt-cat');
     const inp = row.querySelector('.cube-opt-inp');
-    const spec = preset.rows[i];
-    if (!spec) { cat.value = ''; inp.value = ''; _syncRow(row); return; }
+    const spec = rows[i];
+    if (!spec || spec[1] == null) { cat.value = ''; inp.value = ''; _syncRow(row); return; }
     cat.value = spec[0];
     // 그 부위에 없는 옵션이면 선택이 안 붙는다 — 조용히 비워 잘못된 목표가 남지 않게 한다
     if (cat.value !== spec[0]) { cat.value = ''; inp.value = ''; _syncRow(row); return; }

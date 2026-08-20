@@ -107,10 +107,12 @@ function _sfGetCfg() {
   return { level: _sfGetLevel(), mvpDiscount: _sfGetMvp(), isShining, isProtected, stage };
 }
 
-function sfEnhanceOnce() {
-  const from = _sfGetFrom();
-  const to   = _sfGetTo();
-  if (_sfState.star >= to) { sfStopAuto(); return false; }
+/* forAuto=true 면 목표 성수에서 멈춘다(자동 강화용). 직접 누를 때는 목표를 보지 않고
+   장비 레벨 상한까지 계속 올릴 수 있다 — 목표는 자동 강화를 어디서 끊을지 정하는
+   값이지, 손으로 더 못 올리게 막는 값이 아니다. */
+function sfEnhanceOnce(forAuto) {
+  const limit = forAuto ? _sfGetTo() : sfMaxStar(_sfGetLevel());
+  if (_sfState.star >= limit) { if (forAuto) sfStopAuto(); return false; }
 
   const star = _sfState.star;
   const cfg  = _sfGetCfg();
@@ -144,7 +146,8 @@ function sfEnhanceOnce() {
   if (_sfState.log.length > 100) _sfState.log.pop();
 
   sfRenderResult();
-  return _sfState.star < to;
+  // 계속 돌려도 되는지 — 판단 기준은 호출한 쪽과 같아야 한다(자동은 목표, 직접은 상한)
+  return _sfState.star < limit;
 }
 
 function sfRenderResult() {
@@ -208,16 +211,21 @@ function sfRenderStarPanel(to, done) {
   document.getElementById('sfStarCur').textContent  = star;
   document.getElementById('sfStarNext').textContent = done ? star : star + 1;
 
+  /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로, 확률표를 치우지 않고 위에 한 줄만
+     덧붙인다. 레벨 상한까지 다 채웠을 때만 더 올릴 수 없으니 확률표를 접는다. */
   const rates = document.getElementById('sfStarRates');
-  if (done) {
-    rates.innerHTML = '<div class="sfstar-rates__row sfstar-rates__row--done">목표 달성!</div>';
+  const maxed = star >= sfMaxStar(_sfGetLevel());
+  if (maxed) {
+    rates.innerHTML = '<div class="sfstar-rates__row sfstar-rates__row--done">최대 성수 도달</div>';
     return;
   }
+  const doneRow = done ? '<div class="sfstar-rates__row sfstar-rates__row--done">목표 달성!</div>' : '';
   const cfg = _sfGetCfg();
   const p   = getSfProb(star, cfg.isShining, cfg.isProtected, cfg.stage);
   const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount, cfg.isShining, cfg.isProtected, cfg.stage, 0);
   const pct = v => (v * 100).toFixed(2) + '%';
   rates.innerHTML = `
+    ${doneRow}
     <div class="sfstar-rates__row sfstar-rates__row--succ"><span>성공</span><span>${pct(p.succ)}</span></div>
     <div class="sfstar-rates__row"><span>실패</span><span>${pct(p.fail)}</span></div>
     <div class="sfstar-rates__row sfstar-rates__row--dest"><span>파괴</span><span>${pct(p.dest)}</span></div>
@@ -305,7 +313,7 @@ function initStarforce() {
     btn.textContent = '■ 중지';
     btn.classList.remove('sbtn--primary'); btn.classList.add('sbtn--danger');
     _sfAutoTimer = setInterval(() => {
-      const cont = sfEnhanceOnce();
+      const cont = sfEnhanceOnce(true);   // 자동은 목표 성수에서 멈춘다
       if (!cont) sfStopAuto();
     }, 80);
   });

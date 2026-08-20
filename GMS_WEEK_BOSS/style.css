@@ -1120,8 +1120,8 @@ select option { background: var(--bg2); color: var(--text); }
    색(color)을 오가게 하면 매 프레임 다시 그려야 하므로, 색은 금색으로 고정해두고
    opacity만 움직인다 — GPU 합성만 일어나 리페인트가 없다. */
 .sfstar-grid__s.goal {
-  /* 채운 별(#ffd429)보다 채도를 낮춘 금색 — 나란히 뒀을 때 서로 구분된다 */
-  color: #c4ab6a;
+  /* 채운 별(#ffd429)보다 채도와 명도를 낮춘 금색 — 나란히 뒀을 때 서로 구분된다 */
+  color: #8a7942;
   animation: sfStarGoal 2.6s ease-in-out infinite;
   will-change: opacity;
 }

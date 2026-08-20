@@ -410,17 +410,35 @@ function _hrRollLines(grade) {
    같은 항목을 한 줄만 적으면 세 줄 합산, 여러 줄에 적으면 그 줄 수만큼 따로 떠야 한다.
    그래야 "공격력 33"(합쳐서 33 이상)과 "공격력 3줄"(각각 한 줄씩)을 같은 칸으로 쓸 수 있다. */
 
-/* 해당 카테고리가 LEGENDARY 등급에서 가질 수 있는 실제 최댓값(GMS 보정 포함).
+/* 해당 카테고리가 특정 등급에서 가질 수 있는 실제 최댓값(GMS 보정 포함).
    레벨에 따라 표가 구간별로 다르고(160제부터 +1) 160제 미만엔 못 미치므로,
    프리셋 숫자를 고정해두지 않고 지금 부위·레벨 기준으로 그때그때 계산한다. */
-function _hrMaxStatValue(cat) {
+function _hrMaxStatValue(cat, grade) {
   const dk = _dataKey(), part = _cubePart(), lv = _cubeLv();
   let max = null;
-  for (const o of _rawOpts(dk, part, lv, 'LEGENDARY')) {
+  for (const o of _rawOpts(dk, part, lv, grade)) {
     const v = _statContrib(o.name)[cat];
     if (v != null && (max === null || v > max)) max = v;
   }
   return max;
+}
+
+/* 몇 번째 줄인지에 따라 실제로 뽑히는 등급이 다르다 — 레전드리 아이템도
+   1번째 줄만 100% 그 등급이고, 2·3번째 줄은 이탈 확률이 더 높아 대부분
+   한 단계 아래 등급에서 뽑힌다(_hrRollLines와 같은 og 표를 쓴다). 그래서
+   "레전드리 3줄 전부 최댓값"을 목표로 잡으면 사실상 안 뜨고, 그 줄이
+   실제로 더 자주 나오는 쪽 등급의 최댓값을 목표로 삼는 게 현실적이다. */
+function _hrLineGrade(ln, grade) {
+  const t = window.CUBE_TABLE; if (!t) return grade;
+  const dk = _dataKey();
+  const og = t.optionGrade[dk]?.[grade];
+  const info = og?.find(o => o.line === ln);
+  if (!info) return grade;
+  const gi = _GRADE_ORDER.indexOf(grade);
+  const lower = gi > 0 ? _GRADE_ORDER[gi - 1] : null;
+  const cp = info.currentGradeProb ?? 1;
+  const lp = lower ? (info.lowerGradeProb ?? 0) : 0;
+  return (lower && lp > cp) ? lower : grade;
 }
 
 /* 자주 쓰는 조합. part를 같이 지정해서 버튼 하나로 부위까지 맞춘다.
@@ -451,10 +469,19 @@ function _hrApplyPreset(preset) {
   const partSel = document.getElementById('cubePart');
   if (partSel && preset.part) { partSel.value = preset.part; _refreshAllRows(); }
 
-  // perLineMax면 부위가 확정된 지금 시점에 실제 최댓값을 구해 rows를 즉석에서 만든다
-  const maxVal = preset.perLineMax ? _hrMaxStatValue(preset.cat) : null;
+  // perLineMax면 부위가 확정된 지금 시점에, 줄마다 실제로 뽑히는 등급 기준 최댓값을 구한다
+  // (1번째 줄은 시작 등급 그대로, 2·3번째 줄은 이탈이 더 흔해 대개 한 단계 아래 최댓값)
+  const startGrade = _hrGrade();
   const rows = preset.perLineMax
-    ? Array.from({ length: preset.lines }, () => [preset.cat, maxVal])
+    ? Array.from({ length: preset.lines }, (_, i) => {
+        const g = _hrLineGrade(i + 1, startGrade);
+        // 이탈한 등급에 그 옵션 자체가 없는 경우가 있다(예: 크리티컬 데미지%는
+        // 레전드리 전용이라 유니크엔 없음) — 그럴 땐 이탈해도 뜰 수가 없으니
+        // 시작 등급 값으로 되돌아간다. 그래야 "이 줄은 목표에서 제외"로
+        // 잘못 비워지지 않는다.
+        const v = _hrMaxStatValue(preset.cat, g) ?? _hrMaxStatValue(preset.cat, startGrade);
+        return [preset.cat, v];
+      })
     : preset.rows;
 
   const rowEls = [...document.querySelectorAll('#hrGoalRows .cube-goal-row')];

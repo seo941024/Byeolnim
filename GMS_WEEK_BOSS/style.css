@@ -1052,6 +1052,11 @@ select option { background: var(--bg2); color: var(--text); }
   .pot-panel.flame-panel .pot-line.is-top::after { animation: none; opacity: .5; }
 }
 
+/* ── 관리자 발송 모달 ──
+   기본 모달은 max-height:70vh 라 아래 버튼이 스크롤에 가려 안 보였다.
+   항목이 적으므로 여유를 주고 간격을 좁혀 한 화면에 들어오게 한다. */
+#overlayAdmin .modal__body { max-height: 86vh; gap: 10px; }
+
 /* ── 관리자 발송 결과 줄 ── */
 .adm-result { margin-top: 10px; font-size: .82rem; font-weight: 700; min-height: 1.2em; color: var(--text-sub); }
 .adm-result.is-ok  { color: var(--success); }

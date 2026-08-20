@@ -1012,6 +1012,11 @@ select option { background: var(--bg2); color: var(--text); }
    마크업에 쉼표를 넣으면 줄 색(등급 색)까지 같이 물들어서 CSS로 붙인다. */
 .hr-log-row .hr-log-line:not(:last-child)::after { content: ","; color: var(--text-sub); }
 
+/* ── 관리자 발송 결과 줄 ── */
+.adm-result { margin-top: 10px; font-size: .82rem; font-weight: 700; min-height: 1.2em; color: var(--text-sub); }
+.adm-result.is-ok  { color: var(--success); }
+.adm-result.is-err { color: var(--danger); }
+
 /* ══ 스타포스 별 판 — 게임 강화창처럼 성수만큼 별이 차오른다 ══ */
 .sfstar-panel {
   position: relative;

@@ -66,6 +66,18 @@ function _sfGetTo()       {
   return Math.min(cap, parseInt(document.getElementById('sfTo').value) || Math.min(22, cap));
 }
 
+/* 타이핑 중에 쓰는 가벼운 보정 — 상한만 즉시 걸고 그 외엔 건드리지 않는다.
+   숫자를 이어 치면 값은 커지기만 하므로, 중간값이 상한을 넘었다면 최종값도
+   넘는다. 즉 위쪽만 자르는 건 입력을 방해하지 않는다. 반대로 빈 칸을 기본값으로
+   되돌리거나 현재>=목표를 손보는 건 다 친 뒤(change)에 해야 한다. */
+function _sfClampMaxWhileTyping(el) {
+  if (el.value === '') return;                 // 지우고 다시 치는 중이면 그대로 둔다
+  const cap = sfMaxStar(_sfGetLevel());
+  const max = el.id === 'sfFrom' ? Math.max(0, cap - 1) : cap;
+  const v   = parseInt(el.value);
+  if (!isNaN(v) && v > max) el.value = max;
+}
+
 /* 레벨이 바뀌면 상한도 바뀌므로 입력칸의 max와 값 자체를 상한에 맞춰 잘라준다.
    max 속성만으로는 직접 타이핑을 막지 못해 값도 같이 손봐야 한다. */
 function _sfClampInputs() {
@@ -256,11 +268,10 @@ function initStarforce() {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _sfRecalcDebounced);
-    // 값을 확정할 때 상한 밖이면 잘라내고 다시 계산한다. 타이핑 도중(input)에
-    // 자르면 "2"를 치는 순간 튕겨나가 20을 못 쓰므로 change 에서만 손댄다.
+    // 값을 확정할 때 빈 칸·모순까지 포함해 전부 정리한다
     el.addEventListener('change', () => { _sfClampInputs(); sfRenderResult(); _sfRecalcExpected(); });
-    // 목표 성수를 바꾸면 별칸 수가 달라지므로 판을 즉시 다시 그린다
-    el.addEventListener('input', sfRenderResult);
+    // 타이핑 도중에도 상한은 즉시 걸고, 별칸 수가 달라지므로 판을 다시 그린다
+    el.addEventListener('input', () => { _sfClampMaxWhileTyping(el); sfRenderResult(); });
   });
 
   // 강화 1회

@@ -1,0 +1,112 @@
+/* =============================================
+   api/push-broadcast.js — 전체 공지 푸시 (관리자 전용)
+
+   저장된 구독자 전원에게 같은 알림을 즉시 보낸다. 보스 알림(push-tick)이
+   "예약된 시각에 각자에게" 보내는 것과 달리, 이건 "지금 모두에게" 보낸다.
+
+     POST /api/push-broadcast
+     Authorization: Bearer <ADMIN_SECRET>   (또는 ?secret=<ADMIN_SECRET>)
+     body: { title, body, url?, dryRun? }
+
+   ※ 비밀번호는 Vercel 환경변수 ADMIN_SECRET에만 둔다. 클라이언트 코드에 적으면
+      누구나 소스를 열어 볼 수 있어 그 순간 비밀이 아니게 되고, 앱에서 하는 검사는
+      우회할 수도 있다. 그래서 대조는 반드시 여기(서버)에서 한다.
+
+   ※ 크론용 CRON_SECRET과 분리한다. 하나를 같이 쓰면 둘 중 하나만 바꾸고 싶을 때
+      다른 기능까지 끊긴다.
+
+   ※ ADMIN_SECRET이 설정돼 있지 않으면 아예 거부한다. 사용자 기기로 직접 도달하는
+      기능이라 인증 없이 열어두면 안 된다.
+
+   ※ dryRun을 주면 실제로 보내지 않고 대상 수만 돌려준다. 문구를 확인하거나
+      구독자 수를 먼저 세어볼 때 쓴다.
+   ============================================= */
+const { getRedis } = require('./_lib');
+
+module.exports = async function handler(req, res) {
+  if (req.method !== 'POST') {
+    res.status(405).json({ ok: false, error: 'POST만 허용' });
+    return;
+  }
+
+  // 전체 발송은 되돌릴 수 없으므로 비밀번호 미설정 시 잠근다
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret) {
+    res.status(500).json({ ok: false, error: 'ADMIN_SECRET 미설정 — 전체 발송을 잠급니다' });
+    return;
+  }
+  const auth = req.headers['authorization'] || '';
+  const q = (req.query && req.query.secret) || '';
+  if (auth !== `Bearer ${secret}` && q !== secret) {
+    res.status(401).json({ ok: false, error: 'unauthorized' });
+    return;
+  }
+
+  const pub = process.env.VAPID_PUBLIC_KEY;
+  const priv = process.env.VAPID_PRIVATE_KEY;
+  if (!pub || !priv) {
+    res.status(500).json({ ok: false, error: 'VAPID 키 미설정' });
+    return;
+  }
+
+  const redis = getRedis();
+  if (!redis) {
+    res.status(500).json({ ok: false, error: 'Redis 미설정' });
+    return;
+  }
+
+  let body = req.body;
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body); } catch { body = null; }
+  }
+  const title = String((body && body.title) || '').trim().slice(0, 60);
+  const text  = String((body && body.body)  || '').trim().slice(0, 160);
+  const url   = String((body && body.url)   || '/').slice(0, 200);
+  const dryRun = !!(body && body.dryRun);
+
+  if (!title) {
+    res.status(400).json({ ok: false, error: '제목(title)이 비었습니다' });
+    return;
+  }
+
+  let ids = [];
+  try { ids = (await redis.smembers('push:subs')) || []; } catch { ids = []; }
+
+  if (dryRun) {
+    res.status(200).json({ ok: true, dryRun: true, targets: ids.length, title, body: text, url });
+    return;
+  }
+
+  const webpush = require('web-push');
+  webpush.setVapidDetails('mailto:seo941024@gmail.com', pub, priv);
+
+  // 같은 tag를 쓰면 이전 공지 알림을 덮어써서 알림창에 쌓이지 않는다
+  const tag = 'notice-' + Date.now().toString(36);
+  const payload = JSON.stringify({ title, body: text, tag, url });
+
+  let sent = 0, failed = 0, pruned = 0;
+
+  for (const id of ids) {
+    let rec = null;
+    try {
+      const raw = await redis.get('push:sub:' + id);
+      rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch { rec = null; }
+    if (!rec || !rec.sub) continue;
+
+    try {
+      await webpush.sendNotification(rec.sub, payload);
+      sent++;
+    } catch (e) {
+      failed++;
+      // 404/410 = 구독 만료 또는 사용자가 알림을 끔 → 목록에서 정리한다
+      const code = e && e.statusCode;
+      if (code === 404 || code === 410) {
+        try { await redis.srem('push:subs', id); await redis.del('push:sub:' + id); pruned++; }
+        catch { /* 다음 발송 때 다시 정리된다 */ }
+      }
+    }
+  }
+
+  res.status(200).json({ ok: true, targets: ids.length, sent, failed, pruned });
+};

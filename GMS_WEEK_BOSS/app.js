@@ -1373,6 +1373,80 @@ document.getElementById('headerBtnSettings').addEventListener('click', () => ove
 document.getElementById('settingsClose').addEventListener('click', () => overlaySettings.classList.remove('open'));
 overlaySettings.addEventListener('click', e => { if (e.target === overlaySettings) overlaySettings.classList.remove('open'); });
 
+/* ── 관리자 — 전체 알림 발송 ──
+   비밀번호를 앱 안에서 대조하지 않는다. 클라이언트 코드는 누구나 열어볼 수 있어
+   거기 적힌 비밀번호는 이미 비밀이 아니고, 검사 자체도 우회할 수 있기 때문.
+   대신 입력한 값을 그대로 서버로 보내 서버가 판단한다(api/push-broadcast).
+   비밀번호가 틀리면 서버가 거부하므로 관리자탭이 열려 있어도 발송되지 않는다. */
+/* 관리자 항목은 평소 숨긴다. ?admin=1 로 한 번 들어오면 이 기기에 기억해두고
+   계속 보여준다 — 설치한 앱은 항상 '/' 로 열려서 주소에 값을 붙일 수 없기 때문.
+   ?admin=0 이면 지운다. 이건 남의 눈에 안 띄게 하려는 것일 뿐 잠금장치가 아니다.
+   실제 차단은 서버가 비밀번호를 대조해서 한다. */
+const ADMIN_VISIBLE_KEY = 'gms_admin_visible';
+(() => {
+  const q = new URLSearchParams(location.search).get('admin');
+  if (q === '1') localStorage.setItem(ADMIN_VISIBLE_KEY, '1');
+  else if (q === '0') localStorage.removeItem(ADMIN_VISIBLE_KEY);
+
+  if (localStorage.getItem(ADMIN_VISIBLE_KEY) === '1') {
+    const box = document.getElementById('settingsAdminBox');
+    if (box) box.style.display = '';
+  }
+})();
+
+const overlayAdmin = document.getElementById('overlayAdmin');
+document.getElementById('btnAdmin')?.addEventListener('click', () => {
+  overlaySettings.classList.remove('open');
+  overlayAdmin.classList.add('open');
+});
+document.getElementById('adminClose')?.addEventListener('click', () => overlayAdmin.classList.remove('open'));
+overlayAdmin?.addEventListener('click', e => { if (e.target === overlayAdmin) overlayAdmin.classList.remove('open'); });
+
+async function admSend(dryRun) {
+  const resEl  = document.getElementById('admResult');
+  const secret = document.getElementById('admSecret').value.trim();
+  const title  = document.getElementById('admTitle').value.trim();
+  const body   = document.getElementById('admBody').value.trim();
+
+  const say = (msg, ok) => {
+    resEl.textContent = msg;
+    resEl.className = 'adm-result' + (ok === true ? ' is-ok' : ok === false ? ' is-err' : '');
+  };
+
+  if (!secret) { say('비밀번호를 입력하세요.', false); return; }
+  if (!title)  { say('제목을 입력하세요.', false); return; }
+  // 전체 발송은 되돌릴 수 없으므로 한 번 더 묻는다
+  if (!dryRun && !confirm(`"${title}"\n\n알림을 켠 전원에게 지금 보냅니다. 취소할 수 없습니다.`)) return;
+
+  const btnC = document.getElementById('admBtnCheck');
+  const btnS = document.getElementById('admBtnSend');
+  btnC.disabled = btnS.disabled = true;
+  say(dryRun ? '확인 중…' : '발송 중…');
+
+  try {
+    const r = await fetch('/api/push-broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
+      body: JSON.stringify({ title, body, url: '/', dryRun }),
+    });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.ok) {
+      const msg = r.status === 401 ? '비밀번호가 맞지 않습니다.' : ((j && j.error) || `요청 실패 (${r.status})`);
+      say(msg, false);
+    } else if (dryRun) {
+      say(`받을 사람 ${j.targets}명`, true);
+    } else {
+      say(`발송 완료 · 성공 ${j.sent} / 실패 ${j.failed}` + (j.pruned ? ` / 만료 정리 ${j.pruned}` : ''), true);
+    }
+  } catch (e) {
+    say('요청 실패: ' + (e && e.message || e), false);
+  } finally {
+    btnC.disabled = btnS.disabled = false;
+  }
+}
+document.getElementById('admBtnCheck')?.addEventListener('click', () => admSend(true));
+document.getElementById('admBtnSend')?.addEventListener('click', () => admSend(false));
+
 document.getElementById('btnResetAll').addEventListener('click', () => {
   document.getElementById('confirmMsg').textContent = '모든 데이터를 초기화하시겠습니까? 되돌릴 수 없습니다.';
   document.getElementById('overlayConfirm').classList.add('open');

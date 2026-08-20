@@ -57,8 +57,34 @@ let _sfAutoTimer = null;
 function _sfGetEvent()    { return document.querySelector('#sfEventGroup .sf-toggle.active')?.dataset.val || 'none'; }
 function _sfGetMvp()      { return parseFloat(document.querySelector('#sfMvpGroup .sf-toggle.active')?.dataset.val || '0'); }
 function _sfGetLevel()    { return parseInt(document.getElementById('sfLevel').value) || 200; }
-function _sfGetFrom()     { return parseInt(document.getElementById('sfFrom').value) || 0; }
-function _sfGetTo()       { return Math.min(30, parseInt(document.getElementById('sfTo').value) || 22); }
+/* 목표·현재 성수는 장비 레벨의 상한을 넘을 수 없다. 확률표는 성수 0~29를
+   통짜로 갖고 있어서, 막지 않으면 120제에 22성 같은 게임에 없는 조합도
+   숫자만 그럴듯하게 계산돼 버린다. */
+function _sfGetFrom()     { return Math.min(sfMaxStar(_sfGetLevel()), parseInt(document.getElementById('sfFrom').value) || 0); }
+function _sfGetTo()       {
+  const cap = sfMaxStar(_sfGetLevel());
+  return Math.min(cap, parseInt(document.getElementById('sfTo').value) || Math.min(22, cap));
+}
+
+/* 레벨이 바뀌면 상한도 바뀌므로 입력칸의 max와 값 자체를 상한에 맞춰 잘라준다.
+   max 속성만으로는 직접 타이핑을 막지 못해 값도 같이 손봐야 한다. */
+function _sfClampInputs() {
+  const cap  = sfMaxStar(_sfGetLevel());
+  const toEl = document.getElementById('sfTo');
+  const frEl = document.getElementById('sfFrom');
+  if (!toEl || !frEl) return;
+
+  toEl.max = cap;
+  frEl.max = Math.max(0, cap - 1);
+
+  let to = Math.min(cap, Math.max(1, parseInt(toEl.value) || Math.min(22, cap)));
+  let fr = Math.min(cap - 1, Math.max(0, parseInt(frEl.value) || 0));
+  if (fr >= to) fr = to - 1;          // 현재가 목표 이상이면 굴릴 게 없다
+
+  toEl.value = to;
+  frEl.value = fr;
+  if (_sfState.star > cap) _sfState.star = cap;
+}
 
 function _sfGetCfg() {
   const star = _sfState.star;
@@ -192,6 +218,8 @@ function sfStopAuto() {
 function initStarforce() {
   if (!document.getElementById('sfStageGrid')) return;
 
+  // 시작부터 입력칸의 max가 레벨 상한을 따르도록 한 번 맞춰둔다
+  _sfClampInputs();
   // 초기 별 위치를 sfFrom 값으로 세팅
   _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
   sfBuildStageGrid();
@@ -228,7 +256,9 @@ function initStarforce() {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _sfRecalcDebounced);
-    el.addEventListener('change', _sfRecalcExpected);
+    // 값을 확정할 때 상한 밖이면 잘라내고 다시 계산한다. 타이핑 도중(input)에
+    // 자르면 "2"를 치는 순간 튕겨나가 20을 못 쓰므로 change 에서만 손댄다.
+    el.addEventListener('change', () => { _sfClampInputs(); sfRenderResult(); _sfRecalcExpected(); });
     // 목표 성수를 바꾸면 별칸 수가 달라지므로 판을 즉시 다시 그린다
     el.addEventListener('input', sfRenderResult);
   });

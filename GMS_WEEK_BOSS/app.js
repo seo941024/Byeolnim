@@ -1434,9 +1434,11 @@ async function admSend(dryRun) {
       const msg = r.status === 401 ? '비밀번호가 맞지 않습니다.' : ((j && j.error) || `요청 실패 (${r.status})`);
       say(msg, false);
     } else if (dryRun) {
-      say(`받을 사람 ${j.targets}명`, true);
+      say(`받을 사람 ${j.targets}명` + (j.skipped ? ` (제외 ${j.skipped})` : ''), true);
     } else {
-      say(`발송 완료 · 성공 ${j.sent} / 실패 ${j.failed}` + (j.pruned ? ` / 만료 정리 ${j.pruned}` : ''), true);
+      say(`발송 완료 · 성공 ${j.sent} / 실패 ${j.failed}`
+          + (j.pruned ? ` / 만료 정리 ${j.pruned}` : '')
+          + (j.skipped ? ` / 제외 ${j.skipped}` : ''), true);
     }
   } catch (e) {
     say('요청 실패: ' + (e && e.message || e), false);
@@ -1446,6 +1448,40 @@ async function admSend(dryRun) {
 }
 document.getElementById('admBtnCheck')?.addEventListener('click', () => admSend(true));
 document.getElementById('admBtnSend')?.addEventListener('click', () => admSend(false));
+
+/* 구독 목록 비우기 — 예전 주소로 설치한 기기까지 확실히 끊어내는 유일한 방법이다.
+   저장된 구독에는 출처가 없어 골라낼 수 없기 때문(이제부터 구독하는 것만 기록된다). */
+document.getElementById('admBtnPurge')?.addEventListener('click', async () => {
+  const resEl  = document.getElementById('admResult');
+  const secret = document.getElementById('admSecret').value.trim();
+  const say = (msg, ok) => {
+    resEl.textContent = msg;
+    resEl.className = 'adm-result' + (ok === true ? ' is-ok' : ok === false ? ' is-err' : '');
+  };
+  if (!secret) { say('비밀번호를 입력하세요.', false); return; }
+  if (!confirm('저장된 구독을 모두 지웁니다.\n\n지운 뒤에는 모두가 알림을 다시 켜야 합니다. 되돌릴 수 없습니다.')) return;
+
+  const btn = document.getElementById('admBtnPurge');
+  btn.disabled = true;
+  say('삭제 중…');
+  try {
+    const r = await fetch('/api/push-purge', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
+      body: JSON.stringify({ confirm: true }),
+    });
+    const j = await r.json().catch(() => null);
+    if (!r.ok || !j || !j.ok) {
+      say(r.status === 401 ? '비밀번호가 맞지 않습니다.' : ((j && j.error) || `요청 실패 (${r.status})`), false);
+    } else {
+      say(`구독 ${j.removed}개를 지웠습니다. 모두 알림을 다시 켜야 합니다.`, true);
+    }
+  } catch (e) {
+    say('요청 실패: ' + (e && e.message || e), false);
+  } finally {
+    btn.disabled = false;
+  }
+});
 
 document.getElementById('btnResetAll').addEventListener('click', () => {
   document.getElementById('confirmMsg').textContent = '모든 데이터를 초기화하시겠습니까? 되돌릴 수 없습니다.';

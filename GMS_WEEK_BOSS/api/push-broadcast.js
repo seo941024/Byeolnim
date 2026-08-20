@@ -72,8 +72,26 @@ module.exports = async function handler(req, res) {
   let ids = [];
   try { ids = (await redis.smembers('push:subs')) || []; } catch { ids = []; }
 
+  /* 지금 이 사이트에서 구독한 사람에게만 보낸다.
+     푸시 구독은 기기의 서비스워커에 묶여 있어 예전 주소로 설치한 사람도 같은
+     VAPID 키면 알림을 받는다. 그쪽으로 새 공지가 가면 안 되므로 origin을 대조하고,
+     origin이 기록돼 있지 않은 과거 구독은 출처를 알 수 없으니 보내지 않는다. */
+  const here = req.headers.origin || '';
+  const records = [];
+  let skipped = 0;
+  for (const id of ids) {
+    let rec = null;
+    try {
+      const raw = await redis.get('push:sub:' + id);
+      rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
+    } catch { rec = null; }
+    if (!rec || !rec.sub) { skipped++; continue; }
+    if (!rec.origin || (here && rec.origin !== here)) { skipped++; continue; }
+    records.push({ id, rec });
+  }
+
   if (dryRun) {
-    res.status(200).json({ ok: true, dryRun: true, targets: ids.length, title, body: text, url });
+    res.status(200).json({ ok: true, dryRun: true, targets: records.length, skipped, title, body: text, url });
     return;
   }
 
@@ -86,14 +104,7 @@ module.exports = async function handler(req, res) {
 
   let sent = 0, failed = 0, pruned = 0;
 
-  for (const id of ids) {
-    let rec = null;
-    try {
-      const raw = await redis.get('push:sub:' + id);
-      rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    } catch { rec = null; }
-    if (!rec || !rec.sub) continue;
-
+  for (const { id, rec } of records) {
     try {
       await webpush.sendNotification(rec.sub, payload);
       sent++;
@@ -108,5 +119,5 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  res.status(200).json({ ok: true, targets: ids.length, sent, failed, pruned });
+  res.status(200).json({ ok: true, targets: records.length, skipped, sent, failed, pruned });
 };

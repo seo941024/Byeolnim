@@ -73,8 +73,14 @@ module.exports = async function handler(req, res) {
         body: String(it.body || '').slice(0, 120),
       }));
 
+    /* 어느 주소에서 구독했는지 함께 남긴다.
+       푸시 구독은 기기의 서비스워커에 묶여 있어 사이트 주소가 바뀌거나 죽어도 살아
+       있다. 예전 주소로 설치한 사람도 같은 VAPID 키면 알림을 받으므로, 전체 발송
+       때 지금 주소에서 구독한 사람만 골라내려면 이 값이 필요하다.
+       endpoint(fcm.googleapis.com/...)로는 출처를 알 수 없다. */
     await redis.set('push:sub:' + id, JSON.stringify({
       sub: body.subscription,
+      origin: req.headers.origin || '',
       items,
       updated: now,
     }));

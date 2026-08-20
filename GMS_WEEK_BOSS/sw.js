@@ -12,10 +12,13 @@
 ═══════════════════════════════════════════════ */
 
 // 캐시 이름을 바꾸면 이전 캐시는 activate에서 전부 지워진다.
-const CACHE = 'mappu-v1';
+const CACHE = 'mappu-v2';
 
-// 오프라인일 때 최소한 화면은 뜨도록 미리 받아두는 것들
-const PRECACHE = ['/', '/index.html'];
+/* 오프라인일 때 최소한 화면은 뜨도록 미리 받아두는 것들.
+   알림 아이콘도 넣는다 — 푸시로 워커가 막 깨어난 순간에는 네트워크가 아직
+   느려서 아이콘을 못 받아오고, 그러면 크롬 기본 아이콘(종 모양)으로 대체된다.
+   이미지는 cache-first라 미리 넣어두면 네트워크 없이 즉시 뜬다. */
+const PRECACHE = ['/', '/index.html', '/images/pwa/icon-192.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(
@@ -44,8 +47,10 @@ self.addEventListener('push', e => {
 
   e.waitUntil(self.registration.showNotification(d.title || '보스 시간', {
     body: d.body || '',
-    icon: 'images/pwa/icon-192.png',
-    badge: 'images/pwa/icon-192.png',
+    // 절대 경로로 둔다 — 상대 경로는 워커 위치를 기준으로 풀려서, 나중에 워커를
+    // 하위 폴더로 옮기면 조용히 깨진다. 이 경로 그대로 PRECACHE에도 넣어야 한다.
+    icon: '/images/pwa/icon-192.png',
+    badge: '/images/pwa/icon-192.png',
     // 같은 일정이 여러 번 와도 알림이 쌓이지 않게 하나로 합친다
     tag: d.tag || 'boss',
     renotify: true,

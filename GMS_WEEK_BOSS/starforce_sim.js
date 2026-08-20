@@ -121,7 +121,7 @@ function sfRenderResult() {
     if (spentVal)  spentVal.textContent = fmtMeso(_sfState.cost);
   }
 
-  const starDisp = `<div class="sf-star-display">${_sfState.star}★ <span style="font-size:.9rem;color:var(--text-sub)">/ ${to}★</span></div>`;
+  sfRenderStarPanel(to, done);
 
   const stats = `
     <div class="sf-res-item"><span class="sf-res-label">강화 횟수</span><span class="sf-res-val">${_sfState.attempts.toLocaleString()} 회</span></div>
@@ -135,7 +135,40 @@ function sfRenderResult() {
     return `<div class="sf-log-row ${cls}"><span class="sf-log-icon">${icon}</span><span class="sf-log-desc">${desc}</span><span class="sf-log-cost">${fmtMeso(l.cost)}</span></div>`;
   }).join('');
 
-  el.innerHTML = starDisp + stats + (logHtml ? `<div class="sf-log">${logHtml}</div>` : '');
+  el.innerHTML = stats + (logHtml ? `<div class="sf-log">${logHtml}</div>` : '');
+}
+
+/* 별 판 — 목표 성수만큼 별칸을 만들고 현재 성수까지 채운다.
+   그 아래에 "현재 ▶▶▶ 다음"과 이번 시도의 성공·실패·파괴 확률을 보여준다.
+   스타캐치/파괴방지는 좌측 설정에서 이미 고르므로 여기선 결과만 반영한다. */
+function sfRenderStarPanel(to, done) {
+  const grid = document.getElementById('sfStarGrid');
+  if (!grid) return;
+  const star = _sfState.star;
+
+  grid.innerHTML = Array.from({ length: to },
+    (_, i) => `<span class="sfstar-grid__s${i < star ? ' on' : ''}">★</span>`).join('');
+
+  // 22성부터는 게임처럼 판 테두리를 금색으로 바꿔 한눈에 구분되게 한다
+  grid.closest('.sfstar-panel')?.classList.toggle('sfstar-panel--hi', star >= 22);
+
+  document.getElementById('sfStarCur').textContent  = star;
+  document.getElementById('sfStarNext').textContent = done ? star : star + 1;
+
+  const rates = document.getElementById('sfStarRates');
+  if (done) {
+    rates.innerHTML = '<div class="sfstar-rates__row sfstar-rates__row--done">목표 달성!</div>';
+    return;
+  }
+  const cfg = _sfGetCfg();
+  const p   = getSfProb(star, cfg.isShining, cfg.isProtected, cfg.stage);
+  const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount, cfg.isShining, cfg.isProtected, cfg.stage, 0);
+  const pct = v => (v * 100).toFixed(2) + '%';
+  rates.innerHTML = `
+    <div class="sfstar-rates__row sfstar-rates__row--succ"><span>성공</span><span>${pct(p.succ)}</span></div>
+    <div class="sfstar-rates__row"><span>실패</span><span>${pct(p.fail)}</span></div>
+    <div class="sfstar-rates__row sfstar-rates__row--dest"><span>파괴</span><span>${pct(p.dest)}</span></div>
+    <div class="sfstar-rates__row"><span>사용 재화</span><span>${fmtMeso(cost)}</span></div>`;
 }
 
 function sfStopAuto() {
@@ -158,6 +191,7 @@ function initStarforce() {
         grp.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
         sfBuildStageGrid(); // 샤이닝 상태 바뀌면 파괴율 다시 계산
+        sfRenderResult();   // 별 판의 확률·비용 표시도 같이 갱신
         _sfRecalcExpected();
       });
     });
@@ -183,10 +217,27 @@ function initStarforce() {
     if (!el) return;
     el.addEventListener('input', _sfRecalcDebounced);
     el.addEventListener('change', _sfRecalcExpected);
+    // 목표 성수를 바꾸면 별칸 수가 달라지므로 판을 즉시 다시 그린다
+    el.addEventListener('input', sfRenderResult);
   });
 
   // 강화 1회
   document.getElementById('sfBtn1')?.addEventListener('click', () => {
+    sfStopAuto();
+    sfEnhanceOnce();
+  });
+
+  /* 스페이스바로 강화. 스타포스 탭의 까미 월루가 열려 있을 때만 동작하고,
+     입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. 스크롤 기본 동작도 막는다. */
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    const sec = document.getElementById('sec-starforce');
+    if (!sec?.classList.contains('active')) return;
+    if (document.getElementById('sfRightSimulate')?.style.display === 'none') return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    if (document.querySelector('.overlay[style*="flex"]')) return;
+    e.preventDefault();
     sfStopAuto();
     sfEnhanceOnce();
   });

@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260819e" />
+  <link rel="stylesheet" href="style.css?v=20260819v" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -251,7 +251,7 @@
       <!-- 탭 -->
       <div class="sf-tabs">
         <button class="sf-tab active" data-sftab="expected">기댓값 계산기</button>
-        <button class="sf-tab" data-sftab="simulate">강화 시뮬레이터</button>
+        <button class="sf-tab" data-sftab="simulate">까미 월루 버튼</button>
       </div>
       <hr class="sec-sep" />
 
@@ -293,7 +293,7 @@
           </div>
           <!-- 강화 버튼 -->
           <div id="sfBtnWrapSimulate" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="sbtn sbtn--primary" id="sfBtn1">강화 1회</button>
+            <button class="sbtn sbtn--primary" id="sfBtn1">강화하기 [space]</button>
             <button class="sbtn sbtn--primary" id="sfBtnAuto">자동 강화</button>
             <button class="sbtn sbtn--ghost" id="sfBtnReset" style="grid-column:1/-1">초기화</button>
           </div>
@@ -351,7 +351,19 @@
         <div class="sf-right" id="sfRightSimulate" style="display:none">
           <div class="card">
             <div class="card__title">강화 결과</div>
-            <div id="sfSpentWrap" style="display:none;margin-top:8px">
+
+            <!-- 별 판 — 성수만큼 별이 채워진다 -->
+            <div class="sfstar-panel">
+              <div class="sfstar-grid" id="sfStarGrid"></div>
+              <div class="sfstar-arrow">
+                <span class="sfstar-arrow__cur"><span class="sfstar-arrow__ico">★</span><span id="sfStarCur">0</span></span>
+                <span class="sfstar-arrow__sep">▶▶▶</span>
+                <span class="sfstar-arrow__next"><span class="sfstar-arrow__ico">★</span><span id="sfStarNext">1</span></span>
+              </div>
+              <div class="sfstar-rates" id="sfStarRates"></div>
+            </div>
+
+            <div id="sfSpentWrap" style="display:none;margin-top:14px">
               <div class="sf-res-item" style="border:none;padding:0 0 8px">
                 <span class="sf-res-label">누적 소모 메소</span>
                 <span class="sf-res-val big" id="sfSpentVal">0</span>
@@ -366,31 +378,37 @@
 
     <!-- ══════ 큐브 시뮬레이터 ══════ -->
     <section class="sec" id="sec-cube">
-      <div class="sec-head"><h2 class="sec-title">큐브 기댓값 계산기</h2></div>
+      <div class="sec-head"><h2 class="sec-title">큐브 시뮬레이터</h2></div>
 
+      <!-- 탭 -->
+      <div class="sf-tabs">
+        <button class="sf-tab active" data-cubetab="sim">옵션 시뮬레이터</button>
+        <button class="sf-tab" data-cubetab="handroll">까미 월루 버튼</button>
+      </div>
+      <hr class="sec-sep" />
+
+      <!-- 공통 설정: 큐브 종류 / 부위 / 아이템 레벨 -->
       <div class="sf-layout">
-        <!-- 설정 카드 -->
         <div class="card">
-          <div class="card__title">설정</div>
+          <div class="cube-set-head">
+            <span class="card__title" style="margin:0">설정</span>
+            <label class="cube-dmt" id="hrDmtWrap" style="display:none">
+              <span>미라클 타임</span>
+              <input type="checkbox" id="hrDmt" />
+              <span class="cube-dmt__track"><span class="cube-dmt__thumb"></span></span>
+            </label>
+          </div>
 
           <div class="field">
             <label class="field__label">큐브 종류</label>
             <div class="cube-type-grid">
-              <button class="cube-type-btn" data-type="craft">
-                <img src="images/icons/Hard.png" alt="">
-                <span>장인의 큐브</span>
-              </button>
-              <button class="cube-type-btn" data-type="master">
-                <img src="images/icons/Solid.png" alt="">
-                <span>명장의 큐브</span>
-              </button>
               <button class="cube-type-btn active" data-type="red">
                 <img src="images/icons/Glowing.png" alt="">
-                <span>레드 큐브</span>
+                <span>Glowing Cubes</span>
               </button>
               <button class="cube-type-btn" data-type="black">
                 <img src="images/icons/Bright.png" alt="">
-                <span>블랙 큐브</span>
+                <span>Bright Cubes</span>
               </button>
             </div>
           </div>
@@ -402,32 +420,73 @@
             </div>
             <div class="field">
               <label class="field__label">아이템 레벨</label>
-              <input class="inp" id="cubeLevel" type="number" value="200" min="1" max="300" placeholder="아이템 레벨">
+              <input class="inp" id="cubeLevel" type="number" value="200" min="1" max="250" placeholder="아이템 레벨">
             </div>
           </div>
 
-          <div class="field mt8">
-            <label class="field__label">잠재능력 등급</label>
-            <select class="sel" id="cubeGrade"></select>
+          <!-- 탭1 전용: 옵션 시뮬레이터 -->
+          <div id="cubeTabSim">
+            <div class="field mt8">
+              <label class="field__label">잠재능력 등급</label>
+              <select class="sel" id="cubeGrade"></select>
+            </div>
+
+            <div class="card__title mt16">옵션 설정</div>
+            <div class="cube-goal-hint">
+              같은 항목을 한 줄에만 적으면 <b>세 줄 합산</b> 기준, 여러 줄에 나눠 적으면 <b>줄마다 따로</b> 만족해야 하는 기준입니다.<br>
+              예 · STR 26 한 줄 → 합산 26% 이상 / STR 13 · STR 13 두 줄 → 13% 이상인 줄이 2개
+            </div>
+            <div id="cubeSetContainer"></div>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="cubeAddSetBtn">+ 옵션 세트 추가</button>
+
+            <div class="cube-btns">
+              <button class="sbtn sbtn--ghost cube-btn-full" id="cubeExpectedBtn">기댓값 계산</button>
+            </div>
           </div>
 
-          <div class="card__title mt16">옵션 설정</div>
-          <div class="cube-goal-hint">
-            같은 항목을 한 줄에만 적으면 <b>세 줄 합산</b> 기준, 여러 줄에 나눠 적으면 <b>줄마다 따로</b> 만족해야 하는 기준입니다.<br>
-            예 · STR 26 한 줄 → 합산 26% 이상 / STR 13 · STR 13 두 줄 → 13% 이상인 줄이 2개
-          </div>
-          <div id="cubeSetContainer"></div>
-          <button class="sbtn sbtn--ghost cube-btn-full mt8" id="cubeAddSetBtn">+ 옵션 세트 추가</button>
-
-          <div class="cube-btns">
-            <button class="sbtn sbtn--ghost cube-btn-full" id="cubeExpectedBtn">기댓값 계산</button>
+          <!-- 탭2 전용: 까미 월루(직접 큐브 굴리기) -->
+          <div id="cubeTabHandroll" style="display:none">
+            <div class="field mt8">
+              <label class="field__label">시작 등급</label>
+              <select class="sel" id="hrGrade"></select>
+            </div>
+            <div class="cube-btns mt16">
+              <button class="sbtn sbtn--primary cube-btn-full" id="hrRollBtn">옵션 재설정 [space]</button>
+              <button class="sbtn sbtn--ghost cube-btn-full mt8" id="hrResetBtn">초기화</button>
+            </div>
           </div>
         </div>
 
         <!-- 결과 카드 -->
         <div class="card">
           <div class="card__title">결과</div>
-          <div id="cubeResults"><p class="empty">결과가 없습니다.</p></div>
+          <div id="cubeTabSimResult"><p class="empty">결과가 없습니다.</p></div>
+          <div id="cubeTabHandrollResult" style="display:none">
+            <!-- 현재 잠재옵션 패널 — 테두리·헤더가 등급 색을 따라간다 -->
+            <div class="pot-panel" id="hrPanel" data-grade="RARE">
+              <div class="pot-panel__head">
+                <img class="pot-panel__icon" id="hrPanelIcon" src="images/icons/rare.png" alt="" onerror="this.style.display='none'">
+                <span>잠재옵션 <span id="hrPanelGrade">레어</span></span>
+              </div>
+              <div class="pot-panel__lines" id="hrPanelLines"></div>
+            </div>
+
+            <div class="sf-res-item mt16">
+              <span class="sf-res-label">사용한 큐브</span>
+              <span class="sf-res-val hr-cubecount">
+                <span class="hr-cubecount__item">
+                  <img src="images/icons/Glowing.png" alt="Glowing" onerror="this.style.display='none'">
+                  <span id="hrCountRed">0</span>개
+                </span>
+                <span class="hr-cubecount__item">
+                  <img src="images/icons/Bright.png" alt="Bright" onerror="this.style.display='none'">
+                  <span id="hrCountBlack">0</span>개
+                </span>
+              </span>
+            </div>
+            <div class="sf-res-item"><span class="sf-res-label">누적 소모 메소</span><span class="sf-res-val" id="hrMesoSpent">0</span></div>
+            <div id="hrLog" class="mt16"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -633,12 +692,12 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260819b"></script>
 <script src="cube_table.js?v=20260819b"></script>
-<script src="starforce.js?v=20260819d"></script>
-<script src="app.js?v=20260819b"></script>
+<script src="starforce.js?v=20260819e"></script>
+<script src="app.js?v=20260819c"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260819b"></script>
-<script src="starforce_sim.js?v=20260819d"></script>
-<script src="cube.js?v=20260819b"></script>
+<script src="starforce_sim.js?v=20260819g"></script>
+<script src="cube.js?v=20260819j"></script>
 <script src="addoption.js?v=20260819b"></script><script src="bosshp.js?v=20260819b"></script>
 <script src="serverstatus.js?v=20260819b"></script>
 <script src="dailytasks.js?v=20260819b"></script>

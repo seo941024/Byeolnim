@@ -1012,6 +1012,46 @@ select option { background: var(--bg2); color: var(--text); }
    마크업에 쉼표를 넣으면 줄 색(등급 색)까지 같이 물들어서 CSS로 붙인다. */
 .hr-log-row .hr-log-line:not(:last-child)::after { content: ","; color: var(--text-sub); }
 
+/* ── 불꽃 판 — 큐브와 달리 등급 색을 쓰지 않는다. 티어는 별 개수로만 보여준다 ── */
+/* .pot-panel 기본값이 파일 뒤쪽에 있어 같은 특이도면 그쪽이 이긴다 — 두 클래스를 겹쳐 올린다 */
+.pot-panel.flame-panel { --pot: var(--border); }
+.pot-panel.flame-panel .pot-panel__head { color: var(--text); }
+.pot-panel.flame-panel .pot-line { --line: var(--border); background: var(--bg2); color: var(--text); text-shadow: none; }
+/* 헤더에는 점수만 가운데로 */
+.pot-panel.flame-panel .pot-panel__head { justify-content: center; }
+.flame-panel__score { font-variant-numeric: tabular-nums; }
+
+/* 한 줄 = [n추] [옵션] [점수] */
+.pot-panel.flame-panel .pot-line {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+}
+.flame-line__rank { flex-shrink: 0; width: 30px; color: var(--text-sub); font-weight: 700; }
+.flame-line__opt  { flex: 1; }
+.flame-line__pt   { flex-shrink: 0; color: var(--text-sub); font-variant-numeric: tabular-nums; }
+
+/* 1추 줄 — 채도를 낮춘 하늘색 테두리 + 바깥으로 번지는 맥동.
+   판 안쪽 여백이 14px이라 번짐(10px)+퍼짐(1px)=11px 로 잡아 잘리지 않게 한다.
+   opacity만 움직여 리페인트 없이 GPU 합성만 일어난다. */
+.pot-panel.flame-panel .pot-line.is-top {
+  position: relative;
+  border-color: #9fc4dc;
+  color: #dceaf4;
+}
+.pot-panel.flame-panel .pot-line.is-top .flame-line__rank,
+.pot-panel.flame-panel .pot-line.is-top .flame-line__pt { color: #b9d3e4; }
+.pot-panel.flame-panel .pot-line.is-top::after {
+  content: ""; position: absolute; inset: 0;
+  border-radius: inherit; pointer-events: none;
+  box-shadow: 0 0 10px 1px rgba(159,196,220,.85);
+  opacity: .15;
+  animation: flameTopGlow 1.8s ease-in-out infinite;
+  will-change: opacity;
+}
+@keyframes flameTopGlow { 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  .pot-panel.flame-panel .pot-line.is-top::after { animation: none; opacity: .5; }
+}
+
 /* ── 관리자 발송 결과 줄 ── */
 .adm-result { margin-top: 10px; font-size: .82rem; font-weight: 700; min-height: 1.2em; color: var(--text-sub); }
 .adm-result.is-ok  { color: var(--success); }

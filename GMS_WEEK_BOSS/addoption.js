@@ -378,6 +378,95 @@ function flameSimulate() {
     </p>`;
 }
 
+/* ═══════════════════════════════════════════════
+   까미 월루 버튼 — 불꽃을 하나씩 직접 써보는 모드
+═══════════════════════════════════════════════ */
+
+/* 불꽃을 번갈아 쓸 수 있으므로 사용 개수는 종류별로 따로 센다 */
+let _flameHand = { count: {}, log: [] };
+
+/* 네 줄 중 가장 높은 티어. 별 표시에 쓴다. */
+function _flameTopTier(lines) {
+  return lines.reduce((m, l) => Math.max(m, l.tier), 0);
+}
+
+/* 티어(내부값 1~5, 5가 가장 좋음)를 화면 표기인 "n추"로 바꾼다.
+   가장 좋은 등급이 1추다 — 옵션 시뮬레이터의 '티어별 스탯 참조' 표와 같은 기준이라
+   보스 장비 여부와 무관하게 항상 1추~5추로 적는다. */
+const FLAME_TIER_MAX = 5;
+function flameTierRank(tier) { return FLAME_TIER_MAX - tier + 1; }   // tier5 → 1추
+
+/* 한 줄 점수 — 1추 7점부터 한 단계 내려갈 때마다 1점씩 깎는다.
+   1추 7 / 2추 6 / 3추 5 / 4추 4 / 5추 3. 네 줄이라 최대 28점. */
+function flameLineScore(tier) { return 8 - flameTierRank(tier); }
+
+/* 불꽃 한 번의 총점 — 어떤 옵션이 떴는지와 무관하게 등급만 본다 */
+function flameRollScore(lines) {
+  return lines.reduce((s, l) => s + flameLineScore(l.tier), 0);
+}
+
+function _flameRollOnce() {
+  const flame   = document.querySelector('#flameTypeGroup .sf-toggle.active')?.dataset.val || 'POWERFUL';
+  const isWeapon = document.querySelector('#flameEquipGroup .sf-toggle.active')?.dataset.val === 'weapon';
+  const level    = parseInt(document.getElementById('flameLevel').value) || 200;
+  const isBoss   = document.getElementById('flameBoss').checked;
+
+  const lines = rollFlame(flame, level, isBoss, isWeapon);
+  const score = flameRollScore(lines);
+
+  _flameHand.count[flame] = (_flameHand.count[flame] || 0) + 1;
+  _flameHand.log.unshift({ lines, score, tier: _flameTopTier(lines) });
+  if (_flameHand.log.length > 30) _flameHand.log.pop();
+
+  _flameRenderHand();
+}
+
+/* 한 줄을 "옵션 +수치" 로 적는다. 착용레벨감소는 값이 음수라 부호를 그대로 쓴다. */
+function _flameLineText(l) {
+  const label = FLAME_OPTION_LABELS[l.opt] || l.opt;
+  const pct   = (l.opt === 'ALL%' || l.opt === '보공%' || l.opt === '데미지%') ? '%' : '';
+  const sign  = l.val < 0 ? '' : '+';
+  return `${label} : ${sign}${l.val.toLocaleString()}${pct}`;
+}
+
+function _flameRenderHand() {
+  const panel = document.getElementById('flameHandPanel');
+  if (!panel) return;
+  const cur = _flameHand.log[0];
+
+  document.getElementById('flameHandScore').textContent = cur ? `${cur.score}점` : '';
+
+  /* 1추 줄에는 흰 테두리와 은은한 빛을 준다(스타포스 22성 강조와 같은 방식).
+     빛은 opacity만 움직여 리페인트가 없고, 안쪽으로 넣어 카드에 잘리지 않는다. */
+  document.getElementById('flameHandLines').innerHTML = cur
+    ? cur.lines.map(l => {
+        const rank = flameTierRank(l.tier);
+        const top  = l.tier === FLAME_TIER_MAX ? ' is-top' : '';
+        return `<div class="pot-line${top}">
+                  <span class="flame-line__rank">${rank}추</span>
+                  <span class="flame-line__opt">${_flameLineText(l)}</span>
+                  <span class="flame-line__pt">${flameLineScore(l.tier)}점</span>
+                </div>`;
+      }).join('')
+    : '<div class="pot-line pot-line--empty">— 옵션 없음 —</div>'.repeat(4);
+
+  for (const k of Object.keys(FLAME_TYPES)) {
+    const el = document.getElementById('flameCount' + k);
+    if (el) el.textContent = (_flameHand.count[k] || 0).toLocaleString();
+  }
+
+  document.getElementById('flameHandLog').innerHTML = _flameHand.log.map(e => `
+    <div class="hr-log-row">
+      <span class="hr-log-grade">${e.score}점</span>
+      ${e.lines.map(l => `<span class="hr-log-line">${flameTierRank(l.tier)}추 ${_flameLineText(l)}</span>`).join('')}
+    </div>`).join('');
+}
+
+function _flameHandReset() {
+  _flameHand = { count: {}, log: [] };
+  _flameRenderHand();
+}
+
 function initAddOption() {
   const sec = document.getElementById('sec-addoption');
   if (!sec) return;
@@ -406,6 +495,7 @@ function initAddOption() {
     <div class="sf-tabs">
       <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
       <button class="sf-tab" data-tab="score">추옵 계산기</button>
+      <button class="sf-tab" data-tab="hand">까미 월루 버튼</button>
     </div>
     <hr class="sec-sep" />
 
@@ -477,6 +567,14 @@ function initAddOption() {
           <button class="sbtn sbtn--ghost w100" id="flameBtnScore">계산</button>
         </div>
 
+        <!-- 탭3 전용: 직접 굴리기 -->
+        <div id="flameTabHand" style="display:none">
+          <div class="cube-btns mt16">
+            <button class="sbtn sbtn--primary w100" id="flameBtnRoll">불꽃 사용 [space]</button>
+            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnHandReset">초기화</button>
+          </div>
+        </div>
+
       </div>
 
       <!-- 우측: 결과 -->
@@ -495,6 +593,28 @@ function initAddOption() {
         <div class="card" id="flameScoreResultCard" style="display:none">
           <div class="card__title">추옵 계산 결과</div>
           <div id="flameScoreResult" style="margin-top:10px"><p class="empty">목표 추옵을 입력하고 계산하세요.</p></div>
+        </div>
+
+        <div class="card" id="flameHandResultCard" style="display:none">
+          <div class="card__title">결과</div>
+          <!-- 네 줄이 뜨는 판. 테두리는 가장 높은 티어를 따라간다 -->
+          <div class="pot-panel flame-panel" id="flameHandPanel" data-tier="0">
+            <div class="pot-panel__head">
+              <span class="flame-panel__score" id="flameHandScore"></span>
+            </div>
+            <div class="pot-panel__lines" id="flameHandLines"></div>
+          </div>
+          <div class="sf-res-item mt16">
+            <span class="sf-res-label">사용한 불꽃</span>
+            <span class="sf-res-val hr-cubecount">
+              ${Object.entries(FLAME_TYPES).map(([k, v]) => `
+                <span class="hr-cubecount__item">
+                  <img src="${v.img}" alt="${v.label}" title="${v.label}" onerror="this.style.display='none'">
+                  <span id="flameCount${k}">0</span>개
+                </span>`).join('')}
+            </span>
+          </div>
+          <div id="flameHandLog" class="mt16"></div>
         </div>
 
       </div>
@@ -540,19 +660,43 @@ function initAddOption() {
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
 
+  // 까미 월루 버튼 — 불꽃 하나씩 직접 굴리기
+  document.getElementById('flameBtnRoll')?.addEventListener('click', _flameRollOnce);
+  document.getElementById('flameBtnHandReset')?.addEventListener('click', _flameHandReset);
+
+  /* 스페이스바로 굴리기. 추옵 탭의 까미 월루가 열려 있을 때만 동작하고,
+     입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
+  document.addEventListener('keydown', e => {
+    if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!sec.classList.contains('active')) return;
+    if (document.getElementById('flameTabHand')?.style.display === 'none') return;
+    const tag = document.activeElement?.tagName;
+    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
+    if (document.querySelector('.overlay.open')) return;
+    e.preventDefault();
+    _flameRollOnce();
+  });
+
+  _flameHandReset();
+
   sec.querySelectorAll('.sf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
-      const isSim = tab.dataset.tab === 'sim';
-      document.getElementById('flameEquipGroup').parentElement.style.display = isSim ? '' : 'none';
-      document.getElementById('flameTypeGroup').parentElement.style.display  = isSim ? '' : 'none';
-      document.getElementById('flameTabSim').style.display         = isSim ? '' : 'none';
-      document.getElementById('flameTabScore').style.display       = isSim ? 'none' : '';
-      document.getElementById('flameStatTableCard').style.display  = isSim ? '' : 'none';
-      document.getElementById('flameSimResultCard').style.display  = isSim ? '' : 'none';
-      document.getElementById('flameScoreResultCard').style.display = isSim ? 'none' : '';
-      _flameAutoCalc(); // 탭 전환 시 해당 탭 결과 자동 표시
+      const which = tab.dataset.tab;               // sim | score | hand
+      const isSim = which === 'sim', isHand = which === 'hand';
+      // 장비 종류·불꽃 선택은 직접 굴리기에서도 써야 하므로 추옵 계산기에서만 숨긴다
+      document.getElementById('flameEquipGroup').parentElement.style.display = which === 'score' ? 'none' : '';
+      document.getElementById('flameTypeGroup').parentElement.style.display  = which === 'score' ? 'none' : '';
+      document.getElementById('flameTabSim').style.display          = isSim  ? '' : 'none';
+      document.getElementById('flameTabScore').style.display        = which === 'score' ? '' : 'none';
+      document.getElementById('flameTabHand').style.display         = isHand ? '' : 'none';
+      document.getElementById('flameStatTableCard').style.display   = isSim  ? '' : 'none';
+      document.getElementById('flameSimResultCard').style.display   = isSim  ? '' : 'none';
+      document.getElementById('flameScoreResultCard').style.display = which === 'score' ? '' : 'none';
+      document.getElementById('flameHandResultCard').style.display  = isHand ? '' : 'none';
+      if (isHand) _flameRenderHand();
+      else _flameAutoCalc(); // 탭 전환 시 해당 탭 결과 자동 표시
     });
   });
 

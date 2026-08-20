@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260820k" />
+  <link rel="stylesheet" href="style.css?v=20260820l" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -450,8 +450,17 @@
               <label class="field__label">시작 등급</label>
               <select class="sel" id="hrGrade"></select>
             </div>
+            <div class="card__title mt16">목표 옵션</div>
+            <div class="cube-goal-hint">
+              한 항목만 적으면 <b>세 줄 합산</b>, 같은 항목을 여러 줄에 적으면 <b>그 줄 수만큼</b> 떠야 멈춥니다.<br>
+              예 · 공격력 33 한 줄 → 합쳐 33% 이상이면 정지 / 공격력 1을 세 줄 → 공격력이 3줄 다 떠야 정지
+            </div>
+            <div class="hr-preset" id="hrPresets"></div>
+            <div id="hrGoalRows"></div>
+
             <div class="cube-btns mt16">
               <button class="sbtn sbtn--primary cube-btn-full" id="hrRollBtn">옵션 재설정 [S]</button>
+              <button class="sbtn sbtn--ghost cube-btn-full mt8" id="hrAutoBtn">목표까지 자동</button>
               <button class="sbtn sbtn--ghost cube-btn-full mt8" id="hrResetBtn">초기화</button>
             </div>
           </div>
@@ -746,7 +755,7 @@
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260819b"></script>
 <script src="starforce_sim.js?v=20260820f"></script>
-<script src="cube.js?v=20260820a"></script>
+<script src="cube.js?v=20260820g"></script>
 <script src="addoption.js?v=20260820c"></script><script src="bosshp.js?v=20260819b"></script>
 <script src="serverstatus.js?v=20260819b"></script>
 <script src="dailytasks.js?v=20260819b"></script>

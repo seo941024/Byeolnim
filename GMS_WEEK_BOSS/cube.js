@@ -386,7 +386,94 @@ function _hrRollLines(grade) {
   }).filter(Boolean);
 }
 
-function _hrRoll() {
+/* ── 목표 옵션 ──
+   판정 규칙은 옵션 시뮬레이터(_computeAllSets)와 똑같이 맞춘다.
+   같은 항목을 한 줄만 적으면 세 줄 합산, 여러 줄에 적으면 그 줄 수만큼 따로 떠야 한다.
+   그래야 "공격력 33"(합쳐서 33 이상)과 "공격력 3줄"(각각 한 줄씩)을 같은 칸으로 쓸 수 있다. */
+
+/* 자주 쓰는 조합. part를 같이 지정해서 버튼 하나로 부위까지 맞춘다.
+   rows의 값 1은 "그 옵션이 뜨기만 하면 됨"이라는 뜻(수치 하한이 없음). */
+const HR_PRESETS = [
+  { label:'공격력 3줄',    part:'무기',   rows:[['공격력 %',1],['공격력 %',1],['공격력 %',1]] },
+  { label:'마력 3줄',      part:'무기',   rows:[['마력 %',1],['마력 %',1],['마력 %',1]] },
+  { label:'재사용 4초',    part:'모자',   rows:[['모든 스킬의 재사용 대기시간',4]] },
+  { label:'재사용 5초 이상', part:'모자', rows:[['모든 스킬의 재사용 대기시간',5]] },
+  { label:'크리데미지 2줄', part:'장갑',  rows:[['크리티컬 데미지 %',1],['크리티컬 데미지 %',1]] },
+  { label:'크리데미지 3줄', part:'장갑',  rows:[['크리티컬 데미지 %',1],['크리티컬 데미지 %',1],['크리티컬 데미지 %',1]] },
+];
+
+function _hrBuildPresets() {
+  const box = document.getElementById('hrPresets');
+  if (!box) return;
+  box.innerHTML = HR_PRESETS.map((p, i) =>
+    `<button class="sbtn sbtn--ghost hr-preset__btn" data-preset="${i}">${p.label}</button>`).join('');
+  box.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => _hrApplyPreset(HR_PRESETS[+btn.dataset.preset]));
+  });
+}
+
+function _hrApplyPreset(preset) {
+  // 부위를 먼저 맞춰야 옵션 목록에 그 항목이 들어온다(무기에만 공격력%, 장갑에만 크뎀%)
+  const partSel = document.getElementById('cubePart');
+  if (partSel && preset.part) { partSel.value = preset.part; _refreshAllRows(); }
+
+  const rows = [...document.querySelectorAll('#hrGoalRows .cube-goal-row')];
+  rows.forEach((row, i) => {
+    const cat = row.querySelector('.cube-opt-cat');
+    const inp = row.querySelector('.cube-opt-inp');
+    const spec = preset.rows[i];
+    if (!spec) { cat.value = ''; inp.value = ''; _syncRow(row); return; }
+    cat.value = spec[0];
+    // 그 부위에 없는 옵션이면 선택이 안 붙는다 — 조용히 비워 잘못된 목표가 남지 않게 한다
+    if (cat.value !== spec[0]) { cat.value = ''; inp.value = ''; _syncRow(row); return; }
+    _syncRow(row);
+    inp.value = spec[1];
+  });
+}
+
+/* 목표 칸을 읽어 {uniques, byCat} 형태로 정리한다(_computeAllSets의 preparedSets와 동일) */
+function _hrGetGoals() {
+  const uniques = [], byCat = {};
+  document.querySelectorAll('#hrGoalRows .cube-goal-row').forEach(row => {
+    const catSel = row.querySelector('.cube-opt-cat');
+    const sel = catSel.selectedOptions[0];
+    if (!sel || !catSel.value || sel.dataset.type === 'none') return;
+    if (sel.dataset.type === 'unique') { uniques.push(catSel.value); return; }
+    const v = parseFloat(row.querySelector('.cube-opt-inp').value);
+    if (!isNaN(v) && v > 0) (byCat[catSel.value] = byCat[catSel.value] || []).push(v);
+  });
+  // 큰 목표부터 큰 값에 맞춰야 그리디 매칭이 옳게 된다
+  Object.values(byCat).forEach(a => a.sort((x, y) => y - x));
+  return { uniques, byCat: Object.entries(byCat) };
+}
+
+function _hrHasGoals() {
+  const g = _hrGetGoals();
+  return g.uniques.length > 0 || g.byCat.length > 0;
+}
+
+/* 지금 뜬 세 줄이 목표를 만족하는지 */
+function _hrGoalsMet(lines) {
+  const g = _hrGetGoals();
+  if (!g.uniques.length && !g.byCat.length) return false;
+  const names = lines.map(l => l.name);
+  for (const u of g.uniques) if (!names.includes(u)) return false;
+  for (const [cat, targets] of g.byCat) {
+    const vals = names.map(n => _statContrib(n)[cat] || 0);
+    if (targets.length === 1) {
+      if (vals.reduce((a, b) => a + b, 0) < targets[0]) return false;
+    } else {
+      const sorted = vals.slice().sort((a, b) => b - a);
+      if (targets.length > sorted.length) return false;
+      for (let i = 0; i < targets.length; i++) if (sorted[i] < targets[i]) return false;
+    }
+  }
+  return true;
+}
+
+/* silent=true면 화면을 갱신하지 않는다 — 자동 돌리기에서 매 회 다시 그리면 느려서,
+   묶음이 끝날 때 한 번만 그린다. */
+function _hrRoll(silent) {
   const type = _activeType();
   _hrState.cubes[type] = (_hrState.cubes[type] || 0) + 1;
   _hrState.meso += cubeTotalCost(type, _cubeLv());
@@ -405,7 +492,47 @@ function _hrRoll() {
   const lines = _hrRollLines(_hrState.grade);
   _hrState.log.unshift({ grade: _hrState.grade, tieredUp, lines });
   if (_hrState.log.length > 30) _hrState.log.pop();
+  if (!silent) _hrRender();
+  return lines;
+}
+
+/* ── 목표까지 자동 돌리기 ──
+   한 번에 다 돌리면 화면이 멈추므로 묶음으로 나눠 돌리고, 묶음 사이에 브라우저가
+   숨 쉴 틈을 준다(중지 버튼도 그래야 눌린다). 목표를 못 만나도 무한정 돌지 않게
+   상한을 둔다 — 확률이 아주 낮은 목표를 걸어두면 영영 안 끝나기 때문. */
+let _hrAutoTimer = null;
+const HR_AUTO_BATCH = 300;
+const HR_AUTO_MAX   = 300000;
+let _hrAutoDone = 0;
+
+function _hrStopAuto(msg) {
+  if (_hrAutoTimer) { clearInterval(_hrAutoTimer); _hrAutoTimer = null; }
+  const btn = document.getElementById('hrAutoBtn');
+  if (btn) { btn.textContent = '목표까지 자동'; btn.classList.remove('sbtn--danger'); }
   _hrRender();
+  if (msg) alert(msg);
+}
+
+function _hrStartAuto() {
+  if (_hrAutoTimer) { _hrStopAuto(); return; }
+  if (!_hrHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
+
+  const btn = document.getElementById('hrAutoBtn');
+  if (btn) { btn.textContent = '■ 중지'; btn.classList.add('sbtn--danger'); }
+  _hrAutoDone = 0;
+
+  _hrAutoTimer = setInterval(() => {
+    for (let i = 0; i < HR_AUTO_BATCH; i++) {
+      const lines = _hrRoll(true);
+      _hrAutoDone++;
+      if (_hrGoalsMet(lines)) { _hrStopAuto(); return; }
+      if (_hrAutoDone >= HR_AUTO_MAX) {
+        _hrStopAuto(`${HR_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`);
+        return;
+      }
+    }
+    _hrRender();   // 묶음이 끝날 때만 그린다
+  }, 0);
 }
 
 /* 로그 줄의 등급 글자도 패널과 같은 색을 쓰도록, 등급 → 색을 한 곳에서 관리 */
@@ -487,10 +614,17 @@ async function initCube() {
   _hrPopulateGrade();
   _addSet(); // 기본 세트 1개
 
-  // 까미 월루 — 시작 등급을 바꾸면 진행 상황을 초기화한다
-  document.getElementById('hrGrade')?.addEventListener('change',_hrReset);
-  document.getElementById('hrRollBtn')?.addEventListener('click',_hrRoll);
-  document.getElementById('hrResetBtn')?.addEventListener('click',_hrReset);
+  // 까미 월루 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_refreshAllRows가 채워준다)
+  const goalBox = document.getElementById('hrGoalRows');
+  if (goalBox) { for (let i=0;i<3;i++) goalBox.appendChild(_makeRow()); }
+  _hrBuildPresets();
+  _refreshAllRows();
+
+  // 시작 등급을 바꾸면 진행 상황을 초기화한다
+  document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); });
+  document.getElementById('hrRollBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrRoll(); });
+  document.getElementById('hrAutoBtn')?.addEventListener('click',_hrStartAuto);
+  document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });
   _hrReset();
 
   /* 스페이스바로 재설정. 큐브 탭의 까미 월루가 열려 있을 때만 동작하고,
@@ -505,6 +639,7 @@ async function initCube() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay[style*="flex"]')) return;  // 모달 떠 있으면 무시
     e.preventDefault();
+    _hrStopAuto();
     _hrRoll();
   });
 

@@ -1392,33 +1392,73 @@ overlaySettings.addEventListener('click', e => { if (e.target === overlaySetting
    거기 적힌 비밀번호는 이미 비밀이 아니고, 검사 자체도 우회할 수 있기 때문.
    대신 입력한 값을 그대로 서버로 보내 서버가 판단한다(api/push-broadcast).
    비밀번호가 틀리면 서버가 거부하므로 관리자탭이 열려 있어도 발송되지 않는다. */
-/* 관리자 항목은 평소 숨긴다. ?admin=1 로 한 번 들어오면 이 기기에 기억해두고
-   계속 보여준다 — 설치한 앱은 항상 '/' 로 열려서 주소에 값을 붙일 수 없기 때문.
-   ?admin=0 이면 지운다. 이건 남의 눈에 안 띄게 하려는 것일 뿐 잠금장치가 아니다.
-   실제 차단은 서버가 비밀번호를 대조해서 한다. */
-const ADMIN_VISIBLE_KEY = 'gms_admin_visible';
-(() => {
-  const q = new URLSearchParams(location.search).get('admin');
-  if (q === '1') localStorage.setItem(ADMIN_VISIBLE_KEY, '1');
-  else if (q === '0') localStorage.removeItem(ADMIN_VISIBLE_KEY);
-
-  if (localStorage.getItem(ADMIN_VISIBLE_KEY) === '1') {
-    const box = document.getElementById('settingsAdminBox');
-    if (box) box.style.display = '';
-  }
-})();
-
+/* 예전엔 ?admin=1 로만 항목을 드러냈는데, 한 번 들어오면 기기에 기억돼서 그냥
+   주소로 들어와도 계속 보였다(= 숨기는 의미가 없었다). 지금은 비밀번호로 로그인해야
+   실제 기능이 드러나므로, 항목 자체는 그냥 두고 로그인으로 막는다. */
 const overlayAdmin = document.getElementById('overlayAdmin');
+
+/* 로그인에 성공한 비밀번호를 이 모달이 열려 있는 동안만 들고 있는다.
+   저장하지 않으므로 닫으면 다시 로그인해야 한다. */
+let _admSecret = null;
+
+function admSetLoggedIn(on) {
+  _admSecret = on ? _admSecret : null;
+  document.getElementById('admLoginStep').style.display  = on ? 'none' : '';
+  document.getElementById('admWorkStep').style.display   = on ? '' : 'none';
+  document.getElementById('admBtnLogin').style.display   = on ? 'none' : '';
+  document.getElementById('admBtnCheck').style.display   = on ? '' : 'none';
+  document.getElementById('admBtnSend').style.display    = on ? '' : 'none';
+}
+
 document.getElementById('btnAdmin')?.addEventListener('click', () => {
   overlaySettings.classList.remove('open');
+  // 열 때마다 로그아웃 상태에서 시작한다
+  document.getElementById('admSecret').value = '';
+  document.getElementById('admResult').textContent = '';
+  admSetLoggedIn(false);
   overlayAdmin.classList.add('open');
+});
+
+/* 로그인 — 비밀번호가 맞는지는 서버만 알 수 있으므로, 아무것도 보내지 않는
+   dryRun 요청으로 확인한다(대상 수만 세고 발송은 안 한다). 401이면 거부. */
+document.getElementById('admBtnLogin')?.addEventListener('click', async () => {
+  const resEl = document.getElementById('admResult');
+  const secret = document.getElementById('admSecret').value.trim();
+  if (!secret) { resEl.className = 'adm-result is-err'; resEl.textContent = '비밀번호를 입력하세요.'; return; }
+
+  const btn = document.getElementById('admBtnLogin');
+  btn.disabled = true;
+  resEl.className = 'adm-result'; resEl.textContent = '확인 중…';
+  try {
+    const r = await fetch('/api/push-broadcast', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
+      body: JSON.stringify({ title: '로그인 확인', dryRun: true }),
+    });
+    const j = await r.json().catch(() => null);
+    if (r.status === 401) { resEl.className = 'adm-result is-err'; resEl.textContent = '비밀번호가 맞지 않습니다.'; return; }
+    if (!r.ok || !j || !j.ok) {
+      resEl.className = 'adm-result is-err';
+      resEl.textContent = (j && j.error) || `요청 실패 (${r.status})`;
+      return;
+    }
+    _admSecret = secret;
+    admSetLoggedIn(true);
+    resEl.className = 'adm-result is-ok';
+    resEl.textContent = `로그인됨 · 받을 사람 ${j.targets}명` + (j.skipped ? ` (제외 ${j.skipped})` : '');
+  } catch (e) {
+    resEl.className = 'adm-result is-err';
+    resEl.textContent = '요청 실패: ' + (e && e.message || e);
+  } finally {
+    btn.disabled = false;
+  }
 });
 document.getElementById('adminClose')?.addEventListener('click', () => overlayAdmin.classList.remove('open'));
 overlayAdmin?.addEventListener('click', e => { if (e.target === overlayAdmin) overlayAdmin.classList.remove('open'); });
 
 async function admSend(dryRun) {
   const resEl  = document.getElementById('admResult');
-  const secret = document.getElementById('admSecret').value.trim();
+  const secret = _admSecret;   // 로그인할 때 확인된 비밀번호만 쓴다
   const title  = document.getElementById('admTitle').value.trim();
   const body   = document.getElementById('admBody').value.trim();
 
@@ -1467,7 +1507,7 @@ document.getElementById('admBtnSend')?.addEventListener('click', () => admSend(f
    저장된 구독에는 출처가 없어 골라낼 수 없기 때문(이제부터 구독하는 것만 기록된다). */
 document.getElementById('admBtnPurge')?.addEventListener('click', async () => {
   const resEl  = document.getElementById('admResult');
-  const secret = document.getElementById('admSecret').value.trim();
+  const secret = _admSecret;   // 로그인할 때 확인된 비밀번호만 쓴다
   const say = (msg, ok) => {
     resEl.textContent = msg;
     resEl.className = 'adm-result' + (ok === true ? ' is-ok' : ok === false ? ' is-err' : '');

@@ -497,7 +497,7 @@ async function initCube() {
      입력칸/셀렉트에 포커스가 있으면(값을 고치는 중이면) 가로채지 않는다.
      기본 동작(스크롤·버튼 재클릭)도 막는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     const sec = document.getElementById('sec-cube');
     if (!sec?.classList.contains('active')) return;
     if (document.getElementById('cubeTabHandroll')?.style.display === 'none') return;

@@ -570,7 +570,7 @@ function initAddOption() {
         <!-- 탭3 전용: 직접 굴리기 -->
         <div id="flameTabHand" style="display:none">
           <div class="cube-btns mt16">
-            <button class="sbtn sbtn--primary w100" id="flameBtnRoll">불꽃 사용 [space]</button>
+            <button class="sbtn sbtn--primary w100" id="flameBtnRoll">불꽃 사용 [S]</button>
             <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnHandReset">초기화</button>
           </div>
         </div>
@@ -667,7 +667,7 @@ function initAddOption() {
   /* 스페이스바로 굴리기. 추옵 탭의 까미 월루가 열려 있을 때만 동작하고,
      입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     if (!sec.classList.contains('active')) return;
     if (document.getElementById('flameTabHand')?.style.display === 'none') return;
     const tag = document.activeElement?.tagName;

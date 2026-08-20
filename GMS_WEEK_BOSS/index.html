@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260820f" />
+  <link rel="stylesheet" href="style.css?v=20260820g" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -293,7 +293,7 @@
           </div>
           <!-- 강화 버튼 -->
           <div id="sfBtnWrapSimulate" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="sbtn sbtn--primary" id="sfBtn1">강화하기 [space]</button>
+            <button class="sbtn sbtn--primary" id="sfBtn1">강화하기 [S]</button>
             <button class="sbtn sbtn--primary" id="sfBtnAuto">자동 강화</button>
             <button class="sbtn sbtn--ghost" id="sfBtnReset" style="grid-column:1/-1">초기화</button>
           </div>
@@ -451,7 +451,7 @@
               <select class="sel" id="hrGrade"></select>
             </div>
             <div class="cube-btns mt16">
-              <button class="sbtn sbtn--primary cube-btn-full" id="hrRollBtn">옵션 재설정 [space]</button>
+              <button class="sbtn sbtn--primary cube-btn-full" id="hrRollBtn">옵션 재설정 [S]</button>
               <button class="sbtn sbtn--ghost cube-btn-full mt8" id="hrResetBtn">초기화</button>
             </div>
           </div>
@@ -663,7 +663,7 @@
         <button class="sbtn sbtn--danger" id="btnResetAll">초기화</button>
       </div>
       <!-- 관리자 항목은 평소 숨어 있고 ?admin=1 로 접속했을 때만 나타난다(app.js) -->
-      <div class="settings-box" id="settingsAdminBox" style="display:none">
+      <div class="settings-box" id="settingsAdminBox">
         <div class="settings-box__title">관리자</div>
         <p class="settings-box__desc">전체 알림을 보냅니다.</p>
         <button class="sbtn sbtn--ghost" id="btnAdmin">관리자 탭 열기</button>
@@ -680,30 +680,37 @@
       <button class="modal__close" id="adminClose">×</button>
     </div>
     <div class="modal__body">
-      <p class="settings-box__desc" style="margin-top:0">알림을 켠 사용자 전원의 기기로 즉시 전송됩니다.</p>
-
-      <div class="field mt8">
-        <label class="field__label">관리자 비밀번호</label>
-        <input class="inp" id="admSecret" type="password" autocomplete="off" placeholder="비밀번호" />
-      </div>
-      <div class="field mt8">
-        <label class="field__label">제목</label>
-        <input class="inp" id="admTitle" maxlength="60" placeholder="예 · 업데이트 안내" />
-      </div>
-      <div class="field mt8">
-        <label class="field__label">내용</label>
-        <input class="inp" id="admBody" maxlength="160" placeholder="예 · 까미 월루 버튼이 생겼습니다." />
+      <!-- 1단계: 로그인. 비밀번호가 확인되기 전에는 아래 발송 영역이 아예 안 보인다 -->
+      <div id="admLoginStep">
+        <p class="settings-box__desc" style="margin-top:0">관리자 비밀번호를 입력하세요.</p>
+        <div class="field mt8">
+          <input class="inp" id="admSecret" type="password" autocomplete="off" placeholder="비밀번호" />
+        </div>
       </div>
 
-      <p class="settings-box__warn" style="margin:0">
-        보낸 알림은 취소할 수 없습니다. 먼저 대상 수를 확인하세요.
-      </p>
+      <!-- 2단계: 로그인 성공 후에만 보이는 실제 작업 영역 -->
+      <div id="admWorkStep" style="display:none">
+        <p class="settings-box__desc" style="margin-top:0">알림을 켠 사용자 전원의 기기로 즉시 전송됩니다.</p>
+        <div class="field mt8">
+          <label class="field__label">제목</label>
+          <input class="inp" id="admTitle" maxlength="60" placeholder="예 · 업데이트 안내" />
+        </div>
+        <div class="field mt8">
+          <label class="field__label">내용</label>
+          <input class="inp" id="admBody" maxlength="160" placeholder="예 · 까미 월루 버튼이 생겼습니다." />
+        </div>
+        <p class="settings-box__warn" style="margin:10px 0 0">
+          보낸 알림은 취소할 수 없습니다. 먼저 대상 수를 확인하세요.
+        </p>
+        <button class="sbtn sbtn--danger w100 mt8" id="admBtnPurge">구독 목록 비우기</button>
+      </div>
+
       <div id="admResult" class="adm-result"></div>
-      <button class="sbtn sbtn--danger w100" id="admBtnPurge">구독 목록 비우기</button>
     </div>
     <div class="modal__foot">
-      <button class="sbtn sbtn--ghost" id="admBtnCheck">대상 수 확인</button>
-      <button class="sbtn sbtn--primary" id="admBtnSend">발송</button>
+      <button class="sbtn sbtn--primary w100" id="admBtnLogin">로그인</button>
+      <button class="sbtn sbtn--ghost" id="admBtnCheck" style="display:none">대상 수 확인</button>
+      <button class="sbtn sbtn--primary" id="admBtnSend" style="display:none">발송</button>
     </div>
   </div>
 </div>
@@ -735,11 +742,11 @@
 <script src="data_liberation.js?v=20260819b"></script>
 <script src="cube_table.js?v=20260819b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260820d"></script>
+<script src="app.js?v=20260820e"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260819b"></script>
-<script src="starforce_sim.js?v=20260820a"></script>
-<script src="cube.js?v=20260819j"></script>
+<script src="starforce_sim.js?v=20260820b"></script>
+<script src="cube.js?v=20260820a"></script>
 <script src="addoption.js?v=20260820c"></script><script src="bosshp.js?v=20260819b"></script>
 <script src="serverstatus.js?v=20260819b"></script>
 <script src="dailytasks.js?v=20260819b"></script>

@@ -141,7 +141,7 @@ function sfEnhanceOnce() {
 
   _sfState.star = nextStar;
   _sfState.log.unshift(result);
-  if (_sfState.log.length > 30) _sfState.log.pop();
+  if (_sfState.log.length > 100) _sfState.log.pop();
 
   sfRenderResult();
   return _sfState.star < to;
@@ -168,7 +168,7 @@ function sfRenderResult() {
     <div class="sf-res-item"><span class="sf-res-label">파괴 횟수</span><span class="sf-res-val" style="color:${_sfState.destroys>0?'var(--danger)':'var(--text)'}">${_sfState.destroys} 회</span></div>
     ${done ? '<div class="sf-res-item" style="color:var(--success);font-weight:700;text-align:center;padding:10px 0">목표 달성!</div>' : ''}`;
 
-  const logHtml = _sfState.log.slice(0, 15).map(l => {
+  const logHtml = _sfState.log.slice(0, 100).map(l => {
     const cls  = l.type === 'success' ? 'log-success' : l.type === 'destroy' ? 'log-destroy' : 'log-fail';
     const icon = l.type === 'success' ? '✦' : l.type === 'destroy' ? '💥' : '✕';
     const desc = l.type === 'success' ? `${l.from}★ → ${l.to}★ 성공` : l.type === 'destroy' ? `${l.from}★ 파괴 → ${l.to}★` : `${l.from}★ 실패`;
@@ -283,7 +283,7 @@ function initStarforce() {
   /* 스페이스바로 강화. 스타포스 탭의 까미 월루가 열려 있을 때만 동작하고,
      입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. 스크롤 기본 동작도 막는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'Space' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     const sec = document.getElementById('sec-starforce');
     if (!sec?.classList.contains('active')) return;
     if (document.getElementById('sfRightSimulate')?.style.display === 'none') return;

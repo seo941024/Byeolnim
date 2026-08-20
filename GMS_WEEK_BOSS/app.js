@@ -160,6 +160,20 @@ function fmtMeso(n) {
   return (neg ? '-' : '') + parts.join(' ') + ' 메소';
 }
 
+/* 차트 축처럼 좁은 자리에 짧게 찍어야 할 때 쓴다. fmtMeso는 "32억 2,009만 1,896 메소"
+   처럼 길어서, 히스토그램 x축에 여러 개를 나란히 두면 서로 겹쳐 글자가 뭉개진다
+   (실제로 그렇게 보임 리포트 있었음). 단위 하나만 소수점까지 남기고 나머지는 버린다. */
+function fmtMesoCompact(n) {
+  n = Math.round(n);
+  const neg = n < 0; n = Math.abs(n);
+  if (n >= 1e12) return (neg ? '-' : '') + (n / 1e12).toFixed(1) + '조';
+  // 100억 넘어가면 소수점 자리가 어차피 안 중요해져서 정수로 끊어 더 짧게 보여준다
+  if (n >= 1e10) return (neg ? '-' : '') + Math.round(n / 1e8).toLocaleString() + '억';
+  if (n >= 1e8)  return (neg ? '-' : '') + (n / 1e8).toFixed(1) + '억';
+  if (n >= 1e4)  return (neg ? '-' : '') + (n / 1e4).toFixed(0) + '만';
+  return (neg ? '-' : '') + n.toLocaleString();
+}
+
 /* ── 토스트 알림 ── */
 let _toastTimer = null;
 function showToast(msg) {

@@ -318,37 +318,50 @@ function initStarforce() {
   // 기댓값 보기
   document.getElementById('sfBtnExpected')?.addEventListener('click', () => sfShowExpected(true));
 
-  // 양방향 메소 ↔ 상위% 이벤트 (한 번만 등록)
+  /* 양방향 메소 ↔ 상위% 이벤트 (한 번만 등록).
+     ★ ensureFresh가 내부적으로 sfShowExpected를 다시 부르면 그 끝에서 이
+     두 입력칸을 "평균"값으로 덮어쓴다. 그래서 사용자가 막 타이핑한 값을
+     먼저 변수에 담아두고, ensureFresh 이후에 그 값 기준으로 다시 계산해
+     최종적으로 필드에 써넣는다 — 안 그러면 "70"을 쳤는데 화면이 평균값으로
+     바뀌어버린다. */
   document.getElementById('sfInputMeso').addEventListener('input', () => {
-    if (!_sfLastCosts.length) return;
-    const val = parseInt(document.getElementById('sfInputMeso').value, 10);
+    const el = document.getElementById('sfInputMeso');
+    const val = parseInt(el.value, 10);
     if (!val || val <= 0) return;
+    if (!_sfEnsureFreshSamples()) return;
     const pct = _sfPctFromMeso(val);
     document.getElementById('sfInputPct').value = pct.toFixed(3);
+    el.value = val;
     _sfShowResult(pct, val);
   });
   document.getElementById('sfInputPct').addEventListener('input', () => {
-    if (!_sfLastCosts.length) return;
-    const pct = parseFloat(document.getElementById('sfInputPct').value);
+    const el = document.getElementById('sfInputPct');
+    const pct = parseFloat(el.value);
     if (isNaN(pct) || pct < 0 || pct > 100) return;
+    if (!_sfEnsureFreshSamples()) return;
     const meso = _sfMesoFromPct(pct);
     document.getElementById('sfInputMeso').value = meso;
+    el.value = pct;
     _sfShowResult(pct, meso);
   });
   document.getElementById('sfInputDestroyCount').addEventListener('input', () => {
-    if (!_sfLastDestroys.length) return;
-    const val = parseInt(document.getElementById('sfInputDestroyCount').value, 10);
+    const el = document.getElementById('sfInputDestroyCount');
+    const val = parseInt(el.value, 10);
     if (isNaN(val) || val < 0) return;
+    if (!_sfEnsureFreshSamples()) return;
     const pct = _sfDestroyPctFromCount(val);
     document.getElementById('sfInputDestroyPct').value = pct.toFixed(3);
+    el.value = val;
     _sfShowDestroyResult(pct, val);
   });
   document.getElementById('sfInputDestroyPct').addEventListener('input', () => {
-    if (!_sfLastDestroys.length) return;
-    const pct = parseFloat(document.getElementById('sfInputDestroyPct').value);
+    const el = document.getElementById('sfInputDestroyPct');
+    const pct = parseFloat(el.value);
     if (isNaN(pct) || pct < 0 || pct > 100) return;
+    if (!_sfEnsureFreshSamples()) return;
     const count = _sfDestroyCountFromPct(pct);
     document.getElementById('sfInputDestroyCount').value = count;
+    el.value = pct;
     _sfShowDestroyResult(pct, count);
   });
 
@@ -374,6 +387,26 @@ function _sfRecalcExpected() {
   if (document.querySelector('.sf-tab.active')?.dataset.sftab !== 'expected') return;
   if (_sfGetFrom() >= _sfGetTo()) return;
   sfShowExpected();
+}
+
+/* _sfLastCosts/_sfLastDestroys가 "지금 화면에 보이는 설정(레벨·현재·목표·이벤트 등)"의
+   샘플이 맞는지 대조할 서명. 목표 성수를 26으로 바꿔도 상위%/메소 입력칸은 이전
+   샘플을 그대로 조회했었다 — sfShowExpected가 다시 안 불리면 배열이 안 바뀌기
+   때문이다(레벨 입력 디바운스 도중, 또는 성수 입력 후 그 즉시 상위% 칸을 만졌을 때
+   등). 그래서 "26성으로 바꿔서 봤더니 예전 20성 근처 값이 나온다" 같은 제보가 있었다.
+   조회 직전에 이 서명을 항상 대조해 다르면 먼저 새로 계산한다. */
+function _sfCfgSignature() {
+  return [_sfGetLevel(), _sfGetFrom(), _sfGetTo(), _sfGetMvp(), _sfGetEvent(), JSON.stringify(_sfStages)].join('|');
+}
+let _sfLastCostsSig = null;
+
+/* 상위%/메소 조회 직전에 반드시 부른다. 서명이 지금 화면 설정과 다르면(또는
+   아예 없으면) 조용히 새로 계산한다 — scrollToResult=false라 스크롤·5천 표본
+   그대로라 빠르다. 이후로는 _sfLastCosts를 안심하고 조회해도 된다. */
+function _sfEnsureFreshSamples() {
+  if (_sfGetFrom() >= _sfGetTo()) return false;
+  if (_sfLastCostsSig !== _sfCfgSignature()) sfShowExpected(false);
+  return _sfLastCosts.length > 0;
 }
 
 let _sfChart        = null;
@@ -469,6 +502,9 @@ function sfShowExpected(scrollToResult) {
   destroyArr.sort((a, b) => a - b);
   _sfLastCosts    = costs;
   _sfLastDestroys = destroyArr;
+  // 방금 이 샘플을 만든 그 cfg로 서명을 남긴다(호출부에 따라 그 사이 입력이
+  // 또 바뀔 수 있으니 지금 다시 읽지 않고, 이 함수 시작에서 캡처한 값을 그대로 쓴다)
+  _sfLastCostsSig = [cfg.level, cfg.current, cfg.target, cfg.mvpDiscount, cfg.isShining ? 'shining' : 'none', JSON.stringify(cfg.stages)].join('|');
 
   // 평균은 시뮬레이션 대신 마르코프 연쇄 정확해를 쓴다. 표본평균은 2만 회로도
   // 실행마다 2% 남짓 흔들려서 1레벨 차이(약 1%)보다 오차가 커, 값이 안정적으로
@@ -514,7 +550,14 @@ function sfShowExpected(scrollToResult) {
       },
       scales: {
         x: {
-          ticks: { color: 'rgba(200,190,240,.6)', maxRotation: 45, font: { size: 9 }, maxTicksLimit: 10 },
+          /* labels[]는 fmtMeso로 "32억 2,009만 1,896 메소"처럼 길게 적혀 있다(툴팁용).
+             그걸 축에 그대로 찍으면 회전시켜도 옆 라벨과 겹쳐 글자가 뭉개진다
+             (실제로 그렇게 보인다는 제보 있었음). 축에는 억/조 단위로 짧게 줄인
+             문자열을 따로 그린다 — 데이터·툴팁은 그대로 두고 표시만 바꾼다. */
+          ticks: {
+            color: 'rgba(200,190,240,.6)', maxRotation: 45, font: { size: 9 }, maxTicksLimit: 8,
+            callback: (_, idx) => fmtMesoCompact(step * (idx + 0.5)),
+          },
           grid: { color: 'rgba(255,255,255,.05)' }
         },
         y: {

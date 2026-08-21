@@ -25,14 +25,10 @@ const FLAME_OPTION_LABELS = {
   'ALL%':'올스탯%', '보공%':'보스데미지%', '데미지%':'데미지%',
 };
 
-/* 무기 종류별 STR/DEX/INT/LUK(순수 스탯) 추가옵션 최댓값 — 제네시스 무기 기준
-   (나무위키 "메이플스토리/시스템/추가옵션" 문서, 제네시스 표).
-   무기는 방어구와 달리 이 옵션의 값이 레벨이 아니라 무기 자체의 기본 공격력에
-   비례해 정해지므로, 레벨만 보는 공식으로는 무기 종류마다 다른 실제 값을 못
-   맞춘다. 5개 값은 "3단계(5추옵) ~ 7단계(1추옵)" — 즉 tier 1~5를 보스 장비
-   기준(단계 = tier+2)으로 나열한 것과 같다. 블레이드는 실제 존재하는
-   아이템이 아니라 표에서 뺐다. */
-const FLAME_WEAPON_STR_GENESIS = {
+/* 무기 종류별 공격력/마력 추가옵션 값 — 제네시스 무기 기준
+   (나무위키 "메이플스토리/시스템/추가옵션" 문서, 제네시스 표를 그대로 옮긴 것).
+   5개 값은 "3단계(5추옵) ~ 7단계(1추옵)" 순서. 블레이드는 표에서 뺐다. */
+const FLAME_WEAPON_ATT_GENESIS = {
   '아대':[31,46,63,83,106], '건':[45,66,91,120,154], '에너지소드':[46,68,93,123,157],
   '너클':[46,68,93,123,157], '건틀렛 리볼버':[46,68,93,123,157], '소울슈터':[46,68,93,123,157],
   '폴암':[55,81,111,146,187], '에인션트 보우':[58,84,116,153,196], '부채':[58,84,116,153,196],
@@ -48,38 +44,16 @@ const FLAME_WEAPON_STR_GENESIS = {
   '매직 건틀렛':[72,106,146,192,246], '스태프':[74,108,148,195,250],
 };
 /* 목록에 나올 순서. 나무위키 표와 같은 순서로 둔다(무게/공격형 계열 → 마법형 계열). */
-const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_STR_GENESIS);
-
-/* 제네시스 무기의 기본 공격력/마력(같은 표의 "기본옵션" 열).
-   무기의 공격력·마력 추가옵션은 고정값이 아니라 이 기본 공격력의 몇 %로 정해진다. */
-const FLAME_WEAPON_BASE_ATT = {
-  '아대':172, '건':249, '에너지소드':255, '너클':255, '건틀렛 리볼버':255, '소울슈터':255,
-  '폴암':304, '에인션트 보우':318, '부채':318, '활':318, '브레스 슈터':318,
-  '듀얼보우건':318, '단검':318, '체인':318,
-  '한손검':326, '한손도끼':326, '한손둔기':326, '케인':326, '석궁':326,
-  '대검':342, '태도':337,
-  '튜너':340, '장검':340, '창':340, '두손검':340, '두손도끼':340, '두손둔기':340,
-  '데스페라도':340, '핸드캐논':348,
-  '완드':400, '샤이닝로드':400, 'ESP리미터':400, '매직 건틀렛':400, '스태프':406,
-};
-/* 단계 3~7에 대응하는 기본 공격력 비율(3단계 1% … 7단계 5%). */
-const FLAME_WEAPON_ATT_PCT = [0.01, 0.02, 0.03, 0.04, 0.05];
+const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_ATT_GENESIS);
 
 function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
   const w = isBoss ? 2 : 0;
   const t = tier; // 1-5
-  if (['STR','DEX','INT','LUK'].includes(option) && weaponSubtype) {
-    const table = FLAME_WEAPON_STR_GENESIS[weaponSubtype];
-    // 표는 "단계(=tier+w) 3~7"만 있다. 논보스 1·2단계처럼 표 밖이면 기존 레벨 공식으로 대체한다
-    // (근거가 없는 값을 억지로 만들어내지 않기 위해서다).
+  if (['ATTACK','MAGIC ATK'].includes(option) && weaponSubtype) {
+    const table = FLAME_WEAPON_ATT_GENESIS[weaponSubtype];
+    // 표는 "단계(=tier+w) 3~7"만 있다. 논보스 1·2단계처럼 표 밖이면 기존 공식으로 대체한다.
     const stage = t + w;
     if (table && stage >= 3 && stage <= 7) return table[stage - 3];
-  }
-  // 무기의 공격력·마력 추옵도 고정값이 아니라 그 무기 기본 공격력에 비례한다
-  if (['ATTACK','MAGIC ATK'].includes(option) && weaponSubtype) {
-    const base = FLAME_WEAPON_BASE_ATT[weaponSubtype];
-    const stage = t + w;
-    if (base && stage >= 3 && stage <= 7) return Math.floor(base * FLAME_WEAPON_ATT_PCT[stage - 3]);
   }
   // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
   if (['STR','DEX','INT','LUK','방어력'].includes(option))

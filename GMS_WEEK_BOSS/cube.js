@@ -196,7 +196,14 @@ function _makeRow() {
     <select class="sel cube-opt-cat"></select>
     <input  class="inp cube-opt-inp" type="number" min="0" placeholder="수치">
     <span   class="cube-opt-unit"></span>`;
-  row.querySelector('.cube-opt-cat').addEventListener('change',()=>_syncRow(row));
+  const catSel=row.querySelector('.cube-opt-cat');
+  catSel.addEventListener('change',()=>{
+    _syncRow(row);
+    if (row.closest('#hrGoalRows')) {
+      const sel=catSel.selectedOptions[0];
+      _hrMaybeAutoGrade(catSel.value, sel?.dataset.type);
+    }
+  });
   return row;
 }
 
@@ -238,14 +245,40 @@ function _refreshRowsIn(sel, grades) {
 
 /* 옵션 시뮬레이터와 까미 월루는 등급 선택칸이 서로 다르다(cubeGrade / hrGrade).
    예전엔 두 곳의 목표 칸을 한꺼번에 cubeGrade 기준으로 채워서, 까미 월루 목표가
-   남의 탭 등급에 휘둘려 목록이 비는 일이 있었다. 각자 자기 등급을 보게 나눈다. */
+   남의 탭 등급에 휘둘려 목록이 비는 일이 있었다. 각자 자기 등급을 보게 나눈다.
+   까미 월루 목표 칸은 시작 등급과 무관하게 이 부위가 가질 수 있는 옵션을 전부
+   보여준다 — 재사용/크리데미지%처럼 레전드리 전용 옵션도 골라둘 수 있어야 하고,
+   고르면 _hrMaybeAutoGrade가 알아서 시작 등급을 그 옵션이 뜨는 등급으로 올려준다. */
 function _refreshAllRows() {
   _refreshRowsIn('#cubeSetContainer', _cubeGrade());
-  const hg = _hrGrade();
-  const gi = _GRADE_ORDER.indexOf(hg);
-  // 이탈로 한 단계 아래 옵션도 뜨므로 두 등급을 합쳐서 보여준다
-  const hrGrades = gi > 0 ? [hg, _GRADE_ORDER[gi-1]] : [hg];
-  _refreshRowsIn('#hrGoalRows', hrGrades);
+  _refreshRowsIn('#hrGoalRows', _GRADE_ORDER);
+}
+
+/* 그 옵션(카테고리 또는 유니크 이름)이 실제로 뜰 수 있는 가장 낮은 등급을 찾는다. */
+function _hrRequiredGrade(cat, type) {
+  const dk=_dataKey(), part=_cubePart(), lv=_cubeLv();
+  for (const g of _GRADE_ORDER) {
+    for (const o of _rawOpts(dk, part, lv, g)) {
+      if (type==='unique') { if (o.name===cat) return g; }
+      else { const p=_parse(o.name); if (p.type!=='unique' && p.cat===cat) return g; }
+    }
+  }
+  return null;
+}
+
+/* 까미 월루 목표 칸에서 옵션을 직접 고르면, 그 옵션이 뜨는 가장 낮은 등급보다
+   지금 시작 등급이 낮을 경우 자동으로 그 등급으로 올려준다 — 안 그러면 아무리
+   돌려도 목표가 나올 수 없는 조합을 고르고도 이유를 모르게 된다. */
+function _hrMaybeAutoGrade(cat, type) {
+  if (!cat || type==='none' || !type) return;
+  const need = _hrRequiredGrade(cat, type);
+  if (!need) return;
+  const gradeSel = document.getElementById('hrGrade');
+  if (!gradeSel) return;
+  if (_GRADE_ORDER.indexOf(need) > _GRADE_ORDER.indexOf(gradeSel.value)) {
+    gradeSel.value = need;
+    _hrStopAuto(); _hrReset(); _refreshAllRows();
+  }
 }
 
 // ── 등급 드롭다운 ────────────────────────────
@@ -515,10 +548,10 @@ function _hrLineGrade(ln, grade) {
 const HR_PRESETS = [
   { label:'공격력 3줄',    part:'무기', perLineMax:true, cat:'공격력 %',      lines:3 },
   { label:'마력 3줄',      part:'무기', perLineMax:true, cat:'마력 %',        lines:3 },
-  { label:'재사용 4초',    part:'모자', rows:[['모든 스킬의 재사용 대기시간',4]] },
-  { label:'재사용 5초 이상', part:'모자', rows:[['모든 스킬의 재사용 대기시간',5]] },
-  { label:'크리데미지 2줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:2 },
-  { label:'크리데미지 3줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:3 },
+  { label:'재사용 4초',    part:'모자', rows:[['모든 스킬의 재사용 대기시간',4]], requireGrade:'LEGENDARY' },
+  { label:'재사용 5초 이상', part:'모자', rows:[['모든 스킬의 재사용 대기시간',5]], requireGrade:'LEGENDARY' },
+  { label:'크리데미지 2줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:2, requireGrade:'LEGENDARY' },
+  { label:'크리데미지 3줄', part:'장갑', perLineMax:true, cat:'크리티컬 데미지 %', lines:3, requireGrade:'LEGENDARY' },
 ];
 
 function _hrBuildPresets() {
@@ -535,6 +568,16 @@ function _hrApplyPreset(preset) {
   // 부위를 먼저 맞춰야 옵션 목록에 그 항목이 들어온다(무기에만 공격력%, 장갑에만 크뎀%)
   const partSel = document.getElementById('cubePart');
   if (partSel && preset.part) { partSel.value = preset.part; _refreshAllRows(); }
+
+  // 재사용/크리데미지처럼 레전드리 전용 옵션이 있는 프리셋은 시작 등급부터 맞춰야
+  // 목표가 실제로 뜰 수 있다 — 조용히 안 붙는 대신 등급을 올려서 바로 되게 한다
+  if (preset.requireGrade) {
+    const gradeSel = document.getElementById('hrGrade');
+    if (gradeSel && gradeSel.value !== preset.requireGrade) {
+      gradeSel.value = preset.requireGrade;
+      _hrStopAuto(); _hrReset(); _refreshAllRows();
+    }
+  }
 
   // perLineMax면 부위가 확정된 지금 시점에, 줄마다 실제로 뽑히는 등급 기준 최댓값을 구한다
   // (1번째 줄은 시작 등급 그대로, 2·3번째 줄은 이탈이 더 흔해 대개 한 단계 아래 최댓값)

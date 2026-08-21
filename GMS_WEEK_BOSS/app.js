@@ -278,8 +278,8 @@ function updateCrystalBar() {
   const elCM = document.getElementById('totalCrystalMonthly');
   if (elCM) elCM.textContent = totalM;
   // 대여 비용은 캐릭터별로 합산해서 차감
-  // 이번 주 보스를 이미 돈 캐릭터(weekDone)는 주간 합계에서 뺀다 —
-  // 남은 캐릭터로 앞으로 얼마가 더 들어오는지 바로 보려는 것.
+  // weekDone이 켜진 캐릭터는 주간 합계에서 뺀다 — 이미 돈 캐릭터를 잠깐 빼고
+  // 남은 캐릭터로 얼마가 더 들어오는지 보려는 용도. 수익 자체는 그대로 남는다.
   const weekTotal  = state.chars.reduce((s, c) =>
     c.weekDone ? s : s + charWeeklyMeso(c) - rentalWeeklyCost(c), 0);
   const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c) - rentalMonthlyCost(c), 0);
@@ -288,7 +288,7 @@ function updateCrystalBar() {
   const doneCount = state.chars.filter(c => c.weekDone).length;
   const elWN = document.getElementById('totalWeekDoneNote');
   if (elWN) {
-    elWN.textContent = doneCount ? `완료 ${doneCount}명 제외` : '';
+    elWN.textContent = doneCount ? `${doneCount}명 제외됨` : '';
     elWN.style.display = doneCount ? '' : 'none';
   }
   const elM = document.getElementById('totalMonthMeso');
@@ -327,7 +327,7 @@ function renderCharList() {
           <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
         <button class="ccbtn ccbtn--weekdone${ch.weekDone ? ' on' : ''}" data-action="weekdone" data-i="${i}">
-          ${ch.weekDone ? '주간 완료' : '주간 미완료'}
+          ${ch.weekDone ? '합산 제외' : '합산 포함'}
         </button>
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>

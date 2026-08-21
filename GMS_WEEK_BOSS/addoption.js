@@ -405,7 +405,9 @@ function flameRollScore(lines) {
   return lines.reduce((s, l) => s + flameLineScore(l.tier), 0);
 }
 
-function _flameRollOnce() {
+/* silent=true면 화면을 안 그린다 — 자동 돌리기에서 매 회 다시 그리면 느려서,
+   묶음이 끝날 때 한 번만 그린다. 굴린 lines를 반환해 목표 판정에 쓴다. */
+function _flameRollOnce(silent) {
   const flame   = document.querySelector('#flameTypeGroup .sf-toggle.active')?.dataset.val || 'POWERFUL';
   const isWeapon = document.querySelector('#flameEquipGroup .sf-toggle.active')?.dataset.val === 'weapon';
   const level    = parseInt(document.getElementById('flameLevel').value) || 200;
@@ -416,9 +418,63 @@ function _flameRollOnce() {
 
   _flameHand.count[flame] = (_flameHand.count[flame] || 0) + 1;
   _flameHand.log.unshift({ lines, score, tier: _flameTopTier(lines) });
-  if (_flameHand.log.length > 30) _flameHand.log.pop();
+  if (_flameHand.log.length > 100) _flameHand.log.pop();
 
+  if (!silent) _flameRenderHand();
+  return lines;
+}
+
+/* ── 목표까지 자동 돌리기 ──
+   목표 옵션 칸(flameGoalOpt1~4 / flameGoalTier1~4)은 확률 계산 탭과 같이 쓴다
+   (flameGetGoals). 지정한 줄들이 전부 그 등급 이상으로 같이 뜨면 멈춘다.
+   flameSimulate의 _isGoalPossible과 같은 th = 6 - minTier 기준을 쓴다. */
+function _flameHasGoals() {
+  return flameGetGoals().some(g => g.opt && g.opt !== 'none');
+}
+
+function _flameHandGoalsMet(lines) {
+  const goals = flameGetGoals().filter(g => g.opt && g.opt !== 'none');
+  if (!goals.length) return false;
+  return goals.every(g => {
+    const th = 6 - g.minTier; // minTier 1(5추)→th1, 5(1추)→th5, _flameExactProb과 동일
+    const line = lines.find(l => l.opt === g.opt);
+    return !!line && line.tier >= th;
+  });
+}
+
+let _flameAutoTimer = null;
+const FLAME_AUTO_BATCH = 300;
+const FLAME_AUTO_MAX   = 300000;
+let _flameAutoDone = 0;
+
+function _flameStopAuto(msg) {
+  if (_flameAutoTimer) { clearInterval(_flameAutoTimer); _flameAutoTimer = null; }
+  const btn = document.getElementById('flameBtnAuto');
+  if (btn) { btn.textContent = '목표까지 자동'; btn.classList.remove('sbtn--danger'); }
   _flameRenderHand();
+  if (msg) alert(msg);
+}
+
+function _flameStartAuto() {
+  if (_flameAutoTimer) { _flameStopAuto(); return; }
+  if (!_flameHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
+
+  const btn = document.getElementById('flameBtnAuto');
+  if (btn) { btn.textContent = '■ 중지'; btn.classList.add('sbtn--danger'); }
+  _flameAutoDone = 0;
+
+  _flameAutoTimer = setInterval(() => {
+    for (let i = 0; i < FLAME_AUTO_BATCH; i++) {
+      const lines = _flameRollOnce(true);
+      _flameAutoDone++;
+      if (_flameHandGoalsMet(lines)) { _flameStopAuto(); return; }
+      if (_flameAutoDone >= FLAME_AUTO_MAX) {
+        _flameStopAuto(`${FLAME_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`);
+        return;
+      }
+    }
+    _flameRenderHand();   // 묶음이 끝날 때만 그린다
+  }, 0);
 }
 
 /* 한 줄을 "옵션 +수치" 로 적는다. 착용레벨감소는 값이 음수라 부호를 그대로 쓴다. */
@@ -531,13 +587,17 @@ function initAddOption() {
           </div>
         </div>
 
-        <!-- 탭1 전용: 목표 옵션 -->
-        <div id="flameTabSim">
+        <!-- 목표 옵션 — 탭1(확률 계산)·탭3(까미 월루) 둘 다에서 쓴다. 추옵 계산기 탭에서만 숨긴다. -->
+        <div id="flameGoalShared">
           <div class="card__title">목표 옵션</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
             ${goalRows}
           </div>
-          <button class="sbtn sbtn--ghost w100" id="flameBtnSim" style="margin-top:12px">시뮬레이션</button>
+        </div>
+
+        <!-- 탭1 전용: 확률 계산 버튼 -->
+        <div id="flameTabSim">
+          <button class="sbtn sbtn--ghost w100" id="flameBtnSim" style="margin-top:4px">시뮬레이션</button>
         </div>
 
         <!-- 탭2 전용: 목표 추옵 -->
@@ -571,6 +631,7 @@ function initAddOption() {
         <div id="flameTabHand" style="display:none">
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary w100" id="flameBtnRoll">불꽃 사용 [S]</button>
+            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnAuto">목표까지 자동</button>
             <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnHandReset">초기화</button>
           </div>
         </div>
@@ -660,9 +721,12 @@ function initAddOption() {
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
 
-  // 까미 월루 버튼 — 불꽃 하나씩 직접 굴리기
-  document.getElementById('flameBtnRoll')?.addEventListener('click', _flameRollOnce);
-  document.getElementById('flameBtnHandReset')?.addEventListener('click', _flameHandReset);
+  // 까미 월루 버튼 — 불꽃 하나씩 직접 굴리기.
+  // ★ _flameRollOnce를 리스너로 그대로 넘기면 클릭 이벤트 객체가 첫 인자(silent)로
+  //   들어가 화면이 안 그려진다 — 인자 없이 감싸서 호출한다.
+  document.getElementById('flameBtnRoll')?.addEventListener('click', () => { _flameStopAuto(); _flameRollOnce(); });
+  document.getElementById('flameBtnAuto')?.addEventListener('click', _flameStartAuto);
+  document.getElementById('flameBtnHandReset')?.addEventListener('click', () => { _flameStopAuto(); _flameHandReset(); });
 
   /* 스페이스바로 굴리기. 추옵 탭의 까미 월루가 열려 있을 때만 동작하고,
      입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
@@ -674,6 +738,7 @@ function initAddOption() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay.open')) return;
     e.preventDefault();
+    _flameStopAuto();
     _flameRollOnce();
   });
 
@@ -681,6 +746,7 @@ function initAddOption() {
 
   sec.querySelectorAll('.sf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
+      _flameStopAuto(); // 다른 탭으로 넘어가면 자동 돌리기는 멈춘다
       sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const which = tab.dataset.tab;               // sim | score | hand
@@ -688,6 +754,8 @@ function initAddOption() {
       // 장비 종류·불꽃 선택은 직접 굴리기에서도 써야 하므로 추옵 계산기에서만 숨긴다
       document.getElementById('flameEquipGroup').parentElement.style.display = which === 'score' ? 'none' : '';
       document.getElementById('flameTypeGroup').parentElement.style.display  = which === 'score' ? 'none' : '';
+      // 목표 옵션은 확률 계산·까미 월루 둘 다에서 쓴다(추옵 계산기에서만 숨긴다)
+      document.getElementById('flameGoalShared').style.display      = which === 'score' ? 'none' : '';
       document.getElementById('flameTabSim').style.display          = isSim  ? '' : 'none';
       document.getElementById('flameTabScore').style.display        = which === 'score' ? '' : 'none';
       document.getElementById('flameTabHand').style.display         = isHand ? '' : 'none';

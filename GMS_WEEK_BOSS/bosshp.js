@@ -337,4 +337,4 @@ function renderBossHPTable() {
 
 renderBossHPTable();
 initStarforce();
-initCube();
+// 큐브는 데이터가 1.1MB라 탭을 열 때만 불러와 초기화한다(cube.js의 ensureCubeReady, navigateTo에서 호출)

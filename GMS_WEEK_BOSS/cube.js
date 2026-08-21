@@ -2,6 +2,36 @@
    큐브 기댓값 계산기
 ═══════════════════════════════════════════════ */
 
+/* cube_table.js는 1.1MB짜리 데이터 파일이라, 큐브 탭을 한 번도 안 여는
+   사람까지 접속할 때마다 무조건 받게 하면 첫 로딩만 그만큼 느려진다.
+   그래서 index.html엔 <script>로 안 넣어두고, 큐브 탭을 처음 열 때만
+   여기서 동적으로 붙인다. 이미 받아놨거나 받는 중이면 새로 안 받는다. */
+let _cubeTableLoading = null;
+let _cubeInited = false;
+
+function ensureCubeReady(cb) {
+  if (window.CUBE_TABLE) {
+    if (!_cubeInited) { _cubeInited = true; initCube(); }
+    cb && cb();
+    return;
+  }
+  if (!_cubeTableLoading) {
+    _cubeTableLoading = new Promise((resolve, reject) => {
+      const s = document.createElement('script');
+      s.src = 'cube_table.js?v=20260819b';
+      s.onload = resolve;
+      s.onerror = () => reject(new Error('cube_table.js 로드 실패'));
+      document.body.appendChild(s);
+    });
+  }
+  _cubeTableLoading.then(() => {
+    if (!_cubeInited) { _cubeInited = true; initCube(); }
+    cb && cb();
+  }).catch(() => {
+    alert('큐브 데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해주세요.');
+  });
+}
+
 const CUBE_MESO  = { red: 12_000_000, black: 22_000_000 };
 const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 제외)","포스실드, 소울링","방패","모자","상의","한벌옷","하의","신발","장갑","망토","벨트","어깨장식","얼굴장식","눈장식","귀고리","반지","펜던트","기계심장"];
 const _CUBE_KEY  = { red:'RED', black:'POTENTIAL' };
@@ -558,7 +588,7 @@ function _hrRoll(silent) {
 
   const lines = _hrRollLines(_hrState.grade);
   _hrState.log.unshift({ grade: _hrState.grade, tieredUp, lines });
-  if (_hrState.log.length > 30) _hrState.log.pop();
+  if (_hrState.log.length > 100) _hrState.log.pop();
   if (!silent) _hrRender();
   return lines;
 }

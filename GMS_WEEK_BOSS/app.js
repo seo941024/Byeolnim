@@ -123,6 +123,8 @@ function navigateTo(sec) {
   if (sec === 'wantchannel') renderWantChannel();
   if (sec === 'mcalendar') renderMapleCalendar();
   if (sec === 'starforce' && typeof _sfRecalcExpected === 'function') _sfRecalcExpected();
+  // 큐브 데이터(1.1MB)는 이 탭을 처음 열 때만 받는다 — ensureCubeReady가 중복 요청·중복 초기화를 알아서 막는다
+  if (sec === 'cube' && typeof ensureCubeReady === 'function') ensureCubeReady();
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {

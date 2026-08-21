@@ -278,10 +278,19 @@ function updateCrystalBar() {
   const elCM = document.getElementById('totalCrystalMonthly');
   if (elCM) elCM.textContent = totalM;
   // 대여 비용은 캐릭터별로 합산해서 차감
-  const weekTotal  = state.chars.reduce((s, c) => s + charWeeklyMeso(c)  - rentalWeeklyCost(c),  0);
+  // 이번 주 보스를 이미 돈 캐릭터(weekDone)는 주간 합계에서 뺀다 —
+  // 남은 캐릭터로 앞으로 얼마가 더 들어오는지 바로 보려는 것.
+  const weekTotal  = state.chars.reduce((s, c) =>
+    c.weekDone ? s : s + charWeeklyMeso(c) - rentalWeeklyCost(c), 0);
   const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c) - rentalMonthlyCost(c), 0);
   const elW = document.getElementById('totalWeekMeso');
   if (elW) elW.textContent = fmtMeso(weekTotal);
+  const doneCount = state.chars.filter(c => c.weekDone).length;
+  const elWN = document.getElementById('totalWeekDoneNote');
+  if (elWN) {
+    elWN.textContent = doneCount ? `완료 ${doneCount}명 제외` : '';
+    elWN.style.display = doneCount ? '' : 'none';
+  }
   const elM = document.getElementById('totalMonthMeso');
   if (elM) { elM.textContent = (monthTotal < 0 ? '-' : '') + fmtMeso(Math.abs(monthTotal)); elM.style.color = monthTotal < 0 ? 'var(--danger)' : ''; }
 }
@@ -317,6 +326,9 @@ function renderCharList() {
           <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
           <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
+        <button class="ccbtn ccbtn--weekdone${ch.weekDone ? ' on' : ''}" data-action="weekdone" data-i="${i}">
+          ${ch.weekDone ? '주간 완료' : '주간 미완료'}
+        </button>
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
     </div>`;
@@ -1108,6 +1120,12 @@ document.getElementById('charList').addEventListener('click', e => {
   if (!btn) return;
   const i = parseInt(btn.dataset.i);
   if (btn.dataset.action === 'edit') return openCharModal(i);
+  if (btn.dataset.action === 'weekdone') {
+    state.chars[i].weekDone = !state.chars[i].weekDone;
+    save(); renderCharList();
+    if (typeof renderCharCards === 'function') renderCharCards();
+    return;
+  }
   document.getElementById('confirmMsg').textContent = `'${state.chars[i].name}' 캐릭터를 삭제하시겠습니까?`;
   document.getElementById('overlayConfirm').classList.add('open');
   document.getElementById('confirmOk').onclick = () => {

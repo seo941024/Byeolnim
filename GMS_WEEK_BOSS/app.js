@@ -326,9 +326,6 @@ function renderCharList() {
           <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
           <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
         </div>
-        <button class="ccbtn ccbtn--weekdone${ch.weekDone ? ' on' : ''}" data-action="weekdone" data-i="${i}">
-          ${ch.weekDone ? '합산 제외' : '합산 포함'}
-        </button>
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
     </div>`;
@@ -1120,12 +1117,6 @@ document.getElementById('charList').addEventListener('click', e => {
   if (!btn) return;
   const i = parseInt(btn.dataset.i);
   if (btn.dataset.action === 'edit') return openCharModal(i);
-  if (btn.dataset.action === 'weekdone') {
-    state.chars[i].weekDone = !state.chars[i].weekDone;
-    save(); renderCharList();
-    if (typeof renderCharCards === 'function') renderCharCards();
-    return;
-  }
   document.getElementById('confirmMsg').textContent = `'${state.chars[i].name}' 캐릭터를 삭제하시겠습니까?`;
   document.getElementById('overlayConfirm').classList.add('open');
   document.getElementById('confirmOk').onclick = () => {
@@ -1298,12 +1289,33 @@ function renderCharInfo() {
             <span class="ci-lv">Lv.${lv}</span>
             <span class="ci-server">${sIconHtml}<span class="icon-lbl">${region} ${world}</span></span>
           </div>
+          <div class="cg-weekrow" title="끄면 이 캐릭터의 주간 수익이 전체 주간 획득 메소에서 빠집니다. 이미 돈 캐릭터를 잠깐 빼고 남은 캐릭터로 얼마가 더 들어오는지 볼 때 씁니다.">
+            <span class="cg-weekrow__lbl">주간 합산</span>
+            <button type="button" class="cg-weektoggle ${ch.weekDone ? 'off' : 'on'}" data-i="${i}"
+                    aria-label="주간 합산 포함 여부">
+              <span class="cg-weektoggle__knob"></span>
+              <span class="cg-weektoggle__txt cg-weektoggle__txt--on">포함</span>
+              <span class="cg-weektoggle__txt cg-weektoggle__txt--off">제외</span>
+            </button>
+          </div>
         </div>
         ${rankRow}
       </div>`;
   }).join('');
 
   box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>`;
+  // 주간 합산 토글 — 카드 클릭(캐릭터 선택)으로 번지지 않게 막는다
+  box.querySelectorAll('.cg-weektoggle').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = Number(btn.dataset.i);
+      state.chars[i].weekDone = !state.chars[i].weekDone;
+      save();
+      btn.classList.toggle('off', !!state.chars[i].weekDone);
+      btn.classList.toggle('on', !state.chars[i].weekDone);
+      updateCrystalBar();
+    });
+  });
   box.querySelectorAll('.cg-card__save').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();

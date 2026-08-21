@@ -482,15 +482,32 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ccbtn--del { background: var(--danger-l); color: var(--danger); }
 .ccbtn--del:hover { background: var(--danger); color: #fff; }
 
-/* 주간 완료 토글 — 켜면 전체 주간 합계에서 이 캐릭터가 빠진다 */
-.ccbtn--weekdone {
-  width: 100%; margin-top: 5px;
-  background: rgba(255,255,255,.06); color: var(--text-dim);
+/* 캐릭터 목록 카드의 주간 합산 토글 — 끄면 전체 주간 합계에서 이 캐릭터가 빠진다 */
+.cg-weekrow {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 8px; margin-top: 8px; padding-top: 8px;
+  border-top: 1px solid var(--border);
 }
-.ccbtn--weekdone:hover { background: rgba(255,255,255,.12); color: var(--text-sub); }
-.ccbtn--weekdone.on { background: var(--accent); color: #000; }
-:root[data-theme="light"] .ccbtn--weekdone { background: rgba(20,18,28,.07); }
-:root[data-theme="light"] .ccbtn--weekdone:hover { background: rgba(20,18,28,.12); }
+.cg-weekrow__lbl { font-size: .7rem; font-weight: 700; color: var(--text-sub); }
+.cg-weektoggle {
+  position: relative; display: inline-flex; align-items: center; width: 62px; height: 24px;
+  border-radius: 999px; border: 1.5px solid var(--border); cursor: pointer; padding: 0; flex: none;
+  background: var(--bg2); transition: background .15s;
+}
+.cg-weektoggle.on { background: rgba(var(--hue),.55); border-color: rgba(var(--hue),.55); }
+.cg-weektoggle__knob {
+  position: absolute; top: 1px; left: 1px; width: 20px; height: 20px; border-radius: 50%;
+  background: #fff; transition: transform .15s; box-shadow: 0 1px 3px rgba(0,0,0,.3);
+}
+.cg-weektoggle.on .cg-weektoggle__knob { transform: translateX(38px); }
+.cg-weektoggle__txt {
+  position: absolute; top: 50%; transform: translateY(-50%); font-size: .6rem; font-weight: 900;
+  letter-spacing: .02em; display: none;
+}
+.cg-weektoggle__txt--on  { left: 7px;  color: rgba(255,255,255,.85); }
+.cg-weektoggle__txt--off { right: 8px; color: var(--text-sub); }
+.cg-weektoggle.on  .cg-weektoggle__txt--on  { display: block; }
+.cg-weektoggle.off .cg-weektoggle__txt--off { display: block; }
 
 /* crystal bar */
 .crystal-bar { padding: 8px 14px 10px; }

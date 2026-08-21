@@ -247,8 +247,9 @@ function initStarforce() {
   _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
   sfBuildStageGrid();
 
-  // 토글 그룹 처리
-  document.querySelectorAll('.sf-toggle-group').forEach(grp => {
+  // 토글 그룹 처리. .sf-toggle-group도 추옵 시뮬레이터가 같이 쓰므로 섹션 안으로 한정한다
+  // (안 그러면 추옵에서 장비 종류를 바꿀 때 스타포스 재계산이 딸려 돌아간다)
+  document.querySelectorAll('#sec-starforce .sf-toggle-group').forEach(grp => {
     grp.querySelectorAll('.sf-toggle').forEach(btn => {
       btn.addEventListener('click', () => {
         grp.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
@@ -376,10 +377,14 @@ function initStarforce() {
     _sfShowDestroyResult(pct, count);
   });
 
-  // 탭 스위칭
-  document.querySelectorAll('.sf-tab').forEach(tab => {
+  /* 탭 스위칭.
+     ★ .sf-tab 클래스는 추옵·큐브 시뮬레이터도 같이 쓴다. 예전엔 document 전체에서
+       찾아서, 스타포스 탭을 누르면 다른 섹션 탭의 active까지 벗겨졌고
+       _sfRecalcExpected는 엉뚱하게 추옵 탭을 보고 그냥 빠져나갔다(그래서 기댓값
+       그래프가 안 그려졌다). 반드시 스타포스 섹션 안에서만 찾는다. */
+  document.querySelectorAll('#sec-starforce .sf-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('#sec-starforce .sf-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const mode = tab.dataset.sftab;
       document.getElementById('sfRightExpected').style.display  = mode === 'expected'  ? '' : 'none';
@@ -395,7 +400,7 @@ function initStarforce() {
 
 // 기댓값 탭이 활성일 때만, 유효한 범위면 조용히 재계산 (버튼 없이도 결과 표시)
 function _sfRecalcExpected() {
-  if (document.querySelector('.sf-tab.active')?.dataset.sftab !== 'expected') return;
+  if (document.querySelector('#sec-starforce .sf-tab.active')?.dataset.sftab !== 'expected') return;
   if (_sfGetFrom() >= _sfGetTo()) return;
   sfShowExpected();
 }
@@ -485,6 +490,25 @@ function _sfShowResult(luckPct, mesoVal) {
   _sfHighlightBar(mesoVal);
 }
 
+/* Chart.js는 스타포스 기댓값 탭의 그래프에서만 쓴다. 그런데 CDN에서 받는
+   200KB짜리라, 그래프를 한 번도 안 보는 사람까지 접속할 때마다 받게 하면
+   첫 로딩만 느려진다. 그래서 처음 그릴 때만 받아온다. */
+let _sfChartLibLoading = null;
+function _sfEnsureChartLib() {
+  if (typeof Chart !== 'undefined') return Promise.resolve(true);
+  if (!_sfChartLibLoading) {
+    _sfChartLibLoading = new Promise(resolve => {
+      const s = document.createElement('script');
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+      s.onload = () => resolve(true);
+      // 못 받아도 계산 자체는 되니 그래프만 포기한다 — 숫자는 그대로 보여준다
+      s.onerror = () => resolve(false);
+      document.body.appendChild(s);
+    });
+  }
+  return _sfChartLibLoading;
+}
+
 function sfShowExpected(scrollToResult) {
   const from = _sfGetFrom();
   const to   = _sfGetTo();
@@ -533,6 +557,9 @@ function sfShowExpected(scrollToResult) {
   const labels = buckets.map((_, i) => fmtMeso(Math.round(step * (i + 0.5))));
 
 
+  // 그래프는 Chart.js를 받아온 뒤에 그린다. 숫자(기댓값·상위%)는 라이브러리와
+  // 무관하므로 아래에서 그대로 먼저 채워진다.
+  const drawCharts = () => {
   const canvas = document.getElementById('sfChart');
   if (_sfChart) { _sfChart.destroy(); _sfChart = null; }
   _sfChart = new Chart(canvas, {
@@ -622,6 +649,9 @@ function sfShowExpected(scrollToResult) {
       }
     }
   });
+
+  };
+  _sfEnsureChartLib().then(ok => { if (ok) drawCharts(); });
 
   /* 메소 bidir 평균 세팅 */
   const avgCost = Math.round(mean);

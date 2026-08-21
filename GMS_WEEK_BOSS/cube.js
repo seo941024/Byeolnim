@@ -98,21 +98,36 @@ function _gmsAdj(p, lv) {
 }
 
 // GMS 보정 포함 stat 기여값 반환
+/* 목표 판정에서 줄마다 호출되므로(자동 돌리기는 초당 수천 번) 결과를 기억해둔다.
+   레벨이 바뀌면 GMS 보정이 달라지므로 레벨도 키에 넣는다. */
+const _statContribCache = new Map();
 function _statContrib(name) {
-  const p=_parse(name), lv=_cubeLv();
-  if (p.type==='pct'||p.type==='flat') return {[p.cat]: p.valNum + _gmsAdj(p, lv)};
-  if (p.type==='colon') return {[p.cat]: _extractNum(p.valShort)};
-  return {};
+  const lv=_cubeLv();
+  const ck = lv+'|'+name;
+  if (_statContribCache.has(ck)) return _statContribCache.get(ck);
+  const p=_parse(name);
+  let out = {};
+  if (p.type==='pct'||p.type==='flat') out = {[p.cat]: p.valNum + _gmsAdj(p, lv)};
+  else if (p.type==='colon') out = {[p.cat]: _extractNum(p.valShort)};
+  _statContribCache.set(ck, out);
+  return out;
 }
 
 // ── 데이터 헬퍼 ─────────────────────────────
+/* optionTable은 키가 1,600개가 넘어서 이 함수를 부를 때마다 전부 훑으면 꽤 비싸다.
+   자동 돌리기는 한 번에 300회 × 3줄 = 900번씩 부르는데, 캐시가 없으면 그 묶음마다
+   화면이 0.7초씩 멈췄다(실측). 표는 한 번 받으면 바뀌지 않으므로 결과를 기억해둔다. */
+const _bracketCache = new Map();
 function _bracket(dk, part, lv) {
   const t=window.CUBE_TABLE; if(!t) return null;
+  const ck = dk+'|'+part+'|'+lv;
+  if (_bracketCache.has(ck)) return _bracketCache.get(ck);
   const lvs=[...new Set(Object.keys(t.optionTable)
     .filter(k=>{const[c,p]=k.split('|');return c===dk&&p===part;})
     .map(k=>+k.split('|')[2]))].sort((a,b)=>a-b);
-  if(!lvs.length) return null;
-  let pick=lvs[0]; for(const L of lvs) if(L<=lv) pick=L;
+  let pick=null;
+  if(lvs.length){ pick=lvs[0]; for(const L of lvs) if(L<=lv) pick=L; }
+  _bracketCache.set(ck, pick);
   return pick;
 }
 function _rawOpts(dk, part, lv, grade) {
@@ -124,8 +139,18 @@ function _rawOpts(dk, part, lv, grade) {
 // pct/flat/colon: 카테고리 1개 항목, 오른쪽 숫자 INPUT
 // unique: 개별 옵션 항목, 오른쪽 없음
 
+/* grade는 하나 또는 여러 개를 받는다. 까미 월루는 시작 등급뿐 아니라 한 단계 아래
+   등급 옵션도 이탈로 뜨므로, 두 등급을 합쳐 목록을 만들어야 그것도 목표로 걸 수 있다. */
 function _buildLeftOpts(dk, part, lv, grade) {
-  const opts = _rawOpts(dk, part, lv, grade);
+  const grades = Array.isArray(grade) ? grade : [grade];
+  const seenName = new Set();
+  const opts = [];
+  for (const g of grades) {
+    for (const o of _rawOpts(dk, part, lv, g)) {
+      if (seenName.has(o.name)) continue;
+      seenName.add(o.name); opts.push(o);
+    }
+  }
   if (!opts.length) return '<option value="" data-type="none">선택 안함</option><option>— 데이터 없음 —</option>';
   // 맨 위에 '선택 안함'(빈 값) — 이 줄을 목표에서 제외하고 싶을 때
   const html=['<option value="" data-type="none">선택 안함</option>'], seenCat=new Set(), seenUniq=new Set();
@@ -201,14 +226,26 @@ function _renumberSets() {
   });
 }
 
-function _refreshAllRows() {
-  document.querySelectorAll('.cube-goal-row').forEach(row=>{
+function _refreshRowsIn(sel, grades) {
+  document.querySelectorAll(sel + ' .cube-goal-row').forEach(row=>{
     const catSel=row.querySelector('.cube-opt-cat');
     const prev=catSel.value;
-    catSel.innerHTML=_buildLeftOpts(_dataKey(),_cubePart(),_cubeLv(),_cubeGrade());
+    catSel.innerHTML=_buildLeftOpts(_dataKey(),_cubePart(),_cubeLv(),grades);
     if(prev) catSel.value=prev;
     _syncRow(row);
   });
+}
+
+/* 옵션 시뮬레이터와 까미 월루는 등급 선택칸이 서로 다르다(cubeGrade / hrGrade).
+   예전엔 두 곳의 목표 칸을 한꺼번에 cubeGrade 기준으로 채워서, 까미 월루 목표가
+   남의 탭 등급에 휘둘려 목록이 비는 일이 있었다. 각자 자기 등급을 보게 나눈다. */
+function _refreshAllRows() {
+  _refreshRowsIn('#cubeSetContainer', _cubeGrade());
+  const hg = _hrGrade();
+  const gi = _GRADE_ORDER.indexOf(hg);
+  // 이탈로 한 단계 아래 옵션도 뜨므로 두 등급을 합쳐서 보여준다
+  const hrGrades = gi > 0 ? [hg, _GRADE_ORDER[gi-1]] : [hg];
+  _refreshRowsIn('#hrGoalRows', hrGrades);
 }
 
 // ── 등급 드롭다운 ────────────────────────────
@@ -718,7 +755,8 @@ async function initCube() {
   _refreshAllRows();
 
   // 시작 등급을 바꾸면 진행 상황을 초기화한다
-  document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); });
+  // 시작 등급이 바뀌면 목표 칸 옵션 목록도 그 등급 기준으로 다시 채워야 한다
+  document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); _refreshAllRows(); });
   document.getElementById('hrRollBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrRoll(); });
   document.getElementById('hrAutoBtn')?.addEventListener('click',_hrStartAuto);
   document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });

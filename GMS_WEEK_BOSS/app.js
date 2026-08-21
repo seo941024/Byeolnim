@@ -1456,7 +1456,8 @@ document.getElementById('admBtnLogin')?.addEventListener('click', async () => {
   }
 });
 document.getElementById('adminClose')?.addEventListener('click', () => overlayAdmin.classList.remove('open'));
-overlayAdmin?.addEventListener('click', e => { if (e.target === overlayAdmin) overlayAdmin.classList.remove('open'); });
+/* 바깥을 클릭해도 닫지 않는다 — 알림 문구를 길게 쓰다가 실수로 바깥을 누르면
+   작성하던 내용이 통째로 날아간다. 닫기(×)로만 닫게 한다. */
 
 async function admSend(dryRun) {
   const resEl  = document.getElementById('admResult');
@@ -1570,11 +1571,28 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 08. 21.',
+    items: [
+      {
+        head: '큐브와 추옵에 목표를 정해두고 자동으로 돌릴 수 있습니다',
+        desc: '원하는 옵션을 적어두고 목표까지 자동을 누르면 그 조건이 나올 때까지 알아서 돌아갑니다. 큐브는 한 항목만 적으면 세 줄 합산으로, 같은 항목을 여러 줄에 적으면 그 줄 수만큼 떠야 멈춥니다. 추옵은 적어둔 옵션이 전부 그 등급 이상으로 떴을 때 멈춥니다. 공격력 3줄이나 재사용 4초처럼 자주 쓰는 조합은 버튼으로 바로 넣을 수 있습니다.',
+      },
+      {
+        head: '큐브 확률에 있던 오류를 바로잡았습니다',
+        desc: '크리티컬 데미지와 공격력·마력의 고정 수치에 160제 보정이 잘못 붙어 실제보다 1 높게 계산되고 있었습니다. 또 쓸만한 스킬 같은 옵션이 한 번에 두 줄 뜨던 문제도 고쳤습니다.',
+      },
+      {
+        head: '큐브 탭을 열 때만 데이터를 받도록 바꿔 첫 로딩이 빨라졌습니다',
+        desc: '큐브 옵션표가 커서 접속할 때마다 받고 있었는데, 이제 큐브를 실제로 열 때만 받습니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 20.',
     items: [
       {
         head: '스타포스와 큐브, 추옵에 까미 월루 버튼이 생겼습니다',
-        desc: '직접 하나씩 눌러보는 탭입니다. 스타포스는 성수가 오를 때마다 별이 채워지고 23성부터는 테두리가 빛나며 성공할 때 반짝입니다. 큐브는 등급과 옵션 세 줄이 등급 색으로 표시되어 이탈 여부를 바로 볼 수 있습니다. 추옵은 네 줄의 등급을 1추 7점부터 매겨 한 번에 몇 점인지 보여주고, 1추가 뜬 줄은 따로 빛납니다. 세 곳 모두 스페이스바로 누를 수 있습니다.',
+        desc: '직접 하나씩 눌러보는 탭입니다. 스타포스는 성수가 오를 때마다 별이 채워지고 23성부터는 테두리가 빛나며 성공할 때 반짝입니다. 큐브는 등급과 옵션 세 줄이 등급 색으로 표시되어 이탈 여부를 바로 볼 수 있습니다. 추옵은 네 줄의 등급을 1추 7점부터 매겨 한 번에 몇 점인지 보여주고, 1추가 뜬 줄은 따로 빛납니다. 세 곳 모두 S 키로 누를 수 있습니다.',
       },
       {
         head: '스타포스 26성 확률이 잘못되어 있어 바로잡았습니다',
@@ -1675,7 +1693,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-20-kkami-button-b',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-21-auto-goal',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

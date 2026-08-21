@@ -25,9 +25,41 @@ const FLAME_OPTION_LABELS = {
   'ALL%':'올스탯%', '보공%':'보스데미지%', '데미지%':'데미지%',
 };
 
-function flameStatValue(option, tier, level, isBoss) {
+/* 무기 종류별 STR/DEX/INT/LUK(순수 스탯) 추가옵션 최댓값 — 제네시스 무기 기준
+   (나무위키 "메이플스토리/시스템/추가옵션" 문서, 제네시스 표).
+   무기는 방어구와 달리 이 옵션의 값이 레벨이 아니라 무기 자체의 기본 공격력에
+   비례해 정해지므로, 레벨만 보는 공식으로는 무기 종류마다 다른 실제 값을 못
+   맞춘다. 5개 값은 "3단계(5추옵) ~ 7단계(1추옵)" — 즉 tier 1~5를 보스 장비
+   기준(단계 = tier+2)으로 나열한 것과 같다. 블레이드는 실제 존재하는
+   아이템이 아니라 표에서 뺐다. */
+const FLAME_WEAPON_STR_GENESIS = {
+  '아대':[31,46,63,83,106], '건':[45,66,91,120,154], '에너지소드':[46,68,93,123,157],
+  '너클':[46,68,93,123,157], '건틀렛 리볼버':[46,68,93,123,157], '소울슈터':[46,68,93,123,157],
+  '폴암':[55,81,111,146,187], '에인션트 보우':[58,84,116,153,196], '부채':[58,84,116,153,196],
+  '활':[58,84,116,153,196], '브레스 슈터':[58,84,116,153,196], '듀얼보우건':[58,84,116,153,196],
+  '단검':[58,84,116,153,196], '체인':[58,84,116,153,196],
+  '한손검':[59,87,119,157,201], '한손도끼':[59,87,119,157,201], '한손둔기':[59,87,119,157,201],
+  '케인':[59,87,119,157,201], '석궁':[59,87,119,157,201],
+  '대검':[21,46,75,110,151], '태도':[21,46,75,110,151],
+  '튜너':[62,90,124,164,210], '장검':[62,90,124,164,210], '창':[62,90,124,164,210],
+  '두손검':[62,90,124,164,210], '두손도끼':[62,90,124,164,210], '두손둔기':[62,90,124,164,210],
+  '데스페라도':[62,90,124,164,210], '핸드캐논':[63,92,127,167,214],
+  '완드':[72,106,146,192,246], '샤이닝로드':[72,106,146,192,246], 'ESP리미터':[72,106,146,192,246],
+  '매직 건틀렛':[72,106,146,192,246], '스태프':[74,108,148,195,250],
+};
+/* 목록에 나올 순서. 나무위키 표와 같은 순서로 둔다(무게/공격형 계열 → 마법형 계열). */
+const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_STR_GENESIS);
+
+function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
   const w = isBoss ? 2 : 0;
   const t = tier; // 1-5
+  if (['STR','DEX','INT','LUK'].includes(option) && weaponSubtype) {
+    const table = FLAME_WEAPON_STR_GENESIS[weaponSubtype];
+    // 표는 "단계(=tier+w) 3~7"만 있다. 논보스 1·2단계처럼 표 밖이면 기존 레벨 공식으로 대체한다
+    // (근거가 없는 값을 억지로 만들어내지 않기 위해서다).
+    const stage = t + w;
+    if (table && stage >= 3 && stage <= 7) return table[stage - 3];
+  }
   // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
   if (['STR','DEX','INT','LUK','방어력'].includes(option))
     return (level < 250 ? Math.floor(level / 20) + 1 : 12) * (t + w);
@@ -57,7 +89,7 @@ function rollTier(prob) {
 }
 
 /* 불꽃 1회 굴리기: 4라인, 중복 없이 */
-function rollFlame(flameKey, level, isBoss, isWeapon) {
+function rollFlame(flameKey, level, isBoss, isWeapon, weaponSubtype) {
   const { prob } = FLAME_TYPES[flameKey];
   const pool = isWeapon ? [...FLAME_OPTIONS_WEAPON] : [...FLAME_OPTIONS_ARMOR];
   const lines = [];
@@ -65,7 +97,7 @@ function rollFlame(flameKey, level, isBoss, isWeapon) {
     const idx = Math.floor(Math.random() * pool.length);
     const opt = pool.splice(idx, 1)[0];
     const tier = rollTier(prob);
-    lines.push({ opt, tier, val: flameStatValue(opt, tier, level, isBoss) });
+    lines.push({ opt, tier, val: flameStatValue(opt, tier, level, isBoss, weaponSubtype) });
   }
   return lines;
 }
@@ -197,6 +229,8 @@ function _flameGetFlameKey() {
 function _flameGetLevel()   { return Math.max(100, Math.min(250, parseInt(document.getElementById('flameLevel').value) || 150)); }
 function _flameGetIsBoss()  { return document.getElementById('flameBoss').checked; }
 function _flameGetIsWeapon(){ return document.querySelector('#flameEquipGroup .sf-toggle.active')?.dataset.val === 'weapon'; }
+// 빈 값("선택 안 함")이면 undefined를 돌려줘, flameStatValue가 기존 레벨 공식으로 자연스럽게 대체하게 한다
+function _flameGetWeaponSubtype(){ return document.getElementById('flameWeaponSubtype')?.value || undefined; }
 
 function flameGetGoals() {
   const goals = [];
@@ -261,13 +295,14 @@ function flameBuildStatTable() {
   const level    = _flameGetLevel();
   const isBoss   = _flameGetIsBoss();
   const isWeapon = _flameGetIsWeapon();
+  const weaponSubtype = isWeapon ? _flameGetWeaponSubtype() : undefined;
   const display = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
   const { prob } = FLAME_TYPES[flameKey];
 
   // 단계 1=최고(old T5) ~ 단계 5=최저(old T1), 역순 표시
   const rows = display.map(opt => {
     const vals = [5,4,3,2,1].map(t => {
-      const v = flameStatValue(opt, t, level, isBoss);
+      const v = flameStatValue(opt, t, level, isBoss, weaponSubtype);
       const unit = ['ALL%','보공%','데미지%'].includes(opt) ? '%' : '';
       return `<td class="${prob[t-1]===0?'flame-t--zero':''}">${prob[t-1]>0 ? v+unit : '—'}</td>`;
     });
@@ -413,7 +448,7 @@ function _flameRollOnce(silent) {
   const level    = parseInt(document.getElementById('flameLevel').value) || 200;
   const isBoss   = document.getElementById('flameBoss').checked;
 
-  const lines = rollFlame(flame, level, isBoss, isWeapon);
+  const lines = rollFlame(flame, level, isBoss, isWeapon, isWeapon ? _flameGetWeaponSubtype() : undefined);
   const score = flameRollScore(lines);
 
   _flameHand.count[flame] = (_flameHand.count[flame] || 0) + 1;
@@ -567,6 +602,17 @@ function initAddOption() {
           </div>
         </div>
 
+        <!-- 무기일 때만 나온다. STR/DEX/INT/LUK(순수 스탯) 추가옵션 값은 레벨이
+             아니라 무기 자체의 기본 공격력에 비례해서, 무기 종류마다 다르다. -->
+        <div id="flameWeaponSubtypeWrap" style="display:none">
+          <label class="field__label">무기 종류</label>
+          <select class="sel" id="flameWeaponSubtype" style="margin-top:6px;width:100%">
+            <option value="">— 선택 안 함 —</option>
+            ${FLAME_WEAPON_SUBTYPES.map(w => `<option value="${w}">${w}</option>`).join('')}
+          </select>
+          <p class="dt-help" style="margin-top:6px">무기 추옵은 제네시스 무기를 기준으로 합니다.</p>
+        </div>
+
         <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">
           <div class="field">
             <label class="field__label">장비 레벨</label>
@@ -689,7 +735,12 @@ function initAddOption() {
     if (tab === 'sim') { if (flameGetGoals().length) flameSimulate(); }
     else if (tab === 'score') { if ((parseInt(document.getElementById('flameScoreTarget')?.value) || 0) > 0) flameScoreSim(); }
   };
-  const refresh = () => { flameBuildStatTable(); flameRefreshOptionSelects(); _flameAutoCalc(); };
+  // 무기 종류 칸은 "무기"를 골랐을 때만 보인다
+  const syncWeaponSubtypeVisibility = () => {
+    const wrap = document.getElementById('flameWeaponSubtypeWrap');
+    if (wrap) wrap.style.display = _flameGetIsWeapon() ? '' : 'none';
+  };
+  const refresh = () => { syncWeaponSubtypeVisibility(); flameBuildStatTable(); flameRefreshOptionSelects(); _flameAutoCalc(); };
 
   sec.querySelectorAll('#flameEquipGroup .sf-toggle, #flameTypeGroup .sf-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -698,6 +749,7 @@ function initAddOption() {
       refresh();
     });
   });
+  document.getElementById('flameWeaponSubtype')?.addEventListener('change', refresh);
 
   const levelEl = document.getElementById('flameLevel');
   levelEl.addEventListener('change', () => {

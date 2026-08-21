@@ -743,10 +743,17 @@ function initAddOption() {
     if (tab === 'sim') { if (flameGetGoals().length) flameSimulate(); }
     else if (tab === 'score') { if ((parseInt(document.getElementById('flameScoreTarget')?.value) || 0) > 0) flameScoreSim(); }
   };
-  // 무기 종류 칸은 "무기"를 골랐을 때만 보인다
+  // 무기 종류 칸은 "무기"를 골랐을 때만 보인다.
+  // 무기 값은 제네시스 표를 그대로 쓰므로 레벨은 못 바꾸게 막는다.
   const syncWeaponSubtypeVisibility = () => {
     const wrap = document.getElementById('flameWeaponSubtypeWrap');
-    if (wrap) wrap.style.display = _flameGetIsWeapon() ? '' : 'none';
+    const isWeapon = _flameGetIsWeapon();
+    if (wrap) wrap.style.display = isWeapon ? '' : 'none';
+    const lv = document.getElementById('flameLevel');
+    if (lv) {
+      lv.disabled = isWeapon;
+      if (isWeapon) lv.value = 200;
+    }
   };
   const refresh = () => { syncWeaponSubtypeVisibility(); flameBuildStatTable(); flameRefreshOptionSelects(); _flameAutoCalc(); };
 

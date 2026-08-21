@@ -50,6 +50,21 @@ const FLAME_WEAPON_STR_GENESIS = {
 /* 목록에 나올 순서. 나무위키 표와 같은 순서로 둔다(무게/공격형 계열 → 마법형 계열). */
 const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_STR_GENESIS);
 
+/* 제네시스 무기의 기본 공격력/마력(같은 표의 "기본옵션" 열).
+   무기의 공격력·마력 추가옵션은 고정값이 아니라 이 기본 공격력의 몇 %로 정해진다. */
+const FLAME_WEAPON_BASE_ATT = {
+  '아대':172, '건':249, '에너지소드':255, '너클':255, '건틀렛 리볼버':255, '소울슈터':255,
+  '폴암':304, '에인션트 보우':318, '부채':318, '활':318, '브레스 슈터':318,
+  '듀얼보우건':318, '단검':318, '체인':318,
+  '한손검':326, '한손도끼':326, '한손둔기':326, '케인':326, '석궁':326,
+  '대검':342, '태도':337,
+  '튜너':340, '장검':340, '창':340, '두손검':340, '두손도끼':340, '두손둔기':340,
+  '데스페라도':340, '핸드캐논':348,
+  '완드':400, '샤이닝로드':400, 'ESP리미터':400, '매직 건틀렛':400, '스태프':406,
+};
+/* 단계 3~7에 대응하는 기본 공격력 비율(3단계 1% … 7단계 5%). */
+const FLAME_WEAPON_ATT_PCT = [0.01, 0.02, 0.03, 0.04, 0.05];
+
 function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
   const w = isBoss ? 2 : 0;
   const t = tier; // 1-5
@@ -59,6 +74,12 @@ function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
     // (근거가 없는 값을 억지로 만들어내지 않기 위해서다).
     const stage = t + w;
     if (table && stage >= 3 && stage <= 7) return table[stage - 3];
+  }
+  // 무기의 공격력·마력 추옵도 고정값이 아니라 그 무기 기본 공격력에 비례한다
+  if (['ATTACK','MAGIC ATK'].includes(option) && weaponSubtype) {
+    const base = FLAME_WEAPON_BASE_ATT[weaponSubtype];
+    const stage = t + w;
+    if (base && stage >= 3 && stage <= 7) return Math.floor(base * FLAME_WEAPON_ATT_PCT[stage - 3]);
   }
   // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
   if (['STR','DEX','INT','LUK','방어력'].includes(option))
@@ -361,7 +382,18 @@ function _isGoalPossible(flameKey, goals) {
   });
 }
 
+/* 무기는 STR/DEX/INT/LUK 추옵 값이 무기 종류마다 달라서, 종류를 안 고르면
+   계산 자체가 성립하지 않는다. 못 돌리게 막고 이유를 알려준다. */
+function _flameWeaponSubtypeMissing() {
+  return _flameGetIsWeapon() && !_flameGetWeaponSubtype();
+}
+
 function flameSimulate() {
+  const resEl0 = document.getElementById('flameSimResult');
+  if (_flameWeaponSubtypeMissing()) {
+    resEl0.innerHTML = '<p class="empty" style="color:var(--danger)">무기 종류를 먼저 골라주세요.</p>';
+    return;
+  }
   const flameKey = _flameGetFlameKey();
   const level    = _flameGetLevel();
   const isBoss   = _flameGetIsBoss();
@@ -443,6 +475,7 @@ function flameRollScore(lines) {
 /* silent=true면 화면을 안 그린다 — 자동 돌리기에서 매 회 다시 그리면 느려서,
    묶음이 끝날 때 한 번만 그린다. 굴린 lines를 반환해 목표 판정에 쓴다. */
 function _flameRollOnce(silent) {
+  if (_flameWeaponSubtypeMissing()) { alert('무기 종류를 먼저 골라주세요.'); return []; }
   const flame   = document.querySelector('#flameTypeGroup .sf-toggle.active')?.dataset.val || 'POWERFUL';
   const isWeapon = document.querySelector('#flameEquipGroup .sf-toggle.active')?.dataset.val === 'weapon';
   const level    = parseInt(document.getElementById('flameLevel').value) || 200;
@@ -492,6 +525,7 @@ function _flameStopAuto(msg) {
 
 function _flameStartAuto() {
   if (_flameAutoTimer) { _flameStopAuto(); return; }
+  if (_flameWeaponSubtypeMissing()) { alert('무기 종류를 먼저 골라주세요.'); return; }
   if (!_flameHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
 
   const btn = document.getElementById('flameBtnAuto');

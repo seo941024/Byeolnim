@@ -2910,6 +2910,17 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   border-radius: var(--radius-sm);
 }
 .cs-me__id { font-size: .92rem; font-weight: 800; color: var(--text); }
+.cs-tabs { display: flex; gap: 6px; }
+.cs-tab {
+  flex: 1; padding: 8px 0; border-radius: var(--radius-sm);
+  font-size: .84rem; font-weight: 800; color: var(--text-sub);
+  background: var(--bg3); border: 1px solid var(--border);
+}
+.cs-tab.sel { color: #fff; background: var(--grad); border-color: transparent; }
+.cs-pwbox {
+  padding: 12px; background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
 
 @media (max-width: 768px) {
   .settings-grid { grid-template-columns: 1fr; }

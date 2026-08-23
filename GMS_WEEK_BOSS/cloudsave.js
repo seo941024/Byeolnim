@@ -12,6 +12,8 @@ const CS_ID_KEY    = 'gms_cloud_id';
 
 let _csUser = null;      // 로그인된 아이디
 let _csBusy = false;
+let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
+let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
 
 function csToken() { return localStorage.getItem(CS_TOKEN_KEY) || ''; }
 
@@ -72,19 +74,34 @@ function csRender(savedAt) {
   if (!box) return;
 
   if (!_csUser) {
+    const isSignup = _csMode === 'signup';
     box.innerHTML = `
-      <div class="cs-row">
-        <input class="inp cs-inp" id="csId" placeholder="아이디" maxlength="16" autocomplete="username">
-        <input class="inp cs-inp" id="csPw" type="password" placeholder="비밀번호" maxlength="10" autocomplete="current-password">
+      <div class="cs-tabs">
+        <button class="cs-tab${isSignup ? '' : ' sel'}" data-mode="login">로그인</button>
+        <button class="cs-tab${isSignup ? ' sel' : ''}" data-mode="signup">회원가입</button>
       </div>
       <div class="cs-row mt8">
-        <button class="sbtn sbtn--primary" id="csLoginBtn">로그인</button>
-        <button class="sbtn sbtn--ghost" id="csSignupBtn">회원가입</button>
+        <input class="inp cs-inp" id="csId" placeholder="아이디" maxlength="16" autocomplete="username">
+      </div>
+      <div class="cs-row mt8">
+        <input class="inp cs-inp" id="csPw" type="password" placeholder="비밀번호" maxlength="10"
+               autocomplete="${isSignup ? 'new-password' : 'current-password'}">
+      </div>
+      ${isSignup ? `
+      <div class="cs-row mt8">
+        <input class="inp cs-inp" id="csPw2" type="password" placeholder="비밀번호 확인" maxlength="10" autocomplete="new-password">
+      </div>` : ''}
+      <div class="cs-row mt8">
+        <button class="sbtn sbtn--primary w100" id="csGoBtn">${isSignup ? '가입하기' : '로그인'}</button>
       </div>
       <p class="dt-help mt8">아이디는 영문·숫자 3~16자이고 대소문자를 구분합니다. 비밀번호는 4~10자입니다.</p>`;
-    document.getElementById('csLoginBtn').addEventListener('click', () => csAuth('login'));
-    document.getElementById('csSignupBtn').addEventListener('click', () => csAuth('signup'));
-    document.getElementById('csPw').addEventListener('keydown', e => { if (e.key === 'Enter') csAuth('login'); });
+
+    box.querySelectorAll('.cs-tab').forEach(btn => {
+      btn.addEventListener('click', () => { _csMode = btn.dataset.mode; csRender(savedAt); });
+    });
+    document.getElementById('csGoBtn').addEventListener('click', () => csAuth(isSignup ? 'signup' : 'login'));
+    const lastInput = document.getElementById(isSignup ? 'csPw2' : 'csPw');
+    lastInput.addEventListener('keydown', e => { if (e.key === 'Enter') csAuth(isSignup ? 'signup' : 'login'); });
     return;
   }
 
@@ -98,11 +115,27 @@ function csRender(savedAt) {
       <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
       <button class="sbtn sbtn--ghost" id="csLoadBtn">서버에서 불러오기</button>
     </div>
-    <p class="dt-help mt8">저장하면 이 기기의 모든 데이터가 서버에 올라가고, 불러오면 이 기기의 데이터를 서버 것으로 덮어씁니다.</p>`;
+    <p class="dt-help mt8">저장하면 이 기기의 모든 데이터가 서버에 올라가고, 불러오면 이 기기의 데이터를 서버 것으로 덮어씁니다.</p>
+    <button class="sbtn sbtn--ghost sbtn--sm mt8" id="csPwToggleBtn">${_csPwOpen ? '비밀번호 변경 닫기' : '비밀번호 변경'}</button>
+    ${_csPwOpen ? `
+    <div class="cs-pwbox mt8">
+      <div class="cs-row"><input class="inp cs-inp" id="csCurPw" type="password" placeholder="현재 비밀번호" maxlength="10" autocomplete="current-password"></div>
+      <div class="cs-row mt8"><input class="inp cs-inp" id="csNewPw" type="password" placeholder="새 비밀번호" maxlength="10" autocomplete="new-password"></div>
+      <div class="cs-row mt8"><input class="inp cs-inp" id="csNewPw2" type="password" placeholder="새 비밀번호 확인" maxlength="10" autocomplete="new-password"></div>
+      <button class="sbtn sbtn--primary w100 mt8" id="csPwSubmitBtn">비밀번호 변경</button>
+    </div>` : ''}`;
 
   document.getElementById('csLogoutBtn').addEventListener('click', csLogout);
   document.getElementById('csSaveBtn').addEventListener('click', csSave);
   document.getElementById('csLoadBtn').addEventListener('click', csLoad);
+  document.getElementById('csPwToggleBtn').addEventListener('click', () => {
+    _csPwOpen = !_csPwOpen;
+    csRender(savedAt);
+  });
+  if (_csPwOpen) {
+    document.getElementById('csPwSubmitBtn').addEventListener('click', () => csChangePw(savedAt));
+    document.getElementById('csNewPw2').addEventListener('keydown', e => { if (e.key === 'Enter') csChangePw(savedAt); });
+  }
 }
 
 /* ── 가입 / 로그인 ── */
@@ -112,8 +145,15 @@ async function csAuth(action) {
   const pw = document.getElementById('csPw').value || '';
   if (!id || !pw) { showToast('아이디와 비밀번호를 입력해주세요.'); return; }
 
+  if (action === 'signup') {
+    const pw2 = document.getElementById('csPw2').value || '';
+    // 서버까지 안 보내고 여기서 먼저 잡는다 — "잘못 쳤다가 로그인이 안 되는" 억울함은
+    // 여기서 미리 걸러야 의미가 있다(서버는 이미 저장된 뒤라 되돌릴 방법이 없다)
+    if (pw !== pw2) { showToast('비밀번호가 서로 다릅니다. 다시 확인해주세요.'); return; }
+  }
+
   _csBusy = true;
-  const btn = document.getElementById(action === 'login' ? 'csLoginBtn' : 'csSignupBtn');
+  const btn = document.getElementById('csGoBtn');
   const label = btn.textContent;
   btn.disabled = true; btn.textContent = '처리 중...';
 
@@ -136,8 +176,36 @@ async function csLogout() {
   localStorage.removeItem(CS_TOKEN_KEY);
   localStorage.removeItem(CS_ID_KEY);
   _csUser = null;
+  _csPwOpen = false;
   showToast('로그아웃되었습니다.');
   csRender(null);
+}
+
+/* ── 비밀번호 변경 ── */
+async function csChangePw(savedAt) {
+  if (_csBusy) return;
+  const curPw = document.getElementById('csCurPw').value || '';
+  const newPw = document.getElementById('csNewPw').value || '';
+  const newPw2 = document.getElementById('csNewPw2').value || '';
+  if (!curPw || !newPw) { showToast('현재 비밀번호와 새 비밀번호를 입력해주세요.'); return; }
+  if (newPw !== newPw2) { showToast('새 비밀번호가 서로 다릅니다. 다시 확인해주세요.'); return; }
+
+  _csBusy = true;
+  const btn = document.getElementById('csPwSubmitBtn');
+  btn.disabled = true; btn.textContent = '변경 중...';
+
+  const j = await csApi('changepw', { curPw, newPw });
+
+  _csBusy = false;
+  if (!j.ok) {
+    // 실패했을 땐 입력한 걸 지우지 않는다 — 오타 하나 고치려고 세 칸 다시 치게 하는 건 불친절하다
+    btn.disabled = false; btn.textContent = '비밀번호 변경';
+    showToast(j.error || '변경에 실패했습니다.');
+    return;
+  }
+  _csPwOpen = false;
+  showToast('비밀번호를 변경했습니다.');
+  csRender(savedAt);
 }
 
 /* ── 저장 / 불러오기 ── */

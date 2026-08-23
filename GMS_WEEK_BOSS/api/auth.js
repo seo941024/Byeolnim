@@ -121,6 +121,40 @@ module.exports = async function handler(req, res) {
     const uid = await redis.get('auth:tok:' + token);
     if (!uid) return bad(res, 401, '로그인이 만료되었습니다. 다시 로그인해주세요');
 
+    /* ── 비밀번호 변경 ── */
+    if (action === 'changepw') {
+      const curPw = String(body.curPw || '');
+      const newPw = String(body.newPw || '');
+      if (newPw.length < PW_MIN || newPw.length > PW_MAX)
+        return bad(res, 400, `새 비밀번호는 ${PW_MIN}~${PW_MAX}자여야 합니다`);
+
+      const raw = await redis.get('auth:user:' + uid);
+      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
+
+      // 잘못된 현재 비밀번호도 로그인과 같은 잠금 카운터를 쓴다 — 여기가 뚫려있으면
+      // 남의 토큰만 훔쳐도 비밀번호 대입 공격이 가능해지기 때문
+      const failKey = 'auth:fail:' + uid;
+      const fails = Number(await redis.get(failKey)) || 0;
+      if (fails >= FAIL_MAX)
+        return bad(res, 429, '시도가 너무 많습니다. 10분 후 다시 시도해주세요');
+
+      if (!safeEq(hashPw(curPw, rec.salt), rec.hash)) {
+        await redis.set(failKey, fails + 1, { ex: FAIL_TTL });
+        await sleep(150);
+        return bad(res, 401, '현재 비밀번호가 올바르지 않습니다');
+      }
+      await redis.del(failKey);
+
+      // salt도 새로 뽑는다 — 같은 salt를 재사용할 이유가 없다
+      const salt = crypto.randomBytes(16).toString('hex');
+      rec.hash = hashPw(newPw, salt);
+      rec.salt = salt;
+      await redis.set('auth:user:' + uid, JSON.stringify(rec));
+      // 지금 쓰던 토큰(세션)은 그대로 둔다 — 방금 인증한 사람을 다시 로그인시키는 건 불필요
+      return res.status(200).json({ ok: true });
+    }
+
     /* ── 저장 ── */
     if (action === 'save') {
       const data = body.data;

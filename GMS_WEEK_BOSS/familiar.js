@@ -188,7 +188,7 @@ function _famRender() {
 
   /* 왼쪽 카드 그림도 등급에 맞춰 바꾼다 */
   const cardImg = document.getElementById('famCardImg');
-  if (cardImg) { cardImg.src = _ruCardSrc(_famState.rank); cardImg.style.display = ''; }
+  if (cardImg) { cardImg.src = _ruMiniSrc(_famState.rank); cardImg.style.display = ''; }
 
   /* 레어는 확률이 추정치라 그 사실을 반드시 같이 띄운다 */
   const noteEl = document.getElementById('famNote');
@@ -227,7 +227,6 @@ const FAM_PITY = { RARE: 5, EPIC: 14 };
 let _ruState = { rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false };
 
 function _ruMiniSrc(g) { return 'images/familiar/mini_' + (g || 'rare').toLowerCase() + '.png'; }
-function _ruCardSrc(g) { return 'images/familiar/card_' + (g || 'rare').toLowerCase() + '.png'; }
 
 function _ruReset() {
   _ruStopAuto();
@@ -289,18 +288,11 @@ function _ruStartAuto() {
 
 function _ruRender() {
   const D = _famData(); if (!D) return;
-  const wrap = document.getElementById('ruCards'); if (!wrap) return;
-
-  /* 세 등급 카드를 나란히 두고 지금 등급만 밝게 — 어디까지 왔는지 바로 보이게 */
-  const order = ['RARE', 'EPIC', 'UNIQUE'];
-  const curIdx = order.indexOf(_ruState.rank);
-  wrap.innerHTML = order.map(function (g, i) {
-    const cls = i === curIdx ? ' is-cur' : (i < curIdx ? ' is-past' : '');
-    return '<div class="ru-card' + cls + '">' +
-      '<img src="' + _ruMiniSrc(g) + '" alt="' + D.RANK_LABEL[g] + '" onerror="this.style.display=\'none\'">' +
-      '<span class="ru-card__lbl" data-grade="' + g + '">' + D.RANK_LABEL[g] + '</span>' +
-      '</div>';
-  }).join('<span class="ru-arrow">▶</span>');
+  /* 카드 그림은 지금 등급 한 장만 원본 크기로 보여준다 */
+  const img = document.getElementById('ruCardImg');
+  if (img) { img.src = _ruMiniSrc(_ruState.rank); img.style.display = ''; }
+  const lbl = document.getElementById('ruCardLbl');
+  if (lbl) { lbl.textContent = D.RANK_LABEL[_ruState.rank]; lbl.dataset.grade = _ruState.rank; }
 
   const info = D.RANKUP[_ruState.rank];
   const cap = FAM_PITY[_ruState.rank];
@@ -354,15 +346,13 @@ function initFamiliar() {
     <div id="famTabRankup">
       <p class="dt-help">레어부터 시작해 유니크까지 올립니다. 등급업 확률과 필요 포인트는 넥슨 공식 수치이고, 천장은 정해진 횟수만큼 연속 실패하면 다음 시도가 확정으로 성공하는 규칙입니다.</p>
 
-      <div class="ru-track" id="ruCards"></div>
-
-      <div class="sf-layout mt16">
-        <div class="card">
-          <div class="card__title">현재 상태</div>
-          <div class="sf-res-item"><span class="sf-res-label">등급</span><span class="sf-res-val ru-now" id="ruNow">레어</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="ruChance">80%</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">필요 포인트</span><span class="sf-res-val" id="ruPoints">100</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">천장</span><span class="sf-res-val" id="ruPity">0 / 5</span></div>
+      <div class="sf-layout">
+        <!-- 왼쪽: 카드 그림 + 버튼 -->
+        <div class="card fam-cardcol">
+          <div class="fam-cardview">
+            <img id="ruCardImg" src="" alt="" onerror="this.style.display='none'">
+          </div>
+          <div class="fam-cardview__lbl" id="ruCardLbl" data-grade="RARE">레어</div>
 
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary cube-btn-full" id="ruRollBtn">등급업 [S]</button>
@@ -371,11 +361,19 @@ function initFamiliar() {
           </div>
         </div>
 
+        <!-- 오른쪽: 현재 상태 + 누적 + 기록 -->
         <div class="card">
-          <div class="card__title">누적</div>
+          <div class="card__title">현재 상태</div>
+          <div class="sf-res-item"><span class="sf-res-label">등급</span><span class="sf-res-val ru-now" id="ruNow">레어</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="ruChance">80%</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">필요 포인트</span><span class="sf-res-val" id="ruPoints">100</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">천장</span><span class="sf-res-val" id="ruPity">0 / 5</span></div>
+
+          <div class="card__title mt16">누적</div>
           <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val" id="ruTries">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="ruFails">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 포인트</span><span class="sf-res-val" id="ruTotalPoints">0</span></div>
+
           <div class="card__title mt16">기록</div>
           <div id="ruLog" class="fam-log"></div>
         </div>
@@ -387,10 +385,13 @@ function initFamiliar() {
       <p class="dt-help">패밀리어 카드로 잠재 옵션을 재설정합니다. 두 줄 중 아랫줄은 한 단계 아래 등급에서 뜨고, 드물게 두 줄 모두 현재 등급에서 뜹니다.</p>
 
       <div class="sf-layout">
-        <div class="card">
-          <div class="card__title">등급</div>
+        <div class="card fam-cardcol">
+          <div class="fam-cardview">
+            <img id="famCardImg" src="" alt="" onerror="this.style.display='none'">
+          </div>
+
+          <div class="card__title mt16">등급</div>
           <div class="sf-toggle-group" id="famRankGroup" style="margin-top:8px">${rankBtns}</div>
-          <div class="fam-cardview"><img id="famCardImg" src="" alt="" onerror="this.style.display='none'"></div>
 
           <div class="card__title mt16">목표 옵션</div>
           <div class="cube-goal-hint">

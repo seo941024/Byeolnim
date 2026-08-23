@@ -482,18 +482,16 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ccbtn--del { background: var(--danger-l); color: var(--danger); }
 .ccbtn--del:hover { background: var(--danger); color: #fff; }
 
-/* ── 패밀리어 등급업 트랙 ── */
-.ru-track { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
-.ru-card { display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: .32; transition: opacity .15s, transform .15s; }
-.ru-card img { width: 116px; height: auto; image-rendering: pixelated; }
-/* 지나온 등급은 흐리게, 지금 등급만 또렷하게 */
-.ru-card.is-past { opacity: .55; }
-.ru-card.is-cur { opacity: 1; transform: scale(1.06); }
-.ru-card__lbl { font-size: .78rem; font-weight: 800; }
-.ru-card__lbl[data-grade="RARE"]   { color: var(--gt-rare); }
-.ru-card__lbl[data-grade="EPIC"]   { color: var(--gt-epic); }
-.ru-card__lbl[data-grade="UNIQUE"] { color: var(--gt-unique); }
-.ru-arrow { color: var(--text-dim); font-size: 1.1rem; }
+/* ── 패밀리어 카드 그림 ──
+   픽셀아트라 크기를 줄이면 뭉개진다. 원본 크기(164px) 그대로 쓰고,
+   화면이 좁을 때만 줄어들게 max-width만 건다. */
+.fam-cardcol { display: flex; flex-direction: column; }
+.fam-cardview { display: flex; justify-content: center; }
+.fam-cardview img { width: 164px; max-width: 100%; height: auto; image-rendering: pixelated; }
+.fam-cardview__lbl { margin-top: 8px; text-align: center; font-size: .82rem; font-weight: 800; }
+.fam-cardview__lbl[data-grade="RARE"]   { color: var(--gt-rare); }
+.fam-cardview__lbl[data-grade="EPIC"]   { color: var(--gt-epic); }
+.fam-cardview__lbl[data-grade="UNIQUE"] { color: var(--gt-unique); }
 .ru-now[data-grade="RARE"]   { color: var(--gt-rare); }
 .ru-now[data-grade="EPIC"]   { color: var(--gt-epic); }
 .ru-now[data-grade="UNIQUE"] { color: var(--gt-unique); }
@@ -501,9 +499,6 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ru-log-res.ok { color: var(--success); }
 .ru-log-res.no { color: var(--danger); }
 .ru-log-pity { font-size: .68rem; font-weight: 800; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 0 5px; }
-/* 옵션 탭 왼쪽 카드 그림 */
-.fam-cardview { display: flex; justify-content: center; margin-top: 12px; }
-.fam-cardview img { width: 100%; max-width: 260px; height: auto; image-rendering: pixelated; }
 
 /* ── 패밀리어 ── */
 /* 유효 옵션 표시. 줄 색은 .pot-line[data-grade]가 이미 등급별로 칠해준다. */

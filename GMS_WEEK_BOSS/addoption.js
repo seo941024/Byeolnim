@@ -594,7 +594,7 @@ function initAddOption() {
     <div class="sf-tabs">
       <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
       <button class="sf-tab" data-tab="score">추옵 계산기</button>
-      <button class="sf-tab" data-tab="hand">직접 불꽃 쓰기</button>
+      <button class="sf-tab" data-tab="hand">추옵 직작</button>
     </div>
     <hr class="sec-sep" />
 

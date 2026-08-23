@@ -77,27 +77,8 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
   });
 });
 
-/* ── 리셋 타이머 (목요일 09:00 KST) ── */
-function nextResetKST() {
-  const kst = new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Seoul' }));
-  let diff = (4 - kst.getDay() + 7) % 7 || 7;
-  const next = new Date(kst);
-  next.setDate(kst.getDate() + diff);
-  next.setHours(9, 0, 0, 0);
-  if (next <= kst) next.setDate(next.getDate() + 7);
-  return next;
-}
-function tickTimer() {
-  const kst  = new Date(new Date().toLocaleString('en-US', { timeZone:'Asia/Seoul' }));
-  const diff = nextResetKST() - kst;
-  const p = n => String(n).padStart(2,'0');
-  const d = Math.floor(diff/86400000);
-  const h = Math.floor((diff%86400000)/3600000);
-  const m = Math.floor((diff%3600000)/60000);
-  const s = Math.floor((diff%60000)/1000);
-  document.getElementById('resetTimer').textContent = `${d}일 ${p(h)}:${p(m)}:${p(s)}`;
-}
-tickTimer(); setInterval(tickTimer, 1000);
+/* 주간 초기화 카운트다운은 헤더에서 뺐다(2026-08-23). 표시 전용이라 다른 로직이
+   쓰지 않던 값이고, 그 자리에 로그인 버튼을 뒀다. */
 
 /* ── 네비게이션 ── */
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
@@ -1605,8 +1586,12 @@ const NOTICE_LOG = [
     date: '2026. 08. 23.',
     items: [
       {
-        head: '로그인하면 데이터를 서버에 저장할 수 있습니다',
-        desc: '설정에서 아이디를 만들고 로그인하면, 파일을 주고받지 않아도 서버에 저장해두고 다른 기기에서 그대로 불러올 수 있습니다. 불러오기는 그 기기의 데이터를 덮어쓰니 주의해주세요.',
+        head: '로그인 버튼이 헤더로 이동했습니다',
+        desc: '헤더 우측의 로그인 버튼을 누르면 아이디를 만들고 로그인해, 데이터를 서버에 저장해두고 다른 기기에서 그대로 불러올 수 있습니다. 불러오기는 그 기기의 데이터를 덮어쓰니 주의해주세요.',
+      },
+      {
+        head: '헤더의 초기화 카운트다운을 없앴습니다',
+        desc: '초기화 시간은 보스 수익 계산기 등 필요한 곳에서 이미 안내되고 있어 헤더에서는 뺐습니다.',
       },
       {
         head: '패밀리어 옵션 목록의 등급 이름이 안 보이던 문제를 고쳤습니다',

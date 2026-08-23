@@ -56,8 +56,18 @@ function csFmtTime(ms) {
   return `${d.getFullYear()}. ${p(d.getMonth() + 1)}. ${p(d.getDate())}. ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
+/* 헤더 버튼에 로그인 상태를 반영한다. 로그인했으면 아이디가 보인다. */
+function csSyncHeader() {
+  const btn = document.getElementById('headerBtnAuth');
+  if (!btn) return;
+  btn.textContent = _csUser || '로그인';
+  btn.classList.toggle('hbtn--on', !!_csUser);
+  btn.title = _csUser ? `${_csUser} — 클라우드 저장 열기` : '로그인 / 회원가입';
+}
+
 /* ── 화면 그리기 ── */
 function csRender(savedAt) {
+  csSyncHeader();
   const box = document.getElementById('cloudBox');
   if (!box) return;
 
@@ -205,5 +215,15 @@ async function csRefresh() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('headerBtnAuth');
+  const ov = document.getElementById('overlayAuth');
+  if (btn && ov) {
+    btn.addEventListener('click', () => {
+      // 열 때마다 서버에 상태를 다시 물어본다 — 다른 기기에서 저장했을 수 있다
+      csRefresh();
+      ov.classList.add('open');
+    });
+    document.getElementById('authClose').addEventListener('click', () => ov.classList.remove('open'));
+  }
   if (document.getElementById('cloudBox')) csRefresh();
 });

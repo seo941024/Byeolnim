@@ -5,7 +5,7 @@
    개수 제한이 있어서 엔드포인트를 잘게 쪼개지 않는다.
 
    저장 구조 (Upstash Redis)
-     auth:user:<id>    (json) { id, salt, hash, created }   ← 비밀번호 원문은 절대 저장 안 함
+     auth:user:<id>    (json) { id, salt, hash, created, nickname }   ← 비밀번호 원문은 절대 저장 안 함
      auth:tok:<token>  (str)  id                            ← 세션, 30일 후 자동 만료
      auth:data:<id>    (json) 사용자가 저장한 앱 데이터
      auth:fail:<id>    (int)  로그인 연속 실패 횟수, 10분 후 자동 소멸
@@ -18,6 +18,8 @@ const crypto = require('crypto');
 const { getRedis } = require('./_lib');
 
 const ID_RE = /^[A-Za-z0-9_]{3,16}$/;     // 대소문자 구분, 영문·숫자·밑줄
+// 한글·영문·숫자·기호·공백 1~12자. 순수 공백만으로는 안 되게 아래서 trim 후 길이를 다시 본다.
+const NICK_RE = /^[가-힣a-zA-Z0-9 !-~]{1,12}$/;
 const PW_MIN = 4;
 const PW_MAX = 10;                         // 요청대로 10자 이내
 const TOKEN_TTL = 60 * 60 * 24 * 30 * 6;   // 6개월(30일 기준 근사치)
@@ -73,12 +75,13 @@ module.exports = async function handler(req, res) {
       if (!taken) return bad(res, 409, '이미 사용 중인 아이디입니다');
 
       const salt = crypto.randomBytes(16).toString('hex');
-      const rec = { id, salt, hash: hashPw(pw, salt), created: Date.now() };
+      // 기본 닉네임은 아이디와 동일 — 따로 설정하기 전까지는 아이디가 그대로 보인다
+      const rec = { id, salt, hash: hashPw(pw, salt), created: Date.now(), nickname: id };
       await redis.set('auth:user:' + id, JSON.stringify(rec));
 
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
-      return res.status(200).json({ ok: true, id, token });
+      return res.status(200).json({ ok: true, id, nickname: id, token });
     }
 
     /* ── 로그인 ── */
@@ -112,7 +115,8 @@ module.exports = async function handler(req, res) {
       await redis.del(failKey);
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
-      return res.status(200).json({ ok: true, id, token });
+      // 오래된 계정(닉네임 필드가 생기기 전 가입)은 nickname이 없을 수 있어 아이디로 대체
+      return res.status(200).json({ ok: true, id, nickname: rec.nickname || id, token });
     }
 
     /* 아래는 전부 로그인된 사람만 */
@@ -155,6 +159,21 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true });
     }
 
+    /* ── 닉네임 변경 ── */
+    if (action === 'setnick') {
+      const nickname = String(body.nickname || '').trim();
+      if (!nickname) return bad(res, 400, '닉네임을 입력해주세요');
+      if (!NICK_RE.test(nickname)) return bad(res, 400, '닉네임은 한글·영문·숫자·기호로 1~12자여야 합니다');
+
+      const raw = await redis.get('auth:user:' + uid);
+      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
+
+      rec.nickname = nickname;
+      await redis.set('auth:user:' + uid, JSON.stringify(rec));
+      return res.status(200).json({ ok: true, nickname });
+    }
+
     /* ── 저장 ── */
     if (action === 'save') {
       const data = body.data;
@@ -181,9 +200,11 @@ module.exports = async function handler(req, res) {
 
     /* ── 로그인 상태 확인 ── */
     if (action === 'me') {
+      const raw = await redis.get('auth:user:' + uid);
+      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
       const metaRaw = await redis.get('auth:datameta:' + uid);
       const meta = metaRaw ? (typeof metaRaw === 'string' ? JSON.parse(metaRaw) : metaRaw) : null;
-      return res.status(200).json({ ok: true, id: uid, savedAt: meta && meta.at });
+      return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at });
     }
 
     /* ── 로그아웃 ── */

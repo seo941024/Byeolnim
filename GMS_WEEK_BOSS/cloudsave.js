@@ -11,9 +11,15 @@ const CS_TOKEN_KEY = 'gms_cloud_token';
 const CS_ID_KEY    = 'gms_cloud_id';
 
 let _csUser = null;      // 로그인된 아이디
+let _csNick = null;      // 표시용 닉네임. 안 정했으면 서버가 아이디를 그대로 돌려준다
 let _csBusy = false;
 let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
 let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
+
+/* 닉네임/아이디는 사용자가 정하는 값이라 innerHTML에 그대로 넣으면 위험하다 */
+function csEsc(s) {
+  return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
+}
 
 function csToken() { return localStorage.getItem(CS_TOKEN_KEY) || ''; }
 
@@ -58,13 +64,14 @@ function csFmtTime(ms) {
   return `${d.getFullYear()}. ${p(d.getMonth() + 1)}. ${p(d.getDate())}. ${p(d.getHours())}:${p(d.getMinutes())}`;
 }
 
-/* 헤더 버튼에 로그인 상태를 반영한다. 로그인했으면 아이디가 보인다. */
+/* 헤더 버튼에 로그인 상태를 반영한다. 닉네임을 정했으면 닉네임, 아니면 아이디가 보인다. */
 function csSyncHeader() {
   const btn = document.getElementById('headerBtnAuth');
   if (!btn) return;
-  btn.textContent = _csUser || '로그인';
+  const shown = _csNick || _csUser;
+  btn.textContent = shown || '로그인';
   btn.classList.toggle('hbtn--on', !!_csUser);
-  btn.title = _csUser ? `${_csUser} — 클라우드 저장 열기` : '로그인 / 회원가입';
+  btn.title = _csUser ? `${shown} — 클라우드 저장 열기` : '로그인 / 회원가입';
 }
 
 /* ── 화면 그리기 ── */
@@ -107,9 +114,17 @@ function csRender(savedAt) {
 
   box.innerHTML = `
     <div class="cs-me">
-      <span class="cs-me__id">${_csUser}</span>
+      <div class="cs-me__body">
+        <span class="cs-me__nick">${csEsc(_csNick || _csUser)}</span>
+        <span class="cs-me__idsub">@${csEsc(_csUser)}</span>
+      </div>
       <button class="sbtn sbtn--ghost sbtn--sm" id="csLogoutBtn">로그아웃</button>
     </div>
+    <div class="cs-row mt8">
+      <input class="inp cs-inp" id="csNickInp" value="${csEsc(_csNick || _csUser)}" maxlength="12" placeholder="닉네임">
+      <button class="sbtn sbtn--ghost" id="csNickSaveBtn">닉네임 저장</button>
+    </div>
+    <p class="dt-help mt8">한글·영문·숫자·기호로 1~12자까지 정할 수 있고, 우측 위 버튼에 이 이름으로 표시됩니다.</p>
     <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
     <div class="cs-row mt8">
       <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
@@ -126,6 +141,8 @@ function csRender(savedAt) {
     </div>` : ''}`;
 
   document.getElementById('csLogoutBtn').addEventListener('click', csLogout);
+  document.getElementById('csNickSaveBtn').addEventListener('click', () => csSetNick(savedAt));
+  document.getElementById('csNickInp').addEventListener('keydown', e => { if (e.key === 'Enter') csSetNick(savedAt); });
   document.getElementById('csSaveBtn').addEventListener('click', csSave);
   document.getElementById('csLoadBtn').addEventListener('click', csLoad);
   document.getElementById('csPwToggleBtn').addEventListener('click', () => {
@@ -167,6 +184,7 @@ async function csAuth(action) {
   localStorage.setItem(CS_TOKEN_KEY, j.token);
   localStorage.setItem(CS_ID_KEY, j.id);
   _csUser = j.id;
+  _csNick = j.nickname || j.id;
   showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
   csRefresh();
 }
@@ -176,6 +194,7 @@ async function csLogout() {
   localStorage.removeItem(CS_TOKEN_KEY);
   localStorage.removeItem(CS_ID_KEY);
   _csUser = null;
+  _csNick = null;
   _csPwOpen = false;
   showToast('로그아웃되었습니다.');
   csRender(null);
@@ -205,6 +224,28 @@ async function csChangePw(savedAt) {
   }
   _csPwOpen = false;
   showToast('비밀번호를 변경했습니다.');
+  csRender(savedAt);
+}
+
+/* ── 닉네임 변경 ── */
+async function csSetNick(savedAt) {
+  if (_csBusy) return;
+  const nickname = (document.getElementById('csNickInp').value || '').trim();
+  if (!nickname) { showToast('닉네임을 입력해주세요.'); return; }
+  if (nickname === _csNick) return;   // 안 바뀌었으면 요청할 필요 없다
+
+  _csBusy = true;
+  const btn = document.getElementById('csNickSaveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const j = await csApi('setnick', { nickname });
+
+  _csBusy = false;
+  btn.disabled = false; btn.textContent = '닉네임 저장';
+
+  if (!j.ok) { showToast(j.error || '닉네임 변경에 실패했습니다.'); return; }
+  _csNick = j.nickname;
+  showToast('닉네임을 저장했습니다.');
   csRender(savedAt);
 }
 
@@ -275,10 +316,12 @@ async function csRefresh() {
     localStorage.removeItem(CS_TOKEN_KEY);
     localStorage.removeItem(CS_ID_KEY);
     _csUser = null;
+    _csNick = null;
     csRender(null);
     return;
   }
   _csUser = j.id;
+  _csNick = j.nickname || j.id;
   csRender(j.savedAt);
 }
 

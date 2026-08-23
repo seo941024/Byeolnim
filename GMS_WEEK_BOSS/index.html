@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260821b" />
+  <link rel="stylesheet" href="style.css?v=20260821c" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -112,6 +112,9 @@
       </button>
       <button class="sb-nav__item" data-sec="cube">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Cube.png" alt="" onerror="this.style.display='none'"></span><span>큐브 시뮬레이터</span>
+      </button>
+      <button class="sb-nav__item" data-sec="familiar">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>패밀리어</span>
       </button>
       <button class="sb-nav__item" data-sec="bosshp">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/boss.webp" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
@@ -517,6 +520,18 @@
       </div>
 
       <div id="bossHPCards" class="bhp-grid"></div>
+    </section>
+
+    <!-- ══════ 패밀리어 ══════ -->
+    <section class="sec" id="sec-familiar">
+      <div class="sec-head">
+        <h2 class="sec-title">패밀리어</h2>
+      </div>
+      <div class="soon-box">
+        <img class="soon-box__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'">
+        <div class="soon-box__title">준비중입니다</div>
+        <div class="soon-box__desc">조금만 기다려주세요.</div>
+      </div>
     </section>
 
     <!-- ══════ 서버 상태 ══════ -->

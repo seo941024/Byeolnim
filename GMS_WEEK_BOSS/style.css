@@ -482,6 +482,16 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ccbtn--del { background: var(--danger-l); color: var(--danger); }
 .ccbtn--del:hover { background: var(--danger); color: #fff; }
 
+/* 아직 안 만든 섹션 자리 표시 */
+.soon-box {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 10px; padding: 60px 20px; text-align: center;
+  background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+}
+.soon-box__icon { width: 64px; height: 64px; object-fit: contain; opacity: .85; }
+.soon-box__title { font-size: 1.05rem; font-weight: 900; color: var(--text); }
+.soon-box__desc { font-size: .8rem; color: var(--text-sub); }
+
 /* 캐릭터 목록 카드의 주간 합산 토글 — 끄면 전체 주간 합계에서 이 캐릭터가 빠진다 */
 .cg-weekrow {
   display: flex; align-items: center; justify-content: space-between;

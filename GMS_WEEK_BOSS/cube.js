@@ -139,7 +139,7 @@ function _rawOpts(dk, part, lv, grade) {
 // pct/flat/colon: 카테고리 1개 항목, 오른쪽 숫자 INPUT
 // unique: 개별 옵션 항목, 오른쪽 없음
 
-/* grade는 하나 또는 여러 개를 받는다. 까미 월루는 시작 등급뿐 아니라 한 단계 아래
+/* grade는 하나 또는 여러 개를 받는다. 직접 큐브 까기는 시작 등급뿐 아니라 한 단계 아래
    등급 옵션도 이탈로 뜨므로, 두 등급을 합쳐 목록을 만들어야 그것도 목표로 걸 수 있다. */
 function _buildLeftOpts(dk, part, lv, grade) {
   const grades = Array.isArray(grade) ? grade : [grade];
@@ -243,10 +243,10 @@ function _refreshRowsIn(sel, grades) {
   });
 }
 
-/* 옵션 시뮬레이터와 까미 월루는 등급 선택칸이 서로 다르다(cubeGrade / hrGrade).
-   예전엔 두 곳의 목표 칸을 한꺼번에 cubeGrade 기준으로 채워서, 까미 월루 목표가
+/* 옵션 시뮬레이터와 직접 큐브 까기는 등급 선택칸이 서로 다르다(cubeGrade / hrGrade).
+   예전엔 두 곳의 목표 칸을 한꺼번에 cubeGrade 기준으로 채워서, 직접 큐브 까기 목표가
    남의 탭 등급에 휘둘려 목록이 비는 일이 있었다. 각자 자기 등급을 보게 나눈다.
-   까미 월루 목표 칸은 시작 등급과 무관하게 이 부위가 가질 수 있는 옵션을 전부
+   직접 큐브 까기 목표 칸은 시작 등급과 무관하게 이 부위가 가질 수 있는 옵션을 전부
    보여준다 — 재사용/크리데미지%처럼 레전드리 전용 옵션도 골라둘 수 있어야 하고,
    고르면 _hrMaybeAutoGrade가 알아서 시작 등급을 그 옵션이 뜨는 등급으로 올려준다. */
 function _refreshAllRows() {
@@ -266,7 +266,7 @@ function _hrRequiredGrade(cat, type) {
   return null;
 }
 
-/* 까미 월루 목표 칸에서 옵션을 직접 고르면, 그 옵션이 뜨는 가장 낮은 등급보다
+/* 직접 큐브 까기 목표 칸에서 옵션을 직접 고르면, 그 옵션이 뜨는 가장 낮은 등급보다
    지금 시작 등급이 낮을 경우 자동으로 그 등급으로 올려준다 — 안 그러면 아무리
    돌려도 목표가 나올 수 없는 조합을 고르고도 이유를 모르게 된다. */
 function _hrMaybeAutoGrade(cat, type) {
@@ -440,7 +440,7 @@ function _partLabel(p) {
 }
 
 /* ═══════════════════════════════════════════════
-   까미 월루 — 큐브를 한 개씩 직접 열어보는 모드
+   직접 큐브 까기 — 큐브를 한 개씩 직접 열어보는 모드
 ═══════════════════════════════════════════════ */
 
 /* 큐브를 번갈아 쓸 수 있으므로 사용 개수는 종류별로 따로 센다 */
@@ -791,7 +791,7 @@ async function initCube() {
   _hrPopulateGrade();
   _addSet(); // 기본 세트 1개
 
-  // 까미 월루 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_refreshAllRows가 채워준다)
+  // 직접 큐브 까기 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_refreshAllRows가 채워준다)
   const goalBox = document.getElementById('hrGoalRows');
   if (goalBox) { for (let i=0;i<3;i++) goalBox.appendChild(_makeRow()); }
   _hrBuildPresets();
@@ -805,7 +805,7 @@ async function initCube() {
   document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });
   _hrReset();
 
-  /* 스페이스바로 재설정. 큐브 탭의 까미 월루가 열려 있을 때만 동작하고,
+  /* 스페이스바로 재설정. 큐브 탭의 직접 큐브 까기가 열려 있을 때만 동작하고,
      입력칸/셀렉트에 포커스가 있으면(값을 고치는 중이면) 가로채지 않는다.
      기본 동작(스크롤·버튼 재클릭)도 막는다. */
   document.addEventListener('keydown', e => {

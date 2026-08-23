@@ -292,7 +292,7 @@ function initStarforce() {
     sfEnhanceOnce();
   });
 
-  /* 스페이스바로 강화. 스타포스 탭의 까미 월루가 열려 있을 때만 동작하고,
+  /* 스페이스바로 강화. 스타포스 탭의 직접 강화하기가 열려 있을 때만 동작하고,
      입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. 스크롤 기본 동작도 막는다. */
   document.addEventListener('keydown', e => {
     if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;

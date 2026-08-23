@@ -420,7 +420,7 @@ function flameSimulate() {
 }
 
 /* ═══════════════════════════════════════════════
-   까미 월루 버튼 — 불꽃을 하나씩 직접 써보는 모드
+   직접 불꽃 쓰기 — 불꽃을 하나씩 직접 써보는 모드
 ═══════════════════════════════════════════════ */
 
 /* 불꽃을 번갈아 쓸 수 있으므로 사용 개수는 종류별로 따로 센다 */
@@ -594,7 +594,7 @@ function initAddOption() {
     <div class="sf-tabs">
       <button class="sf-tab active" data-tab="sim">옵션 시뮬레이터</button>
       <button class="sf-tab" data-tab="score">추옵 계산기</button>
-      <button class="sf-tab" data-tab="hand">까미 월루 버튼</button>
+      <button class="sf-tab" data-tab="hand">직접 불꽃 쓰기</button>
     </div>
     <hr class="sec-sep" />
 
@@ -641,7 +641,7 @@ function initAddOption() {
           </div>
         </div>
 
-        <!-- 목표 옵션 — 탭1(확률 계산)·탭3(까미 월루) 둘 다에서 쓴다. 추옵 계산기 탭에서만 숨긴다. -->
+        <!-- 목표 옵션 — 탭1(확률 계산)·탭3(직접 불꽃 쓰기) 둘 다에서 쓴다. 추옵 계산기 탭에서만 숨긴다. -->
         <div id="flameGoalShared">
           <div class="card__title">목표 옵션</div>
           <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
@@ -788,14 +788,14 @@ function initAddOption() {
   document.getElementById('flameBtnSim').addEventListener('click', flameSimulate);
   document.getElementById('flameBtnScore').addEventListener('click', flameScoreSim);
 
-  // 까미 월루 버튼 — 불꽃 하나씩 직접 굴리기.
+  // 직접 불꽃 쓰기 — 불꽃 하나씩 직접 굴리기.
   // ★ _flameRollOnce를 리스너로 그대로 넘기면 클릭 이벤트 객체가 첫 인자(silent)로
   //   들어가 화면이 안 그려진다 — 인자 없이 감싸서 호출한다.
   document.getElementById('flameBtnRoll')?.addEventListener('click', () => { _flameStopAuto(); _flameRollOnce(); });
   document.getElementById('flameBtnAuto')?.addEventListener('click', _flameStartAuto);
   document.getElementById('flameBtnHandReset')?.addEventListener('click', () => { _flameStopAuto(); _flameHandReset(); });
 
-  /* 스페이스바로 굴리기. 추옵 탭의 까미 월루가 열려 있을 때만 동작하고,
+  /* 스페이스바로 굴리기. 추옵 탭의 직접 불꽃 쓰기가 열려 있을 때만 동작하고,
      입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
   document.addEventListener('keydown', e => {
     if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
@@ -821,7 +821,7 @@ function initAddOption() {
       // 장비 종류·불꽃 선택은 직접 굴리기에서도 써야 하므로 추옵 계산기에서만 숨긴다
       document.getElementById('flameEquipGroup').parentElement.style.display = which === 'score' ? 'none' : '';
       document.getElementById('flameTypeGroup').parentElement.style.display  = which === 'score' ? 'none' : '';
-      // 목표 옵션은 확률 계산·까미 월루 둘 다에서 쓴다(추옵 계산기에서만 숨긴다)
+      // 목표 옵션은 확률 계산·직접 불꽃 쓰기 둘 다에서 쓴다(추옵 계산기에서만 숨긴다)
       document.getElementById('flameGoalShared').style.display      = which === 'score' ? 'none' : '';
       document.getElementById('flameTabSim').style.display          = isSim  ? '' : 'none';
       document.getElementById('flameTabScore').style.display        = which === 'score' ? '' : 'none';

@@ -485,8 +485,6 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 /* ── 패밀리어 ── */
 /* 유효 옵션 표시. 줄 색은 .pot-line[data-grade]가 이미 등급별로 칠해준다. */
 .fam-line__star { margin-right: 6px; color: #fff; text-shadow: 0 0 6px rgba(255,255,255,.7); }
-.fam-best { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
-.fam-best__at { font-size: .72rem; color: var(--text-sub); text-align: right; }
 /* 잠긴 등급 버튼 — 눌리지 않는다는 걸 색으로도 알린다 */
 .sf-toggle.is-locked { opacity: .45; cursor: not-allowed; }
 .fam-log { display: flex; flex-direction: column; gap: 4px; margin-top: 10px; max-height: 420px; overflow-y: auto; }
@@ -496,6 +494,7 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   font-size: .74rem;
 }
 .fam-log-row.is-hit { background: color-mix(in srgb, var(--accent) 14%, var(--bg2)); }
+.fam-log-icon { width: 13px; height: 13px; flex-shrink: 0; image-rendering: pixelated; }
 .fam-log-n { min-width: 42px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .fam-log-line { font-weight: 700; }
 .fam-log-line[data-grade="RARE"]   { color: #6699ff; }

@@ -15,10 +15,13 @@
 
 const FAM_CARD_IMG = 'images/icons/Use_Mystical_Familiar_Card.png';
 
+/* 등급 아이콘 — 큐브 시뮬레이터와 같은 파일을 쓴다 */
+function _famIconSrc(g) { return `images/icons/${(g||'rare').toLowerCase()}.png`; }
+
 /* 지금 열려 있는 등급. 나중에 에픽까지 열면 선택형으로 바꾼다. */
 const FAM_OPEN_RANKS = ['UNIQUE'];
 
-let _famState = { rank: 'UNIQUE', cards: 0, lines: [], log: [], best: null };
+let _famState = { rank: 'UNIQUE', cards: 0, lines: [], log: [] };
 
 function _famData() { return window.FAMILIAR_DATA; }
 
@@ -61,15 +64,12 @@ function _famRollOnce() {
   const pc = _famPrimeCount(_famState.lines);
   _famState.log.unshift({ n: _famState.cards, lines: _famState.lines, prime: pc });
   if (_famState.log.length > 100) _famState.log.length = 100;
-  if (!_famState.best || pc > _famState.best.prime) {
-    _famState.best = { n: _famState.cards, lines: _famState.lines, prime: pc };
-  }
   _famRender();
 }
 
 function _famReset() {
   _famStopAuto();
-  _famState = { rank: _famState.rank, cards: 0, lines: [], log: [], best: null };
+  _famState = { rank: _famState.rank, cards: 0, lines: [], log: [] };
   _famRender();
 }
 
@@ -120,9 +120,6 @@ function _famStartAuto() {
       const lines = _famRoll(_famState.rank);
       _famState.lines = lines;
       const pc = _famPrimeCount(lines);
-      if (!_famState.best || pc > _famState.best.prime) {
-        _famState.best = { n: _famState.cards, lines, prime: pc };
-      }
       if (_famGoalsMet(lines)) {
         _famState.log.unshift({ n: _famState.cards, lines, prime: pc, goal: true });
         if (_famState.log.length > 100) _famState.log.length = 100;
@@ -173,11 +170,12 @@ function _famRender() {
   const linesEl = document.getElementById('famLines');
   const cntEl = document.getElementById('famCardCount');
   const logEl = document.getElementById('famLog');
-  const bestEl = document.getElementById('famBest');
   if (!panel) return;
 
   panel.dataset.grade = _famState.rank;
   document.getElementById('famPanelTitle').textContent = _famState.rank;
+  const icoEl = document.getElementById('famPanelIcon');
+  if (icoEl) { icoEl.src = _famIconSrc(_famState.rank); icoEl.style.display = ''; }
 
   linesEl.innerHTML = _famState.lines.length
     ? _famState.lines.map(_famLineHtml).join('')
@@ -185,17 +183,11 @@ function _famRender() {
 
   if (cntEl) cntEl.textContent = _famState.cards.toLocaleString();
 
-  if (bestEl) {
-    bestEl.innerHTML = _famState.best && _famState.best.prime > 0
-      ? _famState.best.lines.map(_famLineHtml).join('') +
-        `<div class="fam-best__at">${_famState.best.n.toLocaleString()}번째</div>`
-      : `<div class="pot-line pot-line--empty">아직 없음</div>`;
-  }
-
   if (logEl) {
     logEl.innerHTML = _famState.log.map(e => `
       <div class="fam-log-row${e.prime ? ' is-hit' : ''}">
         <span class="fam-log-n">${e.n.toLocaleString()}</span>
+        <img class="fam-log-icon" src="${_famIconSrc(_famState.rank)}" alt="" onerror="this.style.display='none'">
         ${e.lines.map(l => `<span class="fam-log-line" data-grade="${l.grade}">${l.opt.en}</span>`).join('')}
       </div>`).join('');
   }
@@ -220,29 +212,42 @@ function initFamiliar() {
 
     <div class="sf-layout">
       <!-- 왼쪽: 설정 -->
-      <div class="card" style="display:flex;flex-direction:column;gap:16px">
+      <div class="card">
         <div>
           <div class="card__title">등급</div>
           <div class="sf-toggle-group" id="famRankGroup" style="margin-top:8px">${rankBtns}</div>
           <p class="dt-help" style="margin-top:8px">에픽·레어는 아랫줄 확률 자료가 없어 잠겨 있습니다.</p>
         </div>
 
-        <div>
-          <div class="card__title">목표 옵션</div>
-          <div id="famGoalRows" style="display:flex;flex-direction:column;gap:8px;margin-top:10px">
-            <select class="sel fam-goal-sel"></select>
-            <select class="sel fam-goal-sel"></select>
+        <div class="card__title mt16">목표 옵션</div>
+        <div class="cube-goal-hint">
+          한 개만 고르면 <b>어느 줄에든</b> 뜨면 정지, 두 개를 고르면 <b>둘 다</b> 떠야 정지합니다.<br>
+          예 · 공격력 6% 하나 → 한 줄이라도 뜨면 정지 / 공격력 6%를 두 칸 → 두 줄 다 떠야 정지
+        </div>
+        <div id="famGoalRows">
+          <select class="sel fam-goal-sel"></select>
+          <select class="sel fam-goal-sel mt8"></select>
+        </div>
+
+        <div class="cube-btns mt16">
+          <button class="sbtn sbtn--primary cube-btn-full" id="famRollBtn">옵션 재설정 [S]</button>
+          <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famAutoBtn">목표까지 자동</button>
+          <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famResetBtn">초기화</button>
+        </div>
+      </div>
+
+      <!-- 오른쪽: 결과 -->
+      <div class="card">
+        <div class="card__title">결과</div>
+        <div class="pot-panel mt8" id="famPanel" data-grade="UNIQUE">
+          <div class="pot-panel__head">
+            <img class="pot-panel__icon" id="famPanelIcon" src="" alt="" onerror="this.style.display='none'">
+            <span>잠재옵션 <span id="famPanelTitle">UNIQUE</span></span>
           </div>
-          <p class="dt-help" style="margin-top:8px">한 개만 고르면 어느 줄에든 뜨면 달성, 두 개를 고르면 둘 다 떠야 달성합니다.</p>
+          <div class="pot-panel__lines" id="famLines"></div>
         </div>
 
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="sbtn sbtn--add" id="famRollBtn">옵션 재설정 [S]</button>
-          <button class="sbtn sbtn--ghost" id="famAutoBtn">목표까지 자동</button>
-          <button class="sbtn sbtn--ghost" id="famResetBtn">초기화</button>
-        </div>
-
-        <div class="sf-res-item">
+        <div class="sf-res-item mt16">
           <span class="sf-res-label">사용한 카드</span>
           <span class="sf-res-val hr-cubecount">
             <span class="hr-cubecount__item">
@@ -252,18 +257,6 @@ function initFamiliar() {
           </span>
         </div>
 
-        <div>
-          <div class="card__title">지금까지 가장 좋은 판</div>
-          <div id="famBest" class="fam-best"></div>
-        </div>
-      </div>
-
-      <!-- 오른쪽: 결과 -->
-      <div class="card">
-        <div class="pot-panel" id="famPanel" data-grade="UNIQUE">
-          <div class="pot-panel__head"><span id="famPanelTitle">UNIQUE</span></div>
-          <div class="pot-panel__lines" id="famLines"></div>
-        </div>
         <div class="card__title mt16">기록</div>
         <div id="famLog" class="fam-log"></div>
         <p class="dt-help mt16">${D.SOURCE_NOTE}</p>

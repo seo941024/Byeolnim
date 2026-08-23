@@ -1113,7 +1113,9 @@ document.getElementById('charList').addEventListener('click', e => {
 ['confirmClose','confirmCancel'].forEach(id => {
   document.getElementById(id).addEventListener('click', () => document.getElementById('overlayConfirm').classList.remove('open'));
 });
-document.querySelectorAll('.overlay').forEach(ov => {
+// 로그인/닉네임/비밀번호 입력 중에 바깥을 잘못 눌러 폼이 통째로 날아가는 게 짜증난다는
+// 피드백으로 overlayAuth는 제외했다 — ×나 로그인 버튼을 다시 눌러야 닫힌다.
+document.querySelectorAll('.overlay:not(#overlayAuth)').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
 
@@ -1583,6 +1585,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 08. 24.',
+    items: [
+      {
+        head: '로그인 창이 바깥을 눌러도 안 닫히게 했습니다',
+        desc: '아이디·비밀번호·닉네임을 입력하다가 실수로 바깥을 눌러 폼이 날아가는 걸 막았습니다. ×나 로그인 버튼을 다시 눌러야 닫힙니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 23.',
     items: [
       {
@@ -1746,7 +1757,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-23-nickname',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-24-authclick',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

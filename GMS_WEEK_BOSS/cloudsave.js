@@ -1,0 +1,209 @@
+/* ═══════════════════════════════════════════════
+   클라우드 저장 — 회원가입 / 로그인 / 서버 저장·불러오기
+
+   파일로 주고받던 백업을 서버에 올려두고 아이디로 꺼내 쓰게 한다.
+   올리는 내용은 기존 "내보내기" 번들과 완전히 같다(state + localStorage 전체).
+
+   토큰은 localStorage에 둔다. 30일 뒤 서버에서 자동 만료된다.
+═══════════════════════════════════════════════ */
+
+const CS_TOKEN_KEY = 'gms_cloud_token';
+const CS_ID_KEY    = 'gms_cloud_id';
+
+let _csUser = null;      // 로그인된 아이디
+let _csBusy = false;
+
+function csToken() { return localStorage.getItem(CS_TOKEN_KEY) || ''; }
+
+async function csApi(action, extra) {
+  const r = await fetch('/api/auth', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(Object.assign({ action, token: csToken() }, extra || {})),
+  });
+  let j = null;
+  try { j = await r.json(); } catch { j = null; }
+  if (!j) return { ok: false, error: '서버 응답을 읽지 못했습니다' };
+  return j;
+}
+
+/* 지금 브라우저에 있는 모든 데이터를 한 덩어리로 — 기존 내보내기와 같은 형식 */
+function csCollectBundle() {
+  const extra = {};
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k === STORAGE_KEYS.boss) continue;   // state로 따로 담는다
+    if (k === CS_TOKEN_KEY || k === CS_ID_KEY) continue;  // 로그인 정보는 올리지 않는다
+    extra[k] = localStorage.getItem(k);
+  }
+  return { _mapbbu: 1, state, extra };
+}
+
+/* 받아온 번들을 브라우저에 되살린다 */
+function csApplyBundle(bundle) {
+  if (!bundle) return false;
+  if (bundle.state) { state = bundle.state; save(); }
+  Object.entries(bundle.extra || {}).forEach(([k, v]) => {
+    if (typeof v === 'string') localStorage.setItem(k, v);
+  });
+  return true;
+}
+
+function csFmtTime(ms) {
+  if (!ms) return '없음';
+  const d = new Date(ms);
+  const p = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}. ${p(d.getMonth() + 1)}. ${p(d.getDate())}. ${p(d.getHours())}:${p(d.getMinutes())}`;
+}
+
+/* ── 화면 그리기 ── */
+function csRender(savedAt) {
+  const box = document.getElementById('cloudBox');
+  if (!box) return;
+
+  if (!_csUser) {
+    box.innerHTML = `
+      <div class="cs-row">
+        <input class="inp cs-inp" id="csId" placeholder="아이디" maxlength="16" autocomplete="username">
+        <input class="inp cs-inp" id="csPw" type="password" placeholder="비밀번호" maxlength="10" autocomplete="current-password">
+      </div>
+      <div class="cs-row mt8">
+        <button class="sbtn sbtn--primary" id="csLoginBtn">로그인</button>
+        <button class="sbtn sbtn--ghost" id="csSignupBtn">회원가입</button>
+      </div>
+      <p class="dt-help mt8">아이디는 영문·숫자 3~16자이고 대소문자를 구분합니다. 비밀번호는 4~10자입니다.</p>`;
+    document.getElementById('csLoginBtn').addEventListener('click', () => csAuth('login'));
+    document.getElementById('csSignupBtn').addEventListener('click', () => csAuth('signup'));
+    document.getElementById('csPw').addEventListener('keydown', e => { if (e.key === 'Enter') csAuth('login'); });
+    return;
+  }
+
+  box.innerHTML = `
+    <div class="cs-me">
+      <span class="cs-me__id">${_csUser}</span>
+      <button class="sbtn sbtn--ghost sbtn--sm" id="csLogoutBtn">로그아웃</button>
+    </div>
+    <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
+    <div class="cs-row mt8">
+      <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
+      <button class="sbtn sbtn--ghost" id="csLoadBtn">서버에서 불러오기</button>
+    </div>
+    <p class="dt-help mt8">저장하면 이 기기의 모든 데이터가 서버에 올라가고, 불러오면 이 기기의 데이터를 서버 것으로 덮어씁니다.</p>`;
+
+  document.getElementById('csLogoutBtn').addEventListener('click', csLogout);
+  document.getElementById('csSaveBtn').addEventListener('click', csSave);
+  document.getElementById('csLoadBtn').addEventListener('click', csLoad);
+}
+
+/* ── 가입 / 로그인 ── */
+async function csAuth(action) {
+  if (_csBusy) return;
+  const id = (document.getElementById('csId').value || '').trim();
+  const pw = document.getElementById('csPw').value || '';
+  if (!id || !pw) { showToast('아이디와 비밀번호를 입력해주세요.'); return; }
+
+  _csBusy = true;
+  const btn = document.getElementById(action === 'login' ? 'csLoginBtn' : 'csSignupBtn');
+  const label = btn.textContent;
+  btn.disabled = true; btn.textContent = '처리 중...';
+
+  const j = await csApi(action, { id, pw });
+
+  btn.disabled = false; btn.textContent = label;
+  _csBusy = false;
+
+  if (!j.ok) { showToast(j.error || '실패했습니다.'); return; }
+
+  localStorage.setItem(CS_TOKEN_KEY, j.token);
+  localStorage.setItem(CS_ID_KEY, j.id);
+  _csUser = j.id;
+  showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
+  csRefresh();
+}
+
+async function csLogout() {
+  await csApi('logout');
+  localStorage.removeItem(CS_TOKEN_KEY);
+  localStorage.removeItem(CS_ID_KEY);
+  _csUser = null;
+  showToast('로그아웃되었습니다.');
+  csRender(null);
+}
+
+/* ── 저장 / 불러오기 ── */
+async function csSave() {
+  if (_csBusy) return;
+  _csBusy = true;
+  const btn = document.getElementById('csSaveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  const j = await csApi('save', { data: JSON.stringify(csCollectBundle()) });
+
+  btn.disabled = false; btn.textContent = '서버에 저장';
+  _csBusy = false;
+
+  if (!j.ok) { showToast(j.error || '저장에 실패했습니다.'); return; }
+  const el = document.getElementById('csSavedAt');
+  if (el) el.textContent = csFmtTime(j.at);
+  showToast('서버에 저장했습니다.');
+}
+
+async function csLoad() {
+  if (_csBusy) return;
+
+  /* 덮어쓰기는 되돌릴 수 없으니 먼저 확인받는다 */
+  const msgEl = document.getElementById('confirmMsg');
+  const ov = document.getElementById('overlayConfirm');
+  if (msgEl && ov) {
+    msgEl.textContent = '서버에 저장된 데이터로 이 기기의 데이터를 덮어씁니다. 계속할까요?';
+    ov.classList.add('open');
+    document.getElementById('confirmOk').onclick = () => {
+      ov.classList.remove('open');
+      csDoLoad();
+    };
+    return;
+  }
+  csDoLoad();
+}
+
+async function csDoLoad() {
+  _csBusy = true;
+  const btn = document.getElementById('csLoadBtn');
+  if (btn) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
+
+  const j = await csApi('load');
+
+  if (btn) { btn.disabled = false; btn.textContent = '서버에서 불러오기'; }
+  _csBusy = false;
+
+  if (!j.ok) { showToast(j.error || '불러오기에 실패했습니다.'); return; }
+  if (j.data == null) { showToast('서버에 저장된 데이터가 없습니다.'); return; }
+
+  let bundle = null;
+  try { bundle = JSON.parse(j.data); } catch { bundle = null; }
+  if (!bundle) { showToast('저장된 데이터를 읽지 못했습니다.'); return; }
+
+  csApplyBundle(bundle);
+  showToast('불러오기 완료! 새로고침합니다…');
+  setTimeout(() => location.reload(), 600);
+}
+
+/* ── 로그인 상태 확인 ── */
+async function csRefresh() {
+  if (!csToken()) { _csUser = null; csRender(null); return; }
+  const j = await csApi('me');
+  if (!j.ok) {
+    // 토큰이 만료됐으면 조용히 로그아웃 상태로
+    localStorage.removeItem(CS_TOKEN_KEY);
+    localStorage.removeItem(CS_ID_KEY);
+    _csUser = null;
+    csRender(null);
+    return;
+  }
+  _csUser = j.id;
+  csRender(j.savedAt);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('cloudBox')) csRefresh();
+});

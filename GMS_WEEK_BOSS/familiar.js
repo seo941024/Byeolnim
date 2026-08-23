@@ -39,15 +39,18 @@ function _famPick(pool) {
   return pool[pool.length - 1];
 }
 
-/* 두 줄을 굴린다. 반환: [{opt, grade}, {opt, grade}] */
+/* 두 줄을 굴린다. 반환: [{opt, grade}, {opt, grade}]
+   레어는 아랫줄이 커먼 풀에서 나오는데 커먼 확률 자료가 없다. 없는 풀을
+   지어내는 대신 두 줄 모두 레어에서 뽑는다(화면에 그 사실을 적어둔다). */
 function _famRoll(rank) {
   const D = _famData();
   const lower = _famLower(rank);
-  const bothCurrent = Math.random() < D.BOTH_CURRENT_TIER;
+  const hasLower = !!D.LINES[lower];
+  const bothCurrent = !hasLower || Math.random() < D.BOTH_CURRENT_TIER;
   const g2 = bothCurrent ? rank : lower;
   return [
-    { opt: _famPick(D.LINES[rank]),  grade: rank, },
-    { opt: _famPick(D.LINES[g2]),    grade: g2,   },
+    { opt: _famPick(D.LINES[rank]), grade: rank },
+    { opt: _famPick(D.LINES[g2]),   grade: g2   },
   ];
 }
 
@@ -142,9 +145,9 @@ function _famBuildGoalOpts() {
   const D = _famData();
   const rank = _famState.rank, lower = _famLower(rank);
   const seen = new Set();
-  const groups = [rank, lower].map(g => {
+  const groups = [rank, lower].filter(g => D.LINES[g]).map(g => {
     const items = D.LINES[g].filter(o => o.pct > 0 && !seen.has(o.key) && seen.add(o.key));
-    return `<optgroup label="${g}">` +
+    return `<optgroup label="${D.RANK_LABEL[g]}">` +
       items.map(o => `<option value="${o.key}">${o.en}</option>`).join('') + '</optgroup>';
   }).join('');
   return '<option value="">선택 안함</option>' + groups;
@@ -173,7 +176,7 @@ function _famRender() {
   if (!panel) return;
 
   panel.dataset.grade = _famState.rank;
-  document.getElementById('famPanelTitle').textContent = _famState.rank;
+  document.getElementById('famPanelTitle').textContent = D.RANK_LABEL[_famState.rank] || _famState.rank;
   const icoEl = document.getElementById('famPanelIcon');
   if (icoEl) { icoEl.src = _famIconSrc(_famState.rank); icoEl.style.display = ''; }
 
@@ -182,6 +185,26 @@ function _famRender() {
     : `<div class="pot-line pot-line--empty">카드를 사용해 옵션을 확인하세요</div>`;
 
   if (cntEl) cntEl.textContent = _famState.cards.toLocaleString();
+
+  /* 왼쪽 카드 그림도 등급에 맞춰 바꾼다 */
+  const cardImg = document.getElementById('famCardImg');
+  if (cardImg) { cardImg.src = _ruCardSrc(_famState.rank); cardImg.style.display = ''; }
+
+  /* 레어는 확률이 추정치라 그 사실을 반드시 같이 띄운다 */
+  const noteEl = document.getElementById('famNote');
+  if (noteEl) {
+    const lower = _famLower(_famState.rank);
+    const estList = D.ESTIMATED_RANKS || [];
+    /* 이 판에 실제로 쓰이는 등급(현재 + 아랫줄) 중 추정치인 것만 짚어준다 */
+    const used = [_famState.rank, D.LINES[lower] ? lower : null].filter(Boolean);
+    const est = used.filter(function (g) { return estList.indexOf(g) >= 0; })
+                    .map(function (g) { return D.RANK_LABEL[g]; });
+    noteEl.innerHTML =
+      (est.length
+        ? '<b>' + est.join('·') + ' 옵션은 정확한 자료가 없어 정규화 방식으로 추론된 값입니다.</b><br>'
+        : '') +
+      D.SOURCE_NOTE;
+  }
 
   if (logEl) {
     logEl.innerHTML = _famState.log.map(e => `
@@ -193,84 +216,248 @@ function _famRender() {
   }
 }
 
+
+/* ═══════════════════════════════════════════════
+   등급업 시뮬레이터
+   레어 → 에픽 → 유니크. 확률과 필요 포인트는 넥슨 공식 공지 그대로다.
+   천장은 공식에 없는 규칙이라 따로 둔다 — 정해진 횟수만큼 연속 실패하면
+   그 다음 시도는 무조건 성공한다. */
+const FAM_PITY = { RARE: 5, EPIC: 14 };
+
+let _ruState = { rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false };
+
+function _ruMiniSrc(g) { return 'images/familiar/mini_' + (g || 'rare').toLowerCase() + '.png'; }
+function _ruCardSrc(g) { return 'images/familiar/card_' + (g || 'rare').toLowerCase() + '.png'; }
+
+function _ruReset() {
+  _ruStopAuto();
+  _ruState = { rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false };
+  _ruRender();
+}
+
+/* 한 번 시도. 천장에 닿았으면 확률을 무시하고 성공시킨다. */
+function _ruStep() {
+  if (_ruState.done) return false;
+  const D = _famData();
+  const cur = _ruState.rank;
+  const info = D.RANKUP[cur];
+  if (!info) { _ruState.done = true; return false; }
+
+  const cap = FAM_PITY[cur];
+  const forced = cap != null && _ruState.pity >= cap;
+  const ok = forced || Math.random() < info.chance;
+
+  _ruState.tries++;
+  _ruState.log.unshift({ n: _ruState.tries, from: cur, ok: ok, forced: forced });
+  if (_ruState.log.length > 200) _ruState.log.length = 200;
+
+  if (ok) {
+    _ruState.rank = info.to;
+    _ruState.pity = 0;
+    if (!D.RANKUP[info.to]) _ruState.done = true;
+  } else {
+    _ruState.fails++;
+    _ruState.pity++;
+  }
+  return ok;
+}
+
+function _ruRollOnce() { _ruStep(); _ruRender(); }
+
+let _ruAutoTimer = null;
+function _ruStopAuto() {
+  if (_ruAutoTimer) { clearTimeout(_ruAutoTimer); _ruAutoTimer = null; }
+  const b = document.getElementById('ruAutoBtn');
+  if (b) b.textContent = '유니크까지 자동';
+}
+
+function _ruStartAuto() {
+  if (_ruAutoTimer) { _ruStopAuto(); return; }
+  if (_ruState.done) { alert('이미 유니크입니다. 초기화 후 다시 시작해주세요.'); return; }
+  const b = document.getElementById('ruAutoBtn');
+  if (b) b.textContent = '중지';
+  const step = function () {
+    for (let i = 0; i < 200; i++) {
+      _ruStep();
+      if (_ruState.done) { _ruStopAuto(); _ruRender(); return; }
+    }
+    _ruRender();
+    _ruAutoTimer = setTimeout(step, 0);
+  };
+  step();
+}
+
+function _ruRender() {
+  const D = _famData(); if (!D) return;
+  const wrap = document.getElementById('ruCards'); if (!wrap) return;
+
+  /* 세 등급 카드를 나란히 두고 지금 등급만 밝게 — 어디까지 왔는지 바로 보이게 */
+  const order = ['RARE', 'EPIC', 'UNIQUE'];
+  const curIdx = order.indexOf(_ruState.rank);
+  wrap.innerHTML = order.map(function (g, i) {
+    const cls = i === curIdx ? ' is-cur' : (i < curIdx ? ' is-past' : '');
+    return '<div class="ru-card' + cls + '">' +
+      '<img src="' + _ruMiniSrc(g) + '" alt="' + D.RANK_LABEL[g] + '" onerror="this.style.display=\'none\'">' +
+      '<span class="ru-card__lbl" data-grade="' + g + '">' + D.RANK_LABEL[g] + '</span>' +
+      '</div>';
+  }).join('<span class="ru-arrow">▶</span>');
+
+  const info = D.RANKUP[_ruState.rank];
+  const cap = FAM_PITY[_ruState.rank];
+  const now = document.getElementById('ruNow');
+  now.textContent = D.RANK_LABEL[_ruState.rank];
+  now.dataset.grade = _ruState.rank;
+  document.getElementById('ruChance').textContent = info ? Math.round(info.chance * 100) + '%' : '—';
+  document.getElementById('ruPoints').textContent = info ? info.points.toLocaleString() : '—';
+  document.getElementById('ruPity').textContent = (info && cap != null) ? (_ruState.pity + ' / ' + cap) : '—';
+  document.getElementById('ruTries').textContent = _ruState.tries.toLocaleString();
+  document.getElementById('ruFails').textContent = _ruState.fails.toLocaleString();
+
+  let pts = 0;
+  _ruState.log.forEach(function (e) { if (D.RANKUP[e.from]) pts += D.RANKUP[e.from].points; });
+  document.getElementById('ruTotalPoints').textContent = pts.toLocaleString();
+
+  const btn = document.getElementById('ruRollBtn');
+  if (btn) { btn.disabled = _ruState.done; btn.textContent = _ruState.done ? '유니크 달성' : '등급업 [S]'; }
+
+  document.getElementById('ruLog').innerHTML = _ruState.log.map(function (e) {
+    return '<div class="fam-log-row' + (e.ok ? ' is-hit' : '') + '">' +
+      '<span class="fam-log-n">' + e.n + '</span>' +
+      '<img class="fam-log-icon" src="images/icons/' + e.from.toLowerCase() + '.png" alt="" onerror="this.style.display=\'none\'">' +
+      '<span class="fam-log-line" data-grade="' + e.from + '">' + D.RANK_LABEL[e.from] + '</span>' +
+      '<span class="ru-log-res ' + (e.ok ? 'ok' : 'no') + '">' + (e.ok ? '성공' : '실패') + '</span>' +
+      (e.forced ? '<span class="ru-log-pity">천장</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
 function initFamiliar() {
   const sec = document.getElementById('sec-familiar');
   const D = _famData();
   if (!sec || !D) return;
 
-  const rankBtns = D.RANKS.filter(r => r !== 'LEGENDARY' && r !== 'COMMON').map(r => {
-    const open = FAM_OPEN_RANKS.includes(r);
-    return `<button class="sf-toggle${r === 'UNIQUE' ? ' active' : ''}${open ? '' : ' is-locked'}"
-              data-rank="${r}"${open ? '' : ' disabled title="확률 자료가 없어 아직 잠겨 있습니다"'}>
-              ${r}${open ? '' : ' 🔒'}
-            </button>`;
+  const rankBtns = ['RARE', 'EPIC', 'UNIQUE'].map(function (r) {
+    return '<button class="sf-toggle' + (r === 'UNIQUE' ? ' active' : '') + '" data-rank="' + r + '">' +
+      D.RANK_LABEL[r] + '</button>';
   }).join('');
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">패밀리어 시뮬레이터</h2></div>
-    <p class="dt-help">패밀리어 카드로 잠재 옵션을 재설정합니다. 두 줄 중 아랫줄은 한 단계 아래 등급에서 뜨고, 드물게 두 줄 모두 현재 등급에서 뜹니다.</p>
 
-    <div class="sf-layout">
-      <!-- 왼쪽: 설정 -->
-      <div class="card">
-        <div>
-          <div class="card__title">등급</div>
-          <div class="sf-toggle-group" id="famRankGroup" style="margin-top:8px">${rankBtns}</div>
-          <p class="dt-help" style="margin-top:8px">에픽·레어는 아랫줄 확률 자료가 없어 잠겨 있습니다.</p>
+    <div class="sf-tabs">
+      <button class="sf-tab active" data-famtab="rankup">등급업 시뮬레이터</button>
+      <button class="sf-tab" data-famtab="option">옵션 시뮬레이터</button>
+    </div>
+    <hr class="sec-sep" />
+
+    <!-- ══ 등급업 ══ -->
+    <div id="famTabRankup">
+      <p class="dt-help">레어부터 시작해 유니크까지 올립니다. 등급업 확률과 필요 포인트는 넥슨 공식 수치이고, 천장은 정해진 횟수만큼 연속 실패하면 다음 시도가 확정으로 성공하는 규칙입니다.</p>
+
+      <div class="ru-track" id="ruCards"></div>
+
+      <div class="sf-layout mt16">
+        <div class="card">
+          <div class="card__title">현재 상태</div>
+          <div class="sf-res-item"><span class="sf-res-label">등급</span><span class="sf-res-val ru-now" id="ruNow">레어</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="ruChance">80%</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">필요 포인트</span><span class="sf-res-val" id="ruPoints">100</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">천장</span><span class="sf-res-val" id="ruPity">0 / 5</span></div>
+
+          <div class="cube-btns mt16">
+            <button class="sbtn sbtn--primary cube-btn-full" id="ruRollBtn">등급업 [S]</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruAutoBtn">유니크까지 자동</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruResetBtn">초기화</button>
+          </div>
         </div>
 
-        <div class="card__title mt16">목표 옵션</div>
-        <div class="cube-goal-hint">
-          한 개만 고르면 <b>어느 줄에든</b> 뜨면 정지, 두 개를 고르면 <b>둘 다</b> 떠야 정지합니다.<br>
-          예 · 공격력 6% 하나 → 한 줄이라도 뜨면 정지 / 공격력 6%를 두 칸 → 두 줄 다 떠야 정지
-        </div>
-        <div id="famGoalRows">
-          <select class="sel fam-goal-sel"></select>
-          <select class="sel fam-goal-sel mt8"></select>
-        </div>
-
-        <div class="cube-btns mt16">
-          <button class="sbtn sbtn--primary cube-btn-full" id="famRollBtn">옵션 재설정 [S]</button>
-          <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famAutoBtn">목표까지 자동</button>
-          <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famResetBtn">초기화</button>
+        <div class="card">
+          <div class="card__title">누적</div>
+          <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val" id="ruTries">0</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="ruFails">0</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">소모 포인트</span><span class="sf-res-val" id="ruTotalPoints">0</span></div>
+          <div class="card__title mt16">기록</div>
+          <div id="ruLog" class="fam-log"></div>
         </div>
       </div>
+    </div>
 
-      <!-- 오른쪽: 결과 -->
-      <div class="card">
-        <div class="card__title">결과</div>
-        <div class="pot-panel mt8" id="famPanel" data-grade="UNIQUE">
-          <div class="pot-panel__head">
-            <img class="pot-panel__icon" id="famPanelIcon" src="" alt="" onerror="this.style.display='none'">
-            <span>잠재옵션 <span id="famPanelTitle">UNIQUE</span></span>
+    <!-- ══ 옵션 ══ -->
+    <div id="famTabOption" style="display:none">
+      <p class="dt-help">패밀리어 카드로 잠재 옵션을 재설정합니다. 두 줄 중 아랫줄은 한 단계 아래 등급에서 뜨고, 드물게 두 줄 모두 현재 등급에서 뜹니다.</p>
+
+      <div class="sf-layout">
+        <div class="card">
+          <div class="card__title">등급</div>
+          <div class="sf-toggle-group" id="famRankGroup" style="margin-top:8px">${rankBtns}</div>
+          <div class="fam-cardview"><img id="famCardImg" src="" alt="" onerror="this.style.display='none'"></div>
+
+          <div class="card__title mt16">목표 옵션</div>
+          <div class="cube-goal-hint">
+            한 개만 고르면 <b>어느 줄에든</b> 뜨면 정지, 두 개를 고르면 <b>둘 다</b> 떠야 정지합니다.
           </div>
-          <div class="pot-panel__lines" id="famLines"></div>
+          <div id="famGoalRows">
+            <select class="sel fam-goal-sel"></select>
+            <select class="sel fam-goal-sel mt8"></select>
+          </div>
+
+          <div class="cube-btns mt16">
+            <button class="sbtn sbtn--primary cube-btn-full" id="famRollBtn">옵션 재설정 [S]</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famAutoBtn">목표까지 자동</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famResetBtn">초기화</button>
+          </div>
         </div>
 
-        <div class="sf-res-item mt16">
-          <span class="sf-res-label">사용한 카드</span>
-          <span class="sf-res-val hr-cubecount">
-            <span class="hr-cubecount__item">
-              <img src="${FAM_CARD_IMG}" alt="패밀리어 카드" title="신비한 패밀리어 카드" onerror="this.style.display='none'">
-              <span id="famCardCount">0</span>개
+        <div class="card">
+          <div class="card__title">결과</div>
+          <div class="pot-panel mt8" id="famPanel" data-grade="UNIQUE">
+            <div class="pot-panel__head">
+              <img class="pot-panel__icon" id="famPanelIcon" src="" alt="" onerror="this.style.display='none'">
+              <span>잠재옵션 <span id="famPanelTitle">유니크</span></span>
+            </div>
+            <div class="pot-panel__lines" id="famLines"></div>
+          </div>
+
+          <div class="sf-res-item mt16">
+            <span class="sf-res-label">사용한 카드</span>
+            <span class="sf-res-val hr-cubecount">
+              <span class="hr-cubecount__item">
+                <img src="${FAM_CARD_IMG}" alt="패밀리어 카드" title="신비한 패밀리어 카드" onerror="this.style.display='none'">
+                <span id="famCardCount">0</span>개
+              </span>
             </span>
-          </span>
-        </div>
+          </div>
 
-        <div class="card__title mt16">기록</div>
-        <div id="famLog" class="fam-log"></div>
-        <p class="dt-help mt16">${D.SOURCE_NOTE}</p>
+          <div class="card__title mt16">기록</div>
+          <div id="famLog" class="fam-log"></div>
+          <p class="dt-help mt16" id="famNote"></p>
+        </div>
       </div>
     </div>`;
 
-  document.getElementById('famRollBtn')?.addEventListener('click', () => { _famStopAuto(); _famRollOnce(); });
-  document.getElementById('famAutoBtn')?.addEventListener('click', _famStartAuto);
-  document.getElementById('famResetBtn')?.addEventListener('click', _famReset);
+  // 탭 전환
+  sec.querySelectorAll('.sf-tab[data-famtab]').forEach(function (tab) {
+    tab.addEventListener('click', function () {
+      sec.querySelectorAll('.sf-tab[data-famtab]').forEach(function (t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      const t = tab.dataset.famtab;
+      document.getElementById('famTabRankup').style.display = t === 'rankup' ? '' : 'none';
+      document.getElementById('famTabOption').style.display = t === 'option' ? '' : 'none';
+      _famStopAuto(); _ruStopAuto();
+    });
+  });
 
-  sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(btn => {
-    btn.addEventListener('click', () => {
-      if (btn.disabled) return;
-      sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(b => b.classList.remove('active'));
+  document.getElementById('ruRollBtn').addEventListener('click', function () { _ruStopAuto(); _ruRollOnce(); });
+  document.getElementById('ruAutoBtn').addEventListener('click', _ruStartAuto);
+  document.getElementById('ruResetBtn').addEventListener('click', _ruReset);
+
+  document.getElementById('famRollBtn').addEventListener('click', function () { _famStopAuto(); _famRollOnce(); });
+  document.getElementById('famAutoBtn').addEventListener('click', _famStartAuto);
+  document.getElementById('famResetBtn').addEventListener('click', _famReset);
+
+  sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(function (b) { b.classList.remove('active'); });
       btn.classList.add('active');
       _famState.rank = btn.dataset.rank;
       _famRefreshGoals();
@@ -278,21 +465,20 @@ function initFamiliar() {
     });
   });
 
-  _famRefreshGoals();
-
-  /* S 키로 재설정 — 큐브와 같은 규칙. 이 탭이 열려 있고 입력칸에 포커스가
-     없을 때만 가로챈다. */
-  document.addEventListener('keydown', e => {
+  /* S 키 — 지금 열려 있는 탭에 맞는 동작을 한다 */
+  document.addEventListener('keydown', function (e) {
     if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    if (!document.getElementById('sec-familiar')?.classList.contains('active')) return;
-    const tag = document.activeElement?.tagName;
+    if (!document.getElementById('sec-familiar').classList.contains('active')) return;
+    const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay[style*="flex"]')) return;
     e.preventDefault();
-    _famStopAuto();
-    _famRollOnce();
+    if (document.getElementById('famTabRankup').style.display !== 'none') { _ruStopAuto(); _ruRollOnce(); }
+    else { _famStopAuto(); _famRollOnce(); }
   });
 
+  _famRefreshGoals();
+  _ruRender();
   _famRender();
 }
 
@@ -306,7 +492,7 @@ function ensureFamiliarReady(cb) {
   if (!_famLoading) {
     _famLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_familiar.js?v=20260821a';
+      s.src = 'data_familiar.js?v=20260821c';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_familiar.js 로드 실패'));
       document.body.appendChild(s);

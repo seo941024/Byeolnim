@@ -482,6 +482,29 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ccbtn--del { background: var(--danger-l); color: var(--danger); }
 .ccbtn--del:hover { background: var(--danger); color: #fff; }
 
+/* ── 패밀리어 등급업 트랙 ── */
+.ru-track { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin-top: 16px; }
+.ru-card { display: flex; flex-direction: column; align-items: center; gap: 6px; opacity: .32; transition: opacity .15s, transform .15s; }
+.ru-card img { width: 116px; height: auto; image-rendering: pixelated; }
+/* 지나온 등급은 흐리게, 지금 등급만 또렷하게 */
+.ru-card.is-past { opacity: .55; }
+.ru-card.is-cur { opacity: 1; transform: scale(1.06); }
+.ru-card__lbl { font-size: .78rem; font-weight: 800; }
+.ru-card__lbl[data-grade="RARE"]   { color: var(--gt-rare); }
+.ru-card__lbl[data-grade="EPIC"]   { color: var(--gt-epic); }
+.ru-card__lbl[data-grade="UNIQUE"] { color: var(--gt-unique); }
+.ru-arrow { color: var(--text-dim); font-size: 1.1rem; }
+.ru-now[data-grade="RARE"]   { color: var(--gt-rare); }
+.ru-now[data-grade="EPIC"]   { color: var(--gt-epic); }
+.ru-now[data-grade="UNIQUE"] { color: var(--gt-unique); }
+.ru-log-res { font-weight: 800; }
+.ru-log-res.ok { color: var(--success); }
+.ru-log-res.no { color: var(--danger); }
+.ru-log-pity { font-size: .68rem; font-weight: 800; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 0 5px; }
+/* 옵션 탭 왼쪽 카드 그림 */
+.fam-cardview { display: flex; justify-content: center; margin-top: 12px; }
+.fam-cardview img { width: 100%; max-width: 260px; height: auto; image-rendering: pixelated; }
+
 /* ── 패밀리어 ── */
 /* 유효 옵션 표시. 줄 색은 .pot-line[data-grade]가 이미 등급별로 칠해준다. */
 .fam-line__star { margin-right: 6px; color: #fff; text-shadow: 0 0 6px rgba(255,255,255,.7); }
@@ -497,9 +520,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fam-log-icon { width: 13px; height: 13px; flex-shrink: 0; image-rendering: pixelated; }
 .fam-log-n { min-width: 42px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
 .fam-log-line { font-weight: 700; }
-.fam-log-line[data-grade="RARE"]   { color: #6699ff; }
-.fam-log-line[data-grade="EPIC"]   { color: #b978ff; }
-.fam-log-line[data-grade="UNIQUE"] { color: #ffcc00; }
+.fam-log-line[data-grade="RARE"]   { color: var(--gt-rare); }
+.fam-log-line[data-grade="EPIC"]   { color: var(--gt-epic); }
+.fam-log-line[data-grade="UNIQUE"] { color: var(--gt-unique); }
 
 /* 아직 안 만든 섹션 자리 표시 */
 .soon-box {
@@ -1065,6 +1088,10 @@ select option { background: var(--bg2); color: var(--text); }
 .hr-log-row .hr-log-grade { font-weight: 700; flex-shrink: 0; }
 .hr-log-row .hr-log-up { color: var(--success); font-weight: 700; flex-shrink: 0; }
 .hr-log-row .hr-log-line { color: var(--text-sub); }
+.hr-log-grade[data-grade="RARE"],      .hr-log-line[data-grade="RARE"]      { color: var(--gt-rare); }
+.hr-log-grade[data-grade="EPIC"],      .hr-log-line[data-grade="EPIC"]      { color: var(--gt-epic); }
+.hr-log-grade[data-grade="UNIQUE"],    .hr-log-line[data-grade="UNIQUE"]    { color: var(--gt-unique); }
+.hr-log-grade[data-grade="LEGENDARY"], .hr-log-line[data-grade="LEGENDARY"] { color: var(--gt-legendary); }
 /* 옵션 사이에 쉼표를 넣어 세 줄이 눈으로 끊어져 보이게 한다.
    마크업에 쉼표를 넣으면 줄 색(등급 색)까지 같이 물들어서 CSS로 붙인다. */
 .hr-log-row .hr-log-line:not(:last-child)::after { content: ","; color: var(--text-sub); }
@@ -1264,22 +1291,34 @@ select option { background: var(--bg2); color: var(--text); }
 .cube-dmt:has(input:checked) { color: var(--primary); }
 
 /* ── 잠재옵션 패널 — 테두리·헤더가 등급 색을 따른다 ── */
+/* 등급 색은 한 곳에서만 정한다. --g-*는 테두리·배경용 원색,
+   --gt-*는 글자용. 화이트 테마에서 노랑(#ffcc00)·연두(#ccff00)를 밝은 바탕에
+   그대로 쓰면 대비가 1.3~1.7까지 떨어져 글자가 사실상 안 보인다.
+   그래서 글자에만 같은 색상의 어두운 변형을 따로 둔다. */
+:root {
+  --g-rare: #6699ff;  --g-epic: #b978ff;  --g-unique: #ffcc00;  --g-legendary: #ccff00;
+  --gt-rare: #6699ff; --gt-epic: #b978ff; --gt-unique: #ffcc00; --gt-legendary: #ccff00;
+}
+:root[data-theme="light"] {
+  --gt-rare: #2f5fd0; --gt-epic: #7c34d6; --gt-unique: #8a6b00; --gt-legendary: #566f00;
+}
 .pot-panel {
-  --pot: #6699ff;                       /* 기본(레어). data-grade로 덮어쓴다 */
+  --pot: var(--g-rare);                 /* 기본(레어). data-grade로 덮어쓴다 */
+  --pot-t: var(--gt-rare);
   border: 2px solid var(--pot);
   border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--pot) 7%, var(--bg3));
   overflow: hidden;
 }
-.pot-panel[data-grade="RARE"]      { --pot: #6699ff; }
-.pot-panel[data-grade="EPIC"]      { --pot: #b978ff; }
-.pot-panel[data-grade="UNIQUE"]    { --pot: #ffcc00; }
-.pot-panel[data-grade="LEGENDARY"] { --pot: #ccff00; }
+.pot-panel[data-grade="RARE"]      { --pot: var(--g-rare);      --pot-t: var(--gt-rare); }
+.pot-panel[data-grade="EPIC"]      { --pot: var(--g-epic);      --pot-t: var(--gt-epic); }
+.pot-panel[data-grade="UNIQUE"]    { --pot: var(--g-unique);    --pot-t: var(--gt-unique); }
+.pot-panel[data-grade="LEGENDARY"] { --pot: var(--g-legendary); --pot-t: var(--gt-legendary); }
 
 .pot-panel__head {
   display: flex; align-items: center; gap: 7px;
   padding: 10px 14px;
-  font-size: .88rem; font-weight: 800; color: var(--pot);
+  font-size: .88rem; font-weight: 800; color: var(--pot-t);
   border-bottom: 1px solid color-mix(in srgb, var(--pot) 35%, transparent);
   background: color-mix(in srgb, var(--pot) 10%, transparent);
 }
@@ -1300,10 +1339,10 @@ select option { background: var(--bg2); color: var(--text); }
   text-shadow: 0 1px 2px rgba(0,0,0,.4);
   text-align: center;
 }
-.pot-line[data-grade="RARE"]      { --line: #6699ff; }
-.pot-line[data-grade="EPIC"]      { --line: #b978ff; }
-.pot-line[data-grade="UNIQUE"]    { --line: #ffcc00; }
-.pot-line[data-grade="LEGENDARY"] { --line: #ccff00; }
+.pot-line[data-grade="RARE"]      { --line: var(--g-rare); }
+.pot-line[data-grade="EPIC"]      { --line: var(--g-epic); }
+.pot-line[data-grade="UNIQUE"]    { --line: var(--g-unique); }
+.pot-line[data-grade="LEGENDARY"] { --line: var(--g-legendary); }
 .pot-line--empty { background: var(--bg2); border-color: var(--border); color: var(--text-sub); font-weight: 500; }
 .sf-res-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
 .sf-res-item:last-child { border-bottom: none; }

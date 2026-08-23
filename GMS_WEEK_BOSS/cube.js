@@ -743,9 +743,9 @@ function _hrRender() {
   logEl.innerHTML = _hrState.log.map(e => `
     <div class="hr-log-row">
       <img class="hr-log-icon" src="${_gradeIconSrc(e.grade)}" alt="" onerror="this.style.display='none'">
-      <span class="hr-log-grade" style="color:${_GRADE_COLOR[e.grade]}">${_GRADE_KR[e.grade]}</span>
+      <span class="hr-log-grade" data-grade="${e.grade}">${_GRADE_KR[e.grade]}</span>
       ${e.tieredUp ? '<span class="hr-log-up">등급업</span>' : ''}
-      ${e.lines.map(l => `<span class="hr-log-line" style="color:${_GRADE_COLOR[l.grade]}">${_shortName(l.name)}</span>`).join('')}
+      ${e.lines.map(l => `<span class="hr-log-line" data-grade="${l.grade}">${_shortName(l.name)}</span>`).join('')}
     </div>`).join('');
 }
 

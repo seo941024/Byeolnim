@@ -171,6 +171,96 @@ const FAM_LINES_EPIC = [
   { key:'STR3',         ko:'STR +3%',                          en:'STR: +3%', pct:2.29, n:164 },
 ];
 
+/* ── 커먼 옵션 풀 ── (추정치)
+   레어와 같은 방식. 위키 목록 26줄을 가져와, 각 줄에 대응하는 레어 옵션의
+   확률을 썼고 합이 100%가 되도록 정규화했다. 레어 자체가 이미 추정치라
+   커먼은 추정 위의 추정이다 — 수치를 그대로 믿을 것은 못 된다.
+   커먼 26줄은 전부 레어에 같은 계열이 있어 대응은 깔끔하게 떨어졌다.
+     https://maplestorywiki.net/w/Familiars/Stat_Tables */
+const FAM_LINES_COMMON = [
+  { key:'STR6F', ko:'STR +6', en:'STR: +6', pct:4.57 },
+  { key:'DEX6F', ko:'DEX +6', en:'DEX: +6', pct:4.68 },
+  { key:'INT6F', ko:'INT +6', en:'INT: +6', pct:4.67 },
+  { key:'LUK6F', ko:'LUK +6', en:'LUK: +6', pct:5.05 },
+  { key:'MAXHP60', ko:'최대 HP +60', en:'Max HP: +60', pct:4.77 },
+  { key:'MAXMP60', ko:'최대 MP +60', en:'Max MP: +60', pct:5.03 },
+  { key:'ATT3F', ko:'공격력 +3', en:'Attack Power: +3', pct:2.73 },
+  { key:'MATT3F', ko:'마력 +3', en:'Magic ATT: +3', pct:2.99 },
+  { key:'DEF60', ko:'방어력 +60', en:'DEF: +60', pct:7.38 },
+  { key:'STR1', ko:'STR +1%', en:'STR: +1%', pct:4.57 },
+  { key:'DEX1', ko:'DEX +1%', en:'DEX: +1%', pct:4.68 },
+  { key:'INT1', ko:'INT +1%', en:'INT: +1%', pct:4.67 },
+  { key:'LUK1', ko:'LUK +1%', en:'LUK: +1%', pct:5.05 },
+  { key:'MAXHP1', ko:'최대 HP +1%', en:'Max HP: +1%', pct:4.77 },
+  { key:'MAXMP1', ko:'최대 MP +1%', en:'Max MP: +1%', pct:5.03 },
+  { key:'ATT1', ko:'공격력 +1%', en:'Attack Power: +1%', pct:2.73 },
+  { key:'MATT1', ko:'마력 +1%', en:'Magic ATT: +1%', pct:2.99 },
+  { key:'DEF1', ko:'방어력 +1%', en:'DEF: +1%', pct:7.38 },
+  { key:'CRITRATE1', ko:'크리티컬 확률 +1%', en:'Critical Rate: +1%', pct:6.53 },
+  { key:'DMG1', ko:'데미지 +1%', en:'Damage +1%', pct:0.64 },
+  { key:'ALLSTAT1F', ko:'올스탯 +1', en:'All Stats: +1', pct:1.06 },
+  { key:'HPREST', ko:'공격 시 20% 확률 HP 240 회복', en:'Attacks have a 20% chance to restore 240 HP', pct:2.69 },
+  { key:'MPREST', ko:'공격 시 20% 확률 MP 120 회복', en:'Attacks have a 20% chance to restore 120 MP', pct:2.35 },
+  { key:'IED15', ko:'방어율 무시 +15%', en:'Ignore Defense: +15%', pct:0.72 },
+  { key:'REC5HP', ko:'HP 5% 주기 회복', en:'Periodically recovers 5% HP', pct:1.19 },
+  { key:'REC5MP', ko:'MP 5% 주기 회복', en:'Periodically recovers 5% MP', pct:1.08 },
+];
+
+/* ── 레어 옵션 풀 ── (추정치)
+   레어는 실측 표본이 없다. 위키에 옵션 '목록'은 있으나 확률은 없고, 넥슨도
+   v.264 패치 뒤로는 게임 데이터에서 가중치를 빼서 아무도 알 수 없는 상태다.
+     https://maplestorywiki.net/w/Familiars/Stat_Tables
+
+   그래서 레어 41줄 각각에 대해, 에픽 표에서 같은 계열 옵션(수치만 다른 것)의
+   실측 확률을 가져와 합이 100%가 되도록 정규화했다. 같은 계열이 에픽에 여럿
+   있으면(예: 주기 회복 12%/15%) 그 평균을 썼다.
+   근거: 레어는 에픽의 열화판이라 옵션 구성이 대응되고 수치만 절반 수준이다
+   (공격력 2%/3%, 방무 15%/30%, 올스탿 1%/2%, STR +12/+24, 방어력 +120/+240).
+   다만 어디까지나 추정이므로 화면에도 추정치임을 표기한다. */
+const FAM_LINES_RARE = [
+  { key:'STR12', ko:'STR +12', en:'STR: +12', pct:3.86 },
+  { key:'DEX12', ko:'DEX +12', en:'DEX: +12', pct:3.96 },
+  { key:'INT12', ko:'INT +12', en:'INT: +12', pct:3.95 },
+  { key:'LUK12', ko:'LUK +12', en:'LUK: +12', pct:4.27 },
+  { key:'MAXHP120', ko:'최대 HP +120', en:'Max HP: +120', pct:4.03 },
+  { key:'MAXMP120', ko:'최대 MP +120', en:'Max MP: +120', pct:4.25 },
+  { key:'ATT6F', ko:'공격력 +6', en:'Attack Power: +6', pct:2.31 },
+  { key:'MATT6F', ko:'마력 +6', en:'Magic ATT: +6', pct:2.53 },
+  { key:'DEF120', ko:'방어력 +120', en:'DEF: +120', pct:6.25 },
+  { key:'STR2', ko:'STR +2%', en:'STR: +2%', pct:3.86 },
+  { key:'DEX2', ko:'DEX +2%', en:'DEX: +2%', pct:3.96 },
+  { key:'INT2', ko:'INT +2%', en:'INT: +2%', pct:3.95 },
+  { key:'LUK2', ko:'LUK +2%', en:'LUK: +2%', pct:4.27 },
+  { key:'MAXHP2', ko:'최대 HP +2%', en:'Max HP: +2%', pct:4.03 },
+  { key:'MAXMP2', ko:'최대 MP +2%', en:'Max MP: +2%', pct:4.25 },
+  { key:'ATT2', ko:'공격력 +2%', en:'Attack Power: +2%', pct:2.31 },
+  { key:'MATT2', ko:'마력 +2%', en:'Magic ATT: +2%', pct:2.53 },
+  { key:'DEF2', ko:'방어력 +2%', en:'DEF: +2%', pct:6.22 },
+  { key:'CRITRATE2', ko:'크리티컬 확률 +2%', en:'Critical Rate: +2%', pct:5.52 },
+  { key:'DMG2', ko:'데미지 +2%', en:'Damage +2%', pct:0.54 },
+  { key:'ALLSTAT3F', ko:'올스탯 +3', en:'All Stats: +3', pct:0.90 },
+  { key:'ALLSTAT1', ko:'올스탯 +1%', en:'All Stats: +1%', pct:0.90 },
+  { key:'HPREST', ko:'공격 시 20% 확률 HP 300 회복', en:'Attacks have a 20% chance to restore 300 HP', pct:2.27 },
+  { key:'MPREST', ko:'공격 시 20% 확률 MP 150 회복', en:'Attacks have a 20% chance to restore 150 MP', pct:1.99 },
+  { key:'IED15', ko:'방어율 무시 +15%', en:'Ignore Defense: +15%', pct:0.61 },
+  { key:'REC7HP', ko:'HP 7% 주기 회복', en:'Periodically recovers 7% HP', pct:1.01 },
+  { key:'REC10HP', ko:'HP 10% 주기 회복', en:'Periodically recovers 10% HP', pct:1.01 },
+  { key:'REC7MP', ko:'MP 7% 주기 회복', en:'Periodically recovers 7% MP', pct:0.90 },
+  { key:'REC10MP', ko:'MP 10% 주기 회복', en:'Periodically recovers 10% MP', pct:0.90 },
+  { key:'REC5HPMP', ko:'HP·MP 5% 주기 회복', en:'Periodically recovers 5% HP/MP', pct:0.54 },
+  { key:'MESODROP30', ko:'메소 드롭률 +30%', en:'Meso Drop Rate Boost: +30%', pct:0.48 },
+  { key:'MESODROP50', ko:'메소 드롭률 +50%', en:'Meso Drop Rate Boost: +50%', pct:0.48 },
+  { key:'DROP30', ko:'아이템 드롭률 +30%', en:'Item Drop Rate Boost: +30%', pct:0.49 },
+  { key:'DROP50', ko:'아이템 드롭률 +50%', en:'Item Drop Rate Boost: +50%', pct:0.49 },
+  { key:'DROPMESO20', ko:'아이템·메소 드롭률 +20%', en:'Item/Meso Drop Rate Boost: +20%', pct:0.52 },
+  { key:'REC5HP_P', ko:'파티원 HP 5% 주기 회복', en:'Periodically recovers 5% HP for party members', pct:0.93 },
+  { key:'REC5MP_P', ko:'파티원 MP 5% 주기 회복', en:'Periodically recovers 5% MP for party members', pct:1.09 },
+  { key:'DEF60P', ko:'파티원 방어력 +60', en:'Party members DEF: +60', pct:2.95 },
+  { key:'REC5HP_N', ko:'주변 HP 5% 주기 회복', en:'Periodically recovers 5% HP for those nearby', pct:1.04 },
+  { key:'REC5MP_N', ko:'주변 MP 5% 주기 회복', en:'Periodically recovers 5% MP for those nearby', pct:1.02 },
+  { key:'DEF60N', ko:'주변 방어력 +60', en:'DEF of those nearby: +60', pct:2.63 },
+];
+
 /* ── 두 줄이 모두 현재 등급에서 나올 확률 ──
    공식 문서상 잠재는 [1번째 = 현재 등급 / 2번째 = 이전 등급]이 기본이고,
    "드물게 두 줄 모두 현재 등급에서 나오는 경우가 있다"고만 적혀 있다. 수치는 비공개.
@@ -198,7 +288,10 @@ const FAM_REF_COMBOS = [
   { ko:'보스 40% / 방무 40%',       pct:0.00007,  one_in:1420000  },
 ];
 
-const FAM_LINES = { UNIQUE: FAM_LINES_UNIQUE, EPIC: FAM_LINES_EPIC };
+const FAM_LINES = { UNIQUE: FAM_LINES_UNIQUE, EPIC: FAM_LINES_EPIC, RARE: FAM_LINES_RARE, COMMON: FAM_LINES_COMMON };
+
+/* 확률이 추정치인 등급 */
+const FAM_ESTIMATED_RANKS = ['RARE', 'COMMON'];
 
 /* 출처 표기 — 화면에 그대로 띄운다 */
 const FAM_SOURCE_NOTE =
@@ -213,6 +306,7 @@ if (typeof window !== 'undefined') {
     LINES: FAM_LINES, SAMPLE_N: FAM_SAMPLE_N, PRIME: FAM_PRIME,
     BOTH_CURRENT_TIER: FAM_BOTH_CURRENT_TIER,
     REF_COMBOS: FAM_REF_COMBOS, SOURCE_NOTE: FAM_SOURCE_NOTE,
+    ESTIMATED_RANKS: FAM_ESTIMATED_RANKS,
   };
 }
-if (typeof module !== 'undefined') module.exports = { FAM_LINES, FAM_RANKUP, FAM_REF_COMBOS, FAM_SAMPLE_N, FAM_BOTH_CURRENT_TIER };
+if (typeof module !== 'undefined') module.exports = { FAM_LINES, FAM_RANKUP, FAM_REF_COMBOS, FAM_SAMPLE_N, FAM_BOTH_CURRENT_TIER, FAM_ESTIMATED_RANKS };

@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260821h" />
+  <link rel="stylesheet" href="style.css?v=20260823a" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -661,6 +661,12 @@
           <button class="sbtn" data-font="8bit" style="font-family:'8bit',sans-serif">8bit</button>
         </div>
       </div>
+      <!-- 로그인해두면 파일을 주고받지 않아도 기기끼리 데이터를 옮길 수 있다(cloudsave.js) -->
+      <div class="settings-box settings-box--wide">
+        <div class="settings-box__title">클라우드 저장</div>
+        <p class="settings-box__desc">로그인하면 데이터를 서버에 올려두고 다른 기기에서 그대로 불러올 수 있습니다.</p>
+        <div id="cloudBox"></div>
+      </div>
       <div class="settings-box">
         <div class="settings-box__title">데이터 저장</div>
         <p class="settings-box__desc">현재 데이터를 JSON 파일로 내보냅니다. 앱 삭제·기기 변경 전에 미리 해두면 안전해요.</p>
@@ -755,7 +761,7 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260819b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260821f"></script>
+<script src="app.js?v=20260823a"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260819b"></script>
 <script src="starforce_sim.js?v=20260821c"></script>
@@ -770,6 +776,8 @@
 <script src="mcalendar.js?v=20260819b"></script>
 <!-- "앱으로 설치" 배너 -->
 <script src="pwa.js?v=20260819e"></script>
+<!-- 클라우드 저장(로그인) — state/save/showToast/STORAGE_KEYS를 쓰므로 app.js 뒤에 와야 한다 -->
+<script src="cloudsave.js?v=20260823a"></script>
 
 <!-- 서비스 워커 등록 — 홈 화면에 추가(설치)와 오프라인 지원을 켠다.
      load 이후에 등록해서 첫 화면 로딩과 경쟁하지 않게 한다.

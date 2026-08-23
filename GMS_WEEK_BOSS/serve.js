@@ -104,8 +104,46 @@ async function lookupCharacter(name, reboot, region) {
   };
 }
 
+/* 요청 본문을 전부 모아 JSON으로. 실패하면 null */
+function readJsonBody(req) {
+  return new Promise(resolve => {
+    let raw = '';
+    req.on('data', c => { raw += c; if (raw.length > 1024 * 1024) req.destroy(); });
+    req.on('end', () => { try { resolve(JSON.parse(raw)); } catch { resolve(null); } });
+    req.on('error', () => resolve(null));
+  });
+}
+
+/* Vercel 서버리스 핸들러(req.body / res.status().json())를 그대로 쓰기 위한 껍데기.
+   api/*.js를 로컬에서 복붙 없이 재사용한다. */
+async function runVercelHandler(handlerPath, req, res, body) {
+  const handler = require(handlerPath);
+  req.body = body;
+  res.status = code => { res.statusCode = code; return res; };
+  res.json = obj => {
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(obj));
+    return res;
+  };
+  await handler(req, res);
+}
+
 http.createServer(async (req, res) => {
   const u = new URL(req.url, `http://localhost:${PORT}`);
+
+  // ── API: /api/auth (회원가입/로그인/저장/불러오기) ──
+  // Upstash 환경변수가 없는 로컬에서는 핸들러가 "저장소 미설정"을 그대로 돌려준다.
+  if (u.pathname === '/api/auth') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const body = await readJsonBody(req);
+    try {
+      await runVercelHandler('./api/auth.js', req, res, body);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'서버 오류: ' + e.message }));
+    }
+    return;
+  }
 
   // ── API: /api/lookup?name=...&reboot=0|1 ──
   if (u.pathname === '/api/lookup') {

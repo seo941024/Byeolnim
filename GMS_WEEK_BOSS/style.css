@@ -978,6 +978,10 @@ tr.done .boss-thumb img { filter: none; }
    select마다 규칙을 따로 다는 방식은 새 select를 추가할 때마다 또 빠뜨리게 되므로
    모든 select에 한 번에 건다. 아래 개별 규칙들은 남아 있어도 결과는 같다. */
 select option { background: var(--bg2); color: var(--text); }
+/* optgroup(그룹 라벨)도 같은 함정에 걸린다 — 배경을 안 주면 OS 기본 흰 배경 위에
+   흰 글씨가 얹혀 라벨 줄이 통째로 흰 막대로 보인다(패밀리어 옵션의 유니크/에픽 그룹).
+   라벨은 항목이 아니라 머리글이므로 글자색만 한 단계 죽여서 구분한다. */
+select optgroup { background: var(--bg2); color: var(--text-sub); }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .check-row { display: flex; gap: 14px; flex-wrap: wrap; font-size: .82rem; }
 .check-row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -2896,8 +2900,25 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   flex-direction: column;
   gap: 8px;
 }
+
+/* ── 클라우드 저장(로그인) ──
+   아이디/비밀번호를 나란히 놓아야 해서 4열 그리드에서 2칸을 차지한다 */
+.settings-box--wide { grid-column: span 2; }
+.cs-row { display: flex; gap: 8px; }
+.cs-row .sbtn { flex: 1; }
+/* min-width:0 이 없으면 input의 기본 최소폭 때문에 좁은 칸에서 넘친다 */
+.cs-inp { flex: 1; min-width: 0; }
+.cs-me {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.cs-me__id { font-size: .92rem; font-weight: 800; color: var(--text); }
+
 @media (max-width: 768px) {
   .settings-grid { grid-template-columns: 1fr; }
+  .settings-box--wide { grid-column: auto; }
 }
 
 /* ── 11. 저성능/모션축소 환경: 드리프트·스윕 전부 정지 ── */

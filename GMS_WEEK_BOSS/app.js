@@ -1602,6 +1602,19 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 08. 23.',
+    items: [
+      {
+        head: '로그인하면 데이터를 서버에 저장할 수 있습니다',
+        desc: '설정에서 아이디를 만들고 로그인하면, 파일을 주고받지 않아도 서버에 저장해두고 다른 기기에서 그대로 불러올 수 있습니다. 불러오기는 그 기기의 데이터를 덮어쓰니 주의해주세요.',
+      },
+      {
+        head: '패밀리어 옵션 목록의 등급 이름이 안 보이던 문제를 고쳤습니다',
+        desc: '다크 모드에서 옵션을 고를 때 유니크·에픽 같은 등급 이름 줄이 흰 막대로만 보였습니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 21.',
     items: [
       {
@@ -1732,7 +1745,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-21-auto-goal',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-23-cloudsave',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

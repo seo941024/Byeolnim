@@ -467,7 +467,8 @@ function _frIconHtml(v, iconFn) {
 }
 
 function _frIconDropdown(prefix, fi, list, iconFn, cur) {
-  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">${FR_NONE_ICON}<span>-</span></button>`]
+  // 안 고른 상태(-)는 아이콘 없이 둔다 — 금지 표시는 Non-elemental 전용이라 헷갈린다.
+  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val=""><span>-</span></button>`]
     .concat(list.map(v =>
       `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">
         ${_frIconHtml(v, iconFn)}<span>${v}</span>
@@ -475,7 +476,7 @@ function _frIconDropdown(prefix, fi, list, iconFn, cur) {
   return `
     <div class="fr-dd" id="fr${prefix}Dd${fi}">
       <button type="button" class="fr-dd__trigger" data-toggle="${fi}">
-        ${cur ? _frIconHtml(cur, iconFn) : FR_NONE_ICON}<span>${cur || '-'}</span>
+        ${cur ? _frIconHtml(cur, iconFn) : ''}<span>${cur || '-'}</span>
         <span class="fr-dd__caret">▾</span>
       </button>
       <div class="fr-dd__menu" hidden>${items.join('')}</div>

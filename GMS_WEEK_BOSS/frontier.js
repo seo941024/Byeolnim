@@ -391,6 +391,25 @@ function _frFindGroup(groups, idx) {
   return groups.findIndex(g => g.items.some(it => String(it.idx) === String(idx)));
 }
 
+/* 드롭다운 하나 안에서 조건 → 수치로 파고든다. 칸을 둘로 나누면 자리를 두 배로 먹는데,
+   실제로는 한 번에 한 단계만 보면 되니 같은 칸에서 목록만 바꿔 끼운다. */
+function _frCondMenuHtml(fi, kind, groups) {
+  return groups.map((g, i) =>
+    `<button type="button" class="fr-dd__item fr-ln-cond" data-fi="${fi}" data-kind="${kind}" data-gi="${i}">
+      <span>${g.label}</span><span class="fr-dd__more">›</span>
+    </button>`).join('');
+}
+
+function _frValMenuHtml(fi, kind, groups, gi, curIdx) {
+  const g = groups[gi];
+  return `
+    <button type="button" class="fr-dd__item fr-ln-back" data-fi="${fi}" data-kind="${kind}">‹ ${g.label}</button>
+    <button type="button" class="fr-dd__item fr-ln-val" data-fi="${fi}" data-kind="${kind}" data-idx="">-</button>
+    ${g.items.map(it =>
+      `<button type="button" class="fr-dd__item fr-ln-val${String(it.idx) === String(curIdx) ? ' active' : ''}"
+        data-fi="${fi}" data-kind="${kind}" data-idx="${it.idx}">${it.label}</button>`).join('')}`;
+}
+
 function _frTwoStepHtml(fi, kind, pool, cacheKey, curIdx) {
   if (!pool.length) return '';
   const groups = _frGroups(pool, cacheKey);
@@ -398,17 +417,18 @@ function _frTwoStepHtml(fi, kind, pool, cacheKey, curIdx) {
   const found = _frFindGroup(groups, curIdx);
   const picked = _frTeam[fi].condPick[kind];
   const gi = found >= 0 ? found : (picked === '' ? -1 : +picked);
-  const condOpts = groups.map((g, i) =>
-    `<option value="${i}"${i === gi ? ' selected' : ''}>${g.label}</option>`).join('');
-  const valOpts = gi < 0 ? '' : groups[gi].items.map(it =>
-    `<option value="${it.idx}"${String(it.idx) === String(curIdx) ? ' selected' : ''}>${it.label}</option>`).join('');
+
+  const cur = curIdx === '' || curIdx == null ? null : pool[+curIdx];
+  const trigger = cur ? cur.label : (gi >= 0 ? groups[gi].label : '-');
+  // 조건만 골라둔 상태면 그 조건의 수치 목록을 펼친 채로 시작한다.
+  const menu = gi >= 0 ? _frValMenuHtml(fi, kind, groups, gi, curIdx) : _frCondMenuHtml(fi, kind, groups);
   return `
-    <select class="sel fr-cond" data-fi="${fi}" data-kind="${kind}">
-      <option value="">-</option>${condOpts}
-    </select>
-    <select class="sel fr-val" data-fi="${fi}" data-kind="${kind}"${gi < 0 ? ' disabled' : ''}>
-      <option value="">-</option>${valOpts}
-    </select>`;
+    <div class="fr-dd fr-dd--line" data-fi="${fi}" data-kind="${kind}">
+      <button type="button" class="fr-dd__trigger fr-ln-trigger"${cur ? '' : ' data-empty="1"'}>
+        <span class="fr-ln-cur">${trigger}</span><span class="fr-dd__caret">▾</span>
+      </button>
+      <div class="fr-dd__menu fr-dd__menu--line" hidden>${menu}</div>
+    </div>`;
 }
 
 function _frPool(fi, kind) {
@@ -566,6 +586,59 @@ function _frRenderDecks() {
   }));
 }
 
+function _frSetLine(fi, kind, idx) {
+  const { pool } = _frPool(fi, kind);
+  const entry = idx === '' ? null : pool[+idx];
+  _frTeam[fi].line = entry ? {
+    catalogIdx: kind === 'event' ? 'e' + idx : String(idx),
+    add: entry.add != null ? entry.add : '',
+    mult: entry.mult != null ? entry.mult : '',
+    cond: entry.cond,
+    groupKey: entry.groupKey,
+  } : { add: '', mult: '', catalogIdx: '' };
+  // 한쪽에서 실제로 고르면 반대쪽에 걸려 있던 조건은 풀어 준다 — 줄은 하나뿐이다.
+  if (entry) _frTeam[fi].condPick[kind === 'event' ? 'base' : 'event'] = '';
+  _frRenderTeam();
+  _frCalcAndRender();
+}
+
+/* 조건을 누르면 같은 칸의 목록만 수치 목록으로 갈아끼운다 — 여기서 전체를 다시 그리면
+   방금 연 드롭다운이 닫혀버린다. 목록을 갈아끼우면 버튼이 새로 생기니 다시 연결한다.
+   조건 선택은 상태에도 남겨서, 나중에 다시 그려도 그 조건이 펼쳐진 채로 돌아온다. */
+function _frBindLineMenu(box) {
+  box.querySelectorAll('.fr-ln-cond').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const fi = +btn.dataset.fi, kind = btn.dataset.kind, gi = +btn.dataset.gi;
+      _frTeam[fi].condPick[kind] = String(gi);
+      const { pool, cacheKey } = _frPool(fi, kind);
+      const groups = _frGroups(pool, cacheKey);
+      // 수치가 하나뿐인 조건은 더 고를 게 없으니 바로 적용한다.
+      if (groups[gi].items.length === 1) { _frSetLine(fi, kind, groups[gi].items[0].idx); return; }
+      btn.closest('.fr-dd__menu').innerHTML = _frValMenuHtml(fi, kind, groups, gi, '');
+      _frBindLineMenu(box);
+    });
+  });
+
+  box.querySelectorAll('.fr-ln-back').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const fi = +btn.dataset.fi, kind = btn.dataset.kind;
+      _frTeam[fi].condPick[kind] = '';
+      const { pool, cacheKey } = _frPool(fi, kind);
+      btn.closest('.fr-dd__menu').innerHTML = _frCondMenuHtml(fi, kind, _frGroups(pool, cacheKey));
+      _frBindLineMenu(box);
+    });
+  });
+
+  box.querySelectorAll('.fr-ln-val').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      _frSetLine(+btn.dataset.fi, btn.dataset.kind, btn.dataset.idx);
+    });
+  });
+}
+
 function _frRenderTeam() {
   const box = document.getElementById('frTeamSlots');
   if (!box) return;
@@ -625,43 +698,7 @@ function _frRenderTeam() {
   });
   /* 잠재는 1개뿐이라 일반/이벤트 어느 쪽에서 고르든 그 카드의 한 줄을 덮어쓴다.
      다시 그릴 때 반대쪽은 자동으로 비워진다(_frLineHtml이 catalogIdx로 판단). */
-  const setLine = (fi, kind, idx) => {
-    const { pool } = _frPool(fi, kind);
-    const entry = idx === '' ? null : pool[+idx];
-    _frTeam[fi].line = entry ? {
-      catalogIdx: kind === 'event' ? 'e' + idx : String(idx),
-      add: entry.add != null ? entry.add : '',
-      mult: entry.mult != null ? entry.mult : '',
-      cond: entry.cond,
-      groupKey: entry.groupKey,
-    } : { add: '', mult: '', catalogIdx: '' };
-    // 한쪽에서 실제로 고르면 반대쪽에 걸려 있던 조건은 풀어 준다 — 줄은 하나뿐이다.
-    if (entry) _frTeam[fi].condPick[kind === 'event' ? 'base' : 'event'] = '';
-    _frRenderTeam();
-    _frCalcAndRender();
-  };
-
-  /* 조건만 고른 상태(수치 미선택)도 다시 그린 뒤 유지돼야 해서 상태로 들고 있는다.
-     화면에서 직접 값을 되살리려 하면 change를 다시 쏘게 되고 그게 무한히 반복된다. */
-  box.querySelectorAll('.fr-cond').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const fi = +e.target.dataset.fi, kind = e.target.dataset.kind;
-      const gi = e.target.value;
-      _frTeam[fi].condPick[kind] = gi;
-      if (gi === '') { setLine(fi, kind, ''); return; }
-      const { pool, cacheKey } = _frPool(fi, kind);
-      const g = _frGroups(pool, cacheKey)[+gi];
-      // 수치가 하나뿐인 조건은 더 고를 게 없으니 바로 적용한다.
-      if (g.items.length === 1) { setLine(fi, kind, g.items[0].idx); return; }
-      setLine(fi, kind, '');
-    });
-  });
-
-  box.querySelectorAll('.fr-val').forEach(sel => {
-    sel.addEventListener('change', e => {
-      setLine(+e.target.dataset.fi, e.target.dataset.kind, e.target.value);
-    });
-  });
+  _frBindLineMenu(box);
   _frRenderTeamBadges();
 }
 

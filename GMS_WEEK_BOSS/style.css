@@ -581,9 +581,14 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 }
 .fr-dd__item img { width: 18px; height: 18px; object-fit: contain; flex: none; }
 
-/* 조건 → 수치 2단계 선택. 수치 칸은 조건을 고르기 전엔 비활성이라 흐리게 둔다. */
-.fr-cond { margin-bottom: 5px; }
-.fr-val:disabled { opacity: .45; cursor: not-allowed; }
+/* 잠재 드롭다운 — 한 칸 안에서 조건 → 수치로 파고든다. 조건이 60개 가까이라 목록은 스크롤. */
+.fr-dd--line .fr-dd__trigger { text-align: left; }
+.fr-ln-cur { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .72rem; }
+.fr-dd__trigger[data-empty] .fr-ln-cur { color: var(--text-dim); }
+.fr-dd__menu--line { max-height: 260px; overflow-y: auto; min-width: 260px; }
+.fr-dd__menu--line .fr-dd__item { font-size: .72rem; text-align: left; white-space: normal; line-height: 1.35; }
+.fr-dd__more { margin-left: auto; padding-left: 8px; color: var(--text-dim); flex: none; }
+.fr-ln-back { font-weight: 800; color: var(--accent); position: sticky; top: 0; background: var(--bg2); z-index: 1; }
 
 /* 무속성 자리의 금지 표시 — 그림 아이콘과 같은 크기로 맞춰 줄이 어긋나지 않게 한다 */
 .fr-dd__ban { width: 18px; height: 18px; flex: none; opacity: .55; stroke-linecap: round; }

@@ -35,7 +35,7 @@ const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy'
    둘 중 하나만 채워도 되고, 둘 다 채워도 된다. */
 let _frTeam = [0, 1, 2].map(() => ({
   rank: 'unique', element: '', type: '',
-  lines: [{ add: '', mult: '' }, { add: '', mult: '' }],
+  lines: [{ add: '', mult: '', catalogIdx: '' }, { add: '', mult: '', catalogIdx: '' }],
 }));
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
@@ -165,10 +165,35 @@ function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
 }
 
 function _frLineHtml(fi, li, line) {
-  return _frTwoValLine(line, '', 'fi', fi, 'li', li);
+  return `
+    <div class="fr-line fr-line--select">
+      <select class="sel fr-line-cat" data-fi="${fi}" data-li="${li}">
+        ${_frLineOptions(fi, li, line.catalogIdx)}
+      </select>
+    </div>`;
 }
 
-const FR_RANKS = [['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
+const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
+
+/* 일반 잠재와 같은 규칙을 프론티어 잠재에도 적용한다: 1번째 줄은 카드 등급 풀,
+   2번째 줄은 한 단계 아래 등급 풀. 프론티어 잠재 자체에 대해 이 규칙이 공식 문서에
+   다시 쓰여 있진 않지만, 패밀리어 시스템 전체가 이 규칙을 쓰고 있어 그대로 따른다. */
+const FR_RANK_DOWN = { unique: 'epic', epic: 'rare', rare: 'common', common: 'common' }; // 커먼은 그 아래가 없어 자기 자신으로
+
+function _frLineOptions(fi, li, selectLabel) {
+  const D = window.FR_CATALOG; if (!D) return '<option value="">데이터 로딩 중...</option>';
+  const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
+  const poolRank = li === 0 ? rank : FR_RANK_DOWN[rank];
+  const pool = D[poolRank.toUpperCase()] || [];
+  const fmt = e => {
+    const parts = [];
+    if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
+    if (e.mult != null) parts.push(`x${e.mult}`);
+    return `${e.label} (${parts.join(', ')})`;
+  };
+  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${fmt(e)}</option>`).join('');
+  return `<option value="">— None —</option>${opts}`;
+}
 
 function _frRenderTeam() {
   const box = document.getElementById('frTeamSlots');
@@ -221,18 +246,26 @@ function _frRenderTeam() {
     });
     document.getElementById('frRank' + i).addEventListener('change', e => {
       _frTeam[i].rank = e.target.value;
-      document.getElementById('frCardImg' + i).src = _frCardSrc(e.target.value);
-    });
-  });
-  box.querySelectorAll('.fr-val-add').forEach(inp => {
-    inp.addEventListener('input', e => {
-      _frTeam[+e.target.dataset.fi].lines[+e.target.dataset.li].add = e.target.value;
+      // 등급이 바뀌면 옵션 풀 자체가 바뀌어서 기존 선택 인덱스가 다른 옵션을 가리키게 된다 —
+      // 헷갈리지 않게 그 카드의 두 줄을 비워서 다시 고르게 한다.
+      _frTeam[i].lines = [{ add: '', mult: '', catalogIdx: '' }, { add: '', mult: '', catalogIdx: '' }];
+      _frRenderTeam();
       _frCalcAndRender();
     });
   });
-  box.querySelectorAll('.fr-val-mult').forEach(inp => {
-    inp.addEventListener('input', e => {
-      _frTeam[+e.target.dataset.fi].lines[+e.target.dataset.li].mult = e.target.value;
+  box.querySelectorAll('.fr-line-cat').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const fi = +e.target.dataset.fi, li = +e.target.dataset.li;
+      const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
+      const poolRank = li === 0 ? rank : FR_RANK_DOWN[rank];
+      const pool = (window.FR_CATALOG && window.FR_CATALOG[poolRank.toUpperCase()]) || [];
+      const idx = e.target.value;
+      const entry = idx !== '' ? pool[+idx] : null;
+      _frTeam[fi].lines[li] = {
+        catalogIdx: idx,
+        add: entry && entry.add != null ? entry.add : '',
+        mult: entry && entry.mult != null ? entry.mult : '',
+      };
       _frCalcAndRender();
     });
   });

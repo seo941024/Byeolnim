@@ -561,6 +561,8 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__lines { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 .fr-line { display: flex; gap: 6px; align-items: flex-end; }
 .fr-line .fr-bonus__lbl { flex: 1.1; font-size: .74rem; color: var(--text-dim); align-self: center; }
+.fr-line--select { width: 100%; }
+.fr-line--select select { width: 100%; font-size: .78rem; }
 .fr-line__field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .fr-line__field-lbl { font-size: .66rem; color: var(--text-dim); }
 .fr-line__field input { width: 100%; min-width: 0; }

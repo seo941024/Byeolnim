@@ -3210,13 +3210,17 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   padding: 7px 12px 7px 7px; border-radius: var(--radius-sm); cursor: pointer; overflow: hidden;
   border: 1px solid var(--border); transition: background .15s, border-color .15s, opacity .15s;
 }
+/* 아이콘 원본이 33x30 ~ 39x39로 제각각이다. 예전에는 30px 칸에 width/height 100%로
+   욱여넣어 전부 억지로 늘리고 줄이느라 뭉개졌다. 칸을 제일 큰 것에 맞추고 각 그림은
+   원본 크기 그대로 가운데 두면 확대·축소가 없어 선명하다. */
 .dt-tile__thumb {
-  flex: none; width: 30px; height: 30px; border-radius: var(--radius-sm); overflow: hidden;
+  flex: none; width: 39px; height: 39px; border-radius: var(--radius-sm); overflow: hidden;
   display: flex; align-items: center; justify-content: center; background: transparent;
 }
-/* cover는 칸을 꽉 채우려고 넘치는 쪽을 잘라낸다 — 아이콘은 정사각형이 아닌 것도
-   있어서(별조각 상자 33x30) 잘려 보였다. contain으로 전체가 들어오게 한다. */
-.dt-tile__img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(1) brightness(.55); transition: filter .15s; }
+.dt-tile__img {
+  width: auto; height: auto; max-width: 100%; max-height: 100%;
+  filter: grayscale(1) brightness(.55); transition: filter .15s;
+}
 .dt-tile__emoji { font-size: 1.15rem; line-height: 1; filter: grayscale(1); opacity: .4; transition: filter .15s, opacity .15s; }
 .dt-tile__label { flex: 1 1 auto; min-width: 0; font-size: .82rem; font-weight: 700; color: var(--text-dim); transition: color .15s; }
 .dt-tile--inactive { background: rgba(0,0,0,.1); }

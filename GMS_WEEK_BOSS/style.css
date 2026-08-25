@@ -1998,6 +1998,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mc-charchip__face img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
 .mc-charchip__body { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .mc-charchip__name { font-size: 1.1rem; font-weight: 900; color: var(--text); }
+.mc-charchip__lv { font-size: .82rem; font-weight: 700; color: var(--text-dim); }
 .mc-charchip__sub { font-size: .8rem; font-weight: 700; color: var(--text-dim); }
 .mc-allbtn { margin-left: auto; }   /* 전체 보기는 오른쪽 끝에 */
 .sbtn.is-off { opacity: .4; cursor: default; }
@@ -2042,6 +2043,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   font-size: .92rem; font-weight: 800; color: var(--text-sub);
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
+.mc-char__lv { font-size: .74rem; font-weight: 700; color: var(--text-dim); }
 
 /* 날짜 모달 — 일정과 아이템을 여기서 기록한다 */
 .modal.modal--mc-day { width: min(880px, 95vw); }
@@ -3185,7 +3187,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; }
 .dt-step2-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .dt-step2-portrait { flex: none; width: 72px; height: 72px; border-radius: var(--radius-sm); object-fit: cover; background: rgba(0,0,0,.2); }
-.dt-step2-name { font-size: 1.35rem; font-weight: 800; }
+.dt-step2-namebox { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.dt-step2-name { font-size: 1.35rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dt-step2-lv { font-size: .82rem; font-weight: 700; color: var(--text-dim); }
+#dtEditWho { flex: none; }
 .dt-addform__presets { display: flex; flex-wrap: wrap; gap: 6px; }
 .dt-addform__opt {
   display: flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: var(--radius-sm);
@@ -3209,7 +3214,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   flex: none; width: 30px; height: 30px; border-radius: var(--radius-sm); overflow: hidden;
   display: flex; align-items: center; justify-content: center; background: transparent;
 }
-.dt-tile__img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) brightness(.55); transition: filter .15s; }
+/* cover는 칸을 꽉 채우려고 넘치는 쪽을 잘라낸다 — 아이콘은 정사각형이 아닌 것도
+   있어서(별조각 상자 33x30) 잘려 보였다. contain으로 전체가 들어오게 한다. */
+.dt-tile__img { width: 100%; height: 100%; object-fit: contain; filter: grayscale(1) brightness(.55); transition: filter .15s; }
 .dt-tile__emoji { font-size: 1.15rem; line-height: 1; filter: grayscale(1); opacity: .4; transition: filter .15s, opacity .15s; }
 .dt-tile__label { flex: 1 1 auto; min-width: 0; font-size: .82rem; font-weight: 700; color: var(--text-dim); transition: color .15s; }
 .dt-tile--inactive { background: rgba(0,0,0,.1); }

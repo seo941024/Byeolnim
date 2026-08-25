@@ -119,6 +119,11 @@ function mcCharFace(ch) {
   return ch.fetched?.img || charJobHeadSrc(ch) || '';
 }
 
+/* 캐릭터 목록 카드와 같은 규칙 — 조회로 받아온 최신 레벨이 있으면 그걸 쓴다. */
+function mcCharLv(ch) {
+  return ch.fetched?.level || ch.level || null;
+}
+
 
 /* ═══════════ 달력 화면 ═══════════
    달력이 주인공이고, 캐릭터 선택과 기록 입력은 눌렀을 때 모달로 연다. */
@@ -254,6 +259,7 @@ function mcRenderCharChip() {
     </span>
     <span class="mc-charchip__body">
       <span class="mc-charchip__name">${mcEsc(ch.name)}</span>
+      ${mcCharLv(ch) ? `<span class="mc-charchip__lv">Lv.${mcCharLv(ch)}</span>` : ''}
       <span class="mc-charchip__sub">캐릭터 변경</span>
     </span>`;
 }
@@ -290,6 +296,7 @@ function mcOpenCharPicker() {
                   ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
                 </span>
                 <span class="mc-char__name">${mcEsc(ch.name)}</span>
+                ${mcCharLv(ch) ? `<span class="mc-char__lv">Lv.${mcCharLv(ch)}</span>` : ''}
               </button>`;
           }).join('')}
         </div>

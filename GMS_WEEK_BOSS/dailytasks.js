@@ -196,7 +196,7 @@ function _dtCardHtml(charId, rec) {
           <span class="dt-card__name">${name}</span>
           ${level ? `<span class="dt-card__lv">Lv.${level}</span>` : ''}
         </span>
-        <button class="dt-card__edit" data-edit-char="${charId}" title="추적 항목 수정">✎</button>
+        <button class="dt-card__edit" data-edit-char="${charId}" title="캐릭터 정보·추적 항목 수정">✎</button>
         <button class="dt-card__del" data-del-char="${charId}" title="캐릭터 삭제">×</button>
       </div>
       <div class="dt-tiles">
@@ -271,10 +271,11 @@ function _dtRenderAddModal() {
 }
 
 function _dtStep1Html() {
+  const editing = !!_dtEditCharId;
   return `
     <div class="modal">
       <div class="modal__head">
-        <span class="modal__title">캐릭터 추가</span>
+        <span class="modal__title">${editing ? '캐릭터 정보 수정' : '캐릭터 추가'}</span>
         <button class="modal__close" id="dtModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -290,9 +291,15 @@ function _dtStep1Html() {
         <div class="char-manual-sep">또는 직접 입력</div>
         <div class="field">
           <label class="field__label">캐릭터명</label>
-          <input class="inp" id="dtManualName" placeholder="캐릭터명" autocomplete="off" />
+          <input class="inp" id="dtManualName" placeholder="캐릭터명" autocomplete="off"
+                 value="${_dtPendingRegion ? '' : (_dtPendingName || '').replace(/"/g, '&quot;')}" />
         </div>
-        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 챌린저스 등 랭킹 조회에 안 잡히는 캐릭터는 직접 입력을 쓰세요. 기본 이미지로 등록됩니다.</p>
+        <div class="field">
+          <label class="field__label">레벨</label>
+          <input class="inp" id="dtManualLevel" type="number" min="1" max="300" placeholder="예: 275"
+                 value="${_dtPendingRegion ? '' : (_dtPendingLevel || '')}" />
+        </div>
+        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 챌린저스 등 랭킹 조회에 안 잡히는 캐릭터는 직접 입력을 쓰세요. 기본 이미지로 등록됩니다. 레벨은 비워두면 표시하지 않습니다.</p>
         <button class="sbtn sbtn--ghost w100" id="dtManualBtn" style="margin-top:8px">직접 입력으로 계속</button>
       </div>
     </div>`;
@@ -334,9 +341,11 @@ function _dtWireStep1() {
     const nameInp = document.getElementById('dtManualName');
     const name = nameInp.value.trim();
     if (!name) { nameInp.focus(); return; }
+    const lvRaw = parseInt(document.getElementById('dtManualLevel')?.value, 10);
     _dtPendingName = name;
-    _dtPendingImg = null;
-    _dtPendingLevel = null;
+    // 수정 중이면 기존 이미지를 그대로 둔다 — 직접 입력으로 고쳤다고 그림까지 날릴 이유가 없다.
+    if (!_dtEditCharId) _dtPendingImg = null;
+    _dtPendingLevel = Number.isFinite(lvRaw) && lvRaw > 0 ? lvRaw : null;
     _dtPendingRegion = null;
     _dtStep = 2;
     _dtRenderAddModal();
@@ -354,7 +363,11 @@ function _dtStep2Html() {
       <div class="modal__body">
         <div class="dt-step2-head">
           <img class="dt-step2-portrait" src="${_dtPendingImg || DT_DEFAULT_PORTRAIT}" alt="" onerror="this.src='${DT_DEFAULT_PORTRAIT}'" />
-          <span class="dt-step2-name">${_dtPendingName}</span>
+          <span class="dt-step2-namebox">
+            <span class="dt-step2-name">${_dtPendingName}</span>
+            ${_dtPendingLevel ? `<span class="dt-step2-lv">Lv.${_dtPendingLevel}</span>` : ''}
+          </span>
+          <button class="sbtn sbtn--ghost sbtn--sm" id="dtEditWho">이름·레벨 수정</button>
         </div>
         <div class="dt-addform__presets">
           ${DAILY_TASK_PRESETS.map(t => `
@@ -380,6 +393,12 @@ function _dtWireStep2() {
       _dtRenderAddModal(); // 이름 입력칸이 없는 화면이라 다시 그려도 값이 안 날아감
     });
   });
+  // 수정 중에도 1단계로 돌아가 이름·레벨을 다시 정할 수 있다. _dtEditCharId는 그대로
+  // 남으므로, 거기서 다시 넘어와 저장하면 새 캐릭터가 아니라 이 캐릭터가 수정된다.
+  document.getElementById('dtEditWho').addEventListener('click', () => {
+    _dtStep = 1;
+    _dtRenderAddModal();
+  });
   document.getElementById('dtStepBack').addEventListener('click', () => {
     if (_dtEditCharId) { _dtCloseAddModal(); return; }
     _dtStep = 1;
@@ -390,7 +409,10 @@ function _dtWireStep2() {
     const activeIds = DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id));
     if (_dtEditCharId) {
       const rec = _dtGetChar(_dtEditCharId);
-      _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds, rec.done.filter(d => activeIds.includes(d)), undefined, undefined, _dtPendingLevel);
+      // region이 바뀌면(랭킹으로 다시 조회) 자동 갱신 대상도 그에 맞게 바뀌어야 한다.
+      _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds,
+        rec.done.filter(d => activeIds.includes(d)),
+        _dtPendingRegion, _dtPendingRegion ? Date.now() : null, _dtPendingLevel);
     } else {
       _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion, _dtPendingLevel);
     }

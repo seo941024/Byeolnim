@@ -635,6 +635,8 @@ function _frRenderDecks() {
   }
   const decks = _frDecks(ch);
   const img = ch.fetched && ch.fetched.img;
+  // 캐릭터 목록 카드와 같은 규칙 — 조회로 받아온 최신 레벨이 있으면 그걸, 없으면 등록할 때 적은 값
+  const lv = (ch.fetched && ch.fetched.level) || ch.level;
   const slots = Array.from({ length: FR_MAX_DECKS }, (_, i) => {
     const filled = !!decks[i];
     return `<button type="button" class="fr-deck__slot${filled ? ' filled' : ''}${i === _frDeckSlot ? ' sel' : ''}"
@@ -645,7 +647,10 @@ function _frRenderDecks() {
   box.innerHTML = `
     <div class="fr-deck__who">
       ${img ? `<img class="fr-deck__face" src="${escHtml(img)}" alt="" onerror="this.style.display='none'">` : ''}
-      <span class="fr-deck__name">${escHtml(ch.name)}</span>
+      <div class="fr-deck__whoBody">
+        <span class="fr-deck__name">${escHtml(ch.name)}</span>
+        ${lv ? `<span class="fr-deck__lv">Lv.${lv}</span>` : ''}
+      </div>
     </div>`;
 
   bar.innerHTML = `

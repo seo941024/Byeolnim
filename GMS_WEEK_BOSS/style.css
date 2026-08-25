@@ -639,7 +639,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 /* 넥슨이 주는 캐릭터 그림은 96×96이다. 크게 늘릴수록 흐려져서, 사이드바 캐릭터 카드와
    같은 정도(약 1.17배)까지만 키운다. 그 이상은 없는 픽셀을 만들어내는 것이라 뭉개진다. */
 .fr-deck__face { width: 112px; height: 112px; object-fit: contain; flex: none; }
-.fr-deck__name { font-size: .9rem; font-weight: 800; color: var(--accent); }
+.fr-deck__whoBody { display: flex; flex-direction: column; gap: 2px; }
+.fr-deck__name { font-size: .9rem; font-weight: 800; color: var(--accent); line-height: 1.2; }
+.fr-deck__lv { font-size: .72rem; font-weight: 700; color: var(--text-dim); line-height: 1.2; }
 .fr-deck__empty { font-size: .76rem; color: var(--text-dim); }
 .fr-deck__slots { display: flex; gap: 4px; }
 .fr-deck__slot {
@@ -2503,12 +2505,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* ★ 원본 픽셀 그대로 그린다(25~44px). 늘리면 뭉개지고 줄이면 작아지므로
    크기를 지정하지 않는 게 제일 선명하다. */
 .gen-cfg-card__img{width:auto;height:auto;max-width:48px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
-/* 격전의 흔적만 원본이 25px이라(다른 재화 아이콘은 32~33px) 혼자 작아 보인다.
-   여백 때문이 아니라 원본 크기가 실제로 작은 것이라, 이것만 33px로 맞춘다. */
-.gen-cfg-card__img[src*="Fierce_Battle"]{width:33px;height:33px}
+/* 격전의 흔적은 원본 아이콘이 25px이라(다른 재화 아이콘은 32~33px) 혼자 작아 보여서
+   34px로 미리 확대해 둔 PNG를 쓴다. 그 크기 그대로 그린다. */
+.gen-cfg-card__img[src*="Fierce_Battle"]{width:34px;height:34px}
 /* 제네시스 패스는 44x32짜리 가로로 긴 무기 아이콘이라 혼자 넓다.
-   긴 변을 33px로 맞추되 height는 auto라 비율이 안 찌그러진다. */
-.gen-cfg-card__img[src*="Genesis.png"]{width:33px;height:auto}
+   height 기준으로 34px에 맞추고 width는 auto라 비율이 안 찌그러진다. */
+.gen-cfg-card__img[src*="Genesis.png"]{width:auto;height:34px}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
 .gen-cfg-card--pass .gen-cfg-card__title{color:var(--text)}
@@ -3003,6 +3005,29 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* ── 7. 제네시스 패스 카드: 빛 스윕 제거 ── */
 .gen-cfg-card--pass.on {
   animation: none !important; background-size: auto !important;
+}
+/* 대신 저비용 반짝임을 넣는다. transform·opacity만 써서 컴포지터에서만 처리되고
+   background-position처럼 매 프레임 다시 칠하지 않아 폰에서도 무겁지 않다.
+   ::after는 별개의 셀렉터라 위 animation:none(!important)에 안 걸린다. */
+.gen-cfg-card--pass.on::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; left: -55%; width: 35%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.6) 45%, rgba(246,199,68,.6) 55%, transparent);
+  transform: translateX(0) skewX(-18deg);
+  animation: pass-shine 3.6s ease-in-out infinite;
+  pointer-events: none; z-index: 1;
+}
+:root[data-theme="light"] .gen-cfg-card--pass.on::after {
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,.9) 45%, rgba(214,160,20,.55) 55%, transparent);
+}
+@keyframes pass-shine {
+  0%   { transform: translateX(0) skewX(-18deg); opacity: 0; }
+  6%   { opacity: .9; }
+  34%  { transform: translateX(420%) skewX(-18deg); opacity: 0; }
+  100% { transform: translateX(420%) skewX(-18deg); opacity: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gen-cfg-card--pass.on::after { animation: none; display: none; }
 }
 
 /* ── 8. 활성 캐릭터 카드: 펄스 글로우 제거, 테두리 링 하나로 단순화 ── */

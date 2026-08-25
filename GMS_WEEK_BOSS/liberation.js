@@ -898,7 +898,7 @@ function renderAstra() {
               </div>
             </div>
             <div class="gen-cfg-card">
-              <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.webp" alt="" onerror="this.style.display='none'">
+              <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.png" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 격전의 흔적</div>
                 <input class="inp" id="astraHeldTrace" type="number" min="0" value="${Math.max(0, astraState.heldTrace)}" />

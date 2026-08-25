@@ -443,8 +443,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 /* flex + aspect-ratio 조합은 폭이 텍스트 칸에 밀려 정사각형이 안 나온다
    (실제로 95x130처럼 세로로 길어졌음). 오른쪽 큰 카드(.cg-card)가 쓰는 방식대로
    grid로 칼럼 폭을 고정하고, 일러스트는 그 폭의 100% + aspect-ratio로 높이를 잡는다. */
+/* 112px — 캘린더 캐릭터 칩/프론티어 덱과 같은 배율(96px 원본의 1.13배)로 맞췄다. */
 .char-card__inner {
-  display: grid; grid-template-columns: minmax(0, 1fr) 118px;
+  display: grid; grid-template-columns: minmax(0, 1fr) 112px;
   align-items: stretch; overflow: hidden;
 }
 .char-card__portrait {
@@ -467,8 +468,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
    버리고 50% 50%로 되돌아갔다(실측으로 확인). 넥슨 아바타는 96x96 정사각형이라
    object-fit:contain에 애초에 여백을 만들 레터박스가 안 생기므로 object-position은
    의미가 없었음 — margin-bottom을 이미지 자체에 줘서 크기 계산과 완전히 분리했다.) */
-.char-card__portrait img:not(.portrait-bg) { width: 92%; height: 92%; object-fit: contain; object-position: bottom center; margin-bottom: 1%; }
-.char-card__portrait--no img:not(.portrait-bg) { width: 92%; height: 92%; object-position: bottom center; margin-bottom: 1%; }
+/* 96px 고정 — 92%(112px 기준 103px)로 두면 원본을 1.07배 늘리게 된다. */
+.char-card__portrait img:not(.portrait-bg) { width: 96px; height: 96px; object-fit: contain; object-position: bottom center; margin-bottom: 4px; image-rendering: pixelated; }
+.char-card__portrait--no img:not(.portrait-bg) { width: 96px; height: 96px; object-position: bottom center; margin-bottom: 4px; }
 .char-card__noimg { display: none; color: var(--text-dim); font-size: .65rem; font-weight: 800; }
 .char-card__portrait--no .char-card__noimg { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
 .char-card__txt {
@@ -2624,10 +2626,12 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* ── 캐릭터 그리드 (캐릭터 정보 탭) ── */
 /* 가로형 카드 2열 고정 → 캐릭터가 늘면 아래로 행이 추가된다.
    카드는 창 너비를 꽉 채우며, 일러스트가 정사각 비율이라 폭이 커지면 높이도 함께 커진다. */
+/* 일러스트를 원본 크기(96px)로 고정하면서 카드도 그에 맞게 줄였다.
+   4열 상한은 그대로 — 270px 카드 5개(5*270+4*10=1390)보다 작게 잡아야 4열에서 멈춘다. */
 .cg-grid {
-  display:grid; grid-template-columns:repeat(auto-fill,minmax(380px,1fr));
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr));
   gap:10px; padding:8px 0 12px;
-  max-width: 1830px; /* 카드 폭이 무한정 안 늘어나게 4열까지만 — 넘는 공간은 우측 여백으로 남긴다(가운데 정렬 X) */
+  max-width: 1360px; /* 카드 폭이 무한정 안 늘어나게 4열까지만 — 넘는 공간은 우측 여백으로 남긴다(가운데 정렬 X) */
 }
 .cg-card {
   position: relative;
@@ -2636,8 +2640,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-radius: var(--radius);
   overflow: hidden; cursor: pointer;
   /* 행을 명시해야 일러스트의 grid-row:1/-1 이 두 행을 걸친다 */
-  /* 일러스트 칼럼은 240px에서 상한 — 초광폭 화면에서 카드가 무한정 커지지 않도록 */
-  display: grid; grid-template-columns: minmax(130px, min(36%, 240px)) 1fr; grid-template-rows: 1fr auto; align-items: stretch;
+  /* 일러스트 칼럼은 112px 고정 — 넥슨 아바타가 96px뿐이라 칼럼을 카드 폭에 따라
+     늘리면 그만큼 확대돼서 흐려진다(예전엔 최대 240px까지 늘어나 1.47배였다). */
+  display: grid; grid-template-columns: 112px 1fr; grid-template-rows: 1fr auto; align-items: stretch;
   transition: border-color .18s;
   /* 카드 폭 기준 컨테이너 쿼리 단위(cqw) → 카드가 커지면 글씨/아이콘도 함께 커진다 */
   container-type: inline-size;
@@ -2658,10 +2663,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   border-color: var(--primary);
   box-shadow: 0 0 0 1px var(--primary);
 }
-/* 일러스트는 왼쪽에서 카드 전체 높이를 차지 */
-/* 정사각 비율 → 카드가 넓어지면 높이도 따라 커진다 */
+/* 일러스트는 왼쪽에서 카드 전체 높이를 차지.
+   aspect-ratio로 카드 폭을 따라가게 두면 그림이 늘어나므로 칼럼 폭(112px)에만 맞춘다. */
 .cg-portrait {
-  grid-row:1 / -1; width:100%; aspect-ratio:1/1;
+  grid-row:1 / -1; width:112px;
   background: transparent;
   display:flex; align-items:flex-end; justify-content:center;
   overflow:hidden; position:relative; flex-shrink:0;
@@ -2671,9 +2676,11 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    바닥 여백은 margin-bottom으로 준다 — padding(부모)은 width/height %의 기준이
    갈라져 캐릭터가 작아졌고, 3-value object-position은 문법 무효라 무시됐음
    (넥슨 아바타가 96x96 정사각이라 애초에 object-position이 먹을 레터박스도 없었음). */
-.cg-portrait img:not(.portrait-bg) { width:92%; height:92%; object-fit:contain; object-position:bottom center; margin-bottom:1%; position:relative; z-index:1; }
+/* %가 아니라 96px 고정 — 92%(112px 기준 103px)로 두면 96px 원본을 1.07배 늘리게 된다.
+   image-rendering:pixelated로 그 확대분마저 최대한 선명하게 그린다. */
+.cg-portrait img:not(.portrait-bg) { width:96px; height:96px; object-fit:contain; object-position:bottom center; margin-bottom:4px; position:relative; z-index:1; image-rendering:pixelated; }
 /* 기본 이미지(default.png)는 넥슨 스크린샷과 비율이 달라 실제 캐릭터보다 크게 보임 → 축소해서 중앙 배치 */
-.cg-portrait--no img:not(.portrait-bg) { width: 92%; height: 92%; object-position: bottom center; margin-bottom: 1%; }
+.cg-portrait--no img:not(.portrait-bg) { width: 96px; height: 96px; object-position: bottom center; margin-bottom: 4px; }
 .cg-portrait--no .cg-noimg { display:flex; }
 .cg-noimg { display:none; position:absolute; inset:0; align-items:center; justify-content:center; font-size:.7rem; color:var(--text-sub); }
 .cg-meta img { width:13px; height:13px; object-fit:contain; }

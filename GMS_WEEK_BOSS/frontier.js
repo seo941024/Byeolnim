@@ -128,9 +128,9 @@ function _frRenderTeam() {
   box.innerHTML = _frTeam.map((f, i) => `
     <div class="fr-slot">
       <img class="fr-slot__img" id="frCardImg${i}" src="${_frCardSrc(f.rank)}" alt="" onerror="this.style.display='none'">
-      <div class="sf-toggle-group fr-slot__rank" id="frRankGroup${i}">
-        ${FR_RANKS.map(([v, label]) => `<button type="button" class="sf-toggle${f.rank === v ? ' active' : ''}" data-rank="${v}">${label}</button>`).join('')}
-      </div>
+      <select class="sel fr-slot__rank" id="frRank${i}">
+        ${FR_RANKS.map(([v, label]) => `<option value="${v}"${f.rank === v ? ' selected' : ''}>${label}</option>`).join('')}
+      </select>
       <div class="fr-slot__field">
         <span class="fr-slot__field-lbl">속성 / 타입</span>
         <div class="fr-slot__field-row">
@@ -150,13 +150,9 @@ function _frRenderTeam() {
   _frTeam.forEach((f, i) => {
     document.getElementById('frEl' + i).addEventListener('change', e => { _frTeam[i].element = e.target.value; _frRenderTeamBadges(); });
     document.getElementById('frTy' + i).addEventListener('change', e => { _frTeam[i].type = e.target.value; _frRenderTeamBadges(); });
-    document.getElementById('frRankGroup' + i).querySelectorAll('.sf-toggle').forEach(btn => {
-      btn.addEventListener('click', () => {
-        _frTeam[i].rank = btn.dataset.rank;
-        document.getElementById('frRankGroup' + i).querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('frCardImg' + i).src = _frCardSrc(btn.dataset.rank);
-      });
+    document.getElementById('frRank' + i).addEventListener('change', e => {
+      _frTeam[i].rank = e.target.value;
+      document.getElementById('frCardImg' + i).src = _frCardSrc(e.target.value);
     });
   });
   box.querySelectorAll('.fr-line-kind').forEach(sel => {
@@ -189,52 +185,50 @@ function initFrontier() {
     <p class="dt-help">패밀리어 3마리로 팀을 짜고 주사위로 원정 라운드를 통과합니다. 오른쪽 카드에서
       각 패밀리어의 속성·타입과 프론티어 잠재 2줄을 고르면, 왼쪽에서 주사위 값만 넣어 바로 점수를 봅니다.</p>
 
-    <div class="sf-layout">
-      <!-- 왼쪽: 점수 계산기 -->
-      <div class="card">
-        <div class="card__title">라운드 점수 계산기</div>
-        <p class="dt-help">Dice Total(합계)형 옵션은 전부 더해 주사위 합에 얹고, Final Multiplier(배율)형
-          옵션은 전부 더한 뒤 마지막에 한 번만 곱합니다.</p>
+    <!-- 위: 팀 구성 (한 화면 전체 폭) -->
+    <div class="card">
+      <div class="card__title">팀 구성 — 패밀리어 3마리</div>
+      <p class="dt-help">등급·속성·타입을 고르고, 카드에 뜬 프론티어 잠재 2줄을 그대로 입력하세요.</p>
+      <div id="frTeamSlots" class="fr-team mt8"></div>
+      <div class="card__title mt16">충족되는 파티 조건</div>
+      <div id="frTeamBadges" class="fr-badges mt8"></div>
+    </div>
 
-        <div class="fr-dice-row mt8">
-          <div class="fr-dice">
-            <label class="fr-slot__lbl">주사위 1</label>
-            <select class="sel" id="frDice1">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-          </div>
-          <div class="fr-dice">
-            <label class="fr-slot__lbl">주사위 2</label>
-            <select class="sel" id="frDice2">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-          </div>
-          <div class="fr-dice">
-            <label class="fr-slot__lbl">주사위 3</label>
-            <select class="sel" id="frDice3">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-          </div>
-        </div>
+    <!-- 아래: 점수 계산기 -->
+    <div class="card mt16">
+      <div class="card__title">라운드 점수 계산기</div>
+      <p class="dt-help">Dice Total(합계)형 옵션은 전부 더해 주사위 합에 얹고, Final Multiplier(배율)형
+        옵션은 전부 더한 뒤 마지막에 한 번만 곱합니다.</p>
 
-        <div class="field mt16">
-          <label class="field__label">라운드 목표 점수 (선택)</label>
-          <input class="inp" id="frTarget" type="number" placeholder="예: 150" min="0">
+      <div class="fr-dice-row mt8">
+        <div class="fr-dice">
+          <label class="fr-slot__lbl">주사위 1</label>
+          <select class="sel" id="frDice1">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
         </div>
-
-        <div class="sf-res-item mt16">
-          <span class="sf-res-label">계산식</span>
-          <span class="sf-res-val" id="frResultFormula" style="font-size:.8rem"></span>
+        <div class="fr-dice">
+          <label class="fr-slot__lbl">주사위 2</label>
+          <select class="sel" id="frDice2">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
         </div>
-        <div class="sf-res-item">
-          <span class="sf-res-label">최종 점수</span>
-          <span class="sf-res-val big" id="frResultScore">0</span>
+        <div class="fr-dice">
+          <label class="fr-slot__lbl">주사위 3</label>
+          <select class="sel" id="frDice3">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
         </div>
-        <div id="frPass" class="fr-pass"></div>
       </div>
 
-      <!-- 오른쪽: 팀 구성 -->
-      <div class="card">
-        <div class="card__title">팀 구성 — 패밀리어 3마리</div>
-        <p class="dt-help">속성·타입을 고르고, 카드에 뜬 프론티어 잠재 2줄의 종류와 수치를 그대로 입력하세요.</p>
-        <div id="frTeamSlots" class="fr-team mt8"></div>
-        <div class="card__title mt16">충족되는 파티 조건</div>
-        <div id="frTeamBadges" class="fr-badges mt8"></div>
+      <div class="field mt16">
+        <label class="field__label">라운드 목표 점수 (선택)</label>
+        <input class="inp" id="frTarget" type="number" placeholder="예: 150" min="0">
       </div>
+
+      <div class="sf-res-item mt16">
+        <span class="sf-res-label">계산식</span>
+        <span class="sf-res-val" id="frResultFormula" style="font-size:.8rem"></span>
+      </div>
+      <div class="sf-res-item">
+        <span class="sf-res-label">최종 점수</span>
+        <span class="sf-res-val big" id="frResultScore">0</span>
+      </div>
+      <div id="frPass" class="fr-pass"></div>
     </div>`;
 
   ['frDice1', 'frDice2', 'frDice3', 'frTarget'].forEach(id => {

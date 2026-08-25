@@ -109,7 +109,8 @@ function _frAggregate(dice) {
     if (count <= 0) return;
     const a = parseFloat(l.add), m = parseFloat(l.mult);
     if (!isNaN(a)) addSum += a * count;
-    if (!isNaN(m)) { multSum += m * count; multCount++; }
+    // 배율 0은 안 채운 것과 같게 본다 — 이게 배율 합에 끼면 ×1 기본값이 0으로 무너진다.
+    if (!isNaN(m) && m > 0) { multSum += m * count; multCount++; }
   };
   _frTeam.forEach((f, i) => {
     const l = f.line;
@@ -150,7 +151,8 @@ function _frCalcAndRender() {
   const diceSum = dice.reduce((a, b) => a + b, 0);
   const { addSum, mult, applied } = _frAggregate(dice);
   const raw = (diceSum + addSum) * mult;
-  const score = Math.floor(raw);
+  // 0.1 같은 값이 이진수로 딱 안 떨어져서 21×4.2가 88.19999...로 나오는 걸 막는다.
+  const score = Math.floor(raw + 1e-9);
 
   /* 고른 옵션이 지금 주사위에서 실제로 터졌는지 카드마다 알려준다 —
      영어 문구만 봐서는 조건이 맞는지 알기 어렵다. */

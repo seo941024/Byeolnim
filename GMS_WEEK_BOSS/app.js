@@ -1121,9 +1121,9 @@ document.getElementById('charList').addEventListener('click', e => {
 ['confirmClose','confirmCancel'].forEach(id => {
   document.getElementById(id).addEventListener('click', () => document.getElementById('overlayConfirm').classList.remove('open'));
 });
-// 로그인/닉네임/비밀번호 입력 중에 바깥을 잘못 눌러 폼이 통째로 날아가는 게 짜증난다는
-// 피드백으로 overlayAuth는 제외했다 — ×나 로그인 버튼을 다시 눌러야 닫힌다.
-document.querySelectorAll('.overlay:not(#overlayAuth)').forEach(ov => {
+// 뭔가를 길게 입력하는 창은 바깥을 잘못 눌렀을 때 쓰던 내용이 통째로 날아간다.
+// 그런 창(로그인, 관리자 알림 발송)은 여기서 빼고 ×로만 닫게 한다.
+document.querySelectorAll('.overlay:not(#overlayAuth):not(#overlayAdmin)').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
 

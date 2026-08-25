@@ -4,10 +4,14 @@
    출처
      구조·규칙: MapleStory Wiki "Mystic Frontier"
        https://maplestorywiki.net/w/Mystic_Frontier
-     주사위 계산 순서·잠재 조건 설명: GMS 히로익 갤러리 가이드 2·3부
+     옵션 실제 텍스트·속성/타입 명칭: masonym.dev/familiars → Familiar Lines →
+       "elemental Familiar is on your active lineup" / "type Familiar is on your active lineup"로 검색
+       (게임 파일 직파싱이 출처라 게임에 뜨는 표기 그대로다. weight는 전부 0이라 확률은 없음)
+     속성/타입 7·9종 구성 확인차 참고만 했던 갤러리 글(수치·확률은 신뢰 안 함, 이제 안 씀):
        https://gall.dcinside.com/mgallery/board/view?id=heroic&no=245780
-       https://gall.dcinside.com/mgallery/board/view/?id=heroic&no=245946
-     옵션 목록 대조: masonym.dev/familiars (게임 파일 직파싱, weight는 전부 0이라 확률 없음)
+
+   속성 7종(영문 표기 그대로): Fire, Ice, Lightning, Poison, Dark, Holy, Non-elemental
+   타입 9종(영문 표기 그대로): Human, Beast, Plant, Aquatic, Reptile, Fairy, Devil, Undead, Mechanical
 
    확실한 것 — 점수 계산 순서.
      Dice Total(합계)형 옵션은 전부 더해서 주사위 합에 얹고, Final Multiplier(배율)형
@@ -22,8 +26,8 @@
      용도로만 쓴다 — 확률 시뮬레이션은 자료가 생기기 전까지 만들지 않는다.
 ═══════════════════════════════════════════════ */
 
-const FRONTIER_ELEMENTS = ['불', '독', '번개', '얼음', '암흑', '신성', '무속성'];
-const FRONTIER_TYPES = ['사람', '야수', '식물', '수생', '요정', '파충류', '악마', '언데드', '기계'];
+const FRONTIER_ELEMENTS = ['Fire', 'Ice', 'Lightning', 'Poison', 'Dark', 'Holy', 'Non-elemental'];
+const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy', 'Devil', 'Undead', 'Mechanical'];
 
 /* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 2줄 */
 let _frTeam = [0, 1, 2].map(() => ({
@@ -79,29 +83,33 @@ function _frCalcAndRender() {
 
 /* 파티 조건형 잠재(속성/타입 기반)가 지금 팀 구성으로 발동 가능한 조건인지만 알려준다.
    실제 보유 여부·확률은 다루지 않는다 — 그 자료가 없다. */
+/* 배지 문구는 masonym.dev(게임 파일 직파싱)에서 실제로 확인한 옵션 텍스트를 그대로 쓴다.
+   검색해서 존재를 확인한 것만 넣었다 — "elemental Familiar is on your active lineup",
+   "type Familiar is on your active lineup", "have the same element/type",
+   "have a different element/type". */
 function _frRenderTeamBadges() {
   const els = _frTeam.map(f => f.element).filter(Boolean);
   const tys = _frTeam.map(f => f.type).filter(Boolean);
   const badges = [];
-  if (els.length >= 1) badges.push(`파티 내 특정 속성 존재 (${[...new Set(els)].join('·')})`);
-  if (tys.length >= 1) badges.push(`파티 내 특정 타입 존재 (${[...new Set(tys)].join('·')})`);
-  if (els.length === 3 && new Set(els).size === 1) badges.push(`전체 동일 속성 (${els[0]})`);
-  if (tys.length === 3 && new Set(tys).size === 1) badges.push(`전체 동일 타입 (${tys[0]})`);
-  if (els.length === 3 && new Set(els).size === 3) badges.push('전체 서로 다른 속성');
-  if (tys.length === 3 && new Set(tys).size === 3) badges.push('전체 서로 다른 타입');
+  [...new Set(els)].forEach(e => badges.push(`If a ${e} elemental Familiar is on your active lineup`));
+  [...new Set(tys)].forEach(t => badges.push(`If a ${t} type Familiar is on your active lineup`));
+  if (els.length === 3 && new Set(els).size === 1) badges.push('If all Familiars on your active lineup have the same element');
+  if (tys.length === 3 && new Set(tys).size === 1) badges.push('If all Familiars on your active lineup have the same type');
+  if (els.length === 3 && new Set(els).size === 3) badges.push('If all Familiars on your active lineup have a different element');
+  if (tys.length === 3 && new Set(tys).size === 3) badges.push('If all Familiars on your active lineup have a different type');
 
   const box = document.getElementById('frTeamBadges');
   if (!box) return;
   box.innerHTML = badges.length
     ? badges.map(b => `<span class="fr-badge">${b}</span>`).join('')
-    : '<span class="fr-badge fr-badge--empty">속성·타입을 고르면 충족되는 파티 조건이 여기 뜹니다</span>';
+    : '<span class="fr-badge fr-badge--empty">Pick an element/type to see which party conditions this lineup satisfies</span>';
 }
 
 function _frLineHtml(fi, li, line) {
   const kindSel = `<select class="sel fr-line-kind" data-fi="${fi}" data-li="${li}">
     <option value="">— 없음 —</option>
-    <option value="add"${line.kind === 'add' ? ' selected' : ''}>Dice Total(합계)</option>
-    <option value="mult"${line.kind === 'mult' ? ' selected' : ''}>Final Multiplier(배율)</option>
+    <option value="add"${line.kind === 'add' ? ' selected' : ''}>Dice Total</option>
+    <option value="mult"${line.kind === 'mult' ? ' selected' : ''}>Final Multiplier</option>
   </select>`;
   const disabled = line.kind ? '' : ' disabled';
   return `
@@ -119,27 +127,22 @@ function _frRenderTeam() {
   if (!box) return;
   box.innerHTML = _frTeam.map((f, i) => `
     <div class="fr-slot">
-      <div class="fr-slot__title">패밀리어 ${i + 1}</div>
-      <div class="fr-slot__body">
-        <div class="fr-slot__card">
-          <img class="fr-slot__img" id="frCardImg${i}" src="${_frCardSrc(f.rank)}" alt="" onerror="this.style.display='none'">
-          <div class="sf-toggle-group fr-slot__rank" id="frRankGroup${i}">
-            ${FR_RANKS.map(([v, label]) => `<button type="button" class="sf-toggle${f.rank === v ? ' active' : ''}" data-rank="${v}">${label}</button>`).join('')}
-          </div>
+      <img class="fr-slot__img" id="frCardImg${i}" src="${_frCardSrc(f.rank)}" alt="" onerror="this.style.display='none'">
+      <div class="sf-toggle-group fr-slot__rank" id="frRankGroup${i}">
+        ${FR_RANKS.map(([v, label]) => `<button type="button" class="sf-toggle${f.rank === v ? ' active' : ''}" data-rank="${v}">${label}</button>`).join('')}
+      </div>
+      <div class="fr-slot__field">
+        <span class="fr-slot__field-lbl">속성 / 타입</span>
+        <div class="fr-slot__field-row">
+          ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '속성 없음')}
+          ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '타입 없음')}
         </div>
-        <div class="fr-slot__fields">
-          <div class="fr-slot__row">
-            <label class="fr-slot__lbl">속성</label>
-            ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '— 선택 안 함 —')}
-          </div>
-          <div class="fr-slot__row">
-            <label class="fr-slot__lbl">타입</label>
-            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '— 선택 안 함 —')}
-          </div>
-          <div class="fr-slot__lines">
-            ${_frLineHtml(i, 0, f.lines[0])}
-            ${_frLineHtml(i, 1, f.lines[1])}
-          </div>
+      </div>
+      <div class="fr-slot__field">
+        <span class="fr-slot__field-lbl">프론티어 잠재</span>
+        <div class="fr-slot__lines">
+          ${_frLineHtml(i, 0, f.lines[0])}
+          ${_frLineHtml(i, 1, f.lines[1])}
         </div>
       </div>
     </div>`).join('');

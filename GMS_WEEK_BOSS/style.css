@@ -532,20 +532,21 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-pass { margin-top: 10px; font-size: .86rem; font-weight: 800; text-align: center; }
 .fr-pass.ok { color: var(--success); }
 .fr-pass.no { color: var(--danger); }
-.fr-team { display: flex; flex-direction: column; gap: 10px; }
-.fr-slot { padding: 10px; border-radius: var(--radius-sm); background: var(--bg2); border: 1px solid var(--border); }
-.fr-slot__title { font-size: .8rem; font-weight: 800; color: var(--text-sub); margin-bottom: 8px; }
-.fr-slot__body { display: flex; gap: 12px; }
-.fr-slot__card { flex: none; display: flex; flex-direction: column; align-items: center; gap: 8px; width: 82px; }
-/* 로로 카드는 픽셀아트라 원본(164px)에서 정확히 반으로 줄여야 안 뭉갠다 */
-.fr-slot__img { width: 82px; height: auto; image-rendering: pixelated; }
-.fr-slot__rank { flex-direction: column; width: 100%; }
-.fr-slot__rank .sf-toggle { padding: 4px 0; font-size: .66rem; }
-.fr-slot__fields { flex: 1; min-width: 0; }
-.fr-slot__row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
-.fr-slot__row:first-of-type { margin-top: 0; }
-.fr-slot__lbl { flex: none; width: 40px; font-size: .78rem; color: var(--text-dim); }
-.fr-slot__row select { flex: 1; }
+/* 카드 3장을 나란히 — 실제 게임의 팀 편성 화면(이미지 위, 정보는 아래로 쌓이는 카드 3장)을 참고 */
+.fr-team { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (max-width: 640px) { .fr-team { grid-template-columns: 1fr; } }
+.fr-slot {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 10px; border-radius: var(--radius-sm); background: var(--bg2); border: 1px solid var(--border);
+}
+/* 로로 카드는 픽셀아트라 원본(164px)에서 정수배로만 줄여야 안 뭉갠다 */
+.fr-slot__img { width: 100%; max-width: 164px; height: auto; image-rendering: pixelated; }
+.fr-slot__rank { width: 100%; }
+.fr-slot__rank .sf-toggle { flex: 1; padding: 5px 0; font-size: .7rem; }
+.fr-slot__field { width: 100%; }
+.fr-slot__field-lbl { display: block; font-size: .68rem; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
+.fr-slot__field-row { display: flex; gap: 6px; }
+.fr-slot__field-row select { flex: 1; min-width: 0; }
 .fr-badges { display: flex; flex-direction: column; gap: 6px; }
 .fr-badge {
   padding: 8px 12px; border-radius: var(--radius-sm);

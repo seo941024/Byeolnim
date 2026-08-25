@@ -898,7 +898,9 @@ function renderAstra() {
               </div>
             </div>
             <div class="gen-cfg-card">
-              <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.png" alt="" onerror="this.style.display='none'">
+              <!-- 파일 이름을 그대로 두고 내용만 바꾸면 브라우저가 옛 그림을 계속 쓴다.
+                   그림을 손볼 때마다 v를 올려야 바뀐 게 보인다. -->
+              <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.png?v=2" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 격전의 흔적</div>
                 <input class="inp" id="astraHeldTrace" type="number" min="0" value="${Math.max(0, astraState.heldTrace)}" />

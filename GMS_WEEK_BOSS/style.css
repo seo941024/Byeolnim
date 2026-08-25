@@ -2508,15 +2508,15 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   50% {background-position:100% 50%}
   100%{background-position:0% 50%}
 }
-/* ★ 원본 픽셀 그대로 그린다(25~44px). 늘리면 뭉개지고 줄이면 작아지므로
-   크기를 지정하지 않는 게 제일 선명하다. */
-.gen-cfg-card__img{width:auto;height:auto;max-width:48px;flex-shrink:0;filter:drop-shadow(0 0 10px rgba(246,199,68,.3))}
-/* 격전의 흔적은 원본 아이콘이 25px이라(다른 재화 아이콘은 32~33px) 혼자 작아 보여서
-   34px로 미리 확대해 둔 PNG를 쓴다. 그 크기 그대로 그린다. */
-.gen-cfg-card__img[src*="Fierce_Battle"]{width:34px;height:34px}
-/* 제네시스 패스는 44x32짜리 가로로 긴 무기 아이콘이라 혼자 넓다.
-   height 기준으로 34px에 맞추고 width는 auto라 비율이 안 찌그러진다. */
-.gen-cfg-card__img[src*="Genesis.png"]{width:auto;height:34px}
+/* ★ 아이콘 자리를 고정 폭으로 잡는다. 아이콘 원본이 33x33 / 44x32 / 37x37 / 34x34로
+   가로가 제각각이라, 자리 폭을 내용에 맡기면 카드마다 제목 시작점이 달라진다
+   (제네시스 패스가 제일 넓어서 혼자 밀려 보였다).
+   가장 큰 것에 맞춘 44x37 자리에 object-fit:none으로 두면 그림은 원본 크기 그대로
+   가운데 놓이면서(확대·축소 없음) 글자 시작점은 전부 같아진다. */
+.gen-cfg-card__img{
+  flex:none;width:44px;height:37px;object-fit:none;
+  filter:drop-shadow(0 0 10px rgba(246,199,68,.3))
+}
 .gen-cfg-card__body{flex:1;display:flex;flex-direction:column;gap:10px;min-width:0}
 .gen-cfg-card__title{font-size:.95rem;font-weight:900;color:var(--text);letter-spacing:.3px}
 .gen-cfg-card--pass .gen-cfg-card__title{color:var(--text)}
@@ -3169,11 +3169,13 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .dt-card__head { display: flex; align-items: center; gap: 12px; }
 .dt-card__drag { flex: none; cursor: grab; color: var(--text-dim); font-size: 1.1rem; line-height: 1; user-select: none; }
 .dt-card__drag:active { cursor: grabbing; }
+/* 캘린더 칩·프론티어 덱과 같은 112px. cover는 96px 아바타의 가장자리를 잘라내므로
+   contain으로 전체가 들어오게 한다(다른 화면과 같은 처리). */
 .dt-card__portrait {
-  flex: none; width: 88px; height: 88px; border-radius: var(--radius-sm); overflow: hidden;
+  flex: none; width: 112px; height: 112px; border-radius: var(--radius-sm); overflow: hidden;
   display: flex; align-items: center; justify-content: center; background: transparent;
 }
-.dt-card__portrait-img { width: 100%; height: 100%; object-fit: cover; }
+.dt-card__portrait-img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
 .dt-card__portrait-no { font-size: .74rem; font-weight: 800; color: var(--text-dim); text-align: center; }
 .dt-card__whoBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dt-card__name { min-width: 0; font-weight: 800; font-size: 1.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -3186,7 +3188,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
 .dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; }
 .dt-step2-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-.dt-step2-portrait { flex: none; width: 72px; height: 72px; border-radius: var(--radius-sm); object-fit: cover; background: rgba(0,0,0,.2); }
+.dt-step2-portrait { flex: none; width: 112px; height: 112px; border-radius: var(--radius-sm); object-fit: contain; image-rendering: pixelated; background: rgba(0,0,0,.2); }
 .dt-step2-namebox { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dt-step2-name { font-size: 1.35rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dt-step2-lv { font-size: .82rem; font-weight: 700; color: var(--text-dim); }

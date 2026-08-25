@@ -37,6 +37,10 @@ let _frTeam = [0, 1, 2].map(() => ({
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
 
+/* 타입 아이콘 — maplehub.app에서 실제로 존재하는 걸 확인한 9장만 받아왔다.
+   속성 아이콘은 그 사이트 경로가 전부 SPA 오류 페이지를 200으로 돌려주는 가짜였어서 없다. */
+function _frTypeIconSrc(type) { return type ? 'images/frontier/type_' + type.toLowerCase() + '.webp' : ''; }
+
 function _frBuildSelect(id, list, cur, placeholder) {
   return `<select class="sel fr-cond-sel" id="${id}">
     <option value="">${placeholder}</option>
@@ -178,10 +182,14 @@ function _frRenderTeam() {
         ${FR_RANKS.map(([v, label]) => `<option value="${v}"${f.rank === v ? ' selected' : ''}>${label}</option>`).join('')}
       </select>
       <div class="fr-slot__field">
-        <span class="fr-slot__field-lbl">속성 / 타입</span>
+        <span class="fr-slot__field-lbl">Element / Type</span>
         <div class="fr-slot__field-row">
-          ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '속성 없음')}
-          ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '타입 없음')}
+          ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, 'No element')}
+          <div class="fr-type-pick">
+            <img class="fr-type-icon" id="frTyIcon${i}" src="${_frTypeIconSrc(f.type)}" alt=""
+                 style="visibility:${f.type ? '' : 'hidden'}" onerror="this.style.visibility='hidden'">
+            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, 'No type')}
+          </div>
         </div>
       </div>
       <div class="fr-slot__field">
@@ -195,7 +203,13 @@ function _frRenderTeam() {
 
   _frTeam.forEach((f, i) => {
     document.getElementById('frEl' + i).addEventListener('change', e => { _frTeam[i].element = e.target.value; _frRenderTeamBadges(); });
-    document.getElementById('frTy' + i).addEventListener('change', e => { _frTeam[i].type = e.target.value; _frRenderTeamBadges(); });
+    document.getElementById('frTy' + i).addEventListener('change', e => {
+      _frTeam[i].type = e.target.value;
+      const icon = document.getElementById('frTyIcon' + i);
+      icon.src = _frTypeIconSrc(e.target.value);
+      icon.style.visibility = e.target.value ? '' : 'hidden';
+      _frRenderTeamBadges();
+    });
     document.getElementById('frRank' + i).addEventListener('change', e => {
       _frTeam[i].rank = e.target.value;
       document.getElementById('frCardImg' + i).src = _frCardSrc(e.target.value);

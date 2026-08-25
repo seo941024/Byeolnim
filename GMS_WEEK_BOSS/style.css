@@ -547,6 +547,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__field-lbl { display: block; font-size: .68rem; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
 .fr-slot__field-row { display: flex; gap: 6px; }
 .fr-slot__field-row select { flex: 1; min-width: 0; }
+.fr-type-pick { flex: 1; display: flex; align-items: center; gap: 5px; min-width: 0; }
+.fr-type-pick select { flex: 1; min-width: 0; }
+.fr-type-icon { width: 18px; height: 18px; object-fit: contain; flex: none; }
 .fr-badges { display: flex; flex-direction: column; gap: 6px; }
 .fr-badge {
   padding: 8px 12px; border-radius: var(--radius-sm);

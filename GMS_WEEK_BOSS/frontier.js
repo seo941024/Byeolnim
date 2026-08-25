@@ -171,10 +171,18 @@ function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
 }
 
 function _frLineHtml(fi, line) {
+  const isEvent = String(line.catalogIdx || '').startsWith('e');
   return `
     <div class="fr-line fr-line--select">
+      <span class="fr-line__field-lbl">프론티어 잠재</span>
       <select class="sel fr-line-cat" data-fi="${fi}">
-        ${_frLineOptions(fi, line.catalogIdx)}
+        ${_frLineOptions(fi, isEvent ? '' : line.catalogIdx)}
+      </select>
+    </div>
+    <div class="fr-line fr-line--select">
+      <span class="fr-line__field-lbl">이벤트 잠재 (~2026-09-08)</span>
+      <select class="sel fr-line-cat-event" data-fi="${fi}">
+        ${_frLineEventOptions(fi, isEvent ? line.catalogIdx : '')}
       </select>
     </div>`;
 }
@@ -193,25 +201,27 @@ function _frLineOptions(fi, selectLabel) {
     return `${e.label} (${parts.join(', ')})`;
   };
   const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${fmt(e)}</option>`).join('');
+  return `<option value="">— None —</option>${opts}`;
+}
 
-  /* 이벤트 잠재는 값이 "몇 마리가 조건에 맞는지"에 곱해지므로 표기에 "마리당"을 붙여
-     일반 잠재와 헷갈리지 않게 한다. value는 "e{idx}"로 구분한다. */
+/* 이벤트 잠재는 값이 "몇 마리가 조건에 맞는지"에 곱해지므로 표기에 "마리당"을 붙여
+   일반 잠재와 헷갈리지 않게 한다. value는 "e{idx}"로 구분한다. */
+function _frLineEventOptions(fi, selectLabel) {
+  const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
   const EG = window.FR_EVENT_GROUPS || [];
   const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
   const fmtEvent = e => {
+    const parts = [];
+    if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
+    if (e.mult != null) parts.push(`x${e.mult}`);
     if (e.groupKey) {
       const g = EG.find(x => x.key === e.groupKey);
-      const parts = [];
-      if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
-      if (e.mult != null) parts.push(`x${e.mult}`);
       return `${g ? g.label : e.groupKey} 마리당 (${parts.join(', ')})`;
     }
-    return fmt(e);
+    return `${e.label} (${parts.join(', ')})`;
   };
-  const eventOpts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${fmtEvent(e)}</option>`).join('');
-  const eventGroup = eventOpts ? `<optgroup label="이벤트 잠재 (~2026-09-08)">${eventOpts}</optgroup>` : '';
-
-  return `<option value="">— None —</option>${opts}${eventGroup}`;
+  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${fmtEvent(e)}</option>`).join('');
+  return `<option value="">— None —</option>${opts}`;
 }
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
@@ -254,8 +264,7 @@ function _frRenderTeam() {
         <span class="fr-slot__field-lbl">Type</span>
         ${_frIconDropdown('ty', i, FRONTIER_TYPES, _frTypeIconSrc, f.type)}
       </div>
-      <div class="fr-slot__field">
-        <span class="fr-slot__field-lbl">프론티어 잠재</span>
+      <div class="fr-slot__field fr-slot__field--lines">
         ${_frLineHtml(i, f.line)}
       </div>
     </div>`).join('');
@@ -296,29 +305,38 @@ function _frRenderTeam() {
       _frCalcAndRender();
     });
   });
+  /* 잠재는 1개뿐이라 일반/이벤트 두 드롭다운 중 하나만 값을 가질 수 있다 —
+     한쪽에서 고르면 다른 쪽은 자동으로 "선택 안 함"으로 되돌린다. */
   box.querySelectorAll('.fr-line-cat').forEach(sel => {
     sel.addEventListener('change', e => {
       const fi = +e.target.dataset.fi;
       const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
       const val = e.target.value;
-      if (val.startsWith('e')) {
-        const pool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
-        const entry = pool[+val.slice(1)];
-        _frTeam[fi].line = {
-          catalogIdx: val,
-          add: entry && entry.add != null ? entry.add : '',
-          mult: entry && entry.mult != null ? entry.mult : '',
-          groupKey: entry ? entry.groupKey : undefined,
-        };
-      } else {
-        const pool = (window.FR_CATALOG && window.FR_CATALOG[rankKey]) || [];
-        const entry = val !== '' ? pool[+val] : null;
-        _frTeam[fi].line = {
-          catalogIdx: val,
-          add: entry && entry.add != null ? entry.add : '',
-          mult: entry && entry.mult != null ? entry.mult : '',
-        };
-      }
+      const pool = (window.FR_CATALOG && window.FR_CATALOG[rankKey]) || [];
+      const entry = val !== '' ? pool[+val] : null;
+      _frTeam[fi].line = {
+        catalogIdx: val,
+        add: entry && entry.add != null ? entry.add : '',
+        mult: entry && entry.mult != null ? entry.mult : '',
+      };
+      _frRenderTeam();
+      _frCalcAndRender();
+    });
+  });
+  box.querySelectorAll('.fr-line-cat-event').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const fi = +e.target.dataset.fi;
+      const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
+      const val = e.target.value;
+      const pool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
+      const entry = val !== '' ? pool[+val.slice(1)] : null;
+      _frTeam[fi].line = {
+        catalogIdx: val,
+        add: entry && entry.add != null ? entry.add : '',
+        mult: entry && entry.mult != null ? entry.mult : '',
+        groupKey: entry ? entry.groupKey : undefined,
+      };
+      _frRenderTeam();
       _frCalcAndRender();
     });
   });

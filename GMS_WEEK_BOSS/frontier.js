@@ -66,25 +66,25 @@ let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', m
 /* 실제로 받는 보너스 주사위 20종 — 4계열 × 5등급이고 등급 색은 회색<파랑<보라<주황<초록 순이다.
    수치를 직접 적게 하면 아이템을 보고 숫자를 옮겨 적어야 해서, 아이템 자체를 고르게 한다.
    출처는 maplehub의 미스틱 프론티어 계산기 구현(수치·그림 경로 모두 거기서 확인). */
-const FR_DICE_TIERS = [['gray', '회색'], ['blue', '파랑'], ['purple', '보라'], ['orange', '주황'], ['green', '초록']];
+const FR_DICE_TIERS = [['gray', 'Gray'], ['blue', 'Blue'], ['purple', 'Purple'], ['orange', 'Orange'], ['green', 'Green']];
 const FR_DICE_KINDS = [
   {
-    key: 'blessed', label: '축복의 주사위',
+    key: 'blessed', label: 'Blessed Dice',
     vals: [{ add: 3 }, { add: 6 }, { add: 9 }, { add: 12 }, { add: 15 }],
     img: t => `blessed_${t}_dice`,
   },
   {
-    key: 'swift', label: '쾌속의 주사위',
+    key: 'swift', label: 'Swift Rolling Dice',
     vals: [{ mult: 1.2 }, { mult: 1.4 }, { mult: 1.6 }, { mult: 1.8 }, { mult: 2 }],
     img: t => `swift_rolling_${t}_dice`,
   },
   {
-    key: 'sharp', label: '예리한 주사위',
+    key: 'sharp', label: 'Sharp Edged Dice',
     vals: [{ add: -1, mult: 1.6 }, { add: -1, mult: 1.8 }, { add: -1, mult: 2 }, { add: -1, mult: 2.2 }, { add: -1, mult: 2.4 }],
     img: t => `sharp_edged_${t}_dice`,
   },
   {
-    key: 'holy', label: '홀리 롤러',
+    key: 'holy', label: 'Holy Rollers',
     vals: [{ add: 1, mult: 1.4 }, { add: 1, mult: 1.6 }, { add: 1, mult: 1.8 }, { add: 1, mult: 2 }, { add: 1, mult: 2.2 }],
     // 파랑만 파일 이름에 holy가 빠져 있다(원본 그대로).
     img: t => (t === 'blue' ? 'blue_rollers' : `${t}_holy_rollers`),
@@ -187,7 +187,7 @@ function _frBonusDiceHtml(i) {
   return `
     <div class="fr-bonus">
       <img class="fr-bonus__img" src="${src}" alt="" ${src === FR_BLANK_ICON ? 'style="visibility:hidden"' : ''}>
-      <span class="fr-bonus__lbl">보너스 주사위 ${i + 1}</span>
+      <span class="fr-bonus__lbl">Bonus ${i + 1}</span>
       <select class="sel fr-bd-kind" data-bi="${i}"><option value="">-</option>${kindOpts}</select>
       <select class="sel fr-bd-tier" data-bi="${i}"${kind ? '' : ' disabled'}><option value="">-</option>${tierOpts}</select>
     </div>`;

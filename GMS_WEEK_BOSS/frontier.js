@@ -29,10 +29,13 @@
 const FRONTIER_ELEMENTS = ['Fire', 'Ice', 'Lightning', 'Poison', 'Dark', 'Holy', 'Non-elemental'];
 const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy', 'Devil', 'Undead', 'Mechanical'];
 
-/* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 2줄 */
+/* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 2줄.
+   한 줄이 합계·배율을 동시에 주는 경우가 실제로 있다(예: "Dice Total: -1, Final
+   Multiplier: +1.4x" — masonym.dev에서 확인). 그래서 줄 하나에 두 값을 같이 받는다.
+   둘 중 하나만 채워도 되고, 둘 다 채워도 된다. */
 let _frTeam = [0, 1, 2].map(() => ({
   rank: 'unique', element: '', type: '',
-  lines: [{ kind: '', val: '' }, { kind: '', val: '' }],
+  lines: [{ add: '', mult: '' }, { add: '', mult: '' }],
 }));
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
@@ -58,20 +61,17 @@ function _frBuildSelect(id, list, cur, placeholder) {
    상태라 0개, 5라운드를 시작할 땐 그동안 4번 클리어했으니 최대 4개까지 쌓인다.
    보너스 주사위도 팀 잠재와 같은 구조(합계에 얹거나 배율에 더하거나)로 취급한다. */
 const FR_MAX_BONUS_DICE = 4;
-let _frBonusDice = [
-  { kind: '', val: '' }, { kind: '', val: '' }, { kind: '', val: '' }, { kind: '', val: '' },
-];
+let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', mult: '' }));
 
-/* 팀 전체 옵션 줄 + 지금 라운드까지 쌓인 보너스 주사위를 모아 더한다 — 합계형은 다 더해서
-   주사위 합에, 배율형은 다 더해서 마지막에 한 번만 곱한다(사용자 확인 계산식).
-   배율형이 하나도 없으면 곱셈 효과 없음 = ×1. */
+/* 팀 전체 옵션 줄 + 보너스 주사위를 모아 더한다 — 각 줄의 합계값은 다 더해서 주사위 합에,
+   배율값은 다 더해서 마지막에 한 번만 곱한다(사용자 확인 계산식). 한 줄이 두 값을 동시에
+   가지면 둘 다 반영된다. 배율값이 하나도 안 채워졌으면 곱셈 효과 없음 = ×1. */
 function _frAggregate() {
   let addSum = 0, multSum = 0, multCount = 0;
   const addLine = l => {
-    const v = parseFloat(l.val);
-    if (!l.kind || isNaN(v)) return;
-    if (l.kind === 'add') addSum += v;
-    else { multSum += v; multCount++; }
+    const a = parseFloat(l.add), m = parseFloat(l.mult);
+    if (!isNaN(a)) addSum += a;
+    if (!isNaN(m)) { multSum += m; multCount++; }
   };
   _frTeam.forEach(f => f.lines.forEach(addLine));
   _frBonusDice.forEach(addLine);
@@ -83,29 +83,14 @@ function _frAggregate() {
 function _frRenderBonusDice() {
   const box = document.getElementById('frBonusDice');
   if (!box) return;
-  box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) => `
-        <div class="fr-line">
-          <span class="fr-bonus__lbl">보너스 주사위 ${i + 1}</span>
-          ${_frLineKindSelect({ bi: i }, _frBonusDice[i].kind)}
-          <input class="inp fr-line-val" type="number" step="0.1"
-                 placeholder="${_frBonusDice[i].kind === 'mult' ? '예: 1.2' : '예: 3'}"
-                 value="${_frBonusDice[i].val}" data-bi="${i}"${_frBonusDice[i].kind ? '' : ' disabled'}>
-        </div>`).join('');
+  box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) =>
+    _frTwoValLine(_frBonusDice[i], `보너스 주사위 ${i + 1}`, 'bi', i)).join('');
 
-  box.querySelectorAll('.fr-line-kind').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const bi = +e.target.dataset.bi;
-      _frBonusDice[bi].kind = e.target.value;
-      if (!e.target.value) _frBonusDice[bi].val = '';
-      _frRenderBonusDice();
-      _frCalcAndRender();
-    });
+  box.querySelectorAll('.fr-val-add').forEach(inp => {
+    inp.addEventListener('input', e => { _frBonusDice[+e.target.dataset.bi].add = e.target.value; _frCalcAndRender(); });
   });
-  box.querySelectorAll('.fr-line-val').forEach(inp => {
-    inp.addEventListener('input', e => {
-      _frBonusDice[+e.target.dataset.bi].val = e.target.value;
-      _frCalcAndRender();
-    });
+  box.querySelectorAll('.fr-val-mult').forEach(inp => {
+    inp.addEventListener('input', e => { _frBonusDice[+e.target.dataset.bi].mult = e.target.value; _frCalcAndRender(); });
   });
 }
 
@@ -157,23 +142,27 @@ function _frRenderTeamBadges() {
     : '<span class="fr-badge fr-badge--empty">Pick an element/type to see which party conditions this lineup satisfies</span>';
 }
 
-function _frLineKindSelect(dataAttrs, kind) {
-  const attrs = Object.entries(dataAttrs).map(([k, v]) => `data-${k}="${v}"`).join(' ');
-  return `<select class="sel fr-line-kind" ${attrs}>
-    <option value="">— 없음 —</option>
-    <option value="add"${kind === 'add' ? ' selected' : ''}>Dice Total</option>
-    <option value="mult"${kind === 'mult' ? ' selected' : ''}>Final Multiplier</option>
-  </select>`;
+/* 옵션 줄 하나 = 합계값 입력 + 배율값 입력, 나란히. 실제 게임 옵션 중에
+   "Dice Total: -1, Final Multiplier: +1.4x"처럼 한 줄이 두 값을 동시에 주는 경우가 있어서
+   둘 다 받는다. idKind/idVal는 data attribute 이름과 값 — 팀 줄은 fi+li, 보너스 주사위는 bi 하나. */
+function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
+  const attrs = idKind2 != null ? `data-${idKind}="${idVal}" data-${idKind2}="${idVal2}"` : `data-${idKind}="${idVal}"`;
+  return `
+    <div class="fr-line">
+      ${label ? `<span class="fr-bonus__lbl">${label}</span>` : ''}
+      <div class="fr-line__field">
+        <span class="fr-line__field-lbl">Dice Total</span>
+        <input class="inp fr-val-add" type="number" step="0.1" placeholder="예: 9" value="${line.add}" ${attrs}>
+      </div>
+      <div class="fr-line__field">
+        <span class="fr-line__field-lbl">× Multiplier</span>
+        <input class="inp fr-val-mult" type="number" step="0.1" placeholder="예: 1.4" value="${line.mult}" ${attrs}>
+      </div>
+    </div>`;
 }
 
 function _frLineHtml(fi, li, line) {
-  const disabled = line.kind ? '' : ' disabled';
-  return `
-    <div class="fr-line">
-      ${_frLineKindSelect({ fi, li }, line.kind)}
-      <input class="inp fr-line-val" type="number" step="0.1" placeholder="${line.kind === 'mult' ? '예: 1.4' : '예: 9'}"
-             value="${line.val}" data-fi="${fi}" data-li="${li}"${disabled}>
-    </div>`;
+  return _frTwoValLine(line, '', 'fi', fi, 'li', li);
 }
 
 const FR_RANKS = [['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
@@ -232,19 +221,15 @@ function _frRenderTeam() {
       document.getElementById('frCardImg' + i).src = _frCardSrc(e.target.value);
     });
   });
-  box.querySelectorAll('.fr-line-kind').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const fi = +e.target.dataset.fi, li = +e.target.dataset.li;
-      _frTeam[fi].lines[li].kind = e.target.value;
-      if (!e.target.value) _frTeam[fi].lines[li].val = '';
-      _frRenderTeam();
+  box.querySelectorAll('.fr-val-add').forEach(inp => {
+    inp.addEventListener('input', e => {
+      _frTeam[+e.target.dataset.fi].lines[+e.target.dataset.li].add = e.target.value;
       _frCalcAndRender();
     });
   });
-  box.querySelectorAll('.fr-line-val').forEach(inp => {
+  box.querySelectorAll('.fr-val-mult').forEach(inp => {
     inp.addEventListener('input', e => {
-      const fi = +e.target.dataset.fi, li = +e.target.dataset.li;
-      _frTeam[fi].lines[li].val = e.target.value;
+      _frTeam[+e.target.dataset.fi].lines[+e.target.dataset.li].mult = e.target.value;
       _frCalcAndRender();
     });
   });

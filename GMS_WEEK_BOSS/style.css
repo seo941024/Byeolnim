@@ -580,6 +580,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   font-size: .8rem; text-align: left; cursor: pointer;
 }
 .fr-dd__item img { width: 18px; height: 18px; object-fit: contain; flex: none; }
+
+/* 무속성 자리의 금지 표시 — 그림 아이콘과 같은 크기로 맞춰 줄이 어긋나지 않게 한다 */
+.fr-dd__ban { width: 18px; height: 18px; flex: none; opacity: .55; stroke-linecap: round; }
 .fr-dd__item:hover { background: var(--bg3); }
 .fr-dd__item.active { background: color-mix(in srgb, var(--accent) 20%, var(--bg2)); color: var(--accent); font-weight: 700; }
 .fr-badges { display: flex; flex-direction: column; gap: 6px; }

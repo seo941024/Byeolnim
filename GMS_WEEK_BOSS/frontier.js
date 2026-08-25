@@ -295,21 +295,25 @@ function _frLineEventOptions(fi, selectLabel) {
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
    네이티브 select는 option 안에 이미지를 못 넣어서 직접 만든다. */
+/* 무속성은 게임에도 아이콘 그림이 없다 — 다른 속성만 그림이 붙으면 줄이 안 맞아서
+   금지 표시를 대신 그린다(maplehub도 같은 방식). currentColor라 테마를 따라간다. */
+const FR_NONE_ICON = `<svg class="fr-dd__ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>`;
+
+function _frIconHtml(v, iconFn) {
+  const src = iconFn(v);
+  return src === FR_BLANK_ICON ? FR_NONE_ICON : `<img src="${src}" alt="">`;
+}
+
 function _frIconDropdown(prefix, fi, list, iconFn, cur) {
-  const curSrc = cur ? iconFn(cur) : '';
-  const curHasIcon = curSrc && curSrc !== FR_BLANK_ICON;
-  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">— None —</button>`]
-    .concat(list.map(v => {
-      const src = iconFn(v);
-      const hasIcon = src !== FR_BLANK_ICON;
-      return `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">
-        ${hasIcon ? `<img src="${src}" alt="">` : ''}<span>${v}</span>
-      </button>`;
-    }));
+  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">${FR_NONE_ICON}<span>— None —</span></button>`]
+    .concat(list.map(v =>
+      `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">
+        ${_frIconHtml(v, iconFn)}<span>${v}</span>
+      </button>`));
   return `
     <div class="fr-dd" id="fr${prefix}Dd${fi}">
       <button type="button" class="fr-dd__trigger" data-toggle="${fi}">
-        ${curHasIcon ? `<img src="${curSrc}" alt="">` : ''}<span>${cur || '— None —'}</span>
+        ${cur ? _frIconHtml(cur, iconFn) : FR_NONE_ICON}<span>${cur || '— None —'}</span>
         <span class="fr-dd__caret">▾</span>
       </button>
       <div class="fr-dd__menu" hidden>${items.join('')}</div>

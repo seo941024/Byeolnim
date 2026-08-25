@@ -619,6 +619,10 @@ function _frRestore(snap) {
   });
 }
 
+/* 지금 손대고 있는 덱 칸. 1·2·3을 누르면 그 칸을 고르면서 불러오고,
+   저장·삭제는 고른 칸에 대해 동작한다 — 칸마다 버튼 세 개를 두면 줄이 너무 길어진다. */
+let _frDeckSlot = 0;
+
 function _frRenderDecks() {
   const box = document.getElementById('frDecks');
   if (!box) return;
@@ -628,35 +632,47 @@ function _frRenderDecks() {
     return;
   }
   const decks = _frDecks(ch);
+  const img = ch.fetched && ch.fetched.img;
   const slots = Array.from({ length: FR_MAX_DECKS }, (_, i) => {
-    const d = decks[i];
-    return `
-      <div class="fr-deck">
-        <button type="button" class="btn fr-deck__load" data-di="${i}"${d ? '' : ' disabled'}>${d ? d.name : '비어 있음'}</button>
-        <button type="button" class="btn fr-deck__save" data-di="${i}">${d ? '덮어쓰기' : '저장'}</button>
-        <button type="button" class="btn fr-deck__del" data-di="${i}"${d ? '' : ' disabled'}>삭제</button>
-      </div>`;
+    const filled = !!decks[i];
+    return `<button type="button" class="fr-deck__slot${filled ? ' filled' : ''}${i === _frDeckSlot ? ' sel' : ''}"
+      data-di="${i}" title="${filled ? `덱 ${i + 1} 불러오기` : `덱 ${i + 1} — 비어 있음`}">${i + 1}</button>`;
   }).join('');
-  box.innerHTML = `<div class="fr-deck__name">${escHtml(ch.name)}</div>${slots}`;
 
-  box.querySelectorAll('.fr-deck__save').forEach(b => b.addEventListener('click', () => {
-    const i = +b.dataset.di, d = _frDecks();
-    d[i] = { name: `덱 ${i + 1}`, ...(_frSnapshot()) };
-    save();
+  box.innerHTML = `
+    <div class="fr-deck__who">
+      ${img ? `<img class="fr-deck__face" src="${escHtml(img)}" alt="" onerror="this.style.display='none'">` : ''}
+      <span class="fr-deck__name">${escHtml(ch.name)}</span>
+    </div>
+    <div class="fr-deck__slots">${slots}</div>
+    <button type="button" class="sbtn sbtn--ghost sbtn--sm" id="frDeckSave">저장</button>
+    <button type="button" class="sbtn sbtn--ghost sbtn--sm" id="frDeckDel"${decks[_frDeckSlot] ? '' : ' disabled'}>삭제</button>`;
+
+  box.querySelectorAll('.fr-deck__slot').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.di;
+    _frDeckSlot = i;
+    const d = _frDecks()[i];
+    if (d) {
+      _frRestore(d);
+      _frRenderTeam();
+      _frRenderBonusDice();
+      _frCalcAndRender();
+      showToast(`덱 ${i + 1}번을 불러왔습니다.`);
+    }
     _frRenderDecks();
   }));
-  box.querySelectorAll('.fr-deck__load').forEach(b => b.addEventListener('click', () => {
-    _frRestore(_frDecks()[+b.dataset.di]);
-    _frRenderTeam();
-    _frRenderBonusDice();
-    _frCalcAndRender();
-  }));
-  box.querySelectorAll('.fr-deck__del').forEach(b => b.addEventListener('click', () => {
-    const d = _frDecks();
-    delete d[+b.dataset.di];
+  document.getElementById('frDeckSave').addEventListener('click', () => {
+    _frDecks()[_frDeckSlot] = _frSnapshot();
     save();
     _frRenderDecks();
-  }));
+    showToast(`덱 ${_frDeckSlot + 1}번에 저장했습니다.`);
+  });
+  document.getElementById('frDeckDel').addEventListener('click', () => {
+    delete _frDecks()[_frDeckSlot];
+    save();
+    _frRenderDecks();
+    showToast(`덱 ${_frDeckSlot + 1}번을 비웠습니다.`);
+  });
 }
 
 function _frSetLine(fi, kind, idx) {

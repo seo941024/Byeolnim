@@ -629,14 +629,22 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-line { display: flex; gap: 6px; align-items: flex-end; }
 .fr-line .fr-bonus__lbl { flex: 1.1; font-size: .74rem; color: var(--text-dim); align-self: center; }
 
-/* 덱 저장 — 캐릭터당 3칸 */
+/* 덱 저장 — 캐릭터당 3칸. 캐릭터별이라는 게 한눈에 보이게 얼굴을 같이 띄운다. */
 .fr-decks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.fr-deck__name { font-size: .78rem; font-weight: 800; color: var(--accent); margin-right: 4px; }
+.fr-deck__who { display: flex; align-items: center; gap: 6px; margin-right: 2px; }
+.fr-deck__face { width: 30px; height: 30px; object-fit: contain; flex: none; }
+.fr-deck__name { font-size: .78rem; font-weight: 800; color: var(--accent); }
 .fr-deck__empty { font-size: .76rem; color: var(--text-dim); }
-.fr-deck { display: flex; align-items: center; gap: 4px; padding: 4px 6px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg2); }
-.fr-deck .btn { font-size: .7rem; padding: 4px 8px; }
-.fr-deck__load { font-weight: 700; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fr-deck .btn:disabled { opacity: .4; cursor: not-allowed; }
+.fr-deck__slots { display: flex; gap: 4px; }
+.fr-deck__slot {
+  width: 30px; height: 30px; border-radius: 6px;
+  font-size: .78rem; font-weight: 800;
+  color: var(--text-dim); background: var(--bg2); border: 1px solid var(--border);
+}
+/* 내용이 있는 칸만 진하게 — 비었는지 찼는지 숫자만 보고 알 수 있어야 한다 */
+.fr-deck__slot.filled { color: var(--text); border-color: rgba(246,199,68,.55); }
+.fr-deck__slot.sel { border-color: var(--accent); color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, var(--bg2)); }
+.fr-deck__slot:hover { border-color: var(--accent); }
 
 /* 보너스 주사위 한 줄: 이름표 + 드롭다운(그림으로 고른다) */
 .fr-bonus { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }

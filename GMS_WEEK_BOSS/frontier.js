@@ -61,7 +61,47 @@ function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/fronti
    상태라 0개, 5라운드를 시작할 땐 그동안 4번 클리어했으니 최대 4개까지 쌓인다.
    보너스 주사위도 팀 잠재와 같은 구조(합계에 얹거나 배율에 더하거나)로 취급한다. */
 const FR_MAX_BONUS_DICE = 4;
-let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', mult: '' }));
+let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', mult: '', kind: '', tier: '' }));
+
+/* 실제로 받는 보너스 주사위 20종 — 4계열 × 5등급이고 등급 색은 회색<파랑<보라<주황<초록 순이다.
+   수치를 직접 적게 하면 아이템을 보고 숫자를 옮겨 적어야 해서, 아이템 자체를 고르게 한다.
+   출처는 maplehub의 미스틱 프론티어 계산기 구현(수치·그림 경로 모두 거기서 확인). */
+const FR_DICE_TIERS = [['gray', '회색'], ['blue', '파랑'], ['purple', '보라'], ['orange', '주황'], ['green', '초록']];
+const FR_DICE_KINDS = [
+  {
+    key: 'blessed', label: '축복의 주사위',
+    vals: [{ add: 3 }, { add: 6 }, { add: 9 }, { add: 12 }, { add: 15 }],
+    img: t => `blessed_${t}_dice`,
+  },
+  {
+    key: 'swift', label: '쾌속의 주사위',
+    vals: [{ mult: 1.2 }, { mult: 1.4 }, { mult: 1.6 }, { mult: 1.8 }, { mult: 2 }],
+    img: t => `swift_rolling_${t}_dice`,
+  },
+  {
+    key: 'sharp', label: '예리한 주사위',
+    vals: [{ add: -1, mult: 1.6 }, { add: -1, mult: 1.8 }, { add: -1, mult: 2 }, { add: -1, mult: 2.2 }, { add: -1, mult: 2.4 }],
+    img: t => `sharp_edged_${t}_dice`,
+  },
+  {
+    key: 'holy', label: '홀리 롤러',
+    vals: [{ add: 1, mult: 1.4 }, { add: 1, mult: 1.6 }, { add: 1, mult: 1.8 }, { add: 1, mult: 2 }, { add: 1, mult: 2.2 }],
+    // 파랑만 파일 이름에 holy가 빠져 있다(원본 그대로).
+    img: t => (t === 'blue' ? 'blue_rollers' : `${t}_holy_rollers`),
+  },
+];
+
+function _frDiceIconSrc(kindKey, tierKey) {
+  const k = FR_DICE_KINDS.find(x => x.key === kindKey);
+  return k && tierKey ? `images/frontier/dice/${k.img(tierKey)}.webp` : FR_BLANK_ICON;
+}
+
+function _frDiceEffectLabel(v) {
+  const p = [];
+  if (v.add != null) p.push(`Dice Total ${v.add > 0 ? '+' : ''}${v.add}`);
+  if (v.mult != null) p.push(`x${v.mult}`);
+  return p.join(', ');
+}
 
 /* 팀에서 그 그룹(속성/타입 묶음)에 해당하는 마릿수 — 이벤트 "~마다" 옵션의 배수가 된다. */
 function _frGroupCount(group) {
@@ -134,18 +174,54 @@ function _frAggregate(dice) {
 }
 
 /* 보너스 주사위는 4칸 고정으로 항상 띄운다. 매 라운드 나오는 것도 아니라서
-   "몇 라운드니까 몇 개"로 자동 계산하는 것보다, 안 나온 칸은 그냥 비워두게 두는 게 편하다. */
+   "몇 라운드니까 몇 개"로 자동 계산하는 것보다, 안 나온 칸은 그냥 비워두게 두는 게 편하다.
+   잠재와 같이 종류 고르고 → 등급 고르는 2단계다. */
+function _frBonusDiceHtml(i) {
+  const b = _frBonusDice[i];
+  const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
+  const kindOpts = FR_DICE_KINDS.map(k =>
+    `<option value="${k.key}"${k.key === b.kind ? ' selected' : ''}>${k.label}</option>`).join('');
+  const tierOpts = !kind ? '' : FR_DICE_TIERS.map(([t, label], ti) =>
+    `<option value="${t}"${t === b.tier ? ' selected' : ''}>${label} — ${_frDiceEffectLabel(kind.vals[ti])}</option>`).join('');
+  const src = _frDiceIconSrc(b.kind, b.tier);
+  return `
+    <div class="fr-bonus">
+      <img class="fr-bonus__img" src="${src}" alt="" ${src === FR_BLANK_ICON ? 'style="visibility:hidden"' : ''}>
+      <span class="fr-bonus__lbl">보너스 주사위 ${i + 1}</span>
+      <select class="sel fr-bd-kind" data-bi="${i}"><option value="">-</option>${kindOpts}</select>
+      <select class="sel fr-bd-tier" data-bi="${i}"${kind ? '' : ' disabled'}><option value="">-</option>${tierOpts}</select>
+    </div>`;
+}
+
 function _frRenderBonusDice() {
   const box = document.getElementById('frBonusDice');
   if (!box) return;
-  box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) =>
-    _frTwoValLine(_frBonusDice[i], `보너스 주사위 ${i + 1}`, 'bi', i)).join('');
+  box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) => _frBonusDiceHtml(i)).join('');
 
-  box.querySelectorAll('.fr-val-add').forEach(inp => {
-    inp.addEventListener('input', e => { _frBonusDice[+e.target.dataset.bi].add = e.target.value; _frCalcAndRender(); });
+  const apply = (i) => {
+    const b = _frBonusDice[i];
+    const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
+    const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
+    const v = kind && ti >= 0 ? kind.vals[ti] : null;
+    b.add = v && v.add != null ? v.add : '';
+    b.mult = v && v.mult != null ? v.mult : '';
+    _frRenderBonusDice();
+    _frCalcAndRender();
+  };
+  box.querySelectorAll('.fr-bd-kind').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const i = +e.target.dataset.bi;
+      _frBonusDice[i].kind = e.target.value;
+      _frBonusDice[i].tier = '';   // 계열이 바뀌면 등급은 다시 고른다
+      apply(i);
+    });
   });
-  box.querySelectorAll('.fr-val-mult').forEach(inp => {
-    inp.addEventListener('input', e => { _frBonusDice[+e.target.dataset.bi].mult = e.target.value; _frCalcAndRender(); });
+  box.querySelectorAll('.fr-bd-tier').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const i = +e.target.dataset.bi;
+      _frBonusDice[i].tier = e.target.value;
+      apply(i);
+    });
   });
 }
 

@@ -600,6 +600,19 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__lines { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
 .fr-line { display: flex; gap: 6px; align-items: flex-end; }
 .fr-line .fr-bonus__lbl { flex: 1.1; font-size: .74rem; color: var(--text-dim); align-self: center; }
+
+/* 보너스 주사위 한 줄: 그림 + 이름 + 계열 + 등급 */
+.fr-bonus { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.fr-bonus__img { width: 26px; height: 26px; object-fit: contain; flex: none; }
+.fr-bonus .fr-bonus__lbl { flex: none; width: 96px; font-size: .74rem; font-weight: 700; color: var(--text-dim); }
+.fr-bonus .fr-bd-kind { flex: 1; min-width: 0; }
+.fr-bonus .fr-bd-tier { flex: 1.6; min-width: 0; }
+.fr-bonus .fr-bd-tier:disabled { opacity: .45; cursor: not-allowed; }
+@media (max-width: 640px) {
+  .fr-bonus { flex-wrap: wrap; }
+  .fr-bonus .fr-bonus__lbl { width: auto; }
+  .fr-bonus .fr-bd-kind, .fr-bonus .fr-bd-tier { flex: 1 1 100%; }
+}
 .fr-line--select { width: 100%; }
 .fr-line--select select { width: 100%; font-size: .78rem; }
 .fr-line__field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }

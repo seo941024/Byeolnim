@@ -64,19 +64,16 @@ function _frAggregate() {
     else { multSum += v; multCount++; }
   };
   _frTeam.forEach(f => f.lines.forEach(addLine));
-  const round = parseInt(document.getElementById('frRound')?.value) || 1;
-  _frBonusDice.slice(0, round - 1).forEach(addLine);
+  _frBonusDice.forEach(addLine);
   return { addSum, mult: multCount ? multSum : 1 };
 }
 
+/* 보너스 주사위는 4칸 고정으로 항상 띄운다. 매 라운드 나오는 것도 아니라서
+   "몇 라운드니까 몇 개"로 자동 계산하는 것보다, 안 나온 칸은 그냥 비워두게 두는 게 편하다. */
 function _frRenderBonusDice() {
   const box = document.getElementById('frBonusDice');
   if (!box) return;
-  const round = parseInt(document.getElementById('frRound')?.value) || 1;
-  const usable = round - 1; // 1라운드 시작 시점엔 0개
-  box.innerHTML = usable === 0
-    ? '<p class="dt-help">1라운드는 아직 받은 보너스 주사위가 없습니다.</p>'
-    : Array.from({ length: usable }, (_, i) => `
+  box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) => `
         <div class="fr-line">
           <span class="fr-bonus__lbl">보너스 주사위 ${i + 1}</span>
           ${_frLineKindSelect({ bi: i }, _frBonusDice[i].kind)}
@@ -264,14 +261,8 @@ function initFrontier() {
         </div>
       </div>
 
-      <div class="field mt16">
-        <label class="field__label">라운드</label>
-        <select class="sel" id="frRound">
-          ${[1,2,3,4,5].map(n => `<option value="${n}">${n} / 5</option>`).join('')}
-        </select>
-      </div>
-      <div class="card__title mt16">보너스 주사위</div>
-      <p class="dt-help">라운드를 클리어할 때마다 하나씩 받습니다. 1라운드 시작 땐 0개, 5라운드 시작 땐 최대 4개까지 쌓입니다.</p>
+      <div class="card__title mt16">보너스 주사위 (선택)</div>
+      <p class="dt-help">라운드 클리어 보상으로 가끔 받습니다. 안 나온 라운드면 비워두세요 — 최대 4개까지 입력할 수 있습니다.</p>
       <div id="frBonusDice" class="mt8"></div>
 
       <div class="field mt16">
@@ -294,8 +285,6 @@ function initFrontier() {
     document.getElementById(id).addEventListener('input', _frCalcAndRender);
     document.getElementById(id).addEventListener('change', _frCalcAndRender);
   });
-  document.getElementById('frRound').addEventListener('change', () => { _frRenderBonusDice(); _frCalcAndRender(); });
-
   _frRenderTeam();
   _frRenderBonusDice();
   _frCalcAndRender();

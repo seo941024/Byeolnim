@@ -25,11 +25,13 @@
 const FRONTIER_ELEMENTS = ['불', '독', '번개', '얼음', '암흑', '신성', '무속성'];
 const FRONTIER_TYPES = ['사람', '야수', '식물', '수생', '요정', '파충류', '악마', '언데드', '기계'];
 
-/* 패밀리어 3마리, 각자 속성/타입 + 프론티어 전용 잠재 2줄(일반 잠재와 같은 2줄 구조) */
+/* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 2줄 */
 let _frTeam = [0, 1, 2].map(() => ({
-  element: '', type: '',
+  rank: 'unique', element: '', type: '',
   lines: [{ kind: '', val: '' }, { kind: '', val: '' }],
 }));
+
+function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
 
 function _frBuildSelect(id, list, cur, placeholder) {
   return `<select class="sel fr-cond-sel" id="${id}">
@@ -110,29 +112,49 @@ function _frLineHtml(fi, li, line) {
     </div>`;
 }
 
+const FR_RANKS = [['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
+
 function _frRenderTeam() {
   const box = document.getElementById('frTeamSlots');
   if (!box) return;
   box.innerHTML = _frTeam.map((f, i) => `
     <div class="fr-slot">
       <div class="fr-slot__title">패밀리어 ${i + 1}</div>
-      <div class="fr-slot__row">
-        <label class="fr-slot__lbl">속성</label>
-        ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '— 선택 안 함 —')}
-      </div>
-      <div class="fr-slot__row">
-        <label class="fr-slot__lbl">타입</label>
-        ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '— 선택 안 함 —')}
-      </div>
-      <div class="fr-slot__lines">
-        ${_frLineHtml(i, 0, f.lines[0])}
-        ${_frLineHtml(i, 1, f.lines[1])}
+      <div class="fr-slot__body">
+        <div class="fr-slot__card">
+          <img class="fr-slot__img" id="frCardImg${i}" src="${_frCardSrc(f.rank)}" alt="" onerror="this.style.display='none'">
+          <div class="sf-toggle-group fr-slot__rank" id="frRankGroup${i}">
+            ${FR_RANKS.map(([v, label]) => `<button type="button" class="sf-toggle${f.rank === v ? ' active' : ''}" data-rank="${v}">${label}</button>`).join('')}
+          </div>
+        </div>
+        <div class="fr-slot__fields">
+          <div class="fr-slot__row">
+            <label class="fr-slot__lbl">속성</label>
+            ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '— 선택 안 함 —')}
+          </div>
+          <div class="fr-slot__row">
+            <label class="fr-slot__lbl">타입</label>
+            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '— 선택 안 함 —')}
+          </div>
+          <div class="fr-slot__lines">
+            ${_frLineHtml(i, 0, f.lines[0])}
+            ${_frLineHtml(i, 1, f.lines[1])}
+          </div>
+        </div>
       </div>
     </div>`).join('');
 
   _frTeam.forEach((f, i) => {
     document.getElementById('frEl' + i).addEventListener('change', e => { _frTeam[i].element = e.target.value; _frRenderTeamBadges(); });
     document.getElementById('frTy' + i).addEventListener('change', e => { _frTeam[i].type = e.target.value; _frRenderTeamBadges(); });
+    document.getElementById('frRankGroup' + i).querySelectorAll('.sf-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        _frTeam[i].rank = btn.dataset.rank;
+        document.getElementById('frRankGroup' + i).querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('frCardImg' + i).src = _frCardSrc(btn.dataset.rank);
+      });
+    });
   });
   box.querySelectorAll('.fr-line-kind').forEach(sel => {
     sel.addEventListener('change', e => {

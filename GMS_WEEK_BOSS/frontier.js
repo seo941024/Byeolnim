@@ -173,14 +173,14 @@ function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
 function _frLineHtml(fi, line) {
   const isEvent = String(line.catalogIdx || '').startsWith('e');
   return `
-    <div class="fr-line fr-line--select">
-      <span class="fr-line__field-lbl">프론티어 잠재</span>
+    <div class="fr-slot__field">
+      <span class="fr-slot__field-lbl">프론티어 잠재</span>
       <select class="sel fr-line-cat" data-fi="${fi}">
         ${_frLineOptions(fi, isEvent ? '' : line.catalogIdx)}
       </select>
     </div>
-    <div class="fr-line fr-line--select">
-      <span class="fr-line__field-lbl">이벤트 잠재 (~2026-09-08)</span>
+    <div class="fr-slot__field">
+      <span class="fr-slot__field-lbl">이벤트 잠재</span>
       <select class="sel fr-line-cat-event" data-fi="${fi}">
         ${_frLineEventOptions(fi, isEvent ? line.catalogIdx : '')}
       </select>
@@ -264,9 +264,7 @@ function _frRenderTeam() {
         <span class="fr-slot__field-lbl">Type</span>
         ${_frIconDropdown('ty', i, FRONTIER_TYPES, _frTypeIconSrc, f.type)}
       </div>
-      <div class="fr-slot__field fr-slot__field--lines">
-        ${_frLineHtml(i, f.line)}
-      </div>
+      ${_frLineHtml(i, f.line)}
     </div>`).join('');
 
   /* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다 */

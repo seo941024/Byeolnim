@@ -462,6 +462,110 @@ function _frIconDropdown(prefix, fi, list, iconFn, cur) {
     </div>`;
 }
 
+/* ── 덱 저장 ─────────────────────────────────────
+   게임에서 덱을 캐릭터당 3개까지 쓰니 저장도 캐릭터에 붙인다(대여 정보와 같은 방식).
+   state 안에 들어가므로 클라우드 세이브에도 그대로 딸려 올라간다. */
+const FR_MAX_DECKS = 3;
+
+function _frActiveChar() {
+  return (typeof state === 'object' && state && Array.isArray(state.chars))
+    ? state.chars[state.activeChar] : null;
+}
+
+function _frDecks(ch = _frActiveChar()) {
+  if (!ch) return [];
+  if (!Array.isArray(ch.frontierDecks)) ch.frontierDecks = [];
+  return ch.frontierDecks;
+}
+
+/* 저장은 화면에 보이는 값만 남긴다 — add/mult/cond는 등급별 목록에서 다시 끌어오면 되고,
+   그걸 같이 저장해두면 나중에 옵션 수치가 바뀔 때 옛 값이 그대로 남아 어긋난다. */
+function _frSnapshot() {
+  return {
+    team: _frTeam.map(f => ({ rank: f.rank, element: f.element, type: f.type, idx: f.line.catalogIdx })),
+    bonus: _frBonusDice.map(b => ({ kind: b.kind, tier: b.tier })),
+  };
+}
+
+function _frRestore(snap) {
+  if (!snap) return;
+  (snap.team || []).forEach((s, i) => {
+    if (i >= _frTeam.length) return;
+    const f = _frTeam[i];
+    f.rank = s.rank || 'unique';
+    f.element = s.element || '';
+    f.type = s.type || '';
+    f.condPick = { base: '', event: '' };
+    f.line = { add: '', mult: '', catalogIdx: '' };
+
+    const idx = s.idx;
+    if (idx === '' || idx == null) return;
+    const isEvent = String(idx).startsWith('e');
+    const rankKey = (f.rank || 'unique').toUpperCase();
+    const src = isEvent ? window.FR_EVENT_CATALOG : window.FR_CATALOG;
+    const pool = (src && src[rankKey]) || [];
+    const e = pool[isEvent ? +String(idx).slice(1) : +idx];
+    if (!e) return;   // 옵션 목록이 바뀌어 그 자리가 없어졌으면 비워 둔다
+    f.line = {
+      catalogIdx: String(idx),
+      add: e.add != null ? e.add : '',
+      mult: e.mult != null ? e.mult : '',
+      cond: e.cond,
+      groupKey: e.groupKey,
+    };
+  });
+  (snap.bonus || []).forEach((s, i) => {
+    if (i >= _frBonusDice.length) return;
+    const b = _frBonusDice[i];
+    b.kind = s.kind || ''; b.tier = s.tier || '';
+    const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
+    const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
+    const v = kind && ti >= 0 ? kind.vals[ti] : null;
+    b.add = v && v.add != null ? v.add : '';
+    b.mult = v && v.mult != null ? v.mult : '';
+  });
+}
+
+function _frRenderDecks() {
+  const box = document.getElementById('frDecks');
+  if (!box) return;
+  const ch = _frActiveChar();
+  if (!ch) {
+    box.innerHTML = '<span class="fr-deck__empty">캐릭터를 선택하면 덱을 저장할 수 있습니다</span>';
+    return;
+  }
+  const decks = _frDecks(ch);
+  const slots = Array.from({ length: FR_MAX_DECKS }, (_, i) => {
+    const d = decks[i];
+    return `
+      <div class="fr-deck">
+        <button type="button" class="btn fr-deck__load" data-di="${i}"${d ? '' : ' disabled'}>${d ? d.name : '비어 있음'}</button>
+        <button type="button" class="btn fr-deck__save" data-di="${i}">${d ? '덮어쓰기' : '저장'}</button>
+        <button type="button" class="btn fr-deck__del" data-di="${i}"${d ? '' : ' disabled'}>삭제</button>
+      </div>`;
+  }).join('');
+  box.innerHTML = `<div class="fr-deck__name">${escHtml(ch.name)}</div>${slots}`;
+
+  box.querySelectorAll('.fr-deck__save').forEach(b => b.addEventListener('click', () => {
+    const i = +b.dataset.di, d = _frDecks();
+    d[i] = { name: `덱 ${i + 1}`, ...(_frSnapshot()) };
+    save();
+    _frRenderDecks();
+  }));
+  box.querySelectorAll('.fr-deck__load').forEach(b => b.addEventListener('click', () => {
+    _frRestore(_frDecks()[+b.dataset.di]);
+    _frRenderTeam();
+    _frRenderBonusDice();
+    _frCalcAndRender();
+  }));
+  box.querySelectorAll('.fr-deck__del').forEach(b => b.addEventListener('click', () => {
+    const d = _frDecks();
+    delete d[+b.dataset.di];
+    save();
+    _frRenderDecks();
+  }));
+}
+
 function _frRenderTeam() {
   const box = document.getElementById('frTeamSlots');
   if (!box) return;
@@ -564,7 +668,8 @@ function _frRenderTeam() {
 function initFrontier() {
   const sec = document.getElementById('sec-frontier');
   if (!sec) return;
-  if (sec.dataset.inited) { _frCalcAndRender(); return; }
+  // 다시 들어올 때마다 덱 목록을 새로 그린다 — 그 사이 캐릭터가 바뀌었을 수 있다.
+  if (sec.dataset.inited) { _frRenderDecks(); _frCalcAndRender(); return; }
   sec.dataset.inited = '1';
 
   document.addEventListener('click', () => {
@@ -577,6 +682,7 @@ function initFrontier() {
     <!-- 위: 팀 구성 (한 화면 전체 폭) -->
     <div class="card">
       <div class="card__title">팀 구성</div>
+      <div id="frDecks" class="fr-decks mt8"></div>
       <div id="frTeamSlots" class="fr-team mt8"></div>
       <div class="card__title mt16">충족되는 파티 조건</div>
       <div id="frTeamBadges" class="fr-badges mt8"></div>
@@ -624,6 +730,7 @@ function initFrontier() {
     document.getElementById(id).addEventListener('input', _frCalcAndRender);
     document.getElementById(id).addEventListener('change', _frCalcAndRender);
   });
+  _frRenderDecks();
   _frRenderTeam();
   _frRenderBonusDice();
   _frCalcAndRender();

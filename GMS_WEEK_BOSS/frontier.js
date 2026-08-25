@@ -427,7 +427,7 @@ function initFrontier() {
 
     <!-- 위: 팀 구성 (한 화면 전체 폭) -->
     <div class="card">
-      <div class="card__title">팀 구성 — 패밀리어 3마리</div>
+      <div class="card__title">팀 구성</div>
       <div id="frTeamSlots" class="fr-team mt8"></div>
       <div class="card__title mt16">충족되는 파티 조건</div>
       <div id="frTeamBadges" class="fr-badges mt8"></div>
@@ -452,11 +452,11 @@ function initFrontier() {
         </div>
       </div>
 
-      <div class="card__title mt16">보너스 주사위 (선택)</div>
+      <div class="card__title mt16">보너스 주사위</div>
       <div id="frBonusDice" class="mt8"></div>
 
       <div class="field mt16">
-        <label class="field__label">라운드 목표 점수 (선택)</label>
+        <label class="field__label">라운드 목표 점수</label>
         <input class="inp" id="frTarget" type="number" placeholder="예: 150" min="0">
       </div>
 

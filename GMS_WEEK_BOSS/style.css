@@ -547,9 +547,18 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__field-lbl { display: block; font-size: .68rem; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
 .fr-slot__field-row { display: flex; gap: 6px; }
 .fr-slot__field-row select { flex: 1; min-width: 0; }
-.fr-type-pick { flex: 1; display: flex; align-items: center; gap: 5px; min-width: 0; }
-.fr-type-pick select { flex: 1; min-width: 0; }
-.fr-type-icon { width: 18px; height: 18px; object-fit: contain; flex: none; }
+/* 속성/타입 아이콘 그리드 — 셀렉트 대신 그림을 직접 눌러 고른다 */
+.fr-icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.fr-icon-btn {
+  width: 34px; height: 34px; border-radius: 8px; flex: none;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg2); border: 1.5px solid var(--border);
+  transition: border-color .12s, background .12s;
+}
+.fr-icon-btn img { width: 20px; height: 20px; object-fit: contain; }
+.fr-icon-btn__txt { font-size: .55rem; font-weight: 800; color: var(--text-sub); line-height: 1.1; text-align: center; }
+.fr-icon-btn:hover { border-color: var(--accent); }
+.fr-icon-btn.active { background: color-mix(in srgb, var(--accent) 22%, var(--bg2)); border-color: var(--accent); }
 .fr-badges { display: flex; flex-direction: column; gap: 6px; }
 .fr-badge {
   padding: 8px 12px; border-radius: var(--radius-sm);

@@ -29,13 +29,14 @@
 const FRONTIER_ELEMENTS = ['Fire', 'Ice', 'Lightning', 'Poison', 'Dark', 'Holy', 'Non-elemental'];
 const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy', 'Devil', 'Undead', 'Mechanical'];
 
-/* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 2줄.
+/* 패밀리어 3마리, 각자 등급(카드 그림용) + 속성/타입 + 프론티어 잠재 1줄.
+   일반 잠재(2줄)와 달리 프론티어 잠재는 한 마리당 한 줄만 뜬다 — 위키에도
+   "a random frontier potential"(단수)이라고 돼 있다.
    한 줄이 합계·배율을 동시에 주는 경우가 실제로 있다(예: "Dice Total: -1, Final
-   Multiplier: +1.4x" — masonym.dev에서 확인). 그래서 줄 하나에 두 값을 같이 받는다.
-   둘 중 하나만 채워도 되고, 둘 다 채워도 된다. */
+   Multiplier: +1.4x" — masonym.dev에서 확인). 그래서 줄 하나에 두 값을 같이 받는다. */
 let _frTeam = [0, 1, 2].map(() => ({
   rank: 'unique', element: '', type: '',
-  lines: [{ add: '', mult: '', catalogIdx: '' }, { add: '', mult: '', catalogIdx: '' }],
+  line: { add: '', mult: '', catalogIdx: '' },
 }));
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
@@ -53,13 +54,6 @@ function _frTypeIconSrc(type) { return type ? 'images/frontier/type_' + type.toL
 const FR_ELEMENT_ICON_KEY = { Fire: 'fire', Poison: 'poison', Lightning: 'lightning', Ice: 'ice', Dark: 'dark', Holy: 'holy' };
 function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/frontier/element_' + FR_ELEMENT_ICON_KEY[el] + '.webp' : FR_BLANK_ICON; }
 
-function _frBuildSelect(id, list, cur, placeholder) {
-  return `<select class="sel fr-cond-sel" id="${id}">
-    <option value="">${placeholder}</option>
-    ${list.map(v => `<option value="${v}"${v === cur ? ' selected' : ''}>${v}</option>`).join('')}
-  </select>`;
-}
-
 /* 라운드마다 클리어 보상으로 보너스 주사위를 하나씩 받는다. 1라운드는 아직 하나도 못 받은
    상태라 0개, 5라운드를 시작할 땐 그동안 4번 클리어했으니 최대 4개까지 쌓인다.
    보너스 주사위도 팀 잠재와 같은 구조(합계에 얹거나 배율에 더하거나)로 취급한다. */
@@ -76,7 +70,7 @@ function _frAggregate() {
     if (!isNaN(a)) addSum += a;
     if (!isNaN(m)) { multSum += m; multCount++; }
   };
-  _frTeam.forEach(f => f.lines.forEach(addLine));
+  _frTeam.forEach(f => addLine(f.line));
   _frBonusDice.forEach(addLine);
   return { addSum, mult: multCount ? multSum : 1 };
 }
@@ -164,27 +158,21 @@ function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
     </div>`;
 }
 
-function _frLineHtml(fi, li, line) {
+function _frLineHtml(fi, line) {
   return `
     <div class="fr-line fr-line--select">
-      <select class="sel fr-line-cat" data-fi="${fi}" data-li="${li}">
-        ${_frLineOptions(fi, li, line.catalogIdx)}
+      <select class="sel fr-line-cat" data-fi="${fi}">
+        ${_frLineOptions(fi, line.catalogIdx)}
       </select>
     </div>`;
 }
 
 const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
 
-/* 일반 잠재와 같은 규칙을 프론티어 잠재에도 적용한다: 1번째 줄은 카드 등급 풀,
-   2번째 줄은 한 단계 아래 등급 풀. 프론티어 잠재 자체에 대해 이 규칙이 공식 문서에
-   다시 쓰여 있진 않지만, 패밀리어 시스템 전체가 이 규칙을 쓰고 있어 그대로 따른다. */
-const FR_RANK_DOWN = { unique: 'epic', epic: 'rare', rare: 'common', common: 'common' }; // 커먼은 그 아래가 없어 자기 자신으로
-
-function _frLineOptions(fi, li, selectLabel) {
+function _frLineOptions(fi, selectLabel) {
   const D = window.FR_CATALOG; if (!D) return '<option value="">데이터 로딩 중...</option>';
   const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
-  const poolRank = li === 0 ? rank : FR_RANK_DOWN[rank];
-  const pool = D[poolRank.toUpperCase()] || [];
+  const pool = D[rank.toUpperCase()] || [];
   const fmt = e => {
     const parts = [];
     if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
@@ -193,6 +181,18 @@ function _frLineOptions(fi, li, selectLabel) {
   };
   const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${fmt(e)}</option>`).join('');
   return `<option value="">— None —</option>${opts}`;
+}
+
+/* 속성/타입은 셀렉트 대신 아이콘을 직접 눌러 고른다 — 사람들이 그림 보고 클릭하는 경우가
+   많다는 요청. 아이콘 없는 항목(Non-elemental)은 글자만 있는 버튼으로 대체한다. */
+function _frIconPicker(prefix, fi, list, iconFn, cur) {
+  return list.map(v => {
+    const src = iconFn(v);
+    const hasIcon = src !== FR_BLANK_ICON;
+    return `<button type="button" class="fr-icon-btn${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}" title="${v}">
+      ${hasIcon ? `<img src="${src}" alt="${v}">` : `<span class="fr-icon-btn__txt">${v}</span>`}
+    </button>`;
+  }).join('');
 }
 
 function _frRenderTeam() {
@@ -205,63 +205,55 @@ function _frRenderTeam() {
         ${FR_RANKS.map(([v, label]) => `<option value="${v}"${f.rank === v ? ' selected' : ''}>${label}</option>`).join('')}
       </select>
       <div class="fr-slot__field">
-        <span class="fr-slot__field-lbl">Element / Type</span>
-        <div class="fr-slot__field-row">
-          <div class="fr-type-pick">
-            <img class="fr-type-icon" id="frElIcon${i}" src="${_frElementIconSrc(f.element)}" alt=""
-                 style="visibility:${f.element ? '' : 'hidden'}">
-            ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '-')}
-          </div>
-          <div class="fr-type-pick">
-            <img class="fr-type-icon" id="frTyIcon${i}" src="${_frTypeIconSrc(f.type)}" alt=""
-                 style="visibility:${f.type ? '' : 'hidden'}">
-            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '-')}
-          </div>
-        </div>
+        <span class="fr-slot__field-lbl">Element</span>
+        <div class="fr-icon-grid" id="frElGrid${i}">${_frIconPicker('el', i, FRONTIER_ELEMENTS, _frElementIconSrc, f.element)}</div>
+      </div>
+      <div class="fr-slot__field">
+        <span class="fr-slot__field-lbl">Type</span>
+        <div class="fr-icon-grid" id="frTyGrid${i}">${_frIconPicker('ty', i, FRONTIER_TYPES, _frTypeIconSrc, f.type)}</div>
       </div>
       <div class="fr-slot__field">
         <span class="fr-slot__field-lbl">프론티어 잠재</span>
-        <div class="fr-slot__lines">
-          ${_frLineHtml(i, 0, f.lines[0])}
-          ${_frLineHtml(i, 1, f.lines[1])}
-        </div>
+        ${_frLineHtml(i, f.line)}
       </div>
     </div>`).join('');
 
+  box.querySelectorAll('.fr-icon-btn[data-el]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = +btn.dataset.el;
+      _frTeam[i].element = _frTeam[i].element === btn.dataset.val ? '' : btn.dataset.val;
+      document.getElementById('frElGrid' + i).querySelectorAll('.fr-icon-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === _frTeam[i].element));
+      _frRenderTeamBadges();
+    });
+  });
+  box.querySelectorAll('.fr-icon-btn[data-ty]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = +btn.dataset.ty;
+      _frTeam[i].type = _frTeam[i].type === btn.dataset.val ? '' : btn.dataset.val;
+      document.getElementById('frTyGrid' + i).querySelectorAll('.fr-icon-btn').forEach(b =>
+        b.classList.toggle('active', b.dataset.val === _frTeam[i].type));
+      _frRenderTeamBadges();
+    });
+  });
   _frTeam.forEach((f, i) => {
-    document.getElementById('frEl' + i).addEventListener('change', e => {
-      _frTeam[i].element = e.target.value;
-      const icon = document.getElementById('frElIcon' + i);
-      const src = _frElementIconSrc(e.target.value);
-      icon.src = src;
-      icon.style.visibility = src ? '' : 'hidden';
-      _frRenderTeamBadges();
-    });
-    document.getElementById('frTy' + i).addEventListener('change', e => {
-      _frTeam[i].type = e.target.value;
-      const icon = document.getElementById('frTyIcon' + i);
-      icon.src = _frTypeIconSrc(e.target.value);
-      icon.style.visibility = e.target.value ? '' : 'hidden';
-      _frRenderTeamBadges();
-    });
     document.getElementById('frRank' + i).addEventListener('change', e => {
       _frTeam[i].rank = e.target.value;
       // 등급이 바뀌면 옵션 풀 자체가 바뀌어서 기존 선택 인덱스가 다른 옵션을 가리키게 된다 —
-      // 헷갈리지 않게 그 카드의 두 줄을 비워서 다시 고르게 한다.
-      _frTeam[i].lines = [{ add: '', mult: '', catalogIdx: '' }, { add: '', mult: '', catalogIdx: '' }];
+      // 헷갈리지 않게 그 카드의 잠재 선택을 비워서 다시 고르게 한다.
+      _frTeam[i].line = { add: '', mult: '', catalogIdx: '' };
       _frRenderTeam();
       _frCalcAndRender();
     });
   });
   box.querySelectorAll('.fr-line-cat').forEach(sel => {
     sel.addEventListener('change', e => {
-      const fi = +e.target.dataset.fi, li = +e.target.dataset.li;
+      const fi = +e.target.dataset.fi;
       const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
-      const poolRank = li === 0 ? rank : FR_RANK_DOWN[rank];
-      const pool = (window.FR_CATALOG && window.FR_CATALOG[poolRank.toUpperCase()]) || [];
+      const pool = (window.FR_CATALOG && window.FR_CATALOG[rank.toUpperCase()]) || [];
       const idx = e.target.value;
       const entry = idx !== '' ? pool[+idx] : null;
-      _frTeam[fi].lines[li] = {
+      _frTeam[fi].line = {
         catalogIdx: idx,
         add: entry && entry.add != null ? entry.add : '',
         mult: entry && entry.mult != null ? entry.mult : '',
@@ -280,13 +272,10 @@ function initFrontier() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">미스틱 프론티어 계산기</h2></div>
-    <p class="dt-help">패밀리어 3마리로 팀을 짜고 주사위로 원정 라운드를 통과합니다. 오른쪽 카드에서
-      각 패밀리어의 속성·타입과 프론티어 잠재 2줄을 고르면, 왼쪽에서 주사위 값만 넣어 바로 점수를 봅니다.</p>
 
     <!-- 위: 팀 구성 (한 화면 전체 폭) -->
     <div class="card">
       <div class="card__title">팀 구성 — 패밀리어 3마리</div>
-      <p class="dt-help">등급·속성·타입을 고르고, 카드에 뜬 프론티어 잠재 2줄을 그대로 입력하세요.</p>
       <div id="frTeamSlots" class="fr-team mt8"></div>
       <div class="card__title mt16">충족되는 파티 조건</div>
       <div id="frTeamBadges" class="fr-badges mt8"></div>
@@ -295,8 +284,6 @@ function initFrontier() {
     <!-- 아래: 점수 계산기 -->
     <div class="card mt16">
       <div class="card__title">라운드 점수 계산기</div>
-      <p class="dt-help">Dice Total(합계)형 옵션은 전부 더해 주사위 합에 얹고, Final Multiplier(배율)형
-        옵션은 전부 더한 뒤 마지막에 한 번만 곱합니다.</p>
 
       <div class="fr-dice-row mt8">
         <div class="fr-dice">
@@ -314,7 +301,6 @@ function initFrontier() {
       </div>
 
       <div class="card__title mt16">보너스 주사위 (선택)</div>
-      <p class="dt-help">라운드 클리어 보상으로 가끔 받습니다. 안 나온 라운드면 비워두세요 — 최대 4개까지 입력할 수 있습니다.</p>
       <div id="frBonusDice" class="mt8"></div>
 
       <div class="field mt16">

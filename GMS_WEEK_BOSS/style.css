@@ -910,7 +910,11 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   background: linear-gradient(90deg, rgba(var(--hue),.12) 0%, var(--panel-veil) 100%);
 }
 .boss-panel__charname { font-size: .96rem; font-weight: 800; color: var(--text); }
+.boss-panel__headl { display: flex; align-items: center; gap: 14px; min-width: 0; flex-wrap: wrap; }
 .boss-panel__headr { display: flex; align-items: center; gap: 16px; }
+/* 캐릭터 목록 카드 안에서 쓰던 걸 여기서도 재사용한다 — 세로로 쌓이던 테두리·여백은
+   여기선 가로 한 줄에 끼워 넣는 것이라 필요 없다. */
+.cg-weekrow--inline { margin-top: 0; padding-top: 0; border-top: none; gap: 6px; }
 .boss-crystal-count { display: flex; align-items: center; gap: 12px; }
 .boss-crystal-count img { width: 22px; height: 22px; object-fit: contain; }
 .boss-crystal-count .cc-item { display: flex; align-items: center; gap: 5px; font-size: 1.1rem; font-weight: 800; color: var(--text); }
@@ -2373,24 +2377,25 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-portrait__ph { display: none; color: var(--text-dim); font-size: .86rem; font-weight: 800; letter-spacing: 1px; }
 .ci-portrait--noimg .ci-portrait__ph { display: block; }
 /* min-width:0 이 없으면 긴 직업명이 칸을 밀어내 카드 밖으로 잘려 나간다 */
-.ci-card__body { padding: 11px 13px; display: flex; flex-direction: column; gap: 7px; min-width: 0; }
+/* 주간 합산 토글이 보스 계산기로 빠지면서 줄이 하나 줄었다. 카드가 전체적으로
+   작아진 김에(캐릭터 그림을 96px로 고정한 뒤) 안쪽 여백·글자도 같이 줄인다 —
+   특히 모바일은 카드 폭이 좁아 cqw 기여가 작아서 세로 길이가 유독 길어 보였다. */
+.ci-card__body { padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
 .ci-card__nameline > div { min-width: 0; }
 /* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음
    카드 폭(cqw) 기준으로 크기를 잡아 카드가 커지면 아이콘도 함께 커진다 */
-.ci-jobicon { width: clamp(34px, 13cqw, 64px); height: clamp(34px, 13cqw, 64px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
-.ci-card__name { font-size: clamp(.9rem, .68rem + 2.2cqw, 1.5rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ci-card__job { font-size: clamp(.68rem, .5rem + 1.1cqw, 1.05rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-jobicon { width: clamp(26px, 10cqw, 48px); height: clamp(26px, 10cqw, 48px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
+.ci-card__name { font-size: clamp(.8rem, .6rem + 1.8cqw, 1.25rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ci-card__job { font-size: clamp(.6rem, .46rem + .8cqw, .88rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {
   display: flex; align-items: center; justify-content: space-between;
-  gap: 7px; flex-wrap: wrap; min-width: 0;
-  border-top: 1px solid var(--border); padding-top: 8px;
+  gap: 6px; flex-wrap: wrap; min-width: 0;
+  border-top: 1px solid var(--border); padding-top: 6px;
 }
-.ci-lv { font-size: clamp(.84rem, .6rem + 1.8cqw, 1.4rem); font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
-.ci-server { display: flex; align-items: center; gap: 5px; font-size: clamp(.7rem, .5rem + 1.1cqw, 1.05rem); font-weight: 700; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-/* 원본이 57x62인데 최대 24px이라 38%까지 줄어 있었다. 카드 폭에 비례(cqw)하는 건
-   유지하되(좁은 카드에서 글자를 밀지 않게) 하한과 상한을 원본에 가깝게 올린다. */
-.ci-servericon { width: clamp(24px, 7.2cqw, 40px); height: clamp(24px, 7.2cqw, 40px); object-fit: contain; }
+.ci-lv { font-size: clamp(.7rem, .52rem + 1.3cqw, 1.1rem); font-weight: 900; color: var(--accent); text-shadow: 0 0 8px rgba(246,199,68,.35); }
+.ci-server { display: flex; align-items: center; gap: 4px; font-size: clamp(.6rem, .46rem + .8cqw, .88rem); font-weight: 700; color: var(--text-sub); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-servericon { width: clamp(18px, 5.5cqw, 32px); height: clamp(18px, 5.5cqw, 32px); object-fit: contain; }
 .ci-main { display: flex; flex-direction: column; gap: 16px; }
 .ci-cody img { width: 96px; height: 96px; }
 .ci-panel {
@@ -2423,9 +2428,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-rank-row b { font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
 
 /* 좌측 카드 하단 랭킹 */
-.ci-card__ranks { margin-top: 0; padding: 7px 13px 9px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
+.ci-card__ranks { margin-top: 0; padding: 5px 11px 7px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
 .ci-ranks-title { font-size: .64rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
-.ci-card__ranks .ci-rank-row { padding: 3px 0; font-size: clamp(.72rem, .5rem + 1.4cqw, 1.15rem); }
+.ci-card__ranks .ci-rank-row { padding: 2px 0; font-size: clamp(.62rem, .46rem + .9cqw, .95rem); }
 
 /* 코디 히스토리 */
 .ci-codies { display: flex; flex-wrap: nowrap; gap: 12px; margin-top: 6px; overflow-x: auto; }

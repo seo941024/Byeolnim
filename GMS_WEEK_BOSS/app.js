@@ -341,19 +341,38 @@ function renderBossTable() {
   const nm  = document.getElementById('bossCharName');
   const cp  = document.getElementById('btnCrystalCount');
 
+  const weekRow = document.getElementById('bossWeekRow');
   if (!ch) {
     nm.textContent = '캐릭터를 선택하세요';
     cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">0개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">0개</span>`;
     tb.innerHTML = `<tr><td colspan="4" class="empty">왼쪽에서 캐릭터를 선택하세요.</td></tr>`;
     document.getElementById('weeklyTotal').textContent = '0 메소';
+    if (weekRow) weekRow.style.display = 'none';
     initRentalSlots();
     return;
   }
+  if (weekRow) weekRow.style.display = '';
 
   const cW = countWeeklyCrystals(ch);
   const cM = countMonthlyCrystals(ch);
   nm.textContent = `${ch.name} 보스 목록`;
   cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">${cW}개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">${cM}개</span>`;
+
+  // 주간 합산 토글 — 캐릭터 목록 카드에서 여기로 옮겼다(보스 목록 옆이 더 눈에 띄고,
+  // 카드 한 장의 세로 길이도 그만큼 줄었다).
+  const weekToggle = document.getElementById('bossWeekToggle');
+  if (weekToggle) {
+    weekToggle.classList.toggle('off', !!ch.weekDone);
+    weekToggle.classList.toggle('on', !ch.weekDone);
+    weekToggle.onclick = () => {
+      ch.weekDone = !ch.weekDone;
+      save();
+      weekToggle.classList.toggle('off', !!ch.weekDone);
+      weekToggle.classList.toggle('on', !ch.weekDone);
+      updateCrystalBar();
+      renderCharList();
+    };
+  }
 
   let total = 0;
   tb.innerHTML = '';
@@ -1292,33 +1311,12 @@ function renderCharInfo() {
             <span class="ci-lv">Lv.${lv}</span>
             <span class="ci-server">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>
           </div>
-          <div class="cg-weekrow" title="끄면 이 캐릭터의 주간 수익이 전체 주간 획득 메소에서 빠집니다. 이미 돈 캐릭터를 잠깐 빼고 남은 캐릭터로 얼마가 더 들어오는지 볼 때 씁니다.">
-            <span class="cg-weekrow__lbl">주간 합산</span>
-            <button type="button" class="cg-weektoggle ${ch.weekDone ? 'off' : 'on'}" data-i="${i}"
-                    aria-label="주간 합산 포함 여부">
-              <span class="cg-weektoggle__knob"></span>
-              <span class="cg-weektoggle__txt cg-weektoggle__txt--on">포함</span>
-              <span class="cg-weektoggle__txt cg-weektoggle__txt--off">제외</span>
-            </button>
-          </div>
         </div>
         ${rankRow}
       </div>`;
   }).join('');
 
   box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>`;
-  // 주간 합산 토글 — 카드 클릭(캐릭터 선택)으로 번지지 않게 막는다
-  box.querySelectorAll('.cg-weektoggle').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const i = Number(btn.dataset.i);
-      state.chars[i].weekDone = !state.chars[i].weekDone;
-      save();
-      btn.classList.toggle('off', !!state.chars[i].weekDone);
-      btn.classList.toggle('on', !state.chars[i].weekDone);
-      updateCrystalBar();
-    });
-  });
   box.querySelectorAll('.cg-card__save').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();

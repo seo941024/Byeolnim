@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260826g" />
+  <link rel="stylesheet" href="style.css?v=20260826h" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -147,7 +147,17 @@
       <p class="dt-help">캐릭터별로 잡을 보스와 난이도, 파티원 수를 고르면 주간 결정석 개수와 예상 수익을 계산해줍니다.</p>
       <div class="boss-panel">
         <div class="boss-panel__head">
-          <span class="boss-panel__charname" id="bossCharName">캐릭터를 선택하세요</span>
+          <div class="boss-panel__headl">
+            <span class="boss-panel__charname" id="bossCharName">캐릭터를 선택하세요</span>
+            <div class="cg-weekrow cg-weekrow--inline" id="bossWeekRow" title="끄면 이 캐릭터의 주간 수익이 전체 주간 획득 메소에서 빠집니다. 이미 돈 캐릭터를 잠깐 빼고 남은 캐릭터로 얼마가 더 들어오는지 볼 때 씁니다.">
+              <span class="cg-weekrow__lbl">주간 합산</span>
+              <button type="button" class="cg-weektoggle on" id="bossWeekToggle" aria-label="주간 합산 포함 여부">
+                <span class="cg-weektoggle__knob"></span>
+                <span class="cg-weektoggle__txt cg-weektoggle__txt--on">포함</span>
+                <span class="cg-weektoggle__txt cg-weektoggle__txt--off">제외</span>
+              </button>
+            </div>
+          </div>
           <div class="boss-panel__headr">
             <span class="boss-crystal-count" id="btnCrystalCount"></span>
             <button class="pill pill--red" id="btnResetBoss">초기화</button>
@@ -784,7 +794,7 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260826b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260825e"></script>
+<script src="app.js?v=20260826a"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260826b"></script>
 <script src="starforce_sim.js?v=20260821c"></script>

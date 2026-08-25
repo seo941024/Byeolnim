@@ -329,7 +329,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 #headerBtnSettings { color: var(--text-sub); }
 /* 로그인된 상태 — 버튼에 아이디가 뜨므로 길어질 수 있다. 잘라서 헤더를 밀지 않게 한다.
    배지가 같이 들어가므로, 좁아질 때 이름만 줄고 배지는 그대로 남게 나눠 놓는다. */
-#headerBtnAuth { max-width: 14em; display: inline-flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; }
+/* 닉네임은 12자까지라 데스크톱에선 22em이면 배지까지 넣어도 안 잘린다.
+   좁은 화면에선 햄버거·로고를 뺀 나머지가 한계라, 둘 중 작은 쪽을 쓴다. */
+#headerBtnAuth { max-width: min(22em, calc(100vw - 140px)); display: inline-flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; }
 .hbtn__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .admin-badge {
   flex: none; padding: 1px 6px; border-radius: 999px;

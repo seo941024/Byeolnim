@@ -300,5 +300,84 @@ const FR_CATALOG = {
    전체 변형 수치까지는 다 못 뽑았다. 지어내지 않고 확인된 것까지만 넣었다 — 나머지는
    자료 더 뽑으면 이어서 채운다. */
 
-if (typeof window !== 'undefined') window.FR_CATALOG = FR_CATALOG;
-if (typeof module !== 'undefined') module.exports = { FR_CATALOG };
+/* ═══════════════════════════════════════════════
+   이벤트 잠재 — 기간 한정, 상시 카탈로그와 구조가 다르다.
+
+   출처: masonym.dev/familiars → Familiar Lines → "Event lines" 필터 켬
+   (처음엔 이 필터를 안 켜서 놓쳤다 — 상시 카탈로그와 별개로 222줄이 있었다)
+
+   상시 옵션은 "떴다/안 떴다"로 고정값을 주는데, 이 이벤트 옵션은 다르다.
+   "+3 for each Fire or Ice element"처럼 팀에 그 속성/타입이 몇 마리 있는지에
+   비례해서 값이 곱해진다(마리당 값 × 매칭되는 마리 수). 그래서 계산기에서
+   팀 구성을 보고 자동으로 마리 수를 세야 한다.
+
+   8개 그룹이 속성 7종 + 타입 9종 = 16개를 정확히 둘씩 묶는다. 속성끼리도
+   타입끼리도 아니라 속성-타입이 섞여 묶인 그룹도 있다(무속성+언데드).
+   레어·커먼 등급엔 이 이벤트 옵션 자체가 없다(직접 확인, 없는 게 맞다).
+
+   만료: 2026-09-08 23:59(서버 기준 표기 그대로, 시간대 미표기). 만료되면
+   이 블록만 지우면 된다 — FR_CATALOG 쪽은 안 건드린다.
+═══════════════════════════════════════════════ */
+
+const FR_EVENT_EXPIRES = '2026-09-08 23:59';
+
+const FR_EVENT_GROUPS = [
+  { key: 'fire_ice',      label: 'Fire or Ice element',            match: [{ f: 'element', v: 'Fire' }, { f: 'element', v: 'Ice' }] },
+  { key: 'lightning_poison', label: 'Lightning or Poison element',  match: [{ f: 'element', v: 'Lightning' }, { f: 'element', v: 'Poison' }] },
+  { key: 'holy_dark',     label: 'Holy or Dark element',            match: [{ f: 'element', v: 'Holy' }, { f: 'element', v: 'Dark' }] },
+  { key: 'human_beast',   label: 'Human or Beast type',             match: [{ f: 'type', v: 'Human' }, { f: 'type', v: 'Beast' }] },
+  { key: 'plant_reptile', label: 'Plant or Reptile type',           match: [{ f: 'type', v: 'Plant' }, { f: 'type', v: 'Reptile' }] },
+  { key: 'aquatic_mech',  label: 'Aquatic or Mechanical type',      match: [{ f: 'type', v: 'Aquatic' }, { f: 'type', v: 'Mechanical' }] },
+  { key: 'fairy_devil',   label: 'Fairy or Devil type',             match: [{ f: 'type', v: 'Fairy' }, { f: 'type', v: 'Devil' }] },
+  { key: 'non_undead',    label: 'Non-elemental or Undead type',    match: [{ f: 'element', v: 'Non-elemental' }, { f: 'type', v: 'Undead' }] },
+];
+
+/* 등급별 "마리당" 수치 — 그룹은 다 같은 진행값을 쓴다(8개 그룹 중 직접 확인한
+   fairy_devil·non_undead·fire_ice 세 개가 전부 동일해서 나머지도 같다고 본다). */
+const FR_EVENT_PER_UNIT = {
+  EPIC:   { add: [3, 2, 1], mult: [0.6, 0.4, 0.2] },
+  UNIQUE: { add: [6, 5, 4], mult: [1.2, 1, 0.8] },
+};
+
+/* "3 or less"는 개수 비례 스택형이 아니라 조건 충족형(상시 카탈로그와 같은 방식)이라
+   groupKey 없이 label만 들고 다닌다 — 계산은 그냥 add/mult 그대로 한 번 더해진다. */
+const FR_EVENT_FLAT = {
+  EPIC: [
+    { label: 'If all dice roll 3 or less', add: 15, mult: null },
+    { label: 'If all dice roll 3 or less', add: 14, mult: null },
+    { label: 'If all dice roll 3 or less', add: 13, mult: null },
+    { label: 'If all dice roll 3 or less', add: null, mult: 3.8 },
+    { label: 'If all dice roll 3 or less', add: null, mult: 3.6 },
+    { label: 'If all dice roll 3 or less', add: null, mult: 3.4 },
+  ],
+  UNIQUE: [
+    { label: 'If all dice roll 3 or less', add: 19, mult: null },
+    { label: 'If all dice roll 3 or less', add: 18, mult: null },
+    { label: 'If all dice roll 3 or less', add: 17, mult: null },
+    { label: 'If all dice roll 3 or less', add: null, mult: 4.2 },
+    { label: 'If all dice roll 3 or less', add: null, mult: 4 },
+    { label: 'If all dice roll 3 or less', add: null, mult: 3.8 },
+  ],
+};
+
+/* FR_EVENT_CATALOG[등급] = [{ groupKey, add(마리당) 또는 null, mult(마리당) 또는 null }, ...그룹형]
+                          + [{ label, add, mult }, ...고정형("3 or less")] */
+const FR_EVENT_CATALOG = {};
+['EPIC', 'UNIQUE'].forEach(rank => {
+  const per = FR_EVENT_PER_UNIT[rank];
+  const grouped = FR_EVENT_GROUPS.flatMap(g => [
+    ...per.add.map(v => ({ groupKey: g.key, add: v, mult: null })),
+    ...per.mult.map(v => ({ groupKey: g.key, add: null, mult: v })),
+  ]);
+  FR_EVENT_CATALOG[rank] = [...grouped, ...(FR_EVENT_FLAT[rank] || [])];
+});
+FR_EVENT_CATALOG.RARE = [];
+FR_EVENT_CATALOG.COMMON = [];
+
+if (typeof window !== 'undefined') {
+  window.FR_CATALOG = FR_CATALOG;
+  window.FR_EVENT_GROUPS = FR_EVENT_GROUPS;
+  window.FR_EVENT_CATALOG = FR_EVENT_CATALOG;
+  window.FR_EVENT_EXPIRES = FR_EVENT_EXPIRES;
+}
+if (typeof module !== 'undefined') module.exports = { FR_CATALOG, FR_EVENT_GROUPS, FR_EVENT_CATALOG, FR_EVENT_EXPIRES };

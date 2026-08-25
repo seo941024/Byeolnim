@@ -65,13 +65,25 @@ let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', m
    가지면 둘 다 반영된다. 배율값이 하나도 안 채워졌으면 곱셈 효과 없음 = ×1. */
 function _frAggregate() {
   let addSum = 0, multSum = 0, multCount = 0;
-  const addLine = l => {
+  /* count는 이벤트 그룹형 줄에서만 1이 아니다 — 팀에 그 속성/타입이 몇 마리인지에
+     비례해서 값이 곱해지는 옵션이라(예: "불 또는 얼음 속성마다 +3"), 매칭 0마리면
+     아예 안 고른 것과 같아야 한다(mult 기본값 1을 망가뜨리면 안 되니 여기서 거른다). */
+  const addLine = (l, count = 1) => {
+    if (count <= 0) return;
     const a = parseFloat(l.add), m = parseFloat(l.mult);
-    if (!isNaN(a)) addSum += a;
-    if (!isNaN(m)) { multSum += m; multCount++; }
+    if (!isNaN(a)) addSum += a * count;
+    if (!isNaN(m)) { multSum += m * count; multCount++; }
   };
-  _frTeam.forEach(f => addLine(f.line));
-  _frBonusDice.forEach(addLine);
+  const matchCount = group => _frTeam.filter(f => group.match.some(m => f[m.f] === m.v)).length;
+  _frTeam.forEach(f => {
+    if (f.line.groupKey) {
+      const g = (window.FR_EVENT_GROUPS || []).find(x => x.key === f.line.groupKey);
+      addLine(f.line, g ? matchCount(g) : 0);
+    } else {
+      addLine(f.line);
+    }
+  });
+  _frBonusDice.forEach(l => addLine(l));
   return { addSum, mult: multCount ? multSum : 1 };
 }
 
@@ -172,7 +184,8 @@ const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], 
 function _frLineOptions(fi, selectLabel) {
   const D = window.FR_CATALOG; if (!D) return '<option value="">데이터 로딩 중...</option>';
   const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
-  const pool = D[rank.toUpperCase()] || [];
+  const rankKey = rank.toUpperCase();
+  const pool = D[rankKey] || [];
   const fmt = e => {
     const parts = [];
     if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
@@ -180,7 +193,25 @@ function _frLineOptions(fi, selectLabel) {
     return `${e.label} (${parts.join(', ')})`;
   };
   const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${fmt(e)}</option>`).join('');
-  return `<option value="">— None —</option>${opts}`;
+
+  /* 이벤트 잠재는 값이 "몇 마리가 조건에 맞는지"에 곱해지므로 표기에 "마리당"을 붙여
+     일반 잠재와 헷갈리지 않게 한다. value는 "e{idx}"로 구분한다. */
+  const EG = window.FR_EVENT_GROUPS || [];
+  const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
+  const fmtEvent = e => {
+    if (e.groupKey) {
+      const g = EG.find(x => x.key === e.groupKey);
+      const parts = [];
+      if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
+      if (e.mult != null) parts.push(`x${e.mult}`);
+      return `${g ? g.label : e.groupKey} 마리당 (${parts.join(', ')})`;
+    }
+    return fmt(e);
+  };
+  const eventOpts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${fmtEvent(e)}</option>`).join('');
+  const eventGroup = eventOpts ? `<optgroup label="이벤트 잠재 (~2026-09-08)">${eventOpts}</optgroup>` : '';
+
+  return `<option value="">— None —</option>${opts}${eventGroup}`;
 }
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
@@ -268,15 +299,26 @@ function _frRenderTeam() {
   box.querySelectorAll('.fr-line-cat').forEach(sel => {
     sel.addEventListener('change', e => {
       const fi = +e.target.dataset.fi;
-      const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
-      const pool = (window.FR_CATALOG && window.FR_CATALOG[rank.toUpperCase()]) || [];
-      const idx = e.target.value;
-      const entry = idx !== '' ? pool[+idx] : null;
-      _frTeam[fi].line = {
-        catalogIdx: idx,
-        add: entry && entry.add != null ? entry.add : '',
-        mult: entry && entry.mult != null ? entry.mult : '',
-      };
+      const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
+      const val = e.target.value;
+      if (val.startsWith('e')) {
+        const pool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
+        const entry = pool[+val.slice(1)];
+        _frTeam[fi].line = {
+          catalogIdx: val,
+          add: entry && entry.add != null ? entry.add : '',
+          mult: entry && entry.mult != null ? entry.mult : '',
+          groupKey: entry ? entry.groupKey : undefined,
+        };
+      } else {
+        const pool = (window.FR_CATALOG && window.FR_CATALOG[rankKey]) || [];
+        const entry = val !== '' ? pool[+val] : null;
+        _frTeam[fi].line = {
+          catalogIdx: val,
+          add: entry && entry.add != null ? entry.add : '',
+          mult: entry && entry.mult != null ? entry.mult : '',
+        };
+      }
       _frCalcAndRender();
     });
   });

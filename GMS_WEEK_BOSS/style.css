@@ -910,8 +910,9 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   background: linear-gradient(90deg, rgba(var(--hue),.12) 0%, var(--panel-veil) 100%);
 }
 .boss-panel__charname { font-size: .96rem; font-weight: 800; color: var(--text); }
-.boss-panel__headl { display: flex; align-items: center; gap: 14px; min-width: 0; flex-wrap: wrap; }
-.boss-panel__headr { display: flex; align-items: center; gap: 16px; }
+/* 주간 합산 토글 등 딸린 것들은 전부 오른쪽 그룹에 묶어서 붙인다 —
+   이름 옆에 따로 두면 좁은 화면에서 줄이 애매하게 갈린다. */
+.boss-panel__headr { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; justify-content: flex-end; }
 /* 캐릭터 목록 카드 안에서 쓰던 걸 여기서도 재사용한다 — 세로로 쌓이던 테두리·여백은
    여기선 가로 한 줄에 끼워 넣는 것이라 필요 없다. */
 .cg-weekrow--inline { margin-top: 0; padding-top: 0; border-top: none; gap: 6px; }

@@ -643,6 +643,13 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-bonus__img { width: 26px; height: 26px; object-fit: contain; flex: none; }
 .fr-bonus .fr-bonus__lbl { flex: none; width: 72px; font-size: .74rem; font-weight: 700; color: var(--text-dim); }
 .fr-bonus .fr-bd { flex: 1; min-width: 0; }
+/* 고른 주사위를 비우는 버튼. 안 고른 칸에서는 자리만 잡고 숨는다(줄이 안 흔들리게) */
+.fr-bd-clear {
+  flex: none; width: 24px; height: 24px; border-radius: 6px;
+  font-size: 1rem; line-height: 1; color: var(--text-dim);
+  background: transparent; border: 1px solid var(--border);
+}
+.fr-bd-clear:hover { color: #e5484d; border-color: #e5484d; }
 /* 이름보다 그림을 보고 고르는 물건이라 목록 그림을 크게 준다 */
 .fr-bd .fr-dd__menu--line .fr-dd__item img { width: 30px; height: 30px; }
 .fr-bd .fr-dd__menu--line .fr-dd__item { gap: 8px; }

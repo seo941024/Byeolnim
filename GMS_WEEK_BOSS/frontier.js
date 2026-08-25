@@ -220,6 +220,8 @@ function _frBonusDiceHtml(i) {
         </button>
         <div class="fr-dd__menu fr-dd__menu--line" hidden>${menu}</div>
       </div>
+      <button type="button" class="fr-bd-clear" data-bi="${i}" title="이 주사위 비우기"
+        ${kind ? '' : 'style="visibility:hidden"'}>×</button>
     </div>`;
 }
 
@@ -280,6 +282,15 @@ function _frRenderBonusDice() {
       const willOpen = menu.hidden;
       document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
       menu.hidden = !willOpen;
+    });
+  });
+  box.querySelectorAll('.fr-bd-clear').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = +btn.dataset.bi;
+      _frBonusDice[i].kind = '';
+      _frBonusDice[i].tier = '';
+      _frApplyBonus(i);
     });
   });
   _frBindBonusMenu(box);

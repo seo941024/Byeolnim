@@ -524,7 +524,7 @@ function renderDestiny() {
     const yld    = active ? Math.floor((yieldMap[diff] || 0) / party) : 0;
 
     const diffOpts = ['none', ...Object.keys(yieldMap)].map(d =>
-      `<option value="${d}" ${diff===d?'selected':''}>${d==='none'?'선택 안함':(LIB_DIFF_LABEL[d]||d)}</option>`
+      `<option value="${d}" ${diff===d?'selected':''}>${d==='none'?'-':(LIB_DIFF_LABEL[d]||d)}</option>`
     ).join('');
 
     return `
@@ -835,7 +835,7 @@ function renderAstra() {
     const yld    = active ? Math.floor((yieldMap[diff] || 0) / party) : 0;
 
     const diffOpts = ['none', ...Object.keys(yieldMap)].map(d =>
-      `<option value="${d}" ${diff===d?'selected':''}>${d==='none'?'선택 안함':(LIB_DIFF_LABEL[d]||d)}</option>`
+      `<option value="${d}" ${diff===d?'selected':''}>${d==='none'?'-':(LIB_DIFF_LABEL[d]||d)}</option>`
     ).join('');
 
     return `

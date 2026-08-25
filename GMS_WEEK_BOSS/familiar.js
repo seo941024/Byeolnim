@@ -150,7 +150,7 @@ function _famBuildGoalOpts() {
     return `<optgroup label="${D.RANK_LABEL[g]}">` +
       items.map(o => `<option value="${o.key}">${o.en}</option>`).join('') + '</optgroup>';
   }).join('');
-  return '<option value="">선택 안함</option>' + groups;
+  return '<option value="">-</option>' + groups;
 }
 
 function _famRefreshGoals() {

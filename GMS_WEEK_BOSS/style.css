@@ -638,17 +638,16 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-deck__load { font-weight: 700; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fr-deck .btn:disabled { opacity: .4; cursor: not-allowed; }
 
-/* 보너스 주사위 한 줄: 그림 + 이름 + 계열 + 등급 */
+/* 보너스 주사위 한 줄: 이름표 + 드롭다운(그림으로 고른다) */
 .fr-bonus { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .fr-bonus__img { width: 26px; height: 26px; object-fit: contain; flex: none; }
-.fr-bonus .fr-bonus__lbl { flex: none; width: 96px; font-size: .74rem; font-weight: 700; color: var(--text-dim); }
-.fr-bonus .fr-bd-kind { flex: 1; min-width: 0; }
-.fr-bonus .fr-bd-tier { flex: 1.6; min-width: 0; }
-.fr-bonus .fr-bd-tier:disabled { opacity: .45; cursor: not-allowed; }
+.fr-bonus .fr-bonus__lbl { flex: none; width: 72px; font-size: .74rem; font-weight: 700; color: var(--text-dim); }
+.fr-bonus .fr-bd { flex: 1; min-width: 0; }
+/* 이름보다 그림을 보고 고르는 물건이라 목록 그림을 크게 준다 */
+.fr-bd .fr-dd__menu--line .fr-dd__item img { width: 30px; height: 30px; }
+.fr-bd .fr-dd__menu--line .fr-dd__item { gap: 8px; }
 @media (max-width: 640px) {
-  .fr-bonus { flex-wrap: wrap; }
-  .fr-bonus .fr-bonus__lbl { width: auto; }
-  .fr-bonus .fr-bd-kind, .fr-bonus .fr-bd-tier { flex: 1 1 100%; }
+  .fr-bonus .fr-bonus__lbl { width: 62px; }
 }
 .fr-line--select { width: 100%; }
 .fr-line--select select { width: 100%; font-size: .78rem; }

@@ -176,21 +176,95 @@ function _frAggregate(dice) {
 /* 보너스 주사위는 4칸 고정으로 항상 띄운다. 매 라운드 나오는 것도 아니라서
    "몇 라운드니까 몇 개"로 자동 계산하는 것보다, 안 나온 칸은 그냥 비워두게 두는 게 편하다.
    잠재와 같이 종류 고르고 → 등급 고르는 2단계다. */
+/* 주사위는 계열 4개 × 등급 5개다. 그림을 보고 고르는 물건이라 네이티브 select로는
+   안 되고(option 안에 이미지를 못 넣는다), 잠재와 같은 방식으로 직접 만든다.
+   계열을 누르면 같은 칸이 그 계열의 등급 목록으로 바뀐다. */
+function _frDiceKindMenuHtml(i) {
+  return FR_DICE_KINDS.map(k =>
+    `<button type="button" class="fr-dd__item fr-bd-kind" data-bi="${i}" data-kind="${k.key}">
+      <img src="images/frontier/dice/${k.img('gray')}.webp" alt="">
+      <span>${k.label}</span><span class="fr-dd__more">›</span>
+    </button>`).join('');
+}
+
+function _frDiceTierMenuHtml(i, kindKey, curTier) {
+  const k = FR_DICE_KINDS.find(x => x.key === kindKey);
+  return `
+    <button type="button" class="fr-dd__item fr-bd-back" data-bi="${i}">‹ ${k.label}</button>
+    <button type="button" class="fr-dd__item fr-bd-tier" data-bi="${i}" data-tier="">-</button>
+    ${FR_DICE_TIERS.map(([t, label], ti) =>
+      `<button type="button" class="fr-dd__item fr-bd-tier${t === curTier ? ' active' : ''}" data-bi="${i}" data-tier="${t}">
+        <img src="${_frDiceIconSrc(kindKey, t)}" alt="">
+        <span>${label} — ${_frDiceEffectLabel(k.vals[ti])}</span>
+      </button>`).join('')}`;
+}
+
 function _frBonusDiceHtml(i) {
   const b = _frBonusDice[i];
   const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
-  const kindOpts = FR_DICE_KINDS.map(k =>
-    `<option value="${k.key}"${k.key === b.kind ? ' selected' : ''}>${k.label}</option>`).join('');
-  const tierOpts = !kind ? '' : FR_DICE_TIERS.map(([t, label], ti) =>
-    `<option value="${t}"${t === b.tier ? ' selected' : ''}>${label} — ${_frDiceEffectLabel(kind.vals[ti])}</option>`).join('');
-  const src = _frDiceIconSrc(b.kind, b.tier);
+  const picked = kind && b.tier;
+  const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
+  const label = picked
+    ? `${kind.label} — ${FR_DICE_TIERS[ti][1]}`
+    : (kind ? kind.label : '-');
+  // 계열까지만 고른 상태면 등급 목록을 펼친 채로 시작한다
+  const menu = kind ? _frDiceTierMenuHtml(i, b.kind, b.tier) : _frDiceKindMenuHtml(i);
   return `
     <div class="fr-bonus">
-      <img class="fr-bonus__img" src="${src}" alt="" ${src === FR_BLANK_ICON ? 'style="visibility:hidden"' : ''}>
       <span class="fr-bonus__lbl">Bonus ${i + 1}</span>
-      <select class="sel fr-bd-kind" data-bi="${i}"><option value="">-</option>${kindOpts}</select>
-      <select class="sel fr-bd-tier" data-bi="${i}"${kind ? '' : ' disabled'}><option value="">-</option>${tierOpts}</select>
+      <div class="fr-dd fr-dd--line fr-bd" data-bi="${i}">
+        <button type="button" class="fr-dd__trigger"${picked ? '' : ' data-empty="1"'}>
+          ${picked ? `<img class="fr-bonus__img" src="${_frDiceIconSrc(b.kind, b.tier)}" alt="">` : ''}
+          <span class="hbtn__name fr-ln-cur">${label}</span>
+          <span class="fr-dd__caret">▾</span>
+        </button>
+        <div class="fr-dd__menu fr-dd__menu--line" hidden>${menu}</div>
+      </div>
     </div>`;
+}
+
+function _frApplyBonus(i) {
+  const b = _frBonusDice[i];
+  const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
+  const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
+  const v = kind && ti >= 0 ? kind.vals[ti] : null;
+  b.add = v && v.add != null ? v.add : '';
+  b.mult = v && v.mult != null ? v.mult : '';
+  _frRenderBonusDice();
+  _frCalcAndRender();
+}
+
+/* 목록을 갈아끼우면 버튼이 새로 생기니 그때마다 다시 연결한다.
+   여기서 전체를 다시 그리면 방금 연 드롭다운이 닫혀버려서, 메뉴 안쪽만 바꾼다. */
+function _frBindBonusMenu(box) {
+  box.querySelectorAll('.fr-bd-kind').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = +btn.dataset.bi;
+      _frBonusDice[i].kind = btn.dataset.kind;
+      _frBonusDice[i].tier = '';
+      btn.closest('.fr-dd__menu').innerHTML = _frDiceTierMenuHtml(i, btn.dataset.kind, '');
+      _frBindBonusMenu(box);
+    });
+  });
+  box.querySelectorAll('.fr-bd-back').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = +btn.dataset.bi;
+      _frBonusDice[i].kind = '';
+      _frBonusDice[i].tier = '';
+      btn.closest('.fr-dd__menu').innerHTML = _frDiceKindMenuHtml(i);
+      _frBindBonusMenu(box);
+    });
+  });
+  box.querySelectorAll('.fr-bd-tier').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = +btn.dataset.bi;
+      _frBonusDice[i].tier = btn.dataset.tier;
+      _frApplyBonus(i);
+    });
+  });
 }
 
 function _frRenderBonusDice() {
@@ -198,32 +272,19 @@ function _frRenderBonusDice() {
   if (!box) return;
   box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) => _frBonusDiceHtml(i)).join('');
 
-  const apply = (i) => {
-    const b = _frBonusDice[i];
-    const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
-    const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
-    const v = kind && ti >= 0 ? kind.vals[ti] : null;
-    b.add = v && v.add != null ? v.add : '';
-    b.mult = v && v.mult != null ? v.mult : '';
-    _frRenderBonusDice();
-    _frCalcAndRender();
-  };
-  box.querySelectorAll('.fr-bd-kind').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const i = +e.target.dataset.bi;
-      _frBonusDice[i].kind = e.target.value;
-      _frBonusDice[i].tier = '';   // 계열이 바뀌면 등급은 다시 고른다
-      apply(i);
+  /* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다 */
+  box.querySelectorAll('.fr-dd__trigger').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const menu = btn.nextElementSibling;
+      const willOpen = menu.hidden;
+      document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
+      menu.hidden = !willOpen;
     });
   });
-  box.querySelectorAll('.fr-bd-tier').forEach(sel => {
-    sel.addEventListener('change', e => {
-      const i = +e.target.dataset.bi;
-      _frBonusDice[i].tier = e.target.value;
-      apply(i);
-    });
-  });
+  _frBindBonusMenu(box);
 }
+
 
 /* "Prevents dice from rolling over N"을 고르면 주사위가 N을 넘을 수 없다.
    넘는 눈을 고를 수 있게 두면 있을 수 없는 조합으로 점수가 나오니, 선택지에서 아예 없앤다.

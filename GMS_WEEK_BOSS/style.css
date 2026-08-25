@@ -327,8 +327,19 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   transition: background .2s, border-color .2s, color .2s;
 }
 #headerBtnSettings { color: var(--text-sub); }
-/* 로그인된 상태 — 버튼에 아이디가 뜨므로 길어질 수 있다. 잘라서 헤더를 밀지 않게 한다 */
-#headerBtnAuth { max-width: 10em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* 로그인된 상태 — 버튼에 아이디가 뜨므로 길어질 수 있다. 잘라서 헤더를 밀지 않게 한다.
+   배지가 같이 들어가므로, 좁아질 때 이름만 줄고 배지는 그대로 남게 나눠 놓는다. */
+#headerBtnAuth { max-width: 14em; display: inline-flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; }
+.hbtn__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.admin-badge {
+  flex: none; padding: 1px 6px; border-radius: 999px;
+  font-size: .62rem; font-weight: 900; letter-spacing: .3px;
+  color: var(--accent); border: 1px solid rgba(246,199,68,.75);
+  background: rgba(246,199,68,.12);
+}
+:root[data-theme="light"] .admin-badge {
+  color: #8a6200; border-color: rgba(154,111,18,.85); background: rgba(154,111,18,.12);
+}
 /* 로그인 표시는 테두리로 준다. 글자색은 라이트 테마에서 .hbtn이 더 높은 명세도로
    덮어쓰기 때문에(:root[data-theme="light"] .hbtn) 테마별로 갈리지만, 테두리는 양쪽 다 걸린다. */
 .hbtn--on { border-color: rgba(246,199,68,.75); }

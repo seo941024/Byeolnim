@@ -12,6 +12,8 @@ const CS_ID_KEY    = 'gms_cloud_id';
 
 let _csUser = null;      // 로그인된 아이디
 let _csNick = null;      // 표시용 닉네임. 안 정했으면 서버가 아이디를 그대로 돌려준다
+// 관리자 배지 표시 여부. 서버(ADMIN_IDS)가 판단해서 내려주는 값만 믿는다 — 여기서 정하지 않는다.
+let _csAdmin = false;
 let _csBusy = false;
 let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
 let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
@@ -69,7 +71,11 @@ function csSyncHeader() {
   const btn = document.getElementById('headerBtnAuth');
   if (!btn) return;
   const shown = _csNick || _csUser;
-  btn.textContent = shown || '로그인';
+  /* 배지가 붙으므로 textContent 대신 innerHTML — 닉네임은 반드시 이스케이프한다.
+     이름은 따로 감싼다. 버튼 폭이 좁아질 때 이름만 줄어들고 배지는 남아야 한다. */
+  btn.innerHTML = shown
+    ? `${_csAdmin ? '<span class="admin-badge">👑ADMIN</span>' : ''}<span class="hbtn__name">${csEsc(shown)}</span>`
+    : '로그인';
   btn.classList.toggle('hbtn--on', !!_csUser);
   btn.title = _csUser ? `${shown} — 클라우드 저장 열기` : '로그인 / 회원가입';
 }
@@ -185,6 +191,7 @@ async function csAuth(action) {
   localStorage.setItem(CS_ID_KEY, j.id);
   _csUser = j.id;
   _csNick = j.nickname || j.id;
+  _csAdmin = !!j.isAdmin;
   showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
   csRefresh();
 }
@@ -195,6 +202,7 @@ async function csLogout() {
   localStorage.removeItem(CS_ID_KEY);
   _csUser = null;
   _csNick = null;
+  _csAdmin = false;
   _csPwOpen = false;
   showToast('로그아웃되었습니다.');
   csRender(null);
@@ -317,11 +325,13 @@ async function csRefresh() {
     localStorage.removeItem(CS_ID_KEY);
     _csUser = null;
     _csNick = null;
+    _csAdmin = false;
     csRender(null);
     return;
   }
   _csUser = j.id;
   _csNick = j.nickname || j.id;
+  _csAdmin = !!j.isAdmin;
   csRender(j.savedAt);
 }
 

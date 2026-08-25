@@ -29,6 +29,19 @@ const DATA_MAX = 1024 * 512;               // 저장 데이터 상한 512KB
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
+/* 관리자 표시용. 누가 관리자인지는 서버만 알아야 해서 환경변수(ADMIN_IDS)에 두고
+   여기서만 대조한다. 앱 코드에 아이디를 적으면 저장소를 열어 보는 누구나 알게 된다.
+   아이디는 대소문자를 구분하므로 그대로 비교한다. 쉼표로 여러 명 넣을 수 있다.
+   ※ 이건 이름 옆 배지를 붙이는 용도일 뿐, 권한과는 무관하다 —
+      알림 발송 같은 실제 관리자 기능은 ADMIN_SECRET으로 따로 확인한다. */
+function isAdminId(id) {
+  return String(process.env.ADMIN_IDS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .includes(id);
+}
+
 function hashPw(pw, salt) {
   // N=16384는 서버리스 환경에서 100ms 안팎 — 무차별 대입을 충분히 느리게 만든다
   return crypto.scryptSync(pw, salt, 32, { N: 16384, r: 8, p: 1 }).toString('hex');
@@ -81,7 +94,7 @@ module.exports = async function handler(req, res) {
 
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
-      return res.status(200).json({ ok: true, id, nickname: id, token });
+      return res.status(200).json({ ok: true, id, nickname: id, token, isAdmin: isAdminId(id) });
     }
 
     /* ── 로그인 ── */
@@ -116,7 +129,7 @@ module.exports = async function handler(req, res) {
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
       // 오래된 계정(닉네임 필드가 생기기 전 가입)은 nickname이 없을 수 있어 아이디로 대체
-      return res.status(200).json({ ok: true, id, nickname: rec.nickname || id, token });
+      return res.status(200).json({ ok: true, id, nickname: rec.nickname || id, token, isAdmin: isAdminId(id) });
     }
 
     /* 아래는 전부 로그인된 사람만 */
@@ -204,7 +217,7 @@ module.exports = async function handler(req, res) {
       const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
       const metaRaw = await redis.get('auth:datameta:' + uid);
       const meta = metaRaw ? (typeof metaRaw === 'string' ? JSON.parse(metaRaw) : metaRaw) : null;
-      return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at });
+      return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at, isAdmin: isAdminId(uid) });
     }
 
     /* ── 로그아웃 ── */

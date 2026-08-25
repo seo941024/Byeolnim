@@ -1160,8 +1160,17 @@ document.getElementById('fileImport').addEventListener('change', e => {
         showToast('별님앱 백업 파일이 아닙니다.');
         return;
       }
-      if (data.state) { state = data.state; save(); }
-      Object.entries(data.extra || {}).forEach(([k, v]) => {
+      /* 덮어쓰기 전에 속을 먼저 살펴본다. 넣다가 중간에 잘못되면 원래 데이터도 없고
+         새 데이터도 온전치 않은 상태로 남아서, 이상하면 아예 시작을 안 하는 게 낫다. */
+      const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+      const st = data.state, ex = data.extra;
+      if (!isObj(st) || !Array.isArray(st.chars) || (ex !== undefined && !isObj(ex))) {
+        showToast('백업 파일이 손상된 것 같습니다.');
+        return;
+      }
+      state = st;
+      save();
+      Object.entries(ex || {}).forEach(([k, v]) => {
         if (typeof v === 'string') localStorage.setItem(k, v);
       });
       showToast('불러오기 완료! 새로고침합니다…');

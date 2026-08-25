@@ -334,7 +334,7 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 #headerBtnAuth { max-width: min(22em, calc(100vw - 140px)); display: inline-flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; }
 .hbtn__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .admin-badge {
-  flex: none; padding: 1px 6px; border-radius: 999px;
+  flex: none; padding: 1px 6px; border-radius: 4px;
   font-size: .62rem; font-weight: 900; letter-spacing: .3px;
   color: var(--accent); border: 1px solid rgba(246,199,68,.75);
   background: rgba(246,199,68,.12);

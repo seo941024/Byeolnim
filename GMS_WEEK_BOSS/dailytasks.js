@@ -20,6 +20,7 @@ const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 let _dtStep = 1;              // 1=이름 정하기(조회/직접입력), 2=항목 선택
 let _dtPendingName = '';
 let _dtPendingImg = null;
+let _dtPendingLevel = null;   // GMS 랭킹 조회로 정한 경우만 채워짐(직접 입력은 레벨을 모른다)
 let _dtPendingRegion = null;  // GMS 랭킹 조회로 정한 경우만 채워짐 → 자동 최신화에 사용
 let _dtNewActive = new Set(); // 2단계에서 지금 체크 중인 항목(제출 전 임시 상태)
 let _dtEditCharId = null;     // null이면 신규 추가, 값이 있으면 그 캐릭터의 항목 수정 모드
@@ -48,15 +49,16 @@ function _dtGetChar(charId) {
   const rec = _dtLoadAll().items[charId];
   if (!rec) return null;
   const today = _dtTodayKey();
-  return { name: rec.name, img: rec.img || null, active: rec.active || [], region: rec.region || null, done: rec.date === today ? (rec.done || []) : [] };
+  return { name: rec.name, img: rec.img || null, level: rec.level || null, active: rec.active || [], region: rec.region || null, done: rec.date === today ? (rec.done || []) : [] };
 }
-function _dtSaveChar(charId, name, img, active, done, region, syncedAt) {
+function _dtSaveChar(charId, name, img, active, done, region, syncedAt, level) {
   const all = _dtLoadAll();
   const prev = all.items[charId] || {};
   all.items[charId] = {
     name, img, active, date: _dtTodayKey(), done,
     region: region !== undefined ? region : prev.region,
     syncedAt: syncedAt !== undefined ? syncedAt : prev.syncedAt,
+    level: level !== undefined ? level : prev.level,
   };
   _dtSaveAll(all);
 }
@@ -66,12 +68,13 @@ function _dtDeleteChar(charId) {
   all.order = all.order.filter(id => id !== charId);
   _dtSaveAll(all);
 }
-function _dtCreateChar(name, img, activeIds, region) {
+function _dtCreateChar(name, img, activeIds, region, level) {
   const all = _dtLoadAll();
   const id = String(Date.now());
   all.items[id] = {
     name, img, active: activeIds, date: _dtTodayKey(), done: [],
     region: region || null, syncedAt: region ? Date.now() : null,
+    level: level || null,
   };
   all.order.push(id);
   _dtSaveAll(all);
@@ -117,7 +120,7 @@ async function dtRefreshStaleChars() {
         const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
         const j = await r.json();
         if (!j.ok || !j.data) return null;
-        return { id, img: j.data.img || rec.img };
+        return { id, img: j.data.img || rec.img, level: j.data.level || rec.level };
       } catch { return null; /* 네트워크 실패 → 다음 진입 때 재시도 */ }
     }));
     results.push(...batchResults);
@@ -129,9 +132,10 @@ async function dtRefreshStaleChars() {
   // 있으므로, 캡처해둔 all을 그대로 덮어쓰지 않고 지금 시점의 최신 값을 다시 읽어서
   // 이미지/동기화 시각만 얹는다.
   const fresh = _dtLoadAll();
-  updates.forEach(({ id, img }) => {
+  updates.forEach(({ id, img, level }) => {
     if (!fresh.items[id]) return;
     fresh.items[id].img = img;
+    fresh.items[id].level = level;
     fresh.items[id].syncedAt = now;
   });
   _dtSaveAll(fresh);
@@ -173,7 +177,7 @@ function _dtTileHtml(charId, task, active, done) {
 }
 
 function _dtCardHtml(charId, rec) {
-  const { name, img, active, done } = rec;
+  const { name, img, level, active, done } = rec;
   const portraitSrc = img || DT_DEFAULT_PORTRAIT;
   const portraitHtml = `
     <img class="dt-card__portrait-img" src="${portraitSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -184,7 +188,10 @@ function _dtCardHtml(charId, rec) {
       <div class="dt-card__head">
         <span class="dt-card__drag" title="드래그해서 순서 바꾸기">⠿</span>
         <span class="dt-card__portrait">${portraitHtml}</span>
-        <span class="dt-card__name">${name}</span>
+        <span class="dt-card__whoBody">
+          <span class="dt-card__name">${name}</span>
+          ${level ? `<span class="dt-card__lv">Lv.${level}</span>` : ''}
+        </span>
         <button class="dt-card__edit" data-edit-char="${charId}" title="추적 항목 수정">✎</button>
         <button class="dt-card__del" data-del-char="${charId}" title="캐릭터 삭제">×</button>
       </div>
@@ -204,6 +211,7 @@ function _dtCloseAddModal() {
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
+  _dtPendingLevel = null;
   _dtPendingRegion = null;
   _dtNewActive = new Set();
   _dtEditCharId = null;
@@ -226,6 +234,7 @@ function _dtOpenAddModal() {
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
+  _dtPendingLevel = null;
   _dtPendingRegion = null;
   _dtNewActive = new Set();
   _dtEditCharId = null;
@@ -241,6 +250,7 @@ function _dtOpenEditModal(charId) {
   _dtStep = 2;
   _dtPendingName = rec.name;
   _dtPendingImg = rec.img;
+  _dtPendingLevel = rec.level || null;
   _dtPendingRegion = rec.region || null;
   _dtNewActive = new Set(rec.active);
   _dtEditCharId = charId;
@@ -307,6 +317,7 @@ function _dtWireStep1() {
       document.getElementById('dtLkUse').addEventListener('click', () => {
         _dtPendingName = j.data.name;
         _dtPendingImg = j.data.img || null;
+        _dtPendingLevel = j.data.level || null;
         _dtPendingRegion = region;
         _dtStep = 2;
         _dtRenderAddModal();
@@ -321,6 +332,7 @@ function _dtWireStep1() {
     if (!name) { nameInp.focus(); return; }
     _dtPendingName = name;
     _dtPendingImg = null;
+    _dtPendingLevel = null;
     _dtPendingRegion = null;
     _dtStep = 2;
     _dtRenderAddModal();
@@ -374,9 +386,9 @@ function _dtWireStep2() {
     const activeIds = DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id));
     if (_dtEditCharId) {
       const rec = _dtGetChar(_dtEditCharId);
-      _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds, rec.done.filter(d => activeIds.includes(d)));
+      _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds, rec.done.filter(d => activeIds.includes(d)), undefined, undefined, _dtPendingLevel);
     } else {
-      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion);
+      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion, _dtPendingLevel);
     }
     _dtCloseAddModal();
     renderDailyTasks();

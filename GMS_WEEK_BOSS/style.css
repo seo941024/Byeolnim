@@ -545,6 +545,11 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__rank .sf-toggle { flex: 1; padding: 5px 0; font-size: .7rem; }
 .fr-slot__field { width: 100%; }
 .fr-slot__field-lbl { display: block; font-size: .68rem; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
+
+/* 고른 잠재가 지금 주사위에서 실제로 터졌는지 카드마다 알려주는 표시 */
+.fr-line-state { display: block; font-size: .7rem; font-weight: 800; margin-top: 6px; min-height: 1em; }
+.fr-line-state.ok { color: #2ecc71; }
+.fr-line-state.no { color: var(--text-dim); }
 .fr-slot__field-row { display: flex; gap: 6px; }
 .fr-slot__field-row select { flex: 1; min-width: 0; }
 /* 속성/타입 드롭다운 — 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐진다 */

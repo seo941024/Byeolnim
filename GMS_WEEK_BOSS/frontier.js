@@ -60,31 +60,73 @@ function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/fronti
 const FR_MAX_BONUS_DICE = 4;
 let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', mult: '' }));
 
-/* 팀 전체 옵션 줄 + 보너스 주사위를 모아 더한다 — 각 줄의 합계값은 다 더해서 주사위 합에,
+/* 팀에서 그 그룹(속성/타입 묶음)에 해당하는 마릿수 — 이벤트 "~마다" 옵션의 배수가 된다. */
+function _frGroupCount(group) {
+  return _frTeam.filter(f => group.match.some(m => f[m.f] === m.v)).length;
+}
+
+/* 옵션이 지금 주사위·팀 구성에서 실제로 발동하는지 판정한다.
+   프론티어 옵션은 조건이 맞을 때만 값이 붙어서, 이걸 안 보고 그냥 더하면 점수가 틀린다. */
+function _frCondMet(cond, dice) {
+  if (!cond) return true;
+  const els = _frTeam.map(f => f.element).filter(Boolean);
+  const tys = _frTeam.map(f => f.type).filter(Boolean);
+  const uniq = a => new Set(a).size;
+  const sorted = [...dice].sort((a, b) => a - b);
+  switch (cond.t) {
+    case 'elem': return els.includes(cond.v);
+    case 'type': return tys.includes(cond.v);
+    // 3마리가 다 채워졌을 때만 "모두 같다/다르다"를 판정할 수 있다.
+    case 'sameElem': return els.length === 3 && uniq(els) === 1;
+    case 'diffElem': return els.length === 3 && uniq(els) === 3;
+    case 'sameType': return tys.length === 3 && uniq(tys) === 1;
+    case 'diffType': return tys.length === 3 && uniq(tys) === 3;
+    case 'dieOdd': return dice[cond.i] % 2 === 1;
+    case 'dieEven': return dice[cond.i] % 2 === 0;
+    case 'allOdd': return dice.every(v => v % 2 === 1);
+    case 'allEven': return dice.every(v => v % 2 === 0);
+    case 'consec': return sorted[1] === sorted[0] + 1 && sorted[2] === sorted[1] + 1;
+    case 'pairMin': return cond.pair.every(i => dice[i] >= cond.w);
+    case 'pairMatch': return dice[cond.pair[0]] === dice[cond.pair[1]];
+    case 'anyDie': return dice.includes(cond.n);
+    case 'allDie': return dice.every(v => v === cond.n);
+    case 'allMin': return dice.every(v => v >= cond.w);
+    case 'allMax': return dice.every(v => v <= cond.w);
+    case 'prevent': return true;   // 주사위 상한을 거는 대신 배율을 주는 상시 옵션
+    case 'group': return true;     // 발동 여부가 아니라 마릿수로 세기 때문에 별도 처리
+    case 'chance': return false;   // 주사위 확률만 바꿔서 점수식엔 안 들어간다
+  }
+  return true;
+}
+
+/* 팀 옵션 줄 + 보너스 주사위를 모아 더한다 — 합계값은 다 더해서 주사위 합에,
    배율값은 다 더해서 마지막에 한 번만 곱한다(사용자 확인 계산식). 한 줄이 두 값을 동시에
-   가지면 둘 다 반영된다. 배율값이 하나도 안 채워졌으면 곱셈 효과 없음 = ×1. */
-function _frAggregate() {
+   가지면 둘 다 반영된다. 배율값이 하나도 안 붙었으면 곱셈 효과 없음 = ×1. */
+function _frAggregate(dice) {
   let addSum = 0, multSum = 0, multCount = 0;
-  /* count는 이벤트 그룹형 줄에서만 1이 아니다 — 팀에 그 속성/타입이 몇 마리인지에
-     비례해서 값이 곱해지는 옵션이라(예: "불 또는 얼음 속성마다 +3"), 매칭 0마리면
-     아예 안 고른 것과 같아야 한다(mult 기본값 1을 망가뜨리면 안 되니 여기서 거른다). */
-  const addLine = (l, count = 1) => {
+  const applied = [];
+  const take = (l, count = 1) => {
     if (count <= 0) return;
     const a = parseFloat(l.add), m = parseFloat(l.mult);
     if (!isNaN(a)) addSum += a * count;
     if (!isNaN(m)) { multSum += m * count; multCount++; }
   };
-  const matchCount = group => _frTeam.filter(f => group.match.some(m => f[m.f] === m.v)).length;
-  _frTeam.forEach(f => {
-    if (f.line.groupKey) {
-      const g = (window.FR_EVENT_GROUPS || []).find(x => x.key === f.line.groupKey);
-      addLine(f.line, g ? matchCount(g) : 0);
-    } else {
-      addLine(f.line);
+  _frTeam.forEach((f, i) => {
+    const l = f.line;
+    if (l.catalogIdx === '' || l.catalogIdx == null) { applied.push(null); return; }
+    if (l.groupKey) {
+      const g = (window.FR_EVENT_GROUPS || []).find(x => x.key === l.groupKey);
+      const n = g ? _frGroupCount(g) : 0;
+      take(l, n);
+      applied.push({ met: n > 0, count: n });
+      return;
     }
+    const met = _frCondMet(l.cond, dice);
+    if (met) take(l);
+    applied.push({ met, count: 1 });
   });
-  _frBonusDice.forEach(l => addLine(l));
-  return { addSum, mult: multCount ? multSum : 1 };
+  _frBonusDice.forEach(l => take(l));
+  return { addSum, mult: multCount ? multSum : 1, applied };
 }
 
 /* 보너스 주사위는 4칸 고정으로 항상 띄운다. 매 라운드 나오는 것도 아니라서
@@ -106,9 +148,26 @@ function _frRenderBonusDice() {
 function _frCalcAndRender() {
   const dice = ['frDice1', 'frDice2', 'frDice3'].map(id => parseInt(document.getElementById(id)?.value) || 0);
   const diceSum = dice.reduce((a, b) => a + b, 0);
-  const { addSum, mult } = _frAggregate();
+  const { addSum, mult, applied } = _frAggregate(dice);
   const raw = (diceSum + addSum) * mult;
   const score = Math.floor(raw);
+
+  /* 고른 옵션이 지금 주사위에서 실제로 터졌는지 카드마다 알려준다 —
+     영어 문구만 봐서는 조건이 맞는지 알기 어렵다. */
+  applied.forEach((a, i) => {
+    const el = document.getElementById('frLineState' + i);
+    if (!el) return;
+    if (!a) { el.textContent = ''; el.className = 'fr-line-state'; return; }
+    const l = _frTeam[i].line;
+    if (l.groupKey) {
+      el.textContent = a.count > 0 ? `조건 ${a.count}마리 적용` : '해당 없음';
+    } else if (l.cond && l.cond.t === 'chance') {
+      el.textContent = '점수 계산 없음';
+    } else {
+      el.textContent = a.met ? '적용됨' : '조건 미달';
+    }
+    el.className = 'fr-line-state' + (a.met ? ' ok' : ' no');
+  });
 
   const fmt = n => (Number.isInteger(n) ? n : n.toFixed(1));
   document.getElementById('frResultScore').textContent = score.toLocaleString();
@@ -184,7 +243,8 @@ function _frLineHtml(fi, line) {
       <select class="sel fr-line-cat-event" data-fi="${fi}">
         ${_frLineEventOptions(fi, isEvent ? line.catalogIdx : '')}
       </select>
-    </div>`;
+    </div>
+    <span class="fr-line-state" id="frLineState${fi}"></span>`;
 }
 
 const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
@@ -194,33 +254,15 @@ function _frLineOptions(fi, selectLabel) {
   const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
   const rankKey = rank.toUpperCase();
   const pool = D[rankKey] || [];
-  const fmt = e => {
-    const parts = [];
-    if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
-    if (e.mult != null) parts.push(`x${e.mult}`);
-    return `${e.label} (${parts.join(', ')})`;
-  };
-  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${fmt(e)}</option>`).join('');
+  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${e.ko || e.label}</option>`).join('');
   return `<option value="">— None —</option>${opts}`;
 }
 
-/* 이벤트 잠재는 값이 "몇 마리가 조건에 맞는지"에 곱해지므로 표기에 "마리당"을 붙여
-   일반 잠재와 헷갈리지 않게 한다. value는 "e{idx}"로 구분한다. */
+/* 이벤트 잠재는 value를 "e{idx}"로 붙여 일반 잠재 인덱스와 구분한다. */
 function _frLineEventOptions(fi, selectLabel) {
   const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
-  const EG = window.FR_EVENT_GROUPS || [];
   const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
-  const fmtEvent = e => {
-    const parts = [];
-    if (e.add != null) parts.push(`Dice Total ${e.add > 0 ? '+' : ''}${e.add}`);
-    if (e.mult != null) parts.push(`x${e.mult}`);
-    if (e.groupKey) {
-      const g = EG.find(x => x.key === e.groupKey);
-      return `${g ? g.label : e.groupKey} 마리당 (${parts.join(', ')})`;
-    }
-    return `${e.label} (${parts.join(', ')})`;
-  };
-  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${fmtEvent(e)}</option>`).join('');
+  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${e.ko || e.label}</option>`).join('');
   return `<option value="">— None —</option>${opts}`;
 }
 
@@ -316,6 +358,7 @@ function _frRenderTeam() {
         catalogIdx: val,
         add: entry && entry.add != null ? entry.add : '',
         mult: entry && entry.mult != null ? entry.mult : '',
+        cond: entry ? entry.cond : null,
       };
       _frRenderTeam();
       _frCalcAndRender();
@@ -332,6 +375,7 @@ function _frRenderTeam() {
         catalogIdx: val,
         add: entry && entry.add != null ? entry.add : '',
         mult: entry && entry.mult != null ? entry.mult : '',
+        cond: entry ? entry.cond : null,
         groupKey: entry ? entry.groupKey : undefined,
       };
       _frRenderTeam();

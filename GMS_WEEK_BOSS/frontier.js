@@ -146,7 +146,32 @@ function _frRenderBonusDice() {
   });
 }
 
+/* "Prevents dice from rolling over N"을 고르면 주사위가 N을 넘을 수 없다.
+   넘는 눈을 고를 수 있게 두면 있을 수 없는 조합으로 점수가 나오니, 선택지에서 아예 없앤다.
+   여러 장이 각각 상한을 걸면 제일 낮은 값이 실제 상한이 된다. */
+function _frDiceCap() {
+  let cap = 6;
+  _frTeam.forEach(f => {
+    const c = f.line && f.line.cond;
+    if (c && c.t === 'prevent' && c.w < cap) cap = c.w;
+  });
+  return cap;
+}
+
+function _frSyncDiceOptions() {
+  const cap = _frDiceCap();
+  ['frDice1', 'frDice2', 'frDice3'].forEach(id => {
+    const sel = document.getElementById(id);
+    if (!sel || +sel.dataset.cap === cap) return;
+    const cur = Math.min(parseInt(sel.value) || 1, cap);
+    sel.dataset.cap = cap;
+    sel.innerHTML = Array.from({ length: cap }, (_, i) => i + 1)
+      .map(n => `<option value="${n}"${n === cur ? ' selected' : ''}>${n}</option>`).join('');
+  });
+}
+
 function _frCalcAndRender() {
+  _frSyncDiceOptions();
   const dice = ['frDice1', 'frDice2', 'frDice3'].map(id => parseInt(document.getElementById(id)?.value) || 0);
   const diceSum = dice.reduce((a, b) => a + b, 0);
   const { addSum, mult, applied } = _frAggregate(dice);

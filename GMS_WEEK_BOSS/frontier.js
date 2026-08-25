@@ -282,7 +282,7 @@ function _frLineOptions(fi, selectLabel) {
   const rankKey = rank.toUpperCase();
   const pool = D[rankKey] || [];
   const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
-  return `<option value="">— None —</option>${opts}`;
+  return `<option value="">-</option>${opts}`;
 }
 
 /* 이벤트 잠재는 value를 "e{idx}"로 붙여 일반 잠재 인덱스와 구분한다. */
@@ -290,7 +290,7 @@ function _frLineEventOptions(fi, selectLabel) {
   const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
   const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
   const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
-  return `<option value="">— None —</option>${opts}`;
+  return `<option value="">-</option>${opts}`;
 }
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
@@ -305,7 +305,7 @@ function _frIconHtml(v, iconFn) {
 }
 
 function _frIconDropdown(prefix, fi, list, iconFn, cur) {
-  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">${FR_NONE_ICON}<span>— None —</span></button>`]
+  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">${FR_NONE_ICON}<span>-</span></button>`]
     .concat(list.map(v =>
       `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">
         ${_frIconHtml(v, iconFn)}<span>${v}</span>
@@ -313,7 +313,7 @@ function _frIconDropdown(prefix, fi, list, iconFn, cur) {
   return `
     <div class="fr-dd" id="fr${prefix}Dd${fi}">
       <button type="button" class="fr-dd__trigger" data-toggle="${fi}">
-        ${cur ? _frIconHtml(cur, iconFn) : FR_NONE_ICON}<span>${cur || '— None —'}</span>
+        ${cur ? _frIconHtml(cur, iconFn) : FR_NONE_ICON}<span>${cur || '-'}</span>
         <span class="fr-dd__caret">▾</span>
       </button>
       <div class="fr-dd__menu" hidden>${items.join('')}</div>

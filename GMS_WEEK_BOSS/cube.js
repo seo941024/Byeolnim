@@ -151,9 +151,9 @@ function _buildLeftOpts(dk, part, lv, grade) {
       seenName.add(o.name); opts.push(o);
     }
   }
-  if (!opts.length) return '<option value="" data-type="none">선택 안함</option><option>— 데이터 없음 —</option>';
-  // 맨 위에 '선택 안함'(빈 값) — 이 줄을 목표에서 제외하고 싶을 때
-  const html=['<option value="" data-type="none">선택 안함</option>'], seenCat=new Set(), seenUniq=new Set();
+  if (!opts.length) return '<option value="" data-type="none">-</option><option>-</option>';
+  // 맨 위 빈 값 줄 — 이 줄을 목표에서 제외하고 싶을 때
+  const html=['<option value="" data-type="none">-</option>'], seenCat=new Set(), seenUniq=new Set();
   for (const o of opts) {
     const p=_parse(o.name);
     if (p.type==='pct'||p.type==='flat'||p.type==='colon') {
@@ -327,7 +327,7 @@ function _computeAllSets() {
       const sel   =catSel.selectedOptions[0];
       if(!sel) return;
       const type=sel.dataset.type||'';
-      if(type==='none' || !catSel.value) return;  // '선택 안함' 줄은 목표에서 제외
+      if(type==='none' || !catSel.value) return;  // 빈 값 줄은 목표에서 제외
       if(type==='unique') {
         goals.push({isUnique:true, kmsName:catSel.value});
       } else {
@@ -734,7 +734,7 @@ function _hrRender() {
   const cur = _hrState.log[0];
   document.getElementById('hrPanelLines').innerHTML = cur
     ? cur.lines.map(l => `<div class="pot-line" data-grade="${l.grade}">${_shortName(l.name)}</div>`).join('')
-    : '<div class="pot-line pot-line--empty">— 옵션 없음 —</div>'.repeat(3);
+    : '<div class="pot-line pot-line--empty">-</div>'.repeat(3);
 
   document.getElementById('hrCountRed').textContent   = (_hrState.cubes.red   || 0).toLocaleString();
   document.getElementById('hrCountBlack').textContent = (_hrState.cubes.black || 0).toLocaleString();

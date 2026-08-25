@@ -260,7 +260,7 @@ function flameRefreshOptionSelects() {
     if (!sel) continue;
     const cur = sel.value;
     const others = getOtherSelected(i);
-    sel.innerHTML = `<option value="none">— 없음 —</option>` +
+    sel.innerHTML = `<option value="none">-</option>` +
       display.map(o => `<option value="${o}"${o===cur?' selected':''}${others.has(o)?' disabled':''}>${FLAME_OPTION_LABELS[o]||o}</option>`).join('');
 
     const tierSel = document.getElementById(`flameGoalTier${i}`);
@@ -547,7 +547,7 @@ function _flameRenderHand() {
                   <span class="flame-line__pt">${flameLineScore(l.tier)}점</span>
                 </div>`;
       }).join('')
-    : '<div class="pot-line pot-line--empty">— 옵션 없음 —</div>'.repeat(4);
+    : '<div class="pot-line pot-line--empty">-</div>'.repeat(4);
 
   for (const k of Object.keys(FLAME_TYPES)) {
     const el = document.getElementById('flameCount' + k);
@@ -578,7 +578,7 @@ function initAddOption() {
 
   const goalRows = [1,2,3,4].map(i => `
     <div class="form-grid" style="grid-template-columns:1fr auto;gap:8px;align-items:center">
-      <select class="sel" id="flameGoalOpt${i}"><option value="none">— 없음 —</option></select>
+      <select class="sel" id="flameGoalOpt${i}"><option value="none">-</option></select>
       <div style="display:flex;align-items:center;gap:6px">
         <select class="sel" id="flameGoalTier${i}" style="width:90px">
           ${[1,2,3,4,5].map(t=>`<option value="${t}"${t===1?' selected':''}>${t}추</option>`).join('')}
@@ -615,7 +615,7 @@ function initAddOption() {
         <div id="flameWeaponSubtypeWrap" style="display:none">
           <label class="field__label">무기 종류</label>
           <select class="sel" id="flameWeaponSubtype" style="margin-top:6px;width:100%">
-            <option value="">— 선택 안 함 —</option>
+            <option value="">-</option>
             ${FLAME_WEAPON_SUBTYPES.map(w => `<option value="${w}">${w}</option>`).join('')}
           </select>
           <p class="dt-help" style="margin-top:6px">무기 추옵은 제네시스 무기를 기준으로 합니다.</p>

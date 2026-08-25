@@ -114,6 +114,7 @@ function navigateTo(sec) {
   // 큐브 데이터(1.1MB)는 이 탭을 처음 열 때만 받는다 — ensureCubeReady가 중복 요청·중복 초기화를 알아서 막는다
   if (sec === 'cube' && typeof ensureCubeReady === 'function') ensureCubeReady();
   if (sec === 'familiar' && typeof ensureFamiliarReady === 'function') ensureFamiliarReady();
+  if (sec === 'frontier' && typeof initFrontier === 'function') initFrontier();
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {

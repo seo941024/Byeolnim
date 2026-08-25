@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260824b" />
+  <link rel="stylesheet" href="style.css?v=20260824c" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -117,6 +117,9 @@
       </button>
       <button class="sb-nav__item" data-sec="familiar">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>패밀리어 시뮬레이터</span>
+      </button>
+      <button class="sb-nav__item" data-sec="frontier">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>미스틱 프론티어 계산기</span>
       </button>
       <button class="sb-nav__item" data-sec="bosshp">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/boss.webp" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
@@ -527,6 +530,9 @@
     <!-- ══════ 패밀리어 ══════ (familiar.js가 채운다) -->
     <section class="sec" id="sec-familiar"></section>
 
+    <!-- ══════ 미스틱 프론티어 ══════ (frontier.js가 채운다) -->
+    <section class="sec" id="sec-frontier"></section>
+
     <!-- ══════ 서버 상태 ══════ -->
     <section class="sec" id="sec-serverstatus"></section>
 
@@ -772,11 +778,11 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260819b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260824b"></script>
+<script src="app.js?v=20260824c"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260819b"></script>
 <script src="starforce_sim.js?v=20260821c"></script>
-<script src="cube.js?v=20260821e"></script><script src="familiar.js?v=20260821h"></script>
+<script src="cube.js?v=20260821e"></script><script src="familiar.js?v=20260821h"></script><script src="frontier.js?v=20260824a"></script>
 <script src="addoption.js?v=20260821e"></script><script src="bosshp.js?v=20260819b"></script>
 <script src="serverstatus.js?v=20260819b"></script>
 <script src="dailytasks.js?v=20260819b"></script>

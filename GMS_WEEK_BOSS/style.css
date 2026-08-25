@@ -526,6 +526,33 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fam-log-line[data-grade="EPIC"]   { color: var(--gt-epic); }
 .fam-log-line[data-grade="UNIQUE"] { color: var(--gt-unique); }
 
+/* ── 미스틱 프론티어 ── */
+.fr-dice-row { display: flex; gap: 10px; }
+.fr-dice { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+.fr-pass { margin-top: 10px; font-size: .86rem; font-weight: 800; text-align: center; }
+.fr-pass.ok { color: var(--success); }
+.fr-pass.no { color: var(--danger); }
+.fr-team { display: flex; flex-direction: column; gap: 10px; }
+.fr-slot { padding: 10px; border-radius: var(--radius-sm); background: var(--bg2); border: 1px solid var(--border); }
+.fr-slot__title { font-size: .8rem; font-weight: 800; color: var(--text-sub); margin-bottom: 6px; }
+.fr-slot__row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+.fr-slot__row:first-of-type { margin-top: 0; }
+.fr-slot__lbl { flex: none; width: 40px; font-size: .78rem; color: var(--text-dim); }
+.fr-slot__row select { flex: 1; }
+.fr-badges { display: flex; flex-direction: column; gap: 6px; }
+.fr-badge {
+  padding: 8px 12px; border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg2));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  font-size: .82rem; font-weight: 700; color: var(--text);
+}
+.fr-badge--empty { background: var(--bg2); border-color: var(--border); color: var(--text-sub); font-weight: 500; }
+.fr-slot__lines { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border); }
+.fr-line { display: flex; gap: 6px; }
+.fr-line .fr-line-kind { flex: 1.4; }
+.fr-line .fr-line-val { flex: 1; min-width: 0; }
+.fr-line .fr-line-val:disabled { opacity: .4; }
+
 /* 아직 안 만든 섹션 자리 표시 */
 .soon-box {
   display: flex; flex-direction: column; align-items: center; justify-content: center;

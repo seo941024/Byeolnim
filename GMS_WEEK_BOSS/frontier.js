@@ -42,13 +42,16 @@ function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + 
 
 /* 타입 아이콘 — maplehub.app에서 실제로 존재하는 걸 확인한 9장만 받아왔다.
    속성 아이콘은 그 사이트 경로가 전부 SPA 오류 페이지를 200으로 돌려주는 가짜였어서 없다. */
-function _frTypeIconSrc(type) { return type ? 'images/frontier/type_' + type.toLowerCase() + '.webp' : ''; }
+/* src=""는 브라우저가 "빈 문자열 = 지금 문서 자체"로 해석해서 페이지를 이미지로 다시 불러오려는
+   경우가 있다(엔진에 따라 다름). 그래서 아이콘 없을 땐 빈 문자열 대신 1x1 투명 GIF를 넣는다. */
+const FR_BLANK_ICON = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7';
+function _frTypeIconSrc(type) { return type ? 'images/frontier/type_' + type.toLowerCase() + '.webp' : FR_BLANK_ICON; }
 
 /* 속성 아이콘 6종 — maplehub.app 콤보박스를 직접 열어서 확인한 실제 경로(elements 복수형,
    lightning은 light로 저장돼 있었다). Non-elemental은 그 목록에 아이콘이 없었다(선택지 자체가
    "None"으로 따로 있고 그림 없음) — 없는 걸 지어내지 않고 그냥 아이콘 없이 둔다. */
 const FR_ELEMENT_ICON_KEY = { Fire: 'fire', Poison: 'poison', Lightning: 'lightning', Ice: 'ice', Dark: 'dark', Holy: 'holy' };
-function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/frontier/element_' + FR_ELEMENT_ICON_KEY[el] + '.webp' : ''; }
+function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/frontier/element_' + FR_ELEMENT_ICON_KEY[el] + '.webp' : FR_BLANK_ICON; }
 
 function _frBuildSelect(id, list, cur, placeholder) {
   return `<select class="sel fr-cond-sel" id="${id}">
@@ -181,13 +184,13 @@ function _frRenderTeam() {
         <div class="fr-slot__field-row">
           <div class="fr-type-pick">
             <img class="fr-type-icon" id="frElIcon${i}" src="${_frElementIconSrc(f.element)}" alt=""
-                 style="visibility:${_frElementIconSrc(f.element) ? '' : 'hidden'}" onerror="this.style.visibility='hidden'">
-            ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, 'No element')}
+                 style="visibility:${f.element ? '' : 'hidden'}">
+            ${_frBuildSelect('frEl' + i, FRONTIER_ELEMENTS, f.element, '-')}
           </div>
           <div class="fr-type-pick">
             <img class="fr-type-icon" id="frTyIcon${i}" src="${_frTypeIconSrc(f.type)}" alt=""
-                 style="visibility:${f.type ? '' : 'hidden'}" onerror="this.style.visibility='hidden'">
-            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, 'No type')}
+                 style="visibility:${f.type ? '' : 'hidden'}">
+            ${_frBuildSelect('frTy' + i, FRONTIER_TYPES, f.type, '-')}
           </div>
         </div>
       </div>

@@ -44,7 +44,7 @@ function csCollectBundle() {
     if (k === CS_TOKEN_KEY || k === CS_ID_KEY) continue;  // 로그인 정보는 올리지 않는다
     extra[k] = localStorage.getItem(k);
   }
-  return { _mapbbu: 1, state, extra };
+  return { [BACKUP_MARK]: 1, state, extra };
 }
 
 /* 받아온 번들을 브라우저에 되살린다 */

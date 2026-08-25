@@ -1129,7 +1129,11 @@ document.querySelectorAll('.overlay:not(#overlayAuth):not(#overlayAdmin)').forEa
 
 
 /* ── 내보내기 / 불러오기 ──
-   보스/캐릭(state)뿐 아니라 해방·헥사·폰트 등 모든 localStorage 키를 함께 백업 */
+   보스/캐릭(state)뿐 아니라 해방·헥사·폰트 등 모든 localStorage 키를 함께 백업.
+
+   파일 안에 표시를 넣어두는 이유: 아무 JSON이나 읽어서 통째로 state에 넣어버리면
+   데이터가 깨진다. 우리가 만든 파일인지 먼저 확인하고 아니면 거부한다. */
+const BACKUP_MARK = '_byeolnim';
 document.getElementById('btnExport').addEventListener('click', () => {
   const extra = {};
   // 모든 localStorage 키 백업 (캐릭터별 헥사 hx_*_<id> 등 포함)
@@ -1138,10 +1142,10 @@ document.getElementById('btnExport').addEventListener('click', () => {
     if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
     extra[k] = localStorage.getItem(k);
   }
-  const bundle = { _mapbbu: 1, state, extra };
+  const bundle = { [BACKUP_MARK]: 1, state, extra };
   const a = document.createElement('a');
   a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
-  a.download = `mapbbu_data_${new Date().toISOString().slice(0,10)}.json`;
+  a.download = `byeolnim_${new Date().toISOString().slice(0,10)}.json`;
   a.click();
 });
 document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileImport').click());
@@ -1151,19 +1155,17 @@ document.getElementById('fileImport').addEventListener('change', e => {
   reader.onload = ev => {
     try {
       const data = JSON.parse(ev.target.result);
-      if (data && (data._mapbbu || data._mappu)) {
-        // 신규 통합 포맷: state + 전 모듈 localStorage 복원
-        if (data.state) { state = data.state; save(); }
-        Object.entries(data.extra || {}).forEach(([k, v]) => {
-          if (typeof v === 'string') localStorage.setItem(k, v);
-        });
-        showToast('불러오기 완료! 새로고침합니다…');
-        setTimeout(() => location.reload(), 600);
-      } else {
-        // 구버전 포맷: state 자체
-        state = data; save();
-        renderCharList(); renderBossTable(); showToast('불러오기 완료!');
+      // 우리 파일이 아니면 여기서 멈춘다 — 통째로 state에 넣으면 데이터가 깨진다.
+      if (!data || !data[BACKUP_MARK]) {
+        showToast('별님앱 백업 파일이 아닙니다.');
+        return;
       }
+      if (data.state) { state = data.state; save(); }
+      Object.entries(data.extra || {}).forEach(([k, v]) => {
+        if (typeof v === 'string') localStorage.setItem(k, v);
+      });
+      showToast('불러오기 완료! 새로고침합니다…');
+      setTimeout(() => location.reload(), 600);
     } catch { showToast('파일 형식이 올바르지 않습니다.'); }
   };
   reader.readAsText(file);

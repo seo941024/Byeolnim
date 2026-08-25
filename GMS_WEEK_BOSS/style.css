@@ -560,6 +560,8 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-line .fr-line-kind { flex: 1.4; }
 .fr-line .fr-line-val { flex: 1; min-width: 0; }
 .fr-line .fr-line-val:disabled { opacity: .4; }
+.fr-line .fr-bonus__lbl { flex: 1.2; font-size: .78rem; color: var(--text-dim); align-self: center; }
+#frBonusDice { display: flex; flex-direction: column; gap: 6px; }
 
 /* 아직 안 만든 섹션 자리 표시 */
 .soon-box {

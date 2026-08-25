@@ -44,17 +44,62 @@ function _frBuildSelect(id, list, cur, placeholder) {
   </select>`;
 }
 
-/* 팀 전체 옵션 줄을 모아 더한다 — 합계형은 다 더해서 주사위 합에, 배율형은 다 더해서
-   마지막에 한 번만 곱한다(사용자 확인 계산식). 배율형이 하나도 없으면 곱셈 효과 없음 = ×1. */
+/* 라운드마다 클리어 보상으로 보너스 주사위를 하나씩 받는다. 1라운드는 아직 하나도 못 받은
+   상태라 0개, 5라운드를 시작할 땐 그동안 4번 클리어했으니 최대 4개까지 쌓인다.
+   보너스 주사위도 팀 잠재와 같은 구조(합계에 얹거나 배율에 더하거나)로 취급한다. */
+const FR_MAX_BONUS_DICE = 4;
+let _frBonusDice = [
+  { kind: '', val: '' }, { kind: '', val: '' }, { kind: '', val: '' }, { kind: '', val: '' },
+];
+
+/* 팀 전체 옵션 줄 + 지금 라운드까지 쌓인 보너스 주사위를 모아 더한다 — 합계형은 다 더해서
+   주사위 합에, 배율형은 다 더해서 마지막에 한 번만 곱한다(사용자 확인 계산식).
+   배율형이 하나도 없으면 곱셈 효과 없음 = ×1. */
 function _frAggregate() {
   let addSum = 0, multSum = 0, multCount = 0;
-  _frTeam.forEach(f => f.lines.forEach(l => {
+  const addLine = l => {
     const v = parseFloat(l.val);
     if (!l.kind || isNaN(v)) return;
     if (l.kind === 'add') addSum += v;
     else { multSum += v; multCount++; }
-  }));
+  };
+  _frTeam.forEach(f => f.lines.forEach(addLine));
+  const round = parseInt(document.getElementById('frRound')?.value) || 1;
+  _frBonusDice.slice(0, round - 1).forEach(addLine);
   return { addSum, mult: multCount ? multSum : 1 };
+}
+
+function _frRenderBonusDice() {
+  const box = document.getElementById('frBonusDice');
+  if (!box) return;
+  const round = parseInt(document.getElementById('frRound')?.value) || 1;
+  const usable = round - 1; // 1라운드 시작 시점엔 0개
+  box.innerHTML = usable === 0
+    ? '<p class="dt-help">1라운드는 아직 받은 보너스 주사위가 없습니다.</p>'
+    : Array.from({ length: usable }, (_, i) => `
+        <div class="fr-line">
+          <span class="fr-bonus__lbl">보너스 주사위 ${i + 1}</span>
+          ${_frLineKindSelect({ bi: i }, _frBonusDice[i].kind)}
+          <input class="inp fr-line-val" type="number" step="0.1"
+                 placeholder="${_frBonusDice[i].kind === 'mult' ? '예: 1.2' : '예: 3'}"
+                 value="${_frBonusDice[i].val}" data-bi="${i}"${_frBonusDice[i].kind ? '' : ' disabled'}>
+        </div>`).join('');
+
+  box.querySelectorAll('.fr-line-kind').forEach(sel => {
+    sel.addEventListener('change', e => {
+      const bi = +e.target.dataset.bi;
+      _frBonusDice[bi].kind = e.target.value;
+      if (!e.target.value) _frBonusDice[bi].val = '';
+      _frRenderBonusDice();
+      _frCalcAndRender();
+    });
+  });
+  box.querySelectorAll('.fr-line-val').forEach(inp => {
+    inp.addEventListener('input', e => {
+      _frBonusDice[+e.target.dataset.bi].val = e.target.value;
+      _frCalcAndRender();
+    });
+  });
 }
 
 function _frCalcAndRender() {
@@ -105,16 +150,20 @@ function _frRenderTeamBadges() {
     : '<span class="fr-badge fr-badge--empty">Pick an element/type to see which party conditions this lineup satisfies</span>';
 }
 
-function _frLineHtml(fi, li, line) {
-  const kindSel = `<select class="sel fr-line-kind" data-fi="${fi}" data-li="${li}">
+function _frLineKindSelect(dataAttrs, kind) {
+  const attrs = Object.entries(dataAttrs).map(([k, v]) => `data-${k}="${v}"`).join(' ');
+  return `<select class="sel fr-line-kind" ${attrs}>
     <option value="">— 없음 —</option>
-    <option value="add"${line.kind === 'add' ? ' selected' : ''}>Dice Total</option>
-    <option value="mult"${line.kind === 'mult' ? ' selected' : ''}>Final Multiplier</option>
+    <option value="add"${kind === 'add' ? ' selected' : ''}>Dice Total</option>
+    <option value="mult"${kind === 'mult' ? ' selected' : ''}>Final Multiplier</option>
   </select>`;
+}
+
+function _frLineHtml(fi, li, line) {
   const disabled = line.kind ? '' : ' disabled';
   return `
     <div class="fr-line">
-      ${kindSel}
+      ${_frLineKindSelect({ fi, li }, line.kind)}
       <input class="inp fr-line-val" type="number" step="0.1" placeholder="${line.kind === 'mult' ? '예: 1.4' : '예: 9'}"
              value="${line.val}" data-fi="${fi}" data-li="${li}"${disabled}>
     </div>`;
@@ -216,6 +265,16 @@ function initFrontier() {
       </div>
 
       <div class="field mt16">
+        <label class="field__label">라운드</label>
+        <select class="sel" id="frRound">
+          ${[1,2,3,4,5].map(n => `<option value="${n}">${n} / 5</option>`).join('')}
+        </select>
+      </div>
+      <div class="card__title mt16">보너스 주사위</div>
+      <p class="dt-help">라운드를 클리어할 때마다 하나씩 받습니다. 1라운드 시작 땐 0개, 5라운드 시작 땐 최대 4개까지 쌓입니다.</p>
+      <div id="frBonusDice" class="mt8"></div>
+
+      <div class="field mt16">
         <label class="field__label">라운드 목표 점수 (선택)</label>
         <input class="inp" id="frTarget" type="number" placeholder="예: 150" min="0">
       </div>
@@ -235,7 +294,9 @@ function initFrontier() {
     document.getElementById(id).addEventListener('input', _frCalcAndRender);
     document.getElementById(id).addEventListener('change', _frCalcAndRender);
   });
+  document.getElementById('frRound').addEventListener('change', () => { _frRenderBonusDice(); _frCalcAndRender(); });
 
   _frRenderTeam();
+  _frRenderBonusDice();
   _frCalcAndRender();
 }

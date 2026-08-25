@@ -636,9 +636,12 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-deck__bar { display: flex; align-items: center; gap: 6px; margin-left: auto; }
 
 .fr-deck__who { display: flex; align-items: center; gap: 8px; }
-/* 캐릭터 그림은 원본이 368×428로 세로가 길다. 정사각형에 우겨넣으면 작아 보여서
-   비율 그대로 두고 높이를 기준으로 키운다. */
-.fr-deck__face { height: 84px; width: auto; object-fit: contain; flex: none; image-rendering: auto; }
+/* 넥슨이 주는 캐릭터 그림은 96×96이다. 그보다 크게 늘리면 흐려지니 정수배(2배)로만
+   키우고, 픽셀아트라 보간을 끄는 쪽이 덜 뭉개진다(로로 카드와 같은 처리). */
+.fr-deck__face {
+  width: 96px; height: 96px; object-fit: contain; flex: none;
+  image-rendering: pixelated;
+}
 .fr-deck__name { font-size: .9rem; font-weight: 800; color: var(--accent); }
 .fr-deck__empty { font-size: .76rem; color: var(--text-dim); }
 .fr-deck__slots { display: flex; gap: 4px; }

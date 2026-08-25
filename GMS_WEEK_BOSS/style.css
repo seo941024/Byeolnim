@@ -2033,7 +2033,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   width: 110px; height: 110px; overflow: hidden;
   display: flex; align-items: flex-end; justify-content: center;
 }
-.mc-char__face img { max-width: 100%; max-height: 100%; object-fit: contain; }
+/* 넥슨 아바타 원본은 96×96인데 이 칸(110px)은 그보다 살짝 키워서 쓴다 —
+   사이드바 캐릭터 카드·프론티어 덱과 같은 정도(1.1배 안팎)로, 픽셀아트라 보간을 끈다. */
+.mc-char__face img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
 .mc-char__name {
   font-size: .92rem; font-weight: 800; color: var(--text-sub);
   max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;

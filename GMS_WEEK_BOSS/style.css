@@ -581,6 +581,10 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 }
 .fr-dd__item img { width: 18px; height: 18px; object-fit: contain; flex: none; }
 
+/* 조건 → 수치 2단계 선택. 수치 칸은 조건을 고르기 전엔 비활성이라 흐리게 둔다. */
+.fr-cond { margin-bottom: 5px; }
+.fr-val:disabled { opacity: .45; cursor: not-allowed; }
+
 /* 무속성 자리의 금지 표시 — 그림 아이콘과 같은 크기로 맞춰 줄이 어긋나지 않게 한다 */
 .fr-dd__ban { width: 18px; height: 18px; flex: none; opacity: .55; stroke-linecap: round; }
 .fr-dd__item:hover { background: var(--bg3); }

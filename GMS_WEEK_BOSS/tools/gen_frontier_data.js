@@ -14,10 +14,13 @@ const path = require('path');
 const SRC = 'https://masonym.dev/familiar_data/familiar_options.json';
 const OUT = path.join(__dirname, '..', 'data_frontier.js');
 
+/* element 뒤의 (?![a-z])가 없으면 "element"가 "elemental"의 앞부분에도 걸려서,
+   확률 옵션("...for each Electric or Poison elemental Familiar...")이 이벤트 그룹으로
+   잘못 분류된다. */
 const GROUPS = [
-  { key: 'fire_ice', re: /Fire or Ice element/, match: [{ f: 'element', v: 'Fire' }, { f: 'element', v: 'Ice' }] },
-  { key: 'lightning_poison', re: /Electric or Poison element/, match: [{ f: 'element', v: 'Lightning' }, { f: 'element', v: 'Poison' }] },
-  { key: 'holy_dark', re: /Holy or Dark element/, match: [{ f: 'element', v: 'Holy' }, { f: 'element', v: 'Dark' }] },
+  { key: 'fire_ice', re: /Fire or Ice element(?![a-z])/, match: [{ f: 'element', v: 'Fire' }, { f: 'element', v: 'Ice' }] },
+  { key: 'lightning_poison', re: /Electric or Poison element(?![a-z])/, match: [{ f: 'element', v: 'Lightning' }, { f: 'element', v: 'Poison' }] },
+  { key: 'holy_dark', re: /Holy or Dark element(?![a-z])/, match: [{ f: 'element', v: 'Holy' }, { f: 'element', v: 'Dark' }] },
   { key: 'human_beast', re: /Human or Beast type/, match: [{ f: 'type', v: 'Human' }, { f: 'type', v: 'Beast' }] },
   { key: 'plant_reptile', re: /Plant or Reptile type/, match: [{ f: 'type', v: 'Plant' }, { f: 'type', v: 'Reptile' }] },
   { key: 'aquatic_mech', re: /Aquatic or Mechanical type/, match: [{ f: 'type', v: 'Aquatic' }, { f: 'type', v: 'Mechanical' }] },

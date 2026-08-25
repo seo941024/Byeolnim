@@ -34,9 +34,12 @@ const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy'
    "a random frontier potential"(단수)이라고 돼 있다.
    한 줄이 합계·배율을 동시에 주는 경우가 실제로 있다(예: "Dice Total: -1, Final
    Multiplier: +1.4x" — masonym.dev에서 확인). 그래서 줄 하나에 두 값을 같이 받는다. */
+/* condPick은 "조건은 골랐는데 수치는 아직"인 상태를 기억해 둔다 — 이게 없으면
+   조건을 고르는 순간 다시 그려지면서 방금 고른 조건이 풀려버린다. */
 let _frTeam = [0, 1, 2].map(() => ({
   rank: 'unique', element: '', type: '',
   line: { add: '', mult: '', catalogIdx: '' },
+  condPick: { base: '', event: '' },
 }));
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
@@ -256,41 +259,104 @@ function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
     </div>`;
 }
 
+const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
+
+/* 한 등급에 옵션이 366개까지 있는데, 대부분은 조건은 같고 수치만 다른 것들이다.
+   그걸 한 줄로 쭉 늘어놓으면 못 고르니 조건별로 묶어서 "조건 고르고 → 수치 고르기"
+   두 단계로 나눈다(366개 → 조건 59개, 조건당 수치 최대 12개).
+
+   묶는 기준은 cond다. 사람이 정한 게 아니라 데이터에서 나온 거라 새 옵션이 들어와도
+   알아서 묶인다. 조건 문구는 같은 묶음 label들의 공통 앞부분을 잘라서 쓴다 —
+   따로 문구를 적어두면 원본이 바뀔 때 같이 안 바뀌어서 어긋난다. */
+/* 문구 하나를 "조건 / 수치" 두 토막으로 자른다. 원본 문구가 몇 가지 정해진 꼴로만
+   나와서 구조로 자를 수 있다. 공통 앞부분으로 자르면 같은 묶음이 전부 "Dice Total:"로
+   시작할 때 그것까지 조건에 딸려 들어가 문구가 깨진다. */
+function _frSplitLabel(label) {
+  let m = label.match(/^(.*?),\s*((?:Dice Total|Final Multiplier)\s*:.*|[+x][\d.]+)$/);
+  if (m) return { cond: m[1], val: m[2] };
+  // 이벤트 "~마다" 꼴은 수치가 앞에 온다 — "+6 for each Fire or Ice element"
+  m = label.match(/^([+x][\d.]+)\s+(for\s+(?:each|every)\s+.*)$/i);
+  if (m) return { cond: m[2], val: m[1] };
+  // 확률 옵션도 수치가 앞이다 — "+6% chance to roll 1 or 6 for each ..."
+  m = label.match(/^(\+[\d.]+%)\s+(chance\s+to\s+roll\s+.*)$/i);
+  if (m) return { cond: m[2], val: m[1] };
+  return { cond: label, val: label };
+}
+
+const _frGroupCache = new Map();
+function _frGroups(pool, cacheKey) {
+  if (_frGroupCache.has(cacheKey)) return _frGroupCache.get(cacheKey);
+  const byCond = new Map();
+  pool.forEach((e, idx) => {
+    /* cond만으로 묶으면 확률 옵션이 전부 cond.t === 'chance' 하나라 48개가 한 덩어리가 된다.
+       조건 문구까지 키에 넣어야 "1 or 6 / 2 or 5 / 3 or 4"가 따로 갈린다. */
+    const k = JSON.stringify(e.cond) + '|' + _frSplitLabel(e.label).cond;
+    if (!byCond.has(k)) byCond.set(k, []);
+    byCond.get(k).push({ e, idx });
+  });
+  /* 원본에 문구·수치가 완전히 같은 줄이 24개 들어있다(확률 옵션 위주, 예: id 140725/140726).
+     고를 때 똑같은 게 두 번 뜨면 뭐가 다른가 싶으니 목록에선 하나만 남긴다.
+     값이 같아서 어느 쪽을 골라도 점수는 같다. */
+  const groups = [...byCond.values()].map(items => {
+    const seen = new Set();
+    const uniq = items.filter(x => !seen.has(x.e.label) && seen.add(x.e.label));
+    return {
+      label: _frSplitLabel(uniq[0].e.label).cond,
+      items: uniq.map(x => ({ idx: x.idx, label: _frSplitLabel(x.e.label).val })),
+    };
+  });
+  _frGroupCache.set(cacheKey, groups);
+  return groups;
+}
+
+/* 지금 고른 값(idx)이 어느 조건 묶음에 속하는지 되찾는다 — 다시 그릴 때 선택을 유지하려고. */
+function _frFindGroup(groups, idx) {
+  if (idx === '' || idx == null) return -1;
+  return groups.findIndex(g => g.items.some(it => String(it.idx) === String(idx)));
+}
+
+function _frTwoStepHtml(fi, kind, pool, cacheKey, curIdx) {
+  if (!pool.length) return '';
+  const groups = _frGroups(pool, cacheKey);
+  // 수치까지 골랐으면 그걸로 조건을 되찾고, 조건만 고른 상태면 기억해 둔 값을 쓴다.
+  const found = _frFindGroup(groups, curIdx);
+  const picked = _frTeam[fi].condPick[kind];
+  const gi = found >= 0 ? found : (picked === '' ? -1 : +picked);
+  const condOpts = groups.map((g, i) =>
+    `<option value="${i}"${i === gi ? ' selected' : ''}>${g.label}</option>`).join('');
+  const valOpts = gi < 0 ? '' : groups[gi].items.map(it =>
+    `<option value="${it.idx}"${String(it.idx) === String(curIdx) ? ' selected' : ''}>${it.label}</option>`).join('');
+  return `
+    <select class="sel fr-cond" data-fi="${fi}" data-kind="${kind}">
+      <option value="">-</option>${condOpts}
+    </select>
+    <select class="sel fr-val" data-fi="${fi}" data-kind="${kind}"${gi < 0 ? ' disabled' : ''}>
+      <option value="">-</option>${valOpts}
+    </select>`;
+}
+
+function _frPool(fi, kind) {
+  const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
+  const src = kind === 'event' ? window.FR_EVENT_CATALOG : window.FR_CATALOG;
+  return { pool: (src && src[rankKey]) || [], cacheKey: kind + ':' + rankKey };
+}
+
 function _frLineHtml(fi, line) {
-  const isEvent = String(line.catalogIdx || '').startsWith('e');
+  if (!window.FR_CATALOG) return '<div class="fr-slot__field">데이터 로딩 중...</div>';
+  const cur = line.catalogIdx;
+  const isEvent = String(cur || '').startsWith('e');
+  const base = _frPool(fi, 'base'), ev = _frPool(fi, 'event');
+  const evCur = isEvent ? +String(cur).slice(1) : '';
   return `
     <div class="fr-slot__field">
       <span class="fr-slot__field-lbl">프론티어 잠재</span>
-      <select class="sel fr-line-cat" data-fi="${fi}">
-        ${_frLineOptions(fi, isEvent ? '' : line.catalogIdx)}
-      </select>
+      ${_frTwoStepHtml(fi, 'base', base.pool, base.cacheKey, isEvent ? '' : cur)}
     </div>
-    <div class="fr-slot__field">
+    ${ev.pool.length ? `<div class="fr-slot__field">
       <span class="fr-slot__field-lbl">이벤트 잠재</span>
-      <select class="sel fr-line-cat-event" data-fi="${fi}">
-        ${_frLineEventOptions(fi, isEvent ? line.catalogIdx : '')}
-      </select>
-    </div>
+      ${_frTwoStepHtml(fi, 'event', ev.pool, ev.cacheKey, evCur)}
+    </div>` : ''}
     <span class="fr-line-state" id="frLineState${fi}"></span>`;
-}
-
-const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
-
-function _frLineOptions(fi, selectLabel) {
-  const D = window.FR_CATALOG; if (!D) return '<option value="">데이터 로딩 중...</option>';
-  const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
-  const rankKey = rank.toUpperCase();
-  const pool = D[rankKey] || [];
-  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
-  return `<option value="">-</option>${opts}`;
-}
-
-/* 이벤트 잠재는 value를 "e{idx}"로 붙여 일반 잠재 인덱스와 구분한다. */
-function _frLineEventOptions(fi, selectLabel) {
-  const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
-  const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
-  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
-  return `<option value="">-</option>${opts}`;
 }
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
@@ -372,45 +438,48 @@ function _frRenderTeam() {
       // 등급이 바뀌면 옵션 풀 자체가 바뀌어서 기존 선택 인덱스가 다른 옵션을 가리키게 된다 —
       // 헷갈리지 않게 그 카드의 잠재 선택을 비워서 다시 고르게 한다.
       _frTeam[i].line = { add: '', mult: '', catalogIdx: '' };
+      _frTeam[i].condPick = { base: '', event: '' };
       _frRenderTeam();
       _frCalcAndRender();
     });
   });
-  /* 잠재는 1개뿐이라 일반/이벤트 두 드롭다운 중 하나만 값을 가질 수 있다 —
-     한쪽에서 고르면 다른 쪽은 자동으로 "선택 안 함"으로 되돌린다. */
-  box.querySelectorAll('.fr-line-cat').forEach(sel => {
+  /* 잠재는 1개뿐이라 일반/이벤트 어느 쪽에서 고르든 그 카드의 한 줄을 덮어쓴다.
+     다시 그릴 때 반대쪽은 자동으로 비워진다(_frLineHtml이 catalogIdx로 판단). */
+  const setLine = (fi, kind, idx) => {
+    const { pool } = _frPool(fi, kind);
+    const entry = idx === '' ? null : pool[+idx];
+    _frTeam[fi].line = entry ? {
+      catalogIdx: kind === 'event' ? 'e' + idx : String(idx),
+      add: entry.add != null ? entry.add : '',
+      mult: entry.mult != null ? entry.mult : '',
+      cond: entry.cond,
+      groupKey: entry.groupKey,
+    } : { add: '', mult: '', catalogIdx: '' };
+    // 한쪽에서 실제로 고르면 반대쪽에 걸려 있던 조건은 풀어 준다 — 줄은 하나뿐이다.
+    if (entry) _frTeam[fi].condPick[kind === 'event' ? 'base' : 'event'] = '';
+    _frRenderTeam();
+    _frCalcAndRender();
+  };
+
+  /* 조건만 고른 상태(수치 미선택)도 다시 그린 뒤 유지돼야 해서 상태로 들고 있는다.
+     화면에서 직접 값을 되살리려 하면 change를 다시 쏘게 되고 그게 무한히 반복된다. */
+  box.querySelectorAll('.fr-cond').forEach(sel => {
     sel.addEventListener('change', e => {
-      const fi = +e.target.dataset.fi;
-      const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
-      const val = e.target.value;
-      const pool = (window.FR_CATALOG && window.FR_CATALOG[rankKey]) || [];
-      const entry = val !== '' ? pool[+val] : null;
-      _frTeam[fi].line = {
-        catalogIdx: val,
-        add: entry && entry.add != null ? entry.add : '',
-        mult: entry && entry.mult != null ? entry.mult : '',
-        cond: entry ? entry.cond : null,
-      };
-      _frRenderTeam();
-      _frCalcAndRender();
+      const fi = +e.target.dataset.fi, kind = e.target.dataset.kind;
+      const gi = e.target.value;
+      _frTeam[fi].condPick[kind] = gi;
+      if (gi === '') { setLine(fi, kind, ''); return; }
+      const { pool, cacheKey } = _frPool(fi, kind);
+      const g = _frGroups(pool, cacheKey)[+gi];
+      // 수치가 하나뿐인 조건은 더 고를 게 없으니 바로 적용한다.
+      if (g.items.length === 1) { setLine(fi, kind, g.items[0].idx); return; }
+      setLine(fi, kind, '');
     });
   });
-  box.querySelectorAll('.fr-line-cat-event').forEach(sel => {
+
+  box.querySelectorAll('.fr-val').forEach(sel => {
     sel.addEventListener('change', e => {
-      const fi = +e.target.dataset.fi;
-      const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
-      const val = e.target.value;
-      const pool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
-      const entry = val !== '' ? pool[+val.slice(1)] : null;
-      _frTeam[fi].line = {
-        catalogIdx: val,
-        add: entry && entry.add != null ? entry.add : '',
-        mult: entry && entry.mult != null ? entry.mult : '',
-        cond: entry ? entry.cond : null,
-        groupKey: entry ? entry.groupKey : undefined,
-      };
-      _frRenderTeam();
-      _frCalcAndRender();
+      setLine(+e.target.dataset.fi, e.target.dataset.kind, e.target.value);
     });
   });
   _frRenderTeamBadges();

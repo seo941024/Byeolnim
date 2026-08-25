@@ -11,6 +11,13 @@ document.addEventListener('dragstart', e => {
   if (e.target.tagName === 'IMG') e.preventDefault();
 });
 
+/* 캐릭터 이름 등 사용자가 직접 입력하는 값은 innerHTML에 그대로 넣지 않는다.
+   클라우드 저장으로 다른 사람 브라우저에서도 이 값이 렌더링될 수 있어서,
+   여기서 안 막으면 저장된 이름이 곧 실행 가능한 스크립트가 될 수 있다. */
+function escHtml(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+}
+
 /* ── state ── */
 let state = { chars: [], activeChar: -1, region: 'na' };
 const STORAGE_KEY = STORAGE_KEYS.boss;
@@ -300,9 +307,9 @@ function renderCharList() {
   li.innerHTML = `
     <div class="char-card__inner">
       <div class="char-card__txt">
-        <div class="char-card__name">${ch.name}</div>
+        <div class="char-card__name">${escHtml(ch.name)}</div>
         <div class="char-card__lv">Lv.${ch.level}</div>
-        ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${world}</span></div>` : ''}
+        ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(world)}</span></div>` : ''}
         ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
         <div class="char-card__btns">
           <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
@@ -1264,14 +1271,14 @@ function renderCharInfo() {
         <div class="ci-card__body">
           <div class="ci-card__nameline">
             <div>
-              <div class="ci-card__name">${ch.name}</div>
-              <div class="ci-card__job">${jn || ''}</div>
+              <div class="ci-card__name">${escHtml(ch.name)}</div>
+              <div class="ci-card__job">${escHtml(jn || '')}</div>
             </div>
             ${headHtml}
           </div>
           <div class="ci-card__meta">
             <span class="ci-lv">Lv.${lv}</span>
-            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${region} ${world}</span></span>
+            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>
           </div>
           <div class="cg-weekrow" title="끄면 이 캐릭터의 주간 수익이 전체 주간 획득 메소에서 빠집니다. 이미 돈 캐릭터를 잠깐 빼고 남은 캐릭터로 얼마가 더 들어오는지 볼 때 씁니다.">
             <span class="cg-weekrow__lbl">주간 합산</span>

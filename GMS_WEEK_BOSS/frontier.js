@@ -625,10 +625,12 @@ let _frDeckSlot = 0;
 
 function _frRenderDecks() {
   const box = document.getElementById('frDecks');
-  if (!box) return;
+  const bar = document.getElementById('frDeckSlots');
+  if (!box || !bar) return;
   const ch = _frActiveChar();
   if (!ch) {
     box.innerHTML = '<span class="fr-deck__empty">캐릭터를 선택하면 덱을 저장할 수 있습니다</span>';
+    bar.innerHTML = '';
     return;
   }
   const decks = _frDecks(ch);
@@ -639,16 +641,19 @@ function _frRenderDecks() {
       data-di="${i}" title="${filled ? `덱 ${i + 1} 불러오기` : `덱 ${i + 1} — 비어 있음`}">${i + 1}</button>`;
   }).join('');
 
+  // 캐릭터 얼굴 — 원본 비율(368×428)을 지켜 세로로 길게 둔다
   box.innerHTML = `
     <div class="fr-deck__who">
       ${img ? `<img class="fr-deck__face" src="${escHtml(img)}" alt="" onerror="this.style.display='none'">` : ''}
       <span class="fr-deck__name">${escHtml(ch.name)}</span>
-    </div>
+    </div>`;
+
+  bar.innerHTML = `
     <div class="fr-deck__slots">${slots}</div>
     <button type="button" class="sbtn sbtn--ghost sbtn--sm" id="frDeckSave">저장</button>
     <button type="button" class="sbtn sbtn--ghost sbtn--sm" id="frDeckDel"${decks[_frDeckSlot] ? '' : ' disabled'}>삭제</button>`;
 
-  box.querySelectorAll('.fr-deck__slot').forEach(b => b.addEventListener('click', () => {
+  bar.querySelectorAll('.fr-deck__slot').forEach(b => b.addEventListener('click', () => {
     const i = +b.dataset.di;
     _frDeckSlot = i;
     const d = _frDecks()[i];
@@ -807,7 +812,11 @@ function initFrontier() {
 
     <!-- 위: 팀 구성 (한 화면 전체 폭) -->
     <div class="card">
-      <div class="card__title">팀 구성</div>
+      <!-- 덱 칸은 제목 줄 오른쪽에 붙여 자리를 따로 먹지 않게 한다 -->
+      <div class="fr-head">
+        <div class="card__title">팀 구성</div>
+        <div id="frDeckSlots" class="fr-deck__bar"></div>
+      </div>
       <div id="frDecks" class="fr-decks mt8"></div>
       <div id="frTeamSlots" class="fr-team mt8"></div>
       <div class="card__title mt16">충족되는 파티 조건</div>

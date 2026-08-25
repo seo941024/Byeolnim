@@ -547,18 +547,33 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .fr-slot__field-lbl { display: block; font-size: .68rem; font-weight: 800; color: var(--text-dim); margin-bottom: 5px; }
 .fr-slot__field-row { display: flex; gap: 6px; }
 .fr-slot__field-row select { flex: 1; min-width: 0; }
-/* 속성/타입 아이콘 그리드 — 셀렉트 대신 그림을 직접 눌러 고른다 */
-.fr-icon-grid { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-.fr-icon-btn {
-  width: 34px; height: 34px; border-radius: 8px; flex: none;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--bg2); border: 1.5px solid var(--border);
-  transition: border-color .12s, background .12s;
+/* 속성/타입 드롭다운 — 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐진다 */
+.fr-dd { position: relative; margin-top: 6px; }
+.fr-dd__trigger {
+  width: 100%; display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-radius: 8px;
+  background: var(--bg2); border: 1.5px solid var(--border); color: var(--text);
+  font-size: .8rem; text-align: left; cursor: pointer;
 }
-.fr-icon-btn img { width: 20px; height: 20px; object-fit: contain; }
-.fr-icon-btn__txt { font-size: .55rem; font-weight: 800; color: var(--text-sub); line-height: 1.1; text-align: center; }
-.fr-icon-btn:hover { border-color: var(--accent); }
-.fr-icon-btn.active { background: color-mix(in srgb, var(--accent) 22%, var(--bg2)); border-color: var(--accent); }
+.fr-dd__trigger:hover { border-color: var(--accent); }
+.fr-dd__trigger img { width: 18px; height: 18px; object-fit: contain; flex: none; }
+.fr-dd__trigger span:not(.fr-dd__caret) { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fr-dd__caret { flex: none; color: var(--text-dim); font-size: .7rem; }
+.fr-dd__menu {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0; z-index: 20;
+  max-height: 260px; overflow-y: auto;
+  background: var(--bg2); border: 1.5px solid var(--border); border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.25);
+  display: flex; flex-direction: column; padding: 4px;
+}
+.fr-dd__item {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 8px; border-radius: 6px; background: transparent; color: var(--text);
+  font-size: .8rem; text-align: left; cursor: pointer;
+}
+.fr-dd__item img { width: 18px; height: 18px; object-fit: contain; flex: none; }
+.fr-dd__item:hover { background: var(--bg3); }
+.fr-dd__item.active { background: color-mix(in srgb, var(--accent) 20%, var(--bg2)); color: var(--accent); font-weight: 700; }
 .fr-badges { display: flex; flex-direction: column; gap: 6px; }
 .fr-badge {
   padding: 8px 12px; border-radius: var(--radius-sm);

@@ -183,16 +183,27 @@ function _frLineOptions(fi, selectLabel) {
   return `<option value="">— None —</option>${opts}`;
 }
 
-/* 속성/타입은 셀렉트 대신 아이콘을 직접 눌러 고른다 — 사람들이 그림 보고 클릭하는 경우가
-   많다는 요청. 아이콘 없는 항목(Non-elemental)은 글자만 있는 버튼으로 대체한다. */
-function _frIconPicker(prefix, fi, list, iconFn, cur) {
-  return list.map(v => {
-    const src = iconFn(v);
-    const hasIcon = src !== FR_BLANK_ICON;
-    return `<button type="button" class="fr-icon-btn${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}" title="${v}">
-      ${hasIcon ? `<img src="${src}" alt="${v}">` : `<span class="fr-icon-btn__txt">${v}</span>`}
-    </button>`;
-  }).join('');
+/* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
+   네이티브 select는 option 안에 이미지를 못 넣어서 직접 만든다. */
+function _frIconDropdown(prefix, fi, list, iconFn, cur) {
+  const curSrc = cur ? iconFn(cur) : '';
+  const curHasIcon = curSrc && curSrc !== FR_BLANK_ICON;
+  const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val="">— None —</button>`]
+    .concat(list.map(v => {
+      const src = iconFn(v);
+      const hasIcon = src !== FR_BLANK_ICON;
+      return `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">
+        ${hasIcon ? `<img src="${src}" alt="">` : ''}<span>${v}</span>
+      </button>`;
+    }));
+  return `
+    <div class="fr-dd" id="fr${prefix}Dd${fi}">
+      <button type="button" class="fr-dd__trigger" data-toggle="${fi}">
+        ${curHasIcon ? `<img src="${curSrc}" alt="">` : ''}<span>${cur || '— None —'}</span>
+        <span class="fr-dd__caret">▾</span>
+      </button>
+      <div class="fr-dd__menu" hidden>${items.join('')}</div>
+    </div>`;
 }
 
 function _frRenderTeam() {
@@ -206,11 +217,11 @@ function _frRenderTeam() {
       </select>
       <div class="fr-slot__field">
         <span class="fr-slot__field-lbl">Element</span>
-        <div class="fr-icon-grid" id="frElGrid${i}">${_frIconPicker('el', i, FRONTIER_ELEMENTS, _frElementIconSrc, f.element)}</div>
+        ${_frIconDropdown('el', i, FRONTIER_ELEMENTS, _frElementIconSrc, f.element)}
       </div>
       <div class="fr-slot__field">
         <span class="fr-slot__field-lbl">Type</span>
-        <div class="fr-icon-grid" id="frTyGrid${i}">${_frIconPicker('ty', i, FRONTIER_TYPES, _frTypeIconSrc, f.type)}</div>
+        ${_frIconDropdown('ty', i, FRONTIER_TYPES, _frTypeIconSrc, f.type)}
       </div>
       <div class="fr-slot__field">
         <span class="fr-slot__field-lbl">프론티어 잠재</span>
@@ -218,21 +229,29 @@ function _frRenderTeam() {
       </div>
     </div>`).join('');
 
-  box.querySelectorAll('.fr-icon-btn[data-el]').forEach(btn => {
+  /* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다 */
+  box.querySelectorAll('.fr-dd__trigger').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const menu = btn.nextElementSibling;
+      const willOpen = menu.hidden;
+      box.querySelectorAll('.fr-dd__menu').forEach(m => { m.hidden = true; });
+      menu.hidden = !willOpen;
+    });
+  });
+  box.querySelectorAll('.fr-dd__item[data-el]').forEach(btn => {
     btn.addEventListener('click', () => {
       const i = +btn.dataset.el;
-      _frTeam[i].element = _frTeam[i].element === btn.dataset.val ? '' : btn.dataset.val;
-      document.getElementById('frElGrid' + i).querySelectorAll('.fr-icon-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.val === _frTeam[i].element));
+      _frTeam[i].element = btn.dataset.val;
+      _frRenderTeam();
       _frRenderTeamBadges();
     });
   });
-  box.querySelectorAll('.fr-icon-btn[data-ty]').forEach(btn => {
+  box.querySelectorAll('.fr-dd__item[data-ty]').forEach(btn => {
     btn.addEventListener('click', () => {
       const i = +btn.dataset.ty;
-      _frTeam[i].type = _frTeam[i].type === btn.dataset.val ? '' : btn.dataset.val;
-      document.getElementById('frTyGrid' + i).querySelectorAll('.fr-icon-btn').forEach(b =>
-        b.classList.toggle('active', b.dataset.val === _frTeam[i].type));
+      _frTeam[i].type = btn.dataset.val;
+      _frRenderTeam();
       _frRenderTeamBadges();
     });
   });
@@ -269,6 +288,10 @@ function initFrontier() {
   if (!sec) return;
   if (sec.dataset.inited) { _frCalcAndRender(); return; }
   sec.dataset.inited = '1';
+
+  document.addEventListener('click', () => {
+    document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
+  });
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">미스틱 프론티어 계산기</h2></div>

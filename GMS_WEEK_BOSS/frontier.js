@@ -160,7 +160,7 @@ function _frCalcAndRender() {
     if (!a) { el.textContent = ''; el.className = 'fr-line-state'; return; }
     const l = _frTeam[i].line;
     if (l.groupKey) {
-      el.textContent = a.count > 0 ? `조건 ${a.count}마리 적용` : '해당 없음';
+      el.textContent = a.count > 0 ? `조건 ${a.count}장 적용` : '해당 없음';
     } else if (l.cond && l.cond.t === 'chance') {
       el.textContent = '점수 계산 없음';
     } else {
@@ -254,7 +254,7 @@ function _frLineOptions(fi, selectLabel) {
   const rank = (_frTeam[fi].rank || 'unique').toLowerCase();
   const rankKey = rank.toUpperCase();
   const pool = D[rankKey] || [];
-  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${e.ko || e.label}</option>`).join('');
+  const opts = pool.map((e, idx) => `<option value="${idx}"${String(idx) === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
   return `<option value="">— None —</option>${opts}`;
 }
 
@@ -262,7 +262,7 @@ function _frLineOptions(fi, selectLabel) {
 function _frLineEventOptions(fi, selectLabel) {
   const rankKey = (_frTeam[fi].rank || 'unique').toUpperCase();
   const eventPool = (window.FR_EVENT_CATALOG && window.FR_EVENT_CATALOG[rankKey]) || [];
-  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${e.ko || e.label}</option>`).join('');
+  const opts = eventPool.map((e, idx) => `<option value="e${idx}"${'e' + idx === String(selectLabel) ? ' selected' : ''}>${e.label}</option>`).join('');
   return `<option value="">— None —</option>${opts}`;
 }
 

@@ -139,7 +139,6 @@ function renderMapleCalendar() {
     <div class="mc-panel">
       <div class="mc-topbar">
         <button class="mc-charchip" id="mcCharChip"></button>
-        <button class="sbtn sbtn--ghost mc-pushbtn" id="mcPushBtn">알림 받기</button>
         <button class="sbtn sbtn--ghost mc-allbtn" id="mcAllBtn">전체 보기</button>
       </div>
       <div class="mc-cal__head">
@@ -163,7 +162,7 @@ function renderMapleCalendar() {
     mcState.viewAll = !mcState.viewAll;
     mcRenderCharChip(); mcRenderGrid();
   });
-  document.getElementById('mcPushBtn').addEventListener('click', mcTogglePush);
+  // 알림 켜기/끄기 버튼은 설정 창으로 옮겼다(mcRenderPushBtn 참고).
   mcRenderPushBtn();
   // 버튼만 만들어두고 기다리면 아무도 안 눌러서, 캘린더에 들어올 때 먼저 물어본다.
   // 렌더 직후 바로 물어보면 화면이 채 그려지기 전이라 어색해 살짝 늦춘다.
@@ -185,11 +184,13 @@ function renderMapleCalendar() {
 function mcRenderPushBtn() {
   const btn = document.getElementById('mcPushBtn');
   if (!btn) return;
+  // 설정 창으로 옮기면서 버튼만 숨기면 설명글이 덩그러니 남는다 — 칸째로 감춘다.
+  const box = document.getElementById('settingsPushBox') || btn;
   if (typeof bpSupported !== 'function' || !bpSupported()) {
-    btn.style.display = 'none';
+    box.style.display = 'none';
     return;
   }
-  btn.style.display = '';
+  box.style.display = '';
   const on = bpIsEnabled();
   btn.textContent = on ? '알림 끄기' : '알림 받기';
   btn.classList.toggle('sbtn--primary', on);
@@ -888,4 +889,15 @@ window.addEventListener('resize', () => {
     mcResizeRaf = 0;
     if (document.getElementById('mcGrid')) mcRenderGrid();
   });
+});
+
+/* 알림 버튼은 설정 창 안에 계속 있는 요소라, 캘린더를 그릴 때마다가 아니라
+   여기서 한 번만 연결한다. 설정을 열 때는 현재 켜짐/꺼짐 상태를 다시 반영한다. */
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('mcPushBtn');
+  if (btn) btn.addEventListener('click', mcTogglePush);
+  ['sbBtnSettings', 'headerBtnSettings'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', mcRenderPushBtn);
+  });
+  mcRenderPushBtn();
 });

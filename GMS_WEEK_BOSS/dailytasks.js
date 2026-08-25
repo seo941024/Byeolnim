@@ -103,7 +103,11 @@ async function dtRefreshStaleChars() {
   const now = Date.now();
   const staleIds = Object.keys(all.items).filter(id => {
     const rec = all.items[id];
-    return rec.region && now - (rec.syncedAt || 0) > interval;
+    if (!rec.region) return false;
+    // 레벨을 저장하기 전에 등록된 캐릭터는 방금 동기화됐어도 level이 아예 없다 —
+    // 그런 경우는 다음 6시간을 기다리지 않고 한 번은 무조건 다시 불러온다.
+    if (rec.level == null) return true;
+    return now - (rec.syncedAt || 0) > interval;
   });
   if (!staleIds.length) return;
 

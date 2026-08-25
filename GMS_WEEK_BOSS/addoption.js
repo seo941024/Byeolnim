@@ -285,6 +285,19 @@ function flameRefreshOptionSelects() {
   }
 }
 
+/* 목표 등급을 지금 불꽃에서 뜰 수 있는 최고 등급(작은 숫자 = 좋은 등급)으로 맞춘다.
+   확률 0인 등급은 flameRefreshOptionSelects가 disabled로 만들어 두므로 그걸 그대로 쓴다. */
+function flameResetGoalTiers() {
+  const { prob } = FLAME_TYPES[_flameGetFlameKey()];
+  for (let i = 1; i <= 4; i++) {
+    const sel = document.getElementById(`flameGoalTier${i}`);
+    if (!sel) continue;
+    // value 1이 1추, 6-value가 prob 배열의 자리다(1추 → prob[4])
+    const best = [1, 2, 3, 4, 5].find(v => prob[6 - v - 1] > 0);
+    if (best) sel.value = String(best);
+  }
+}
+
 function flameBuildStatTable() {
   const flameKey = _flameGetFlameKey();
   const level    = _flameGetLevel();
@@ -759,8 +772,13 @@ function initAddOption() {
 
   sec.querySelectorAll('#flameEquipGroup .sf-toggle, #flameTypeGroup .sf-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
-      btn.closest('.sf-toggle-group').querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
+      const group = btn.closest('.sf-toggle-group');
+      group.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
       btn.classList.add('active');
+      /* 불꽃을 바꾸면 목표 등급을 그 불꽃에서 가능한 최고 등급으로 되돌린다.
+         강력한 환생의 불꽃은 1추가 안 떠서 2추로 밀려 있는데, 영원한·심연의로 바꿔도
+         그 2추가 그대로 남아 있었다. 이 둘은 1추를 노리고 쓰는 불꽃이다. */
+      if (group.id === 'flameTypeGroup') flameResetGoalTiers();
       refresh();
     });
   });

@@ -23,6 +23,8 @@ let _cmTotalPages = 1;
 let _cmBusy = false;
 let _cmEditor = null;
 let _cmReplyTo = null;   // 답글 대상 댓글 id. 깊이 제한 없이 계속 이어서 달 수 있다.
+let _cmEditPostId = null; // null이면 새 글쓰기, id가 있으면 그 글을 수정하는 중
+let _cmEditPost = null;   // 수정 중인 글의 원본 데이터(제목·본문 미리 채우기용)
 
 // 기본 Quill 색 포맷은 style="color: ..."를 만든다. 서버는 style을 전혀
 // 허용하지 않으므로, 세 가지 고정 색상만 class로 기록하는 포맷으로 교체한다.
@@ -43,6 +45,10 @@ function cmIsAdmin() { return typeof _csAdmin !== 'undefined' && _csAdmin === tr
 function cmCanDelete(authorId) {
   if (!cmLoggedIn()) return false;
   return authorId === (localStorage.getItem('gms_cloud_id') || '') || cmIsAdmin();
+}
+/* 수정은 삭제와 달리 작성자 본인만 — 관리자도 남의 글 내용은 못 바꾼다(서버와 동일 규칙) */
+function cmCanEdit(authorId) {
+  return cmLoggedIn() && authorId === (localStorage.getItem('gms_cloud_id') || '');
 }
 
 async function cmApi(action, extra) {
@@ -134,6 +140,8 @@ function cmRenderList(sec) {
 
   document.getElementById('cmWriteBtn').addEventListener('click', () => {
     if (!cmLoggedIn()) { showToast('로그인 후 글을 쓸 수 있습니다.'); return; }
+    _cmEditPostId = null;
+    _cmEditPost = null;
     _cmView = 'write';
     renderCommunity();
   });
@@ -224,8 +232,9 @@ function cmPaintPager() {
 
 /* ── 글쓰기 ── */
 function cmRenderWrite(sec) {
+  const editing = !!_cmEditPostId;
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">글쓰기</h2></div>
+    <div class="sec-head"><h2 class="sec-title">${editing ? '글 수정' : '글쓰기'}</h2></div>
     <div class="card cm-write">
       <div class="field">
         <label class="field__label">제목</label>
@@ -243,7 +252,7 @@ function cmRenderWrite(sec) {
       </div>
       <div class="cm-write__foot">
         <button class="sbtn sbtn--ghost" id="cmCancelBtn">취소</button>
-        <button class="sbtn sbtn--primary" id="cmSubmitBtn">등록</button>
+        <button class="sbtn sbtn--primary" id="cmSubmitBtn">${editing ? '수정 완료' : '등록'}</button>
       </div>
     </div>`;
 
@@ -265,8 +274,15 @@ function cmRenderWrite(sec) {
   _cmEditor.root.addEventListener('paste', e => cmCaptureEditorImages(e));
   _cmEditor.root.addEventListener('drop', e => cmCaptureEditorImages(e));
 
+  if (editing && _cmEditPost) {
+    document.getElementById('cmTitle').value = _cmEditPost.title;
+    _cmEditor.root.innerHTML = _cmEditPost.body;
+  }
+
   document.getElementById('cmCancelBtn').addEventListener('click', () => {
-    _cmView = 'list';
+    _cmView = editing ? 'post' : 'list';
+    _cmEditPostId = null;
+    _cmEditPost = null;
     _cmEditor = null;
     renderCommunity();
   });
@@ -324,17 +340,20 @@ async function cmSubmitPost() {
   if (!title) { showToast('제목을 입력해주세요.'); return; }
   if (!text && !_cmEditor.root.querySelector('img')) { showToast('내용을 입력해주세요.'); return; }
 
+  const editing = !!_cmEditPostId;
   const btn = document.getElementById('cmSubmitBtn');
-  _cmBusy = true; btn.disabled = true; btn.textContent = '등록 중...';
-  const j = await cmApi('create', { title, body });
-  _cmBusy = false; btn.disabled = false; btn.textContent = '등록';
+  _cmBusy = true; btn.disabled = true; btn.textContent = editing ? '수정 중...' : '등록 중...';
+  const j = editing ? await cmApi('edit', { id: _cmEditPostId, title, body }) : await cmApi('create', { title, body });
+  _cmBusy = false; btn.disabled = false; btn.textContent = editing ? '수정 완료' : '등록';
 
   if (!j.ok) { showToast(j.error); return; }
-  showToast('글이 등록되었습니다.');
+  showToast(editing ? '글이 수정되었습니다.' : '글이 등록되었습니다.');
   _cmEditor = null;
   _cmPostId = j.id;
+  _cmEditPostId = null;
+  _cmEditPost = null;
   _cmView = 'post';
-  _cmPage = 1; // 새 글은 최신순 1페이지 맨 위에 뜨니, 목록으로 돌아갔을 때 그게 보이게
+  if (!editing) _cmPage = 1; // 새 글은 최신순 1페이지 맨 위에 뜨니, 목록으로 돌아갔을 때 그게 보이게
   renderCommunity();
 }
 
@@ -356,18 +375,20 @@ async function cmRenderPost(sec) {
 
   const p = j.post;
   const canDeletePost = cmCanDelete(p.authorId);
+  const canEditPost = cmCanEdit(p.authorId);
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
     <div class="cm-toolbar">
       <button class="sbtn sbtn--ghost" id="cmBackBtn">← 목록</button>
+      ${canEditPost ? '<button class="sbtn sbtn--ghost sbtn--sm" id="cmEditPostBtn">글 수정</button>' : ''}
       ${canDeletePost ? '<button class="sbtn sbtn--danger sbtn--sm" id="cmDelPost">글 삭제</button>' : ''}
     </div>
     <div class="card cm-post">
       <h3 class="cm-post__title">${cmEsc(p.title)}</h3>
       <div class="cm-post__meta">
         <button type="button" class="cm-post__nick" id="cmPostNickBtn">${cmEsc(p.authorNick)}</button>
-        <span>${cmFmtTime(p.createdAt)}</span>
+        <span>${cmFmtTime(p.createdAt)}${p.editedAt ? ' · 수정됨' : ''}</span>
       </div>
       <div class="cm-post__body">${p.body}</div>
       ${(p.images || []).map(u => `<img class="cm-post__img" src="${cmEsc(u)}" alt="" loading="lazy" onerror="this.style.display='none'">`).join('')}
@@ -390,6 +411,12 @@ async function cmRenderPost(sec) {
 
   document.getElementById('cmBackBtn').addEventListener('click', () => { _cmView = 'list'; renderCommunity(); });
   document.getElementById('cmPostNickBtn').addEventListener('click', () => cmShowRepChar(p.authorNick, p.authorRepChar));
+  document.getElementById('cmEditPostBtn')?.addEventListener('click', () => {
+    _cmEditPostId = p.id;
+    _cmEditPost = p;
+    _cmView = 'write';
+    renderCommunity();
+  });
   document.getElementById('cmDelPost')?.addEventListener('click', async () => {
     if (!confirm('이 글을 삭제할까요? 되돌릴 수 없습니다.')) return;
     const d = await cmApi('delete', { id: p.id });

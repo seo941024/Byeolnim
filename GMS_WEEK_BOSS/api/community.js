@@ -186,6 +186,34 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, id });
     }
 
+    /* ── 글 수정 (작성자만 — 관리자도 남의 글 내용은 못 고친다, 삭제만 가능) ── */
+    if (action === 'edit') {
+      const id = String(body.id || '');
+      const raw = await redis.get('community:post:' + id);
+      if (!raw) return bad(res, 404, '글을 찾을 수 없습니다');
+      const post = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      if (post.authorId !== uid) return bad(res, 403, '수정 권한이 없습니다');
+
+      const title = String(body.title || '').trim();
+      const rawHtml = String(body.body || '').trim();
+      const html = sanitizePostHtml(rawHtml);
+      const text = postText(html);
+      const images = postImageUrls(html);
+
+      if (!title) return bad(res, 400, '제목을 입력해주세요');
+      if (title.length > TITLE_MAX) return bad(res, 400, `제목은 ${TITLE_MAX}자 이내여야 합니다`);
+      if (!html || (!text && !images.length)) return bad(res, 400, '내용을 입력해주세요');
+      if (rawHtml.length > BODY_HTML_MAX) return bad(res, 400, `내용이 너무 깁니다(${BODY_HTML_MAX}자 이내)`);
+      if (text.length > BODY_TEXT_MAX) return bad(res, 400, `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다`);
+      if (images.length > IMAGES_MAX) return bad(res, 400, `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다`);
+
+      post.title = title;
+      post.body = html;
+      post.editedAt = Date.now();
+      await redis.set('community:post:' + id, JSON.stringify(post));
+      return res.status(200).json({ ok: true, id });
+    }
+
     /* ── 글 삭제 (작성자 또는 관리자) ── */
     if (action === 'delete') {
       const id = String(body.id || '');

@@ -1562,9 +1562,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 /* ── 큐브 목표 옵션 ── */
 .cube-type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 6px; }
 .cube-type-btn { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 10px 8px; border-radius: var(--radius-sm); background: var(--bg3); border: 1.5px solid var(--border); color: var(--text-sub); font-size: .82rem; font-weight: 700; cursor: pointer; transition: .15s; opacity: .6; }
-.cube-type-btn img { width: 36px; height: 36px; object-fit: contain; }
-.cube-type-btn[data-type="red"] img    { width: 44px; height: 44px; }
-.cube-type-btn[data-type="black"] img  { width: 44px; height: 44px; }
+/* 원본 픽셀 크기 그대로, 100px 상자보다 큰 것만 줄인다(사이드바 아이콘과 동일한 원칙) */
+.cube-type-btn img { width: auto; height: auto; max-width: 100px; max-height: 100px; object-fit: contain; }
 .cube-type-btn:not([disabled]):hover { border-color: var(--primary); opacity: 1; }
 .cube-type-btn.active { border-color: var(--primary); background: var(--primary-l); color: var(--primary); opacity: 1; }
 .cube-type-btn[disabled] { cursor: not-allowed; }
@@ -2954,7 +2953,8 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 .flame-score-card__prob { font-size: .82rem; color: var(--text-sub); }
 .flame-score-card__mean { font-size: .82rem; color: var(--text-sub); margin-bottom: 2px; }
 .flame-th-prob { font-size: .72rem; font-weight: 400; color: var(--text-sub); }
-.flame-type-icon { width: 36px; height: 36px; object-fit: contain; display: block; margin: 0 auto 4px; }
+/* 원본 픽셀 크기 그대로, 100px 상자보다 큰 것만 줄인다(사이드바 아이콘과 동일한 원칙) */
+.flame-type-icon { width: auto; height: auto; max-width: 100px; max-height: 100px; object-fit: contain; display: block; margin: 0 auto 4px; }
 
 tbody tr:hover { background: rgba(var(--hue),.05); }
 

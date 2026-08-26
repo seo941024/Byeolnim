@@ -20,7 +20,7 @@ let _cmPostId = null;
 let _cmPosts = [];
 let _cmNextCursor = 0;
 let _cmBusy = false;
-let _cmDraftImages = [];   // 글쓰기 중 업로드된 사진 URL
+let _cmEditor = null;
 
 function cmEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
@@ -83,7 +83,6 @@ function cmRenderList(sec) {
   document.getElementById('cmWriteBtn').addEventListener('click', () => {
     if (!cmLoggedIn()) { showToast('로그인 후 글을 쓸 수 있습니다.'); return; }
     _cmView = 'write';
-    _cmDraftImages = [];
     renderCommunity();
   });
 
@@ -154,14 +153,13 @@ function cmRenderWrite(sec) {
       </div>
       <div class="field mt8">
         <label class="field__label">내용</label>
-        <textarea class="inp cm-textarea" id="cmBody" maxlength="5000" placeholder="내용을 입력하세요"></textarea>
+        <div id="cmEditor" class="cm-editor"></div>
       </div>
       <div class="field mt8">
-        <label class="field__label">사진 (최대 ${CM_IMAGES_MAX}장, 1장당 5MB)</label>
+        <label class="field__label">사진 (본문에 삽입 · 최대 ${CM_IMAGES_MAX}장, 1장당 5MB)</label>
         <input type="file" id="cmFile" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none" />
-        <button class="sbtn sbtn--ghost" id="cmPickBtn">사진 추가</button>
+        <button class="sbtn sbtn--ghost" id="cmPickBtn">사진 삽입</button>
         <span class="cm-upstate" id="cmUpState"></span>
-        <div class="cm-thumbs" id="cmThumbs"></div>
       </div>
       <div class="cm-write__foot">
         <button class="sbtn sbtn--ghost" id="cmCancelBtn">취소</button>
@@ -169,11 +167,25 @@ function cmRenderWrite(sec) {
       </div>
     </div>`;
 
-  cmPaintThumbs();
+  _cmEditor = new Quill('#cmEditor', {
+    theme: 'snow',
+    placeholder: '내용을 입력하세요',
+    modules: { toolbar: [
+      ['bold', 'italic', 'underline', 'strike'],
+      [{ size: ['small', false, 'large', 'huge'] }],
+      [{ color: [] }, { background: [] }],
+      [{ list: 'ordered' }, { list: 'bullet' }],
+      ['blockquote', 'image'], ['clean'],
+    ] },
+  });
+  const toolbar = _cmEditor.getModule('toolbar');
+  toolbar.addHandler('image', () => document.getElementById('cmFile').click());
+  _cmEditor.root.addEventListener('paste', e => cmCaptureEditorImages(e));
+  _cmEditor.root.addEventListener('drop', e => cmCaptureEditorImages(e));
 
   document.getElementById('cmCancelBtn').addEventListener('click', () => {
     _cmView = 'list';
-    _cmDraftImages = [];
+    _cmEditor = null;
     renderCommunity();
   });
   document.getElementById('cmPickBtn').addEventListener('click', () => document.getElementById('cmFile').click());
@@ -181,33 +193,18 @@ function cmRenderWrite(sec) {
   document.getElementById('cmSubmitBtn').addEventListener('click', cmSubmitPost);
 }
 
-function cmPaintThumbs() {
-  const box = document.getElementById('cmThumbs');
-  if (!box) return;
-  box.innerHTML = _cmDraftImages.map((url, i) => `
-    <div class="cm-thumb">
-      <img src="${cmEsc(url)}" alt="" loading="lazy">
-      <button type="button" class="cm-thumb__del" data-i="${i}" title="사진 빼기">×</button>
-    </div>`).join('');
-  box.querySelectorAll('.cm-thumb__del').forEach(b => {
-    b.addEventListener('click', () => {
-      _cmDraftImages.splice(Number(b.dataset.i), 1);
-      cmPaintThumbs();
-    });
-  });
-}
-
 async function cmUploadFiles(fileList) {
   const files = Array.from(fileList || []);
   document.getElementById('cmFile').value = '';   // 같은 파일 다시 골라도 change가 뜨게
   if (!files.length) return;
 
-  const room = CM_IMAGES_MAX - _cmDraftImages.length;
+  const room = CM_IMAGES_MAX - document.querySelectorAll('#cmEditor .ql-editor img').length;
   if (room <= 0) { showToast(`사진은 ${CM_IMAGES_MAX}장까지만 올릴 수 있습니다.`); return; }
   const targets = files.slice(0, room);
   if (files.length > room) showToast(`${CM_IMAGES_MAX}장까지만 올라갑니다. ${targets.length}장만 올립니다.`);
 
   const st = document.getElementById('cmUpState');
+  let pos = _cmEditor.getSelection(true)?.index ?? _cmEditor.getLength();
   for (let i = 0; i < targets.length; i++) {
     const f = targets[i];
     if (f.size > CM_IMG_MAX_BYTES) { showToast(`${f.name}은(는) 5MB가 넘어 건너뜁니다.`); continue; }
@@ -221,8 +218,8 @@ async function cmUploadFiles(fileList) {
       });
       const j = await cmApi('upload', { data: dataUrl });
       if (!j.ok) { showToast(j.error || '업로드 실패'); continue; }
-      _cmDraftImages.push(j.url);
-      cmPaintThumbs();
+      _cmEditor.insertEmbed(pos, 'image', j.url, 'user');
+      _cmEditor.setSelection(++pos, 0, 'silent');
     } catch (e) {
       showToast('업로드 실패: ' + e.message);
     }
@@ -230,21 +227,29 @@ async function cmUploadFiles(fileList) {
   st.textContent = '';
 }
 
+function cmCaptureEditorImages(e) {
+  const files = Array.from((e.clipboardData || e.dataTransfer || {}).files || []).filter(f => f.type.startsWith('image/'));
+  if (!files.length) return;
+  e.preventDefault();
+  cmUploadFiles(files);
+}
+
 async function cmSubmitPost() {
   if (_cmBusy) return;
   const title = document.getElementById('cmTitle').value.trim();
-  const body = document.getElementById('cmBody').value.trim();
+  const body = _cmEditor.root.innerHTML;
+  const text = _cmEditor.getText().trim();
   if (!title) { showToast('제목을 입력해주세요.'); return; }
-  if (!body) { showToast('내용을 입력해주세요.'); return; }
+  if (!text && !_cmEditor.root.querySelector('img')) { showToast('내용을 입력해주세요.'); return; }
 
   const btn = document.getElementById('cmSubmitBtn');
   _cmBusy = true; btn.disabled = true; btn.textContent = '등록 중...';
-  const j = await cmApi('create', { title, body, images: _cmDraftImages });
+  const j = await cmApi('create', { title, body });
   _cmBusy = false; btn.disabled = false; btn.textContent = '등록';
 
   if (!j.ok) { showToast(j.error); return; }
   showToast('글이 등록되었습니다.');
-  _cmDraftImages = [];
+  _cmEditor = null;
   _cmPostId = j.id;
   _cmView = 'post';
   renderCommunity();
@@ -281,7 +286,7 @@ async function cmRenderPost(sec) {
         <span class="cm-post__nick">${cmEsc(p.authorNick)}</span>
         <span>${cmFmtTime(p.createdAt)}</span>
       </div>
-      <div class="cm-post__body">${cmEsc(p.body)}</div>
+      <div class="cm-post__body">${p.body}</div>
       ${(p.images || []).map(u => `<img class="cm-post__img" src="${cmEsc(u)}" alt="" loading="lazy" onerror="this.style.display='none'">`).join('')}
     </div>
 

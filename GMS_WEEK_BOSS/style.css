@@ -3341,8 +3341,22 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .cm-post__title { font-size: 1.25rem; font-weight: 900; color: var(--text); margin: 0 0 6px; }
 .cm-post__meta { display: flex; gap: 10px; font-size: .76rem; color: var(--text-dim); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
 .cm-post__nick { color: var(--accent); }
-/* 본문은 이스케이프해서 넣으므로 줄바꿈을 CSS로 살린다 */
+.cm-editor .ql-toolbar.ql-snow, .cm-editor .ql-container.ql-snow { border-color: var(--border); font-family: inherit; }
+.cm-editor .ql-toolbar.ql-snow { border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--bg2); }
+.cm-editor .ql-container.ql-snow { min-height: 260px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); font-size: .9rem; color: var(--text); }
+.cm-editor .ql-editor { min-height: 260px; line-height: 1.65; }
+.cm-editor .ql-snow .ql-stroke { stroke: var(--text-sub); }
+.cm-editor .ql-snow .ql-fill { fill: var(--text-sub); }
+.cm-editor .ql-snow .ql-picker { color: var(--text-sub); }
+.cm-editor .ql-snow .ql-picker-options { background: var(--bg2); border-color: var(--border); }
+.cm-editor .ql-editor img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+/* 서버 sanitizer를 통과한 HTML만 여기 들어온다. */
 .cm-post__body { white-space: pre-wrap; word-break: break-word; line-height: 1.65; font-size: .9rem; color: var(--text); padding: 14px 0; }
+.cm-post__body p { margin: 0 0 .7em; }
+.cm-post__body img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 10px 0; }
+.cm-post__body .ql-size-small { font-size: .75em; }
+.cm-post__body .ql-size-large { font-size: 1.5em; }
+.cm-post__body .ql-size-huge { font-size: 2.5em; }
 .cm-post__img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 8px 0; }
 
 /* 댓글 */

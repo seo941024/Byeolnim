@@ -1605,6 +1605,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 08. 26.',
+    items: [
+      {
+        head: '커뮤니티 글쓰기에 서식과 본문 사진을 넣을 수 있습니다',
+        desc: '글자 굵기·기울임·밑줄·크기·색을 적용할 수 있고, 사진은 원하는 글 사이 위치에 바로 삽입됩니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 25.',
     items: [
       {
@@ -1633,7 +1642,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-25-frontier',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-26-community-editor',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

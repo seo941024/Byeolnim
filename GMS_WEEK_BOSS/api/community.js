@@ -16,10 +16,12 @@
    않아도 되고, "누가 썼는지"가 그 시점 기준으로 고정되는 게 자연스럽다.
    ============================================= */
 const crypto = require('crypto');
+const sanitizeHtml = require('sanitize-html');
 const { getRedis, isAdminId } = require('./_lib');
 
 const TITLE_MAX = 80;
-const BODY_MAX = 5000;
+const BODY_TEXT_MAX = 5000;
+const BODY_HTML_MAX = 30000;
 const COMMENT_MAX = 1000;
 const IMAGES_MAX = 10;
 const LIST_PAGE = 20;
@@ -32,6 +34,32 @@ const UPLOAD_ALLOWED = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': '
 
 function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
 function newId() { return Date.now().toString(36) + crypto.randomBytes(4).toString('hex'); }
+
+const BLOB_URL_RE = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
+
+/* Quill이 만드는 서식만 보존한다. 특히 img는 우리가 업로드한 public Blob만
+   남겨서, 글 본문을 innerHTML로 표시해도 스크립트/이벤트 속성/외부 추적 이미지는
+   들어올 수 없게 한다. */
+function sanitizePostHtml(value) {
+  return sanitizeHtml(String(value || ''), {
+    allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'span', 'ol', 'ul', 'li', 'blockquote', 'img'],
+    allowedAttributes: { span: ['class'], img: ['src', 'alt'] },
+    allowedClasses: { span: ['ql-size-small', 'ql-size-large', 'ql-size-huge', 'ql-color-*', 'ql-bg-*'] },
+    allowedSchemes: ['https'],
+    transformTags: {
+      img: (tagName, attribs) => BLOB_URL_RE.test(attribs.src || '')
+        ? { tagName, attribs: { src: attribs.src, alt: '' } }
+        : { tagName: 'span', text: '' },
+    },
+  }).trim();
+}
+
+function postText(html) {
+  return sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }).replace(/\s+/g, ' ').trim();
+}
+function postImageUrls(html) {
+  return Array.from(String(html).matchAll(/<img\s+[^>]*src="([^"]+)"/gi), m => m[1]);
+}
 
 async function getUid(redis, token) {
   if (!token) return null;
@@ -70,9 +98,9 @@ module.exports = async function handler(req, res) {
         return {
           id: p.id, title: p.title, authorNick: p.authorNick, createdAt: p.createdAt,
           commentCount: p.commentCount || 0,
-          bodyPreview: (p.body || '').slice(0, 100),
-          thumb: (p.images && p.images[0]) || null,
-          imageCount: (p.images && p.images.length) || 0,
+          bodyPreview: postText(p.body || '').slice(0, 100),
+          thumb: postImageUrls(sanitizePostHtml(p.body || ''))[0] || (p.images && p.images[0]) || null,
+          imageCount: postImageUrls(sanitizePostHtml(p.body || '')).length || (p.images && p.images.length) || 0,
         };
       });
       const nextCursor = ids.length === LIST_PAGE ? cursor + LIST_PAGE : null;
@@ -85,6 +113,8 @@ module.exports = async function handler(req, res) {
       const raw = await redis.get('community:post:' + id);
       if (!raw) return bad(res, 404, '글을 찾을 수 없습니다');
       const post = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      // 리치 에디터 도입 전의 평문 글까지 포함해, 표시 직전에 한 번 더 정화한다.
+      post.body = sanitizePostHtml(post.body || '');
 
       const craw = await redis.get('community:comments:' + id);
       const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
@@ -128,23 +158,22 @@ module.exports = async function handler(req, res) {
     /* ── 글쓰기 ── */
     if (action === 'create') {
       const title = String(body.title || '').trim();
-      const text = String(body.body || '').trim();
-      const images = Array.isArray(body.images) ? body.images.slice(0, IMAGES_MAX) : [];
+      const rawHtml = String(body.body || '').trim();
+      const html = sanitizePostHtml(rawHtml);
+      const text = postText(html);
+      const images = postImageUrls(html);
 
       if (!title) return bad(res, 400, '제목을 입력해주세요');
       if (title.length > TITLE_MAX) return bad(res, 400, `제목은 ${TITLE_MAX}자 이내여야 합니다`);
-      if (!text) return bad(res, 400, '내용을 입력해주세요');
-      if (text.length > BODY_MAX) return bad(res, 400, `내용은 ${BODY_MAX}자 이내여야 합니다`);
-      // 업로드 API가 내려준 blob URL만 받는다 — 아무 URL이나 박아서 외부 이미지를
-      // 끌어오는 걸 막는다.
-      if (images.some(u => typeof u !== 'string' || !/^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//.test(u))) {
-        return bad(res, 400, '사진 형식이 올바르지 않습니다');
-      }
+      if (!html || (!text && !images.length)) return bad(res, 400, '내용을 입력해주세요');
+      if (rawHtml.length > BODY_HTML_MAX) return bad(res, 400, `내용이 너무 깁니다(${BODY_HTML_MAX}자 이내)`);
+      if (text.length > BODY_TEXT_MAX) return bad(res, 400, `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다`);
+      if (images.length > IMAGES_MAX) return bad(res, 400, `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다`);
 
       const nickname = await getNick(redis, uid);
       const id = newId();
       const createdAt = Date.now();
-      const post = { id, authorId: uid, authorNick: nickname, title, body: text, images, createdAt, commentCount: 0 };
+      const post = { id, authorId: uid, authorNick: nickname, title, body: html, images: [], createdAt, commentCount: 0 };
       await redis.set('community:post:' + id, JSON.stringify(post));
       await redis.zadd('community:posts', { score: createdAt, member: id });
       return res.status(200).json({ ok: true, id });

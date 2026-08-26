@@ -74,6 +74,47 @@
 
 **커뮤니티 게시판 + 리치 에디터 작업은 이걸로 완료.** 더 손댈 것 없음.
 
+## ✅ 완료 — 계정별 대표 캐릭터 (2026-08-26, 커밋 `3366dc0`)
+
+글쓰기가 생겼으니 누가 쓴 글인지 캐릭터로도 알아볼 수 있게, 계정 설정에서
+대표 캐릭터를 지정하고 커뮤니티 글/댓글의 닉네임을 누르면 그 캐릭터
+정보(이미지·레벨·직업·월드)가 팝업으로 뜨도록 했다.
+
+- **`api/auth.js`** — `setrepchar` 액션 추가 (name/level/job/world/region/img
+  저장, `body.clear`로 해제). login/signup/`me` 응답에 `repChar` 필드 포함.
+  이미지 URL은 `/^https:\/\/msavatar\d*\.nexon\.net\//i` 정규식으로 검증해서
+  넥슨 아바타 도메인이 아니면 빈 문자열로 버림 (임의 URL/스크립트 주입 방지).
+- **`api/community.js`** — `getNick(redis, uid)` → `getProfile(redis, uid)`로
+  확장(`{ nickname, repChar }` 반환). `create`/`comment` 액션이 글/댓글 저장
+  시점에 `authorRepChar`도 **스냅샷으로 같이 저장**한다 — `authorNick`과
+  동일한 원칙으로, 나중에 대표 캐릭터를 바꿔도 이미 쓴 글/댓글은 그대로 유지됨.
+  주의: `list` 액션(목록 미리보기)은 `authorRepChar`를 안 내려주므로 목록에서는
+  닉네임이 클릭 안 됨 — 글을 눌러 들어가야(`get` 액션) 확인 가능. 의도적으로
+  그렇게 둔 것(목록 항목 자체가 이미 클릭하면 글로 들어감).
+- **`cloudsave.js`** — `_csAdmin`과 똑같은 패턴으로 `_csRepChar` 상태를
+  로그인/로그아웃/새로고침에 동기화. 계정 설정 패널에 `<select>`로 보유
+  캐릭터(`state.chars`) 중 하나를 골라 저장/해제하는 UI 추가
+  (`csRepCharOptions()`, `csSetRepChar()`).
+- **`community.js`** — 글 상세의 닉네임과 각 댓글 닉네임을 `<span>`에서
+  `<button>`으로 바꾸고, 누르면 `cmShowRepChar(nick, repChar)`가 오버레이
+  팝업을 띄운다. 대표 캐릭터가 없으면 "대표 캐릭터가 설정되지 않았습니다"
+  빈 상태 표시. 오버레이는 `dailytasks.js`의 준비 패턴과 동일
+  (`cmEnsureRepOverlay` — 처음 한 번만 껍데기 생성, 이후엔 안쪽만 다시 그림).
+- **`style.css`** — 닉네임 버튼(`.cm-post__nick`/`.cm-c__nick`, hover 시
+  밑줄), 팝업 내용(`.cm-rep-modal`/`.cm-rep__img` 등, 캐릭터 이미지는 96px로
+  고정해 세션 내내 지켜온 "원본 해상도 이상으로 확대 금지" 원칙 유지,
+  `image-rendering: pixelated`) 스타일 추가.
+- Vercel Hobby 12개 함수 제한 그대로 유지 — 새 API 파일 없이 기존
+  `auth.js`/`community.js`에만 액션 추가.
+- 검증: 로컬 dev 서버는 Redis가 없어서 매번 해온 대로 `window.fetch`를
+  가짜로 물려서 확인 — 글 상세/댓글 닉네임 클릭 시 팝업이 올바른 캐릭터
+  정보로 뜨는 것, 대표 캐릭터 없는 계정은 빈 상태로 뜨는 것, 계정 설정에서
+  캐릭터 선택→저장→`_csRepChar` 갱신, "— 없음(해제) —" 선택→해제까지 왕복
+  확인. 넥슨 아바타 URL 정규식은 정상 URL은 통과, `evil.com`/`javascript:`/
+  `data:` URL은 전부 걸러지는 것을 별도 node 스크립트로 확인.
+- 배포 시 필수인 공지 카드도 같이 갱신(`app.js`의 `NOTICE_LOG` 2026.08.26에
+  항목 추가, `NOTICE.id`를 `2026-08-26-community-repchar`로 변경).
+
 ---
 
 *(아래는 문제를 처음 발견했을 때의 기록 원문)*

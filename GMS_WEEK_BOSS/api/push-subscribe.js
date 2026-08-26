@@ -63,9 +63,17 @@ module.exports = async function handler(req, res) {
   // 진짜 원인(예: Upstash 토큰이 읽기 전용으로 발급됨)을 특정하려면 오류를 그대로
   // 삼키지 말고 클라이언트에 보여줘야 하므로 감싸서 처리한다.
   try {
+    const rawOld = await redis.get('push:sub:' + id);
+    const oldRec = rawOld ? (typeof rawOld === 'string' ? JSON.parse(rawOld) : rawOld) : null;
+    // 로그인한 상태에서 동기화하면 이 기기를 계정에 연결한다. 커뮤니티 알림은
+    // 계정 소유자에게만 보내야 하므로, 브라우저가 보낸 id를 그대로 믿지 않는다.
+    const token = String(body.token || '');
+    const uid = token ? await redis.get('auth:tok:' + token) : null;
+
     // 알림 끄기
     if (body.unsubscribe) {
       await redis.srem('push:subs', id);
+      if (oldRec && oldRec.userId) await redis.srem('push:user:' + oldRec.userId, id);
       await redis.del('push:sub:' + id);
       res.status(200).json({ ok: true, removed: true });
       return;
@@ -89,13 +97,17 @@ module.exports = async function handler(req, res) {
        있다. 예전 주소로 설치한 사람도 같은 VAPID 키면 알림을 받으므로, 전체 발송
        때 지금 주소에서 구독한 사람만 골라내려면 이 값이 필요하다.
        endpoint(fcm.googleapis.com/...)로는 출처를 알 수 없다. */
+    const userId = uid || (oldRec && oldRec.userId) || null;
+    if (oldRec && oldRec.userId && oldRec.userId !== userId) await redis.srem('push:user:' + oldRec.userId, id);
     await redis.set('push:sub:' + id, JSON.stringify({
       sub: body.subscription,
       origin: req.headers.origin || '',
       items,
+      userId,
       updated: now,
     }));
     await redis.sadd('push:subs', id);
+    if (userId) await redis.sadd('push:user:' + userId, id);
 
     res.status(200).json({ ok: true, id, count: items.length });
   } catch (e) {

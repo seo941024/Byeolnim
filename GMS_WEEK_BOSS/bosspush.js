@@ -125,7 +125,7 @@ async function bpDisable() {
     await fetch('/api/push-subscribe', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription: sub, unsubscribe: true }),
+      body: JSON.stringify({ subscription: sub, token: localStorage.getItem('gms_cloud_token') || '', unsubscribe: true }),
     }).catch(() => {});
     await sub.unsubscribe().catch(() => {});
   }
@@ -143,7 +143,7 @@ async function bpSync() {
   const res = await fetch('/api/push-subscribe', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription: sub, items }),
+    body: JSON.stringify({ subscription: sub, token: localStorage.getItem('gms_cloud_token') || '', items }),
   }).then(r => r.json()).catch(() => null);
 
   if (!res || !res.ok) return { ok: false, count: 0 };

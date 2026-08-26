@@ -99,4 +99,48 @@ function isAdminId(id) {
     .includes(id);
 }
 
-module.exports = { worldName, lookupCharacter, histKey, todayStr, getRedis, pushSnapshot, isAdminId };
+/* 계정에 연결된 모든 기기로 즉시 푸시한다. 예약 보스 알림과 달리 커뮤니티
+   알림은 댓글이 달린 그 순간 보내야 하므로, 만료 구독 정리까지 여기서 공용으로
+   처리한다. 발송 실패는 글/댓글 작성 자체를 막지 않는다. */
+async function sendPushToUsers(redis, userIds, payload) {
+  const users = [...new Set((userIds || []).filter(Boolean).map(String))];
+  if (!users.length || !process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return { sent: 0, failed: 0 };
+
+  const webpush = require('web-push');
+  webpush.setVapidDetails('mailto:seo941024@gmail.com', process.env.VAPID_PUBLIC_KEY, process.env.VAPID_PRIVATE_KEY);
+  let sent = 0, failed = 0;
+
+  for (const uid of users) {
+    let ids = [];
+    try { ids = (await redis.smembers('push:user:' + uid)) || []; } catch { continue; }
+    for (const id of ids) {
+      let rec = null;
+      try {
+        const raw = await redis.get('push:sub:' + id);
+        rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      } catch { rec = null; }
+      // 로그아웃/기기 교체로 연결이 바뀐 낡은 인덱스는 발견하는 즉시 정리한다.
+      if (!rec || !rec.sub || rec.userId !== uid) {
+        try { await redis.srem('push:user:' + uid, id); } catch {}
+        continue;
+      }
+      try {
+        await webpush.sendNotification(rec.sub, JSON.stringify(payload), { urgency: 'normal', TTL: 24 * 60 * 60 });
+        sent++;
+      } catch (e) {
+        failed++;
+        const code = e && e.statusCode;
+        if (code === 404 || code === 410) {
+          try {
+            await redis.srem('push:subs', id);
+            await redis.srem('push:user:' + uid, id);
+            await redis.del('push:sub:' + id);
+          } catch {}
+        }
+      }
+    }
+  }
+  return { sent, failed };
+}
+
+module.exports = { worldName, lookupCharacter, histKey, todayStr, getRedis, pushSnapshot, isAdminId, sendPushToUsers };

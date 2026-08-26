@@ -1619,6 +1619,10 @@ const NOTICE_LOG = [
         head: '커뮤니티 닉네임을 누르면 대표 캐릭터를 볼 수 있습니다',
         desc: '계정 설정에서 대표 캐릭터를 지정해두면, 내가 쓴 글이나 댓글의 닉네임을 다른 사람이 눌렀을 때 그 캐릭터 정보가 보입니다.',
       },
+      {
+        head: '댓글 알림과 대댓글 기능이 생겼습니다',
+        desc: '내 글이나 댓글에 새 댓글이 달리면 알림으로 알려드리고, 댓글에는 계속 답글을 이어서 달 수 있습니다.',
+      },
     ],
   },
   {
@@ -1650,7 +1654,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-26-community-repchar',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-08-26-community-replies-push',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

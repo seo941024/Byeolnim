@@ -17,7 +17,7 @@
    ============================================= */
 const crypto = require('crypto');
 const sanitizeHtml = require('sanitize-html');
-const { getRedis, isAdminId } = require('./_lib');
+const { getRedis, isAdminId, sendPushToUsers } = require('./_lib');
 
 const TITLE_MAX = 80;
 const BODY_TEXT_MAX = 5000;
@@ -203,6 +203,7 @@ module.exports = async function handler(req, res) {
     /* ── 댓글 작성 ── */
     if (action === 'comment') {
       const postId = String(body.postId || '');
+      const parentId = String(body.parentId || '');
       const text = String(body.body || '').trim();
       if (!text) return bad(res, 400, '댓글 내용을 입력해주세요');
       if (text.length > COMMENT_MAX) return bad(res, 400, `댓글은 ${COMMENT_MAX}자 이내여야 합니다`);
@@ -215,13 +216,29 @@ module.exports = async function handler(req, res) {
       const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
       if (comments.length >= COMMENTS_MAX_PER_POST) return bad(res, 400, '댓글이 너무 많습니다');
 
+      let parent = null;
+      if (parentId) {
+        parent = comments.find(c => c.id === parentId);
+        if (!parent) return bad(res, 404, '답글을 달 댓글을 찾을 수 없습니다');
+      }
+
       const { nickname, repChar } = await getProfile(redis, uid);
-      const comment = { id: newId(), authorId: uid, authorNick: nickname, authorRepChar: repChar, body: text, createdAt: Date.now() };
+      const comment = { id: newId(), parentId: parent ? parent.id : null, authorId: uid, authorNick: nickname, authorRepChar: repChar, body: text, createdAt: Date.now() };
       comments.push(comment);
       await redis.set('community:comments:' + postId, JSON.stringify(comments));
 
       post.commentCount = comments.length;
       await redis.set('community:post:' + postId, JSON.stringify(post));
+      // 일반 댓글은 글쓴이에게, 답글은 글쓴이와 바로 위 댓글 작성자에게 알린다.
+      // 자기 글/자기 댓글에는 보내지 않고, 같은 사람이면 한 번만 보낸다.
+      const recipients = [post.authorId, parent && parent.authorId].filter(id => id && id !== uid);
+      const kind = parent ? '답글' : '댓글';
+      await sendPushToUsers(redis, recipients, {
+        title: `${nickname}님이 ${kind}을 남겼습니다`,
+        body: `“${String(post.title || '').slice(0, 45)}”`,
+        tag: `community-${postId}-${comment.id}`,
+        url: '/?community=' + encodeURIComponent(postId),
+      }).catch(() => {});
       return res.status(200).json({ ok: true, comment });
     }
 
@@ -235,7 +252,15 @@ module.exports = async function handler(req, res) {
       if (!target) return bad(res, 404, '댓글을 찾을 수 없습니다');
       if (target.authorId !== uid && !isAdminId(uid)) return bad(res, 403, '삭제 권한이 없습니다');
 
-      const next = comments.filter(c => c.id !== commentId);
+      // 댓글을 지우면 모든 하위 답글도 같이 지워서 고아 답글이 남지 않게 한다.
+      const removed = new Set([commentId]);
+      for (let changed = true; changed;) {
+        changed = false;
+        for (const c of comments) {
+          if (c.parentId && removed.has(c.parentId) && !removed.has(c.id)) { removed.add(c.id); changed = true; }
+        }
+      }
+      const next = comments.filter(c => !removed.has(c.id));
       await redis.set('community:comments:' + postId, JSON.stringify(next));
 
       const praw = await redis.get('community:post:' + postId);

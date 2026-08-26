@@ -22,6 +22,7 @@ let _cmPage = 1;        // 지금 보고 있는 페이지 — 글 봤다가 목�
 let _cmTotalPages = 1;
 let _cmBusy = false;
 let _cmEditor = null;
+let _cmReplyTo = null;   // 답글 대상 댓글 id. 깊이 제한 없이 계속 이어서 달 수 있다.
 
 // 기본 Quill 색 포맷은 style="color: ..."를 만든다. 서버는 style을 전혀
 // 허용하지 않으므로, 세 가지 고정 색상만 class로 기록하는 포맷으로 교체한다.
@@ -376,6 +377,11 @@ async function cmRenderPost(sec) {
       <div class="card__title">댓글 ${j.comments.length}</div>
       <div class="cm-clist" id="cmClist"></div>
       ${cmLoggedIn() ? `
+      ${typeof bpIsEnabled === 'function' && !bpIsEnabled() ? `
+      <div class="cm-pushhint">
+        <span>내 글이나 댓글에 답글이 달리면 바로 알려드릴게요.</span>
+        <button class="sbtn sbtn--ghost sbtn--sm" id="cmCommentPushBtn">댓글 알림 켜기</button>
+      </div>` : ''}
       <div class="cm-cwrite">
         <textarea class="inp cm-cinput" id="cmCommentBody" maxlength="1000" placeholder="댓글을 입력하세요"></textarea>
         <button class="sbtn sbtn--primary" id="cmCommentBtn">등록</button>
@@ -395,21 +401,48 @@ async function cmRenderPost(sec) {
 
   cmPaintComments(j.comments);
   document.getElementById('cmCommentBtn')?.addEventListener('click', cmSubmitComment);
+  document.getElementById('cmCommentPushBtn')?.addEventListener('click', async () => {
+    const r = typeof bpEnable === 'function' ? await bpEnable() : { ok: false, msg: '이 브라우저는 알림을 지원하지 않아요.' };
+    if (!r.ok) { showToast(r.msg || '알림을 켜지 못했습니다.'); return; }
+    showToast('댓글 알림을 켰습니다.');
+    renderCommunity();
+  });
 }
 
 function cmPaintComments(comments) {
   const box = document.getElementById('cmClist');
   if (!box) return;
   if (!comments.length) { box.innerHTML = '<p class="empty">아직 댓글이 없습니다.</p>'; return; }
-  box.innerHTML = comments.map(c => `
-    <div class="cm-c">
+  const byId = new Map(comments.map(c => [c.id, c]));
+  const roots = comments.filter(c => !c.parentId || !byId.has(c.parentId));
+  const replies = new Map();
+  comments.filter(c => c.parentId && byId.has(c.parentId)).forEach(c => {
+    const list = replies.get(c.parentId) || [];
+    list.push(c); replies.set(c.parentId, list);
+  });
+  const card = (c, depth) => `
+    <div class="cm-c${depth ? ' cm-c--reply' : ''}"${depth ? ` style="--cm-reply-depth:${Math.min(depth, 4)}"` : ''}>
       <div class="cm-c__head">
         <button type="button" class="cm-c__nick" data-cnick="${cmEsc(c.id)}">${cmEsc(c.authorNick)}</button>
         <span class="cm-c__time">${cmFmtTime(c.createdAt)}</span>
+        ${cmLoggedIn() ? `<button class="cm-c__reply" data-rid="${cmEsc(c.id)}">답글</button>` : ''}
         ${cmCanDelete(c.authorId) ? `<button class="cm-c__del" data-cid="${cmEsc(c.id)}" title="댓글 삭제">×</button>` : ''}
       </div>
       <div class="cm-c__body">${cmEsc(c.body)}</div>
-    </div>`).join('');
+    </div>`;
+  const branch = (c, depth) => {
+    const children = (replies.get(c.id) || []).map(r => branch(r, depth + 1)).join('');
+    const writer = _cmReplyTo === c.id ? `
+      <div class="cm-replywrite">
+        <textarea class="inp cm-cinput" id="cmReplyBody" maxlength="1000" placeholder="답글을 입력하세요"></textarea>
+        <div class="cm-replywrite__actions">
+          <button class="sbtn sbtn--ghost sbtn--sm" id="cmReplyCancelBtn">취소</button>
+          <button class="sbtn sbtn--primary sbtn--sm" id="cmReplyBtn" data-rid="${cmEsc(c.id)}">답글 등록</button>
+        </div>
+      </div>` : '';
+    return card(c, depth) + children + writer;
+  };
+  box.innerHTML = roots.map(c => branch(c, 0)).join('');
 
   // 닉네임 버튼은 댓글 id로 원본 배열에서 찾아 그 사람의 대표 캐릭터를 띄운다
   // (data 속성에 JSON을 통째로 넣는 것보다 간단하고 안전하다).
@@ -427,6 +460,17 @@ function cmPaintComments(comments) {
       renderCommunity();
     });
   });
+  box.querySelectorAll('.cm-c__reply').forEach(b => {
+    b.addEventListener('click', () => {
+      _cmReplyTo = _cmReplyTo === b.dataset.rid ? null : b.dataset.rid;
+      cmPaintComments(comments);
+    });
+  });
+  document.getElementById('cmReplyCancelBtn')?.addEventListener('click', () => {
+    _cmReplyTo = null;
+    cmPaintComments(comments);
+  });
+  document.getElementById('cmReplyBtn')?.addEventListener('click', cmSubmitReply);
 }
 
 async function cmSubmitComment() {
@@ -444,3 +488,31 @@ async function cmSubmitComment() {
   el.value = '';
   renderCommunity();
 }
+
+async function cmSubmitReply() {
+  if (_cmBusy) return;
+  const el = document.getElementById('cmReplyBody');
+  const parentId = document.getElementById('cmReplyBtn')?.dataset.rid || '';
+  const text = (el?.value || '').trim();
+  if (!text) { showToast('답글 내용을 입력해주세요.'); return; }
+  const btn = document.getElementById('cmReplyBtn');
+  _cmBusy = true; btn.disabled = true;
+  const j = await cmApi('comment', { postId: _cmPostId, parentId, body: text });
+  _cmBusy = false; btn.disabled = false;
+  if (!j.ok) { showToast(j.error); return; }
+  _cmReplyTo = null;
+  renderCommunity();
+}
+
+// 푸시 알림을 누르면 관련 글을 곧바로 연다. 열고 나면 쿼리를 지워 새로고침 때
+// 같은 글이 계속 열리지 않게 한다.
+window.addEventListener('load', () => {
+  const postId = new URLSearchParams(location.search).get('community');
+  if (!postId || typeof navigateTo !== 'function') return;
+  _cmPostId = postId;
+  _cmView = 'post';
+  navigateTo('community');
+  _cmView = 'post';
+  renderCommunity();
+  history.replaceState(null, '', location.pathname);
+});

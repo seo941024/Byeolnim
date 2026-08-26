@@ -173,7 +173,7 @@ function _hxCompute() {
   const enoughF = haveSEF >= totalSEF;
   const res = document.getElementById('hxResult');
   const SE_ICON  = `<img src="images/icons/Use_Sol_Erda.png"  class="hx-res-icon" alt="">`;
-  const SEF_ICON = `<img src="images/skill/Common/fragment.png" class="hx-res-icon" alt="">`;
+  const SEF_ICON = `<img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon hx-res-icon--frag" alt="">`;
   res.innerHTML = `
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON}${totalAllSE.toLocaleString()} 개</span></div>
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다 조각</span><span class="rv">${SEF_ICON}${totalAllSEF.toLocaleString()} 개</span></div>

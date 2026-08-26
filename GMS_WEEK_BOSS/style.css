@@ -1166,7 +1166,7 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 }
 .hexa-support-item span { font-size: .8rem; color: var(--text-sub); }
 .hx-node-name { display: flex; align-items: center; gap: 6px; color: var(--text) !important; font-weight: 700; font-size: .88rem; }
-.hx-node-icon { width: auto; height: auto; max-width: 32px; max-height: 32px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
+.hx-node-icon { width: auto; height: auto; max-width: 40px; max-height: 40px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
 .hexa-label { display: flex; align-items: center; gap: 6px; }
 .hexa-support-item .inp { max-width: 60px; }
 .hexa-support-item button { color: var(--danger); font-size: .82rem; padding: 0 4px; }
@@ -1182,6 +1182,10 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 .hexa-result-row .rv.ng { color: var(--danger); }
 .hexa-result-row .rv.hp-suf { color: #38bdf8; }
 .hx-res-icon { width: auto; height: auto; max-width: 28px; max-height: 28px; object-fit: contain; flex-shrink: 0; }
+/* 조각 아이콘은 원본 그림 자체가 캔버스를 꽉 채우지 않는 형태라 같은 28px 상자에서도
+   솔 에르다보다 작아 보인다 — 상자를 조금 더 키워서 눈에 보이는 무게를 맞춘다.
+   솔 에르다(.hx-res-icon 기본값)는 지금 크기가 정확하다고 확인됐으니 안 건드린다. */
+.hx-res-icon--frag { max-width: 34px; max-height: 34px; }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 
@@ -3380,11 +3384,18 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .cm-c__nick:hover { text-decoration: underline; }
 .cm-c__time { font-size: .72rem; color: var(--text-dim); font-weight: 700; }
+.cm-c__reply { padding: 0; border: none; background: transparent; color: var(--text-dim); font-size: .72rem; font-weight: 700; }
+.cm-c__reply:hover { color: var(--primary); text-decoration: underline; }
 .cm-c__del { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; border: none; background: transparent; color: var(--text-dim); cursor: pointer; font-size: .9rem; line-height: 1; }
 .cm-c__del:hover { color: #e5484d; }
 .cm-c__body { white-space: pre-wrap; word-break: break-word; font-size: .84rem; line-height: 1.55; color: var(--text); }
 .cm-cwrite { display: flex; gap: 8px; align-items: flex-start; }
 .cm-cinput { flex: 1; min-height: 70px; resize: vertical; font-family: inherit; line-height: 1.5; }
+.cm-c--reply { margin-left: calc(var(--cm-reply-depth) * 28px); border-left: 3px solid rgba(var(--hue), .45); background: rgba(var(--hue), .06); }
+.cm-replywrite { margin: 0 0 2px 28px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); }
+.cm-replywrite .cm-cinput { display: block; width: 100%; min-height: 64px; }
+.cm-replywrite__actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
+.cm-pushhint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0; padding: 9px 10px; border: 1px solid rgba(var(--hue),.28); border-radius: var(--radius-sm); background: rgba(var(--hue),.07); color: var(--text-sub); font-size: .76rem; font-weight: 700; }
 
 /* 대표 캐릭터 팝업 — 세로형 카드. 사이드바 캐릭터 카드(.char-card)와 같은 배경/portrait
    구성요소를 재사용하되, 초상화가 위 · 정보가 아래로 오는 배치만 다르다. */
@@ -3409,4 +3420,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   .cm-thumb { width: 76px; height: 76px; }
   .cm-cwrite { flex-direction: column; }
   .cm-cwrite .sbtn { width: 100%; }
+  .cm-c--reply { margin-left: calc(var(--cm-reply-depth) * 14px); }
+  .cm-replywrite { margin-left: 14px; }
+  .cm-pushhint { align-items: flex-start; flex-direction: column; }
 }

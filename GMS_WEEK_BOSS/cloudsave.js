@@ -203,6 +203,8 @@ async function csAuth(action) {
   _csAdmin = !!j.isAdmin;
   _csRepChar = j.repChar || null;
   showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
+  // 이미 허용해 둔 이 브라우저의 푸시 구독을 방금 로그인한 계정에 연결한다.
+  if (typeof bpSync === 'function') bpSync().catch(() => {});
   csRefresh();
 }
 

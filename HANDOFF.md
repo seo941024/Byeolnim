@@ -55,7 +55,130 @@
 공지 카드는 **"확인" 버튼으로만 닫힌다** (× 없음, 바깥 클릭으로도 안 닫힘) — 실수로 넘겨서
 공지를 못 보는 걸 막으려고 일부러 그렇게 만든 것이니 되돌리지 말 것.
 
-## 최신 세션에서 한 일 (2026-08-25 이어서, 커밋 `228c07e`까지)
+## 최신 세션에서 한 일 (2026-08-26, 커밋 `25052ab` ~ 최신)
+
+### 커뮤니티 게시판 신규 추가
+
+로그인한 사람만 글/댓글을 쓸 수 있는 자유게시판. 목록·글 읽기는 로그인 없이 된다.
+
+**파일 구성**
+- `api/community.js` — 글/댓글/사진 업로드까지 **전부 이 파일 하나**에서
+  `action` 문자열로 분기한다(`list`, `get`, `create`, `delete`, `comment`,
+  `comment-delete`, `upload`). auth.js와 같은 패턴.
+- `community.js` — 프론트. `_cmView`를 `list`/`write`/`post` 세 값으로 갈아
+  끼우며 그린다.
+- `index.html`에 `#sec-community` 섹션 + 사이드바 `data-sec="community"` 메뉴.
+- `style.css` 맨 끝에 `.cm-*` 클래스들.
+
+**⚠️ 반드시 알아야 할 것 — Vercel Hobby 플랜 서버리스 함수 12개 제한**
+`api/*.js` 파일 하나당 함수 1개로 카운트되고, Hobby 플랜은 **12개가 상한**이다.
+이 세션 시작 시점에 이미 정확히 12개였다(여유가 0이었음). 그래서:
+- 사진 업로드는 원래 `api/community-upload.js`로 따로 만들었다가, 함수 개수
+  초과로 배포가 두 번 연달아 `Error`(Build Failed) 났다. **`api/community.js`의
+  `action:'upload'`로 합쳐서 별도 파일을 없앴다.**
+- 그래도 1개가 남아, 15줄짜리였던 `api/push-key.js`(VAPID 공개키 조회)를
+  `api/push-subscribe.js`의 `GET` 라우트로 합쳤다. 클라이언트도
+  `bosspush.js`에서 `/api/push-key` → `/api/push-subscribe?key=1`로 바꿨다.
+- **다음에 새 API 파일을 또 추가하려면 먼저 `ls api/*.js | grep -v _lib.js | wc -l`로
+  개수를 세어 볼 것.** 12개 넘으면 배포가 조용히 실패하지 않고 명확한
+  에러 메시지("No more than 12 Serverless Functions...")를 내지만, 이번처럼
+  원인 파악에 몇 번 왔다갔다 했다. Pro 플랜으로 올리면 이 제한이 없어진다
+  (사용자가 원하면 알려줄 것 — 우리가 결정할 일은 아님).
+
+**저장 구조 (Upstash Redis)**
+```
+community:post:<id>       (json) { id, authorId, authorNick, title, body,
+                                    images:[url,...], createdAt, commentCount }
+community:posts           (zset) score=createdAt, member=id  -- 최신순 목록
+community:comments:<pid>  (json) [{ id, authorId, authorNick, body, createdAt }, ...]
+```
+닉네임은 글 작성 시점 값을 스냅샷으로 박아 둔다 — 나중에 닉네임 바꿔도 옛 글엔 소급 안 됨(의도된 동작).
+
+**사진 업로드 (Vercel Blob)**
+- 글당 최대 10장, 1장당 5MB, png/jpg/gif/webp만(동영상 불가 — 사용자 요청).
+- `put()` 호출 시 `access:'public'`. 글에 저장하는 이미지 URL은
+  `*.public.blob.vercel-storage.com` 패턴만 허용하도록 서버에서 검증한다
+  (아무 외부 URL이나 넣는 걸 막음).
+- **Vercel 콘솔에서 사용자가 직접 해야 하는 설정** (2026-08-26에 완료 확인):
+  Storage → Create → Blob Store 생성 시 **Access를 "Public"으로**(기본값인
+  "Private"는 우리 구조와 안 맞음 — 서명 토큰 없인 `<img>` 태그로 못 봄),
+  그리고 **"Add a read-write token env var to this connection" 체크박스를
+  꼭 체크**해야 `BLOB_READ_WRITE_TOKEN`이 생성된다(기본 비체크 상태로
+  두면 안 만들어져서 업로드가 계속 "저장소가 설정되지 않았습니다" 에러).
+  이미 만든 스토어라도 환경변수는 프로젝트 Settings → Environment Variables에서
+  `BLOB_READ_WRITE_TOKEN`이 Production에 걸려 있는지 확인 가능.
+  **환경변수를 새로 추가/연결한 뒤에는 그 이후 커밋으로 다시 배포해야 함**(이미
+  떠 있던 배포는 새 환경변수를 못 읽는다 — Redeploy 버튼 눌러도 되고, 아무
+  파일이나 살짝 고쳐 커밋·푸시해도 됨).
+
+**권한**
+- 글/댓글 삭제: 작성자 본인 또는 관리자. 서버는 `_lib.js`의 `isAdminId()`로
+  판단(환경변수 `ADMIN_IDS`, `auth.js`와 같은 함수를 공유하도록 이번에
+  `_lib.js`로 옮겼다). 화면에서는 `cloudsave.js`가 로그인 시 채워 두는
+  전역 `_csAdmin`을 같이 봐서 삭제 버튼을 보여줄지 정한다 — **화면에서 그 값을
+  위조해도 서버가 다시 확인하므로 실제로는 못 지운다.**
+
+**검증 상태**
+- XSS 방어(제목/닉네임에 태그 넣어도 텍스트로만 표시), 본문 줄바꿈 보존,
+  일반 유저/관리자 삭제 버튼 노출 분기 — 전부 fetch를 가짜로 물려서
+  로컬 브라우저로 직접 확인함.
+- Redis 저장/조회 자체(글쓰기 → 목록에 실제로 뜨는지, 댓글 등)는 로컬에
+  Upstash 환경변수가 없어서 **배포 후 실제 사이트에서 확인 필요**. 이번
+  세션에서 사용자가 배포·Blob 연결까지는 확인했다("됐어"라고 확인) —
+  다만 실제 글쓰기·댓글까지 끝까지 다 눌러본 건지는 이 문서 작성 시점에
+  명확히 확인 안 됨. **다음 세션에서 의심되면 제일 먼저 글 하나 써보고
+  목록에 뜨는지, 댓글 달리는지부터 확인할 것.**
+
+### 다음에 할 일 — 리치 텍스트 에디터 (사용자 명시적 요청, 미착수)
+
+사용자 요청 원문(의도 그대로 옮김): "네이버 카페 글처럼 사진이 들어가있으면
+표시해주고, 들어갔을 때 사용자가 설정한 글자크기, 줄강조, 기울임, 색 등
+그대로 볼 수 있고, 사진도 순서대로 볼 수 있게" — 즉 지금의 `<textarea>`
+평문 입력 + 본문 밖 사진 갤러리 구조를, **본문 안에 서식(굵게/기울임/크기/색/
+밑줄)과 이미지를 섞어 쓸 수 있는 위지윅 에디터**로 바꿔달라는 것.
+
+착수 안 한 이유: 세션 막바지에 요청이 들어왔고, 아래 작업이 얽혀 있어
+어설프게 반만 하면 보안 구멍(XSS)을 남긴 채 배포될 위험이 있다고 판단해
+사용자와 합의 하에 다음 세션으로 미뤘다.
+
+**해야 할 일 (순서대로)**
+1. **에디터 라이브러리 선정 및 도입** — Quill, TipTap, Toast UI Editor 등에서
+   고를 것. CDN 스크립트 태그 하나로 붙는 게 이 프로젝트 스타일(번들러 없는
+   순수 바닐라 JS)과 맞다 — Quill이 CDN 배포가 제일 간단해서 유력.
+   `community.js`의 `cmRenderWrite()`에서 `#cmBody` textarea를 에디터로
+   교체하면 된다.
+2. **저장 방식을 텍스트 → HTML로 변경.** `api/community.js`의 `create` 액션이
+   지금 `body`를 그냥 문자열로 저장하는데(`BODY_MAX` 글자 수만 검사), 앞으로는
+   에디터가 만든 HTML을 저장해야 한다.
+3. **★ 서버 쪽 HTML sanitize 필수.** 지금은 프론트(`community.js`의 `cmEsc()`)
+   에서 `&<>"`만 이스케이프해서 항상 텍스트로만 렌더링했기 때문에 안전했다.
+   에디터가 HTML을 만들게 되면 그 escape를 걷어내고 `innerHTML`로 꽂아야
+   서식이 실제로 보이는데, **그 순간 XSS 구멍이 열린다.** 반드시 서버에서
+   허용 태그(b/i/u/strong/em/span[style 중 color·font-size만]/img[src가
+   우리 Blob 도메인인 것만]/br/p 정도로 화이트리스트)만 남기고 나머지는
+   제거하는 sanitize를 거쳐야 한다. Node 쪽에서 쓸 만한 라이브러리:
+   `sanitize-html`(npm) 또는 `DOMPurify`(서버에서 쓰려면 jsdom 필요해서
+   더 무거움 — `sanitize-html` 쪽이 서버리스 함수엔 더 가볍고 적합해 보임).
+   **이 프로젝트는 이미 서버리스 함수 12개 한도에 걸려 있으므로 새 API 파일을
+   만들지 말고 기존 `api/community.js` 안에서 처리할 것.**
+4. **본문 내 이미지 삽입 흐름 변경.** 지금은 "사진을 다 올리고 → 글 등록"
+   순서로, 업로드된 URL 배열(`images`)을 글 본문과 분리해서 저장하고 본문
+   아래 순서대로 나열하는 구조다(`cmRenderPost()`의
+   `(p.images || []).map(...)` 부분). 에디터에 이미지를 바로 붙여 넣거나
+   드래그하면 에디터가 이미지를 만나는 시점에 `action:'upload'`를 호출해
+   URL을 받아서 그 자리에 꽂아야 한다(Quill 기준 `imageHandler` 커스텀).
+   **10장 제한과 5MB 제한은 그대로 유지** — 지금 `cmUploadFiles()`에 있는
+   개수·용량 체크 로직을 에디터의 업로드 훅으로 옮기면 된다.
+5. **목록(list)에서 사진 미리보기(`thumb`)와 본문 미리보기(`bodyPreview`)를
+   다시 손볼 것.** 지금은 `p.images[0]`과 `body.slice(0,100)`을 그대로
+   쓰는데, 본문이 HTML이 되면 `bodyPreview`는 태그를 걷어낸 순수 텍스트로
+   만들어야 한다(안 그러면 목록에 잘린 태그가 그대로 보이거나 깨진 HTML이
+   노출될 수 있음).
+6. 다 끝나면 이번 세션과 같은 방식으로 검증할 것: fetch를 가짜로 물려서
+   `<script>`나 `onerror=` 같은 걸 서식 텍스트에 넣어봐도 실행되지 않는지,
+   허용한 서식(굵게/색 등)은 실제로 적용되는지 로컬 브라우저에서 직접 확인.
+
+
 
 같은 날 세션이 이어졌다. 아래 "1. 미스틱 프론티어" 이후 있었던 작업.
 

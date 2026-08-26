@@ -22,6 +22,11 @@ let _cmNextCursor = 0;
 let _cmBusy = false;
 let _cmEditor = null;
 
+// 기본 Quill 색 포맷은 style="color: ..."를 만든다. 서버는 style을 전혀
+// 허용하지 않으므로, 세 가지 고정 색상만 class로 기록하는 포맷으로 교체한다.
+const CM_COLOR_CLASS = Quill.import('attributors/class/color');
+Quill.register(CM_COLOR_CLASS, true);
+
 function cmEsc(s) {
   return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 }
@@ -173,7 +178,7 @@ function cmRenderWrite(sec) {
     modules: { toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
       [{ size: ['small', false, 'large', 'huge'] }],
-      [{ color: [] }, { background: [] }],
+      [{ color: ['red', 'yellow', 'blue'] }],
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['blockquote', 'image'], ['clean'],
     ] },

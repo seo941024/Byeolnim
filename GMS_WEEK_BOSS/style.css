@@ -3357,6 +3357,20 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .cm-post__body .ql-size-small { font-size: .75em; }
 .cm-post__body .ql-size-large { font-size: 1.5em; }
 .cm-post__body .ql-size-huge { font-size: 2.5em; }
+/* 커뮤니티 글자색은 다크·화이트 어느 쪽에서도 읽히는 세 가지로 제한한다.
+   Quill의 class 포맷을 쓰므로 style 속성을 열 필요가 없다. */
+.cm-editor .ql-color-red, .cm-post__body .ql-color-red { color: #f87171; }
+.cm-editor .ql-color-yellow, .cm-post__body .ql-color-yellow { color: #facc15; }
+.cm-editor .ql-color-blue, .cm-post__body .ql-color-blue { color: #60a5fa; }
+.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="red"] { background-color: #f87171; }
+.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="yellow"] { background-color: #facc15; }
+.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="blue"] { background-color: #60a5fa; }
+:root[data-theme="light"] .cm-editor .ql-color-red,
+:root[data-theme="light"] .cm-post__body .ql-color-red { color: #dc2626; }
+:root[data-theme="light"] .cm-editor .ql-color-yellow,
+:root[data-theme="light"] .cm-post__body .ql-color-yellow { color: #a16207; }
+:root[data-theme="light"] .cm-editor .ql-color-blue,
+:root[data-theme="light"] .cm-post__body .ql-color-blue { color: #2563eb; }
 .cm-post__img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 8px 0; }
 
 /* 댓글 */

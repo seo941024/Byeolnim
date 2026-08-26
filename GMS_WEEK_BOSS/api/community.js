@@ -44,7 +44,7 @@ function sanitizePostHtml(value) {
   return sanitizeHtml(String(value || ''), {
     allowedTags: ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'span', 'ol', 'ul', 'li', 'blockquote', 'img'],
     allowedAttributes: { span: ['class'], img: ['src', 'alt'] },
-    allowedClasses: { span: ['ql-size-small', 'ql-size-large', 'ql-size-huge', 'ql-color-*', 'ql-bg-*'] },
+    allowedClasses: { span: ['ql-size-small', 'ql-size-large', 'ql-size-huge', 'ql-color-red', 'ql-color-yellow', 'ql-color-blue'] },
     allowedSchemes: ['https'],
     transformTags: {
       img: (tagName, attribs) => BLOB_URL_RE.test(attribs.src || '')

@@ -98,7 +98,9 @@ module.exports = async function handler(req, res) {
 
     /* ── 사진 업로드 (Vercel Blob) ──
        사진 1장씩 올리고, 여러 장은 프론트에서 반복 호출한다 — 한 번에 여러 장을
-       보내면 하나가 실패했을 때 전체를 다시 보내야 해서 번거롭다. */
+       보내면 하나가 실패했을 때 전체를 다시 보내야 해서 번거롭다.
+       BLOB_READ_WRITE_TOKEN은 Vercel Storage에서 Blob 스토어를 연결하면
+       자동으로 주입된다(Production/Preview 스코프 확인 완료, 2026-08-26). */
     if (action === 'upload') {
       if (!process.env.BLOB_READ_WRITE_TOKEN) return bad(res, 500, '사진 저장소가 설정되지 않았습니다(BLOB_READ_WRITE_TOKEN)');
 

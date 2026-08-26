@@ -175,7 +175,7 @@ function _hxCompute() {
   // 아이콘은 항상 값 뒤(오른쪽 끝)에 고정폭 상자로 붙는다 — 그래야 숫자 자릿수가
   // 달라도 아이콘 위치(=행의 끝점)가 전부 같아진다.
   const seIcon  = `<span class="hx-res-icon-wrap"><img src="images/icons/Use_Sol_Erda.png" class="hx-res-icon" alt=""></span>`;
-  const sefIcon = `<span class="hx-res-icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon hx-res-icon--frag" alt=""></span>`;
+  const sefIcon = `<span class="hx-res-icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon" alt=""></span>`;
   const SE_ICON  = n => `${n.toLocaleString()}${seIcon}`;
   const SEF_ICON = n => `${n.toLocaleString()}${sefIcon}`;
   res.innerHTML = `

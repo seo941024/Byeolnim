@@ -284,7 +284,7 @@ async function csSetRepChar(savedAt) {
         name: ch.name, level: f.level || ch.level,
         job: f.job || (typeof JOB_LIST !== 'undefined' ? JOB_LIST[ch.jobIdx]?.name : '') || '',
         world: f.world || '', region: f.region || (state.region === 'eu' ? 'EU' : 'NA'),
-        img: f.img || '',
+        img: f.img || '', cardBg: ch.cardBg || null,
       });
     }
   }

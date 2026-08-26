@@ -203,10 +203,12 @@ module.exports = async function handler(req, res) {
       // 프로필에 박아 넣는 걸 막는다(글 사진의 Blob URL 검증과 같은 이유).
       const IMG_RE = /^https:\/\/msavatar\d*\.nexon\.net\//i;
       const safeImg = IMG_RE.test(img) ? img : '';
+      // 카드 배경도 캐릭터가 골라둔 값 그대로 — bgN 형식만 허용(임의 문자열 방지).
+      const cardBg = /^bg\d+$/.test(String(body.cardBg || '')) ? body.cardBg : null;
 
       if (!name) return bad(res, 400, '캐릭터를 선택해주세요');
 
-      rec.repChar = { name, level, job, world, region, img: safeImg };
+      rec.repChar = { name, level, job, world, region, img: safeImg, cardBg };
       await redis.set('auth:user:' + uid, JSON.stringify(rec));
       return res.status(200).json({ ok: true, repChar: rec.repChar });
     }

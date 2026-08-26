@@ -84,12 +84,20 @@ function cmEnsureRepOverlay() {
 
 function cmShowRepChar(nick, repChar) {
   const ov = cmEnsureRepOverlay();
+  // 세로형 카드 — 사이드바 캐릭터 카드(.char-card)와 같은 구성 요소(배경/portrait/서버
+  // 아이콘)를 그대로 재사용하되, 초상화가 위 · 정보가 아래로 오는 세로 배치만 다르다.
+  const sIcon = repChar && repChar.world ? serverIconSrc(repChar.world) : '';
   const bodyHtml = repChar ? `
     <div class="cm-rep">
-      ${repChar.img ? `<img class="cm-rep__img" src="${cmEsc(repChar.img)}" alt="" onerror="this.style.display='none'">` : ''}
+      <div class="cm-rep__portrait">
+        ${typeof portraitBgHtml === 'function' ? portraitBgHtml(repChar.cardBg) : ''}
+        <img class="cm-rep__img" src="${repChar.img ? cmEsc(repChar.img) : 'images/dailytasks/default.png'}" alt=""
+          onerror="this.src='images/dailytasks/default.png'">
+      </div>
       <div class="cm-rep__name">${cmEsc(repChar.name)}</div>
-      <div class="cm-rep__meta">Lv.${cmEsc(String(repChar.level))} · ${cmEsc(repChar.job)}</div>
-      <div class="cm-rep__meta">${cmEsc(repChar.region)} ${cmEsc(repChar.world)}</div>
+      <div class="cm-rep__lv">Lv.${cmEsc(String(repChar.level))}</div>
+      ${repChar.world ? `<div class="cm-rep__world-line">${sIcon ? `<img src="${cmEsc(sIcon)}" onerror="this.style.display='none'">` : ''}<span>${cmEsc(repChar.world)}</span></div>` : ''}
+      ${repChar.job ? `<div class="cm-rep__job">${cmEsc(repChar.job)}</div>` : ''}
     </div>`
     : '<p class="empty">대표 캐릭터가 설정되지 않았습니다.</p>';
   ov.innerHTML = `

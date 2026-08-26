@@ -89,4 +89,14 @@ async function pushSnapshot(redis, key, snap) {
   return arr;
 }
 
-module.exports = { worldName, lookupCharacter, histKey, todayStr, getRedis, pushSnapshot };
+/* 관리자 여부 — auth.js에서 쓰던 걸 여기로 옮겨서 community.js와 같이 쓴다.
+   ADMIN_IDS 환경변수(쉼표 구분)에 있는 아이디만 관리자다. */
+function isAdminId(id) {
+  return String(process.env.ADMIN_IDS || '')
+    .split(',')
+    .map(s => s.trim())
+    .filter(Boolean)
+    .includes(id);
+}
+
+module.exports = { worldName, lookupCharacter, histKey, todayStr, getRedis, pushSnapshot, isAdminId };

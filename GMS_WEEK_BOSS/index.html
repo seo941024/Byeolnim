@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20260826i" />
+  <link rel="stylesheet" href="style.css?v=20260826j" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
   <!-- ── PWA (홈 화면에 추가) ── -->
@@ -123,6 +123,9 @@
       </button>
       <button class="sb-nav__item" data-sec="bosshp">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/boss.webp" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
+      </button>
+      <button class="sb-nav__item" data-sec="community">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Alliance_Report.png" alt="" onerror="this.style.display='none'"></span><span>커뮤니티</span>
       </button>
       <button class="sb-nav__item" data-sec="serverstatus">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/info.webp" alt="" onerror="this.style.display='none'"></span><span>서버 상태</span>
@@ -542,6 +545,7 @@
     <section class="sec" id="sec-frontier"></section>
 
     <!-- ══════ 서버 상태 ══════ -->
+    <section class="sec" id="sec-community"></section>
     <section class="sec" id="sec-serverstatus"></section>
 
     <!-- ══════ 오늘의 채널 추천 ══════ -->
@@ -792,13 +796,13 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260826b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260826a"></script>
+<script src="app.js?v=20260826b"></script>
 <script src="hexa.js?v=20260819b"></script>
 <script src="liberation.js?v=20260826b"></script>
 <script src="starforce_sim.js?v=20260821c"></script>
 <script src="cube.js?v=20260825a"></script><script src="familiar.js?v=20260825a"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20260826b"></script>
 <script src="addoption.js?v=20260825b"></script><script src="bosshp.js?v=20260819b"></script>
-<script src="serverstatus.js?v=20260819b"></script>
+<script src="serverstatus.js?v=20260819b"></script><script src="community.js?v=20260826a"></script>
 <script src="dailytasks.js?v=20260826c"></script>
 <script src="wantchannel.js?v=20260819b"></script>
 <!-- 캘린더가 알림 켜기/끄기를 호출하므로 mcalendar.js보다 먼저 와야 한다 -->

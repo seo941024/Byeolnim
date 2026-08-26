@@ -95,6 +95,7 @@ const NAV_LABELS = {
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', bosshp: '보스 정보', serverstatus: '서버 상태',
+  community: '커뮤니티',
 };
 function navigateTo(sec) {
   if (typeof va === 'function') va('event', { name: '메뉴 클릭', data: { section: NAV_LABELS[sec] || sec } });
@@ -107,6 +108,8 @@ function navigateTo(sec) {
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
   if (sec === 'serverstatus') renderServerStatus();
+  // 커뮤니티는 들어올 때마다 목록을 새로 받는다 — 다른 사람이 쓴 글이 그새 올라올 수 있다
+  if (sec === 'community' && typeof renderCommunity === 'function') { _cmView = 'list'; renderCommunity(); }
   if (sec === 'dailytasks') renderDailyTasks();
   if (sec === 'wantchannel') renderWantChannel();
   if (sec === 'mcalendar') renderMapleCalendar();

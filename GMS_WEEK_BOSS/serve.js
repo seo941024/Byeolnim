@@ -104,11 +104,13 @@ async function lookupCharacter(name, reboot, region) {
   };
 }
 
-/* 요청 본문을 전부 모아 JSON으로. 실패하면 null */
-function readJsonBody(req) {
+/* 요청 본문을 전부 모아 JSON으로. 실패하면 null.
+   maxBytes를 받는 이유: 사진 업로드(base64)는 auth.js류보다 훨씬 커서
+   기본 1MB로는 잘린다. */
+function readJsonBody(req, maxBytes = 1024 * 1024) {
   return new Promise(resolve => {
     let raw = '';
-    req.on('data', c => { raw += c; if (raw.length > 1024 * 1024) req.destroy(); });
+    req.on('data', c => { raw += c; if (raw.length > maxBytes) req.destroy(); });
     req.on('end', () => { try { resolve(JSON.parse(raw)); } catch { resolve(null); } });
     req.on('error', () => resolve(null));
   });
@@ -138,6 +140,33 @@ http.createServer(async (req, res) => {
     const body = await readJsonBody(req);
     try {
       await runVercelHandler('./api/auth.js', req, res, body);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'서버 오류: ' + e.message }));
+    }
+    return;
+  }
+
+  // ── API: /api/community (게시판 글/댓글) ──
+  if (u.pathname === '/api/community') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const body = await readJsonBody(req);
+    try {
+      await runVercelHandler('./api/community.js', req, res, body);
+    } catch (e) {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ ok:false, error:'서버 오류: ' + e.message }));
+    }
+    return;
+  }
+
+  // ── API: /api/community-upload (게시판 사진 업로드) ──
+  // base64라 원본 1장(최대 5MB)보다 넉넉하게 잡는다(base64는 원본의 약 1.37배).
+  if (u.pathname === '/api/community-upload') {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    const body = await readJsonBody(req, 8 * 1024 * 1024);
+    try {
+      await runVercelHandler('./api/community-upload.js', req, res, body);
     } catch (e) {
       res.writeHead(500, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify({ ok:false, error:'서버 오류: ' + e.message }));

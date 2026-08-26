@@ -15,7 +15,7 @@
    해서 응답 시간 차이로 정답을 유추하지 못하게 막는다.
    ============================================= */
 const crypto = require('crypto');
-const { getRedis } = require('./_lib');
+const { getRedis, isAdminId } = require('./_lib');
 
 const ID_RE = /^[A-Za-z0-9_]{3,16}$/;     // 대소문자 구분, 영문·숫자·밑줄
 // 한글·영문·숫자·기호·공백 1~12자. 순수 공백만으로는 안 되게 아래서 trim 후 길이를 다시 본다.
@@ -29,18 +29,7 @@ const DATA_MAX = 1024 * 512;               // 저장 데이터 상한 512KB
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-/* 관리자 표시용. 누가 관리자인지는 서버만 알아야 해서 환경변수(ADMIN_IDS)에 두고
-   여기서만 대조한다. 앱 코드에 아이디를 적으면 저장소를 열어 보는 누구나 알게 된다.
-   아이디는 대소문자를 구분하므로 그대로 비교한다. 쉼표로 여러 명 넣을 수 있다.
-   ※ 이건 이름 옆 배지를 붙이는 용도일 뿐, 권한과는 무관하다 —
-      알림 발송 같은 실제 관리자 기능은 ADMIN_SECRET으로 따로 확인한다. */
-function isAdminId(id) {
-  return String(process.env.ADMIN_IDS || '')
-    .split(',')
-    .map(s => s.trim())
-    .filter(Boolean)
-    .includes(id);
-}
+/* isAdminId는 _lib.js로 옮겼다 — community.js(글/댓글 삭제 권한)도 같이 쓴다. */
 
 function hashPw(pw, salt) {
   // N=16384는 서버리스 환경에서 100ms 안팎 — 무차별 대입을 충분히 느리게 만든다

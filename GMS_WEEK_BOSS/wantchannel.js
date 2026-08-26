@@ -137,7 +137,7 @@ async function _wcFetchRecommend(item) {
 function _wcRowHtml(item) {
   return `
     <div class="wc-item" data-want="${item.file}">
-      <img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" />
+      <span class="wc-item__img-wrap"><img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" /></span>
       <span class="wc-item__name">${item.name}</span>
     </div>`;
 }

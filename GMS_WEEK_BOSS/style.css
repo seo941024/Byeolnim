@@ -1167,6 +1167,9 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 .hexa-support-item span { font-size: .8rem; color: var(--text-sub); }
 .hx-node-name { display: flex; align-items: center; gap: 6px; color: var(--text) !important; font-weight: 700; font-size: .88rem; }
 .hx-node-icon { width: auto; height: auto; max-width: 40px; max-height: 40px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
+/* 아이콘을 고정폭 상자에 넣어서, 보유 솔 에르다/조각 두 줄의 텍스트가 같은
+   위치에서 시작하게 한다(사이드바 nav와 동일한 패턴). */
+.hexa-label__icon-wrap { width: 40px; height: 40px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hexa-label { display: flex; align-items: center; gap: 6px; }
 .hexa-support-item .inp { max-width: 60px; }
 .hexa-support-item button { color: var(--danger); font-size: .82rem; padding: 0 4px; }
@@ -1186,6 +1189,10 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
    솔 에르다보다 작아 보인다 — 상자를 조금 더 키워서 눈에 보이는 무게를 맞춘다.
    솔 에르다(.hx-res-icon 기본값)는 지금 크기가 정확하다고 확인됐으니 안 건드린다. */
 .hx-res-icon--frag { max-width: 34px; max-height: 34px; }
+/* 아이콘을 값 뒤 고정폭 상자에 넣는다 — 숫자 자릿수가 달라도 아이콘(=행의 끝점)
+   위치가 전부 같아진다. 솔 에르다/조각 아이콘 크기가 달라도(28px vs 34px)
+   상자 폭은 둘 다 34px로 통일해서 끝점이 흔들리지 않게 한다. */
+.hx-res-icon-wrap { width: 34px; height: 28px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 

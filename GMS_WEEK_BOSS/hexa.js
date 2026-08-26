@@ -172,21 +172,25 @@ function _hxCompute() {
   const enough  = haveSE >= totalSE;
   const enoughF = haveSEF >= totalSEF;
   const res = document.getElementById('hxResult');
-  const SE_ICON  = `<img src="images/icons/Use_Sol_Erda.png"  class="hx-res-icon" alt="">`;
-  const SEF_ICON = `<img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon hx-res-icon--frag" alt="">`;
+  // 아이콘은 항상 값 뒤(오른쪽 끝)에 고정폭 상자로 붙는다 — 그래야 숫자 자릿수가
+  // 달라도 아이콘 위치(=행의 끝점)가 전부 같아진다.
+  const seIcon  = `<span class="hx-res-icon-wrap"><img src="images/icons/Use_Sol_Erda.png" class="hx-res-icon" alt=""></span>`;
+  const sefIcon = `<span class="hx-res-icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon hx-res-icon--frag" alt=""></span>`;
+  const SE_ICON  = n => `${n.toLocaleString()}${seIcon}`;
+  const SEF_ICON = n => `${n.toLocaleString()}${sefIcon}`;
   res.innerHTML = `
-    <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON}${totalAllSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다 조각</span><span class="rv">${SEF_ICON}${totalAllSEF.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">이미 사용한 솔 에르다</span><span class="rv">${SE_ICON}${usedSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">이미 사용한 솔 에르다 조각</span><span class="rv">${SEF_ICON}${usedSEF.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">만렙까지 남은 솔 에르다</span><span class="rv">${SE_ICON}${remainSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">만렙까지 남은 솔 에르다 조각</span><span class="rv">${SEF_ICON}${remainSEF.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON(totalAllSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다 조각</span><span class="rv">${SEF_ICON(totalAllSEF)}</span></div>
+    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">이미 사용한 솔 에르다</span><span class="rv">${SE_ICON(usedSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">이미 사용한 솔 에르다 조각</span><span class="rv">${SEF_ICON(usedSEF)}</span></div>
+    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">만렙까지 남은 솔 에르다</span><span class="rv">${SE_ICON(remainSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">만렙까지 남은 솔 에르다 조각</span><span class="rv">${SEF_ICON(remainSEF)}</span></div>
     <div class="hx-result-sep"></div>
     <div class="hexa-result-label">필요량 계산 결과</div>
-    <div class="hexa-result-row"><span class="rl">필요 솔 에르다</span><span class="rv">${SE_ICON}${totalSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">필요 솔 에르다 조각</span><span class="rv">${SEF_ICON}${totalSEF.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">보유 솔 에르다</span><span class="rv">${SE_ICON}${haveSE.toLocaleString()} 개</span></div>
-    <div class="hexa-result-row"><span class="rl">보유 솔 에르다 조각</span><span class="rv">${SEF_ICON}${haveSEF.toLocaleString()} 개</span></div>
+    <div class="hexa-result-row"><span class="rl">필요 솔 에르다</span><span class="rv">${SE_ICON(totalSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">필요 솔 에르다 조각</span><span class="rv">${SEF_ICON(totalSEF)}</span></div>
+    <div class="hexa-result-row"><span class="rl">보유 솔 에르다</span><span class="rv">${SE_ICON(haveSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">보유 솔 에르다 조각</span><span class="rv">${SEF_ICON(haveSEF)}</span></div>
     <div class="hexa-result-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
       <span class="rl">솔 에르다 부족량</span>
       <span class="rv ${enough?'hp-suf':'ng'}">${enough?'요구량 충족':(totalSE-haveSE).toLocaleString()+' 개 부족'}</span>

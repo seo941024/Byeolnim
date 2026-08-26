@@ -178,7 +178,9 @@ function cmRenderWrite(sec) {
     modules: { toolbar: [
       ['bold', 'italic', 'underline', 'strike'],
       [{ size: ['small', false, 'large', 'huge'] }],
-      [{ color: ['red', 'yellow', 'blue'] }],
+      // false는 Quill이 자동으로 "색 없음"(기본 글자색으로 되돌리기) 항목을 만들어준다 —
+      // 커스텀 배열을 쓰면 이게 자동으로 안 붙어서 따로 넣어야 한다.
+      [{ color: ['red', 'yellow', 'blue', false] }],
       [{ list: 'ordered' }, { list: 'bullet' }],
       ['blockquote', 'image'], ['clean'],
     ] },

@@ -24,6 +24,17 @@ function subId(endpoint) {
 }
 
 module.exports = async function handler(req, res) {
+  /* GET /api/push-subscribe?key=1 — VAPID 공개키 조회.
+     원래 api/push-key.js였는데, Vercel Hobby 플랜의 서버리스 함수 12개 제한에
+     걸려서(커뮤니티 기능 추가로 초과) 여기 GET 라우트로 합쳤다. 로직은 그대로,
+     자리만 옮겼다 — 클라이언트도 이 주소로 같이 바꿔야 한다(bosspush.js). */
+  if (req.method === 'GET') {
+    const key = process.env.VAPID_PUBLIC_KEY;
+    if (!key) { res.status(500).json({ ok: false, error: 'VAPID 키 미설정' }); return; }
+    res.status(200).json({ ok: true, key });
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ ok: false, error: 'POST만 허용' });
     return;

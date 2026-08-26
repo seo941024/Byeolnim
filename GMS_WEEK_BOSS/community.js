@@ -1,7 +1,8 @@
 /* ═══════════════════════════════════════════════
    커뮤니티 — 글쓰기 / 목록 / 글 보기 / 댓글
 
-   서버: api/community.js (글·댓글), api/community-upload.js (사진)
+   서버: api/community.js (글·댓글·사진 업로드 전부 이 파일 하나 — Vercel Hobby
+   플랜의 서버리스 함수 12개 제한 때문에 action:'upload'로 합쳐져 있다)
    로그인은 cloudsave.js가 관리하는 토큰(localStorage: gms_cloud_token)을 그대로 쓴다.
    목록·읽기는 로그인 없이 되고, 글·댓글 쓰기는 로그인해야 한다.
 
@@ -218,12 +219,7 @@ async function cmUploadFiles(fileList) {
         fr.onerror = () => reject(new Error('읽기 실패'));
         fr.readAsDataURL(f);
       });
-      const r = await fetch('/api/community-upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: cmToken(), data: dataUrl }),
-      });
-      const j = await r.json();
+      const j = await cmApi('upload', { data: dataUrl });
       if (!j.ok) { showToast(j.error || '업로드 실패'); continue; }
       _cmDraftImages.push(j.url);
       cmPaintThumbs();

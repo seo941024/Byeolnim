@@ -96,7 +96,8 @@ async function bpEnable() {
       '새로고침하고 다시 시도해주세요.' };
   }
 
-  const keyRes = await fetch('/api/push-key').then(r => r.json()).catch(() => null);
+  // push-key.js는 함수 개수 제한 때문에 push-subscribe.js의 GET 라우트로 합쳐졌다
+  const keyRes = await fetch('/api/push-subscribe?key=1').then(r => r.json()).catch(() => null);
   if (!keyRes || !keyRes.ok) return { ok: false, msg: '서버 설정이 아직 안 됐어요.' };
 
   const reg = await navigator.serviceWorker.ready;

@@ -25,6 +25,11 @@ const IMAGES_MAX = 10;
 const LIST_PAGE = 20;
 const COMMENTS_MAX_PER_POST = 500; // 도배 방지용 상한
 
+// 사진 업로드용 — 원래 api/community-upload.js였는데, Vercel Hobby 플랜의
+// 서버리스 함수 12개 제한에 걸려서 이 파일의 action으로 합쳤다.
+const UPLOAD_MAX_BYTES = 5 * 1024 * 1024; // 원본 파일 기준 5MB
+const UPLOAD_ALLOWED = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
+
 function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
 function newId() { return Date.now().toString(36) + crypto.randomBytes(4).toString('hex'); }
 
@@ -90,6 +95,33 @@ module.exports = async function handler(req, res) {
     const token = String(body.token || '');
     const uid = await getUid(redis, token);
     if (!uid) return bad(res, 401, '로그인이 필요합니다');
+
+    /* ── 사진 업로드 (Vercel Blob) ──
+       사진 1장씩 올리고, 여러 장은 프론트에서 반복 호출한다 — 한 번에 여러 장을
+       보내면 하나가 실패했을 때 전체를 다시 보내야 해서 번거롭다. */
+    if (action === 'upload') {
+      if (!process.env.BLOB_READ_WRITE_TOKEN) return bad(res, 500, '사진 저장소가 설정되지 않았습니다(BLOB_READ_WRITE_TOKEN)');
+
+      const data = String(body.data || '');
+      const m = data.match(/^data:(image\/[a-z]+);base64,(.+)$/);
+      if (!m) return bad(res, 400, '이미지 파일이 아닙니다');
+      const mime = m[1];
+      const ext = UPLOAD_ALLOWED[mime];
+      if (!ext) return bad(res, 400, '지원하지 않는 이미지 형식입니다(png/jpg/gif/webp만)');
+
+      let buf;
+      try { buf = Buffer.from(m[2], 'base64'); } catch { return bad(res, 400, '이미지 데이터가 손상되었습니다'); }
+      if (buf.length > UPLOAD_MAX_BYTES) return bad(res, 400, '사진 1장은 5MB 이내여야 합니다');
+
+      try {
+        const { put } = require('@vercel/blob');
+        const name = `community/${uid}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+        const blob = await put(name, buf, { access: 'public', contentType: mime });
+        return res.status(200).json({ ok: true, url: blob.url });
+      } catch (e) {
+        return bad(res, 500, '업로드 실패: ' + e.message);
+      }
+    }
 
     /* ── 글쓰기 ── */
     if (action === 'create') {

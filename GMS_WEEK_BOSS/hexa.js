@@ -172,7 +172,7 @@ function _hxCompute() {
   const enough  = haveSE >= totalSE;
   const enoughF = haveSEF >= totalSEF;
   const res = document.getElementById('hxResult');
-  const SE_ICON  = `<img src="images/skill/Common/sol_erda.png"  class="hx-res-icon" alt="">`;
+  const SE_ICON  = `<img src="images/icons/Use_Sol_Erda.png"  class="hx-res-icon" alt="">`;
   const SEF_ICON = `<img src="images/skill/Common/fragment.png" class="hx-res-icon" alt="">`;
   res.innerHTML = `
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON}${totalAllSE.toLocaleString()} 개</span></div>

@@ -1166,7 +1166,7 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 }
 .hexa-support-item span { font-size: .8rem; color: var(--text-sub); }
 .hx-node-name { display: flex; align-items: center; gap: 6px; color: var(--text) !important; font-weight: 700; font-size: .88rem; }
-.hx-node-icon { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
+.hx-node-icon { width: auto; height: auto; max-width: 32px; max-height: 32px; object-fit: contain; flex-shrink: 0; border-radius: 6px; }
 .hexa-label { display: flex; align-items: center; gap: 6px; }
 .hexa-support-item .inp { max-width: 60px; }
 .hexa-support-item button { color: var(--danger); font-size: .82rem; padding: 0 4px; }
@@ -1181,7 +1181,7 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 .hexa-result-row .rv.ok { color: var(--accent); }
 .hexa-result-row .rv.ng { color: var(--danger); }
 .hexa-result-row .rv.hp-suf { color: #38bdf8; }
-.hx-res-icon { width: 28px; height: 28px; object-fit: contain; flex-shrink: 0; }
+.hx-res-icon { width: auto; height: auto; max-width: 28px; max-height: 28px; object-fit: contain; flex-shrink: 0; }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 

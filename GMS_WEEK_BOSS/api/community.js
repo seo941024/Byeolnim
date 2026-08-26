@@ -85,11 +85,17 @@ module.exports = async function handler(req, res) {
   const action = String(body.action || '');
 
   try {
-    /* ── 목록 (로그인 불필요) ── */
+    /* ── 목록 (로그인 불필요) ──
+       "더 보기"로 이어붙이던 걸 번호 페이지로 바꿨다 — 글이 많아지면 옛날 글
+       보려고 몇 번이고 눌러야 하는 게 불편해서, 페이지 번호로 바로 점프하게 한다. */
     if (action === 'list') {
-      const cursor = Number(body.cursor) || 0; // 이전 응답의 nextCursor를 그대로 넣으면 이어서
-      const ids = await redis.zrange('community:posts', cursor, cursor + LIST_PAGE - 1, { rev: true });
-      if (!ids || !ids.length) return res.status(200).json({ ok: true, posts: [], nextCursor: null });
+      const total = await redis.zcard('community:posts');
+      const totalPages = Math.max(1, Math.ceil(total / LIST_PAGE));
+      const page = Math.min(Math.max(1, Number(body.page) || 1), totalPages);
+      const offset = (page - 1) * LIST_PAGE;
+
+      const ids = total ? await redis.zrange('community:posts', offset, offset + LIST_PAGE - 1, { rev: true }) : [];
+      if (!ids || !ids.length) return res.status(200).json({ ok: true, posts: [], page: 1, totalPages: 1 });
 
       const raws = await Promise.all(ids.map(id => redis.get('community:post:' + id)));
       const posts = raws.filter(Boolean).map(r => {
@@ -103,8 +109,7 @@ module.exports = async function handler(req, res) {
           imageCount: postImageUrls(sanitizePostHtml(p.body || '')).length || (p.images && p.images.length) || 0,
         };
       });
-      const nextCursor = ids.length === LIST_PAGE ? cursor + LIST_PAGE : null;
-      return res.status(200).json({ ok: true, posts, nextCursor });
+      return res.status(200).json({ ok: true, posts, page, totalPages });
     }
 
     /* ── 글 하나 + 댓글 (로그인 불필요) ── */

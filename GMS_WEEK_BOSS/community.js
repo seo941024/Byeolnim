@@ -18,7 +18,8 @@ const CM_IMG_MAX_BYTES = 5 * 1024 * 1024;
 let _cmView = 'list';
 let _cmPostId = null;
 let _cmPosts = [];
-let _cmNextCursor = 0;
+let _cmPage = 1;        // 지금 보고 있는 페이지 — 글 봤다가 목록으로 돌아오면 이 페이지 그대로 보여준다
+let _cmTotalPages = 1;
 let _cmBusy = false;
 let _cmEditor = null;
 
@@ -83,7 +84,7 @@ function cmRenderList(sec) {
       <button class="sbtn sbtn--primary" id="cmWriteBtn">글쓰기</button>
     </div>
     <div class="cm-list" id="cmList"><p class="empty">불러오는 중...</p></div>
-    <div class="cm-more" id="cmMoreWrap"></div>`;
+    <div class="cm-pager" id="cmPager"></div>`;
 
   document.getElementById('cmWriteBtn').addEventListener('click', () => {
     if (!cmLoggedIn()) { showToast('로그인 후 글을 쓸 수 있습니다.'); return; }
@@ -91,22 +92,24 @@ function cmRenderList(sec) {
     renderCommunity();
   });
 
-  _cmPosts = [];
-  _cmNextCursor = 0;
-  cmLoadMore();
+  cmLoadPage(_cmPage);
 }
 
-async function cmLoadMore() {
-  if (_cmBusy || _cmNextCursor === null) return;
+/* 번호 페이지 방식 — "더 보기"로 이어붙이면 옛날 글 보려고 몇 번이고 눌러야 해서
+   불편하다는 지적으로 바꿨다. 글 봤다가 목록으로 돌아오면 보던 페이지 그대로 보여준다. */
+async function cmLoadPage(page) {
+  if (_cmBusy) return;
   _cmBusy = true;
-  const j = await cmApi('list', { cursor: _cmNextCursor });
+  document.getElementById('cmList').innerHTML = '<p class="empty">불러오는 중...</p>';
+  const j = await cmApi('list', { page });
   _cmBusy = false;
   if (!j.ok) {
     document.getElementById('cmList').innerHTML = `<p class="empty">${cmEsc(j.error)}</p>`;
     return;
   }
-  _cmPosts = _cmPosts.concat(j.posts);
-  _cmNextCursor = j.nextCursor;
+  _cmPosts = j.posts;
+  _cmPage = j.page;
+  _cmTotalPages = j.totalPages;
   cmPaintList();
 }
 
@@ -115,7 +118,7 @@ function cmPaintList() {
   if (!box) return;
   if (!_cmPosts.length) {
     box.innerHTML = '<p class="empty">아직 글이 없습니다. 첫 글을 남겨보세요.</p>';
-    document.getElementById('cmMoreWrap').innerHTML = '';
+    document.getElementById('cmPager').innerHTML = '';
     return;
   }
   box.innerHTML = _cmPosts.map(p => `
@@ -140,11 +143,37 @@ function cmPaintList() {
     });
   });
 
-  const moreWrap = document.getElementById('cmMoreWrap');
-  moreWrap.innerHTML = _cmNextCursor === null
-    ? ''
-    : '<button class="sbtn sbtn--ghost w100" id="cmMoreBtn">더 보기</button>';
-  document.getElementById('cmMoreBtn')?.addEventListener('click', cmLoadMore);
+  cmPaintPager();
+}
+
+/* 페이지 번호 버튼 — 지금 페이지 중심으로 최대 7개(양옆 3개씩)만 보여주고,
+   양 끝은 처음/끝으로 바로 점프하는 버튼을 둔다. 페이지가 하나뿐이면 아예 숨긴다. */
+function cmPaintPager() {
+  const pager = document.getElementById('cmPager');
+  if (!pager) return;
+  if (_cmTotalPages <= 1) { pager.innerHTML = ''; return; }
+
+  const cur = _cmPage, total = _cmTotalPages;
+  const lo = Math.max(1, cur - 3), hi = Math.min(total, cur + 3);
+  const nums = [];
+  for (let p = lo; p <= hi; p++) nums.push(p);
+
+  // 처음/이전/다음/마지막은 페이지 값이 우연히 지금 페이지와 같아도(1페이지에서
+  // "처음"·"이전") 번호 버튼처럼 강조되면 안 되니, 강조 여부를 따로 받는다.
+  const btn = (label, page, opts = {}) =>
+    `<button type="button" class="cm-page${opts.cur ? ' cm-page--cur' : ''}"
+      data-page="${page}" ${opts.disabled ? 'disabled' : ''}>${label}</button>`;
+
+  pager.innerHTML = `
+    ${btn('처음', 1, { disabled: cur === 1 })}
+    ${btn('이전', Math.max(1, cur - 1), { disabled: cur === 1 })}
+    ${nums.map(p => btn(String(p), p, { cur: p === cur })).join('')}
+    ${btn('다음', Math.min(total, cur + 1), { disabled: cur === total })}
+    ${btn('마지막', total, { disabled: cur === total })}`;
+
+  pager.querySelectorAll('.cm-page').forEach(el => {
+    el.addEventListener('click', () => cmLoadPage(Number(el.dataset.page)));
+  });
 }
 
 /* ── 글쓰기 ── */
@@ -259,6 +288,7 @@ async function cmSubmitPost() {
   _cmEditor = null;
   _cmPostId = j.id;
   _cmView = 'post';
+  _cmPage = 1; // 새 글은 최신순 1페이지 맨 위에 뜨니, 목록으로 돌아갔을 때 그게 보이게
   renderCommunity();
 }
 

@@ -3321,7 +3321,16 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .cm-item__preview { font-size: .78rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cm-item__meta { display: flex; align-items: center; gap: 10px; font-size: .72rem; color: var(--text-dim); font-weight: 700; }
 .cm-item__nick { color: var(--accent); }
-.cm-more { margin-top: 10px; }
+/* 번호 페이지네이션 — "더 보기"로 이어붙이던 걸 대체했다(마지막 페이지로 바로 못 가서). */
+.cm-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
+.cm-page {
+  min-width: 34px; height: 34px; padding: 0 8px; border-radius: 8px;
+  border: 1px solid var(--border); background: var(--bg2); color: var(--text-sub);
+  font-size: .82rem; font-weight: 700; cursor: pointer; transition: .15s;
+}
+.cm-page:hover:not(:disabled) { border-color: var(--primary); color: var(--text); }
+.cm-page--cur { background: var(--primary); border-color: var(--primary); color: #fff; }
+.cm-page:disabled { opacity: .35; cursor: default; }
 
 /* 글쓰기 */
 .cm-write { display: flex; flex-direction: column; }

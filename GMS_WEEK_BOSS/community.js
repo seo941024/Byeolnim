@@ -67,6 +67,43 @@ function cmFmtTime(ms) {
   return `${d.getFullYear()}. ${p(d.getMonth() + 1)}. ${p(d.getDate())}.`;
 }
 
+/* ── 대표 캐릭터 팝업 — 글·댓글의 닉네임을 누르면 뜬다.
+   dailytasks.js의 오버레이 준비 패턴(_dtEnsureOverlay)과 같은 방식으로,
+   처음 한 번만 오버레이 껍데기를 만들고 다음부터는 안쪽만 새로 그린다. */
+function cmEnsureRepOverlay() {
+  let ov = document.getElementById('cmRepOverlay');
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'cmRepOverlay';
+    ov.className = 'overlay';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
+  }
+  return ov;
+}
+
+function cmShowRepChar(nick, repChar) {
+  const ov = cmEnsureRepOverlay();
+  const bodyHtml = repChar ? `
+    <div class="cm-rep">
+      ${repChar.img ? `<img class="cm-rep__img" src="${cmEsc(repChar.img)}" alt="" onerror="this.style.display='none'">` : ''}
+      <div class="cm-rep__name">${cmEsc(repChar.name)}</div>
+      <div class="cm-rep__meta">Lv.${cmEsc(String(repChar.level))} · ${cmEsc(repChar.job)}</div>
+      <div class="cm-rep__meta">${cmEsc(repChar.region)} ${cmEsc(repChar.world)}</div>
+    </div>`
+    : '<p class="empty">대표 캐릭터가 설정되지 않았습니다.</p>';
+  ov.innerHTML = `
+    <div class="modal cm-rep-modal">
+      <div class="modal__head">
+        <span class="modal__title">${cmEsc(nick)}</span>
+        <button class="modal__close" id="cmRepClose">×</button>
+      </div>
+      <div class="modal__body">${bodyHtml}</div>
+    </div>`;
+  document.getElementById('cmRepClose').addEventListener('click', () => ov.classList.remove('open'));
+  ov.classList.add('open');
+}
+
 /* ── 화면 그리기 ── */
 function renderCommunity() {
   const sec = document.getElementById('sec-community');
@@ -320,7 +357,7 @@ async function cmRenderPost(sec) {
     <div class="card cm-post">
       <h3 class="cm-post__title">${cmEsc(p.title)}</h3>
       <div class="cm-post__meta">
-        <span class="cm-post__nick">${cmEsc(p.authorNick)}</span>
+        <button type="button" class="cm-post__nick" id="cmPostNickBtn">${cmEsc(p.authorNick)}</button>
         <span>${cmFmtTime(p.createdAt)}</span>
       </div>
       <div class="cm-post__body">${p.body}</div>
@@ -338,6 +375,7 @@ async function cmRenderPost(sec) {
     </div>`;
 
   document.getElementById('cmBackBtn').addEventListener('click', () => { _cmView = 'list'; renderCommunity(); });
+  document.getElementById('cmPostNickBtn').addEventListener('click', () => cmShowRepChar(p.authorNick, p.authorRepChar));
   document.getElementById('cmDelPost')?.addEventListener('click', async () => {
     if (!confirm('이 글을 삭제할까요? 되돌릴 수 없습니다.')) return;
     const d = await cmApi('delete', { id: p.id });
@@ -358,12 +396,21 @@ function cmPaintComments(comments) {
   box.innerHTML = comments.map(c => `
     <div class="cm-c">
       <div class="cm-c__head">
-        <span class="cm-c__nick">${cmEsc(c.authorNick)}</span>
+        <button type="button" class="cm-c__nick" data-cnick="${cmEsc(c.id)}">${cmEsc(c.authorNick)}</button>
         <span class="cm-c__time">${cmFmtTime(c.createdAt)}</span>
         ${cmCanDelete(c.authorId) ? `<button class="cm-c__del" data-cid="${cmEsc(c.id)}" title="댓글 삭제">×</button>` : ''}
       </div>
       <div class="cm-c__body">${cmEsc(c.body)}</div>
     </div>`).join('');
+
+  // 닉네임 버튼은 댓글 id로 원본 배열에서 찾아 그 사람의 대표 캐릭터를 띄운다
+  // (data 속성에 JSON을 통째로 넣는 것보다 간단하고 안전하다).
+  box.querySelectorAll('.cm-c__nick').forEach(b => {
+    b.addEventListener('click', () => {
+      const c = comments.find(x => x.id === b.dataset.cnick);
+      if (c) cmShowRepChar(c.authorNick, c.authorRepChar);
+    });
+  });
 
   box.querySelectorAll('.cm-c__del').forEach(b => {
     b.addEventListener('click', async () => {

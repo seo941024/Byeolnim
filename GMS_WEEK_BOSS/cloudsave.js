@@ -14,6 +14,7 @@ let _csUser = null;      // 로그인된 아이디
 let _csNick = null;      // 표시용 닉네임. 안 정했으면 서버가 아이디를 그대로 돌려준다
 // 관리자 배지 표시 여부. 서버(ADMIN_IDS)가 판단해서 내려주는 값만 믿는다 — 여기서 정하지 않는다.
 let _csAdmin = false;
+let _csRepChar = null;   // { name, level, job, world, region, img } | null — 커뮤니티에서 닉네임 누르면 보여줄 캐릭터
 let _csBusy = false;
 let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
 let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
@@ -131,6 +132,13 @@ function csRender(savedAt) {
       <button class="sbtn sbtn--ghost" id="csNickSaveBtn">닉네임 저장</button>
     </div>
     <p class="dt-help mt8">한글·영문·숫자·기호로 1~12자까지 정할 수 있고, 우측 위 버튼에 이 이름으로 표시됩니다.</p>
+    <div class="cs-row mt8">
+      <select class="sel cs-inp" id="csRepSel">${csRepCharOptions()}</select>
+      <button class="sbtn sbtn--ghost" id="csRepSaveBtn">대표 캐릭터 저장</button>
+    </div>
+    <p class="dt-help mt8">${_csRepChar
+      ? `현재 대표 캐릭터: <b>${csEsc(_csRepChar.name)}</b> (Lv.${_csRepChar.level} · ${csEsc(_csRepChar.world)}). 커뮤니티에서 내 닉네임을 누르면 이 캐릭터가 보입니다.`
+      : '커뮤니티에서 닉네임을 누르면 여기서 고른 캐릭터가 보입니다. 캐릭터 목록에 등록해 둔 것 중에서 고를 수 있습니다.'}</p>
     <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
     <div class="cs-row mt8">
       <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
@@ -149,6 +157,7 @@ function csRender(savedAt) {
   document.getElementById('csLogoutBtn').addEventListener('click', csLogout);
   document.getElementById('csNickSaveBtn').addEventListener('click', () => csSetNick(savedAt));
   document.getElementById('csNickInp').addEventListener('keydown', e => { if (e.key === 'Enter') csSetNick(savedAt); });
+  document.getElementById('csRepSaveBtn').addEventListener('click', () => csSetRepChar(savedAt));
   document.getElementById('csSaveBtn').addEventListener('click', csSave);
   document.getElementById('csLoadBtn').addEventListener('click', csLoad);
   document.getElementById('csPwToggleBtn').addEventListener('click', () => {
@@ -192,6 +201,7 @@ async function csAuth(action) {
   _csUser = j.id;
   _csNick = j.nickname || j.id;
   _csAdmin = !!j.isAdmin;
+  _csRepChar = j.repChar || null;
   showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
   csRefresh();
 }
@@ -203,6 +213,7 @@ async function csLogout() {
   _csUser = null;
   _csNick = null;
   _csAdmin = false;
+  _csRepChar = null;
   _csPwOpen = false;
   showToast('로그아웃되었습니다.');
   csRender(null);
@@ -232,6 +243,58 @@ async function csChangePw(savedAt) {
   }
   _csPwOpen = false;
   showToast('비밀번호를 변경했습니다.');
+  csRender(savedAt);
+}
+
+/* ── 대표 캐릭터 ──
+   캐릭터 목록(state.chars)에서 골라 서버에 스냅샷으로 올린다. 실시간 조회가
+   아니라 "고를 때의 이름·레벨·직업·서버·이미지"를 그대로 저장하는 것이라,
+   나중에 그 캐릭터 정보를 갱신해도 이미 고른 값은 안 바뀐다(다시 저장해야 함) —
+   닉네임과 같은 원칙. */
+function csRepCharOptions() {
+  const chars = (typeof state !== 'undefined' && Array.isArray(state.chars)) ? state.chars : [];
+  const curName = _csRepChar && _csRepChar.name;
+  const opts = chars.map((ch, i) => {
+    const f = ch.fetched || {};
+    const world = f.world || '';
+    return `<option value="${i}"${ch.name === curName ? ' selected' : ''}>${csEsc(ch.name)}${world ? ` (${csEsc(world)})` : ''}</option>`;
+  }).join('');
+  const noneSelected = !curName || !chars.some(ch => ch.name === curName);
+  return `<option value=""${noneSelected ? ' selected' : ''}>— 없음(해제) —</option>${opts}`;
+}
+
+async function csSetRepChar(savedAt) {
+  if (_csBusy) return;
+  const sel = document.getElementById('csRepSel');
+  const idx = sel.value;
+
+  _csBusy = true;
+  const btn = document.getElementById('csRepSaveBtn');
+  btn.disabled = true; btn.textContent = '저장 중...';
+
+  let j;
+  if (idx === '') {
+    j = await csApi('setrepchar', { clear: true });
+  } else {
+    const ch = (state.chars || [])[Number(idx)];
+    if (!ch) { j = { ok: false, error: '캐릭터를 찾을 수 없습니다.' }; }
+    else {
+      const f = ch.fetched || {};
+      j = await csApi('setrepchar', {
+        name: ch.name, level: f.level || ch.level,
+        job: f.job || (typeof JOB_LIST !== 'undefined' ? JOB_LIST[ch.jobIdx]?.name : '') || '',
+        world: f.world || '', region: f.region || (state.region === 'eu' ? 'EU' : 'NA'),
+        img: f.img || '',
+      });
+    }
+  }
+
+  _csBusy = false;
+  btn.disabled = false; btn.textContent = '대표 캐릭터 저장';
+
+  if (!j.ok) { showToast(j.error || '대표 캐릭터 설정에 실패했습니다.'); return; }
+  _csRepChar = j.repChar;
+  showToast(idx === '' ? '대표 캐릭터를 해제했습니다.' : '대표 캐릭터를 저장했습니다.');
   csRender(savedAt);
 }
 
@@ -326,12 +389,14 @@ async function csRefresh() {
     _csUser = null;
     _csNick = null;
     _csAdmin = false;
+    _csRepChar = null;
     csRender(null);
     return;
   }
   _csUser = j.id;
   _csNick = j.nickname || j.id;
   _csAdmin = !!j.isAdmin;
+  _csRepChar = j.repChar || null;
   csRender(j.savedAt);
 }
 

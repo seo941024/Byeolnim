@@ -66,10 +66,12 @@ async function getUid(redis, token) {
   return await redis.get('auth:tok:' + token);
 }
 
-async function getNick(redis, uid) {
+/* 닉네임과 대표 캐릭터(설정한 사람만)를 한 번에 읽어서 글·댓글에 스냅샷으로
+   박아 둔다 — 닉네임과 같은 원칙: 나중에 바뀌어도 이미 쓴 글에는 소급 안 됨. */
+async function getProfile(redis, uid) {
   const raw = await redis.get('auth:user:' + uid);
   const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
-  return (rec && rec.nickname) || uid;
+  return { nickname: (rec && rec.nickname) || uid, repChar: (rec && rec.repChar) || null };
 }
 
 module.exports = async function handler(req, res) {
@@ -175,10 +177,10 @@ module.exports = async function handler(req, res) {
       if (text.length > BODY_TEXT_MAX) return bad(res, 400, `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다`);
       if (images.length > IMAGES_MAX) return bad(res, 400, `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다`);
 
-      const nickname = await getNick(redis, uid);
+      const { nickname, repChar } = await getProfile(redis, uid);
       const id = newId();
       const createdAt = Date.now();
-      const post = { id, authorId: uid, authorNick: nickname, title, body: html, images: [], createdAt, commentCount: 0 };
+      const post = { id, authorId: uid, authorNick: nickname, authorRepChar: repChar, title, body: html, images: [], createdAt, commentCount: 0 };
       await redis.set('community:post:' + id, JSON.stringify(post));
       await redis.zadd('community:posts', { score: createdAt, member: id });
       return res.status(200).json({ ok: true, id });
@@ -213,8 +215,8 @@ module.exports = async function handler(req, res) {
       const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
       if (comments.length >= COMMENTS_MAX_PER_POST) return bad(res, 400, '댓글이 너무 많습니다');
 
-      const nickname = await getNick(redis, uid);
-      const comment = { id: newId(), authorId: uid, authorNick: nickname, body: text, createdAt: Date.now() };
+      const { nickname, repChar } = await getProfile(redis, uid);
+      const comment = { id: newId(), authorId: uid, authorNick: nickname, authorRepChar: repChar, body: text, createdAt: Date.now() };
       comments.push(comment);
       await redis.set('community:comments:' + postId, JSON.stringify(comments));
 

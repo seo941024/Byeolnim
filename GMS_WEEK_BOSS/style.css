@@ -3349,7 +3349,11 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* 글 보기 */
 .cm-post__title { font-size: 1.25rem; font-weight: 900; color: var(--text); margin: 0 0 6px; }
 .cm-post__meta { display: flex; gap: 10px; font-size: .76rem; color: var(--text-dim); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-.cm-post__nick { color: var(--accent); }
+.cm-post__nick {
+  background: none; border: none; padding: 0; font: inherit; font-weight: 800;
+  color: var(--accent); cursor: pointer;
+}
+.cm-post__nick:hover { text-decoration: underline; }
 .cm-editor .ql-toolbar.ql-snow, .cm-editor .ql-container.ql-snow { border-color: var(--border); font-family: inherit; }
 .cm-editor .ql-toolbar.ql-snow { border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--bg2); }
 .cm-editor .ql-container.ql-snow { min-height: 260px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); font-size: .9rem; color: var(--text); }
@@ -3387,13 +3391,24 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .cm-clist { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
 .cm-c { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); }
 .cm-c__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.cm-c__nick { font-size: .8rem; font-weight: 800; color: var(--accent); }
+.cm-c__nick {
+  background: none; border: none; padding: 0; font: inherit;
+  font-size: .8rem; font-weight: 800; color: var(--accent); cursor: pointer;
+}
+.cm-c__nick:hover { text-decoration: underline; }
 .cm-c__time { font-size: .72rem; color: var(--text-dim); font-weight: 700; }
 .cm-c__del { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; border: none; background: transparent; color: var(--text-dim); cursor: pointer; font-size: .9rem; line-height: 1; }
 .cm-c__del:hover { color: #e5484d; }
 .cm-c__body { white-space: pre-wrap; word-break: break-word; font-size: .84rem; line-height: 1.55; color: var(--text); }
 .cm-cwrite { display: flex; gap: 8px; align-items: flex-start; }
 .cm-cinput { flex: 1; min-height: 70px; resize: vertical; font-family: inherit; line-height: 1.5; }
+
+/* 대표 캐릭터 팝업 */
+.cm-rep-modal { width: min(320px, 92vw); }
+.cm-rep { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0 4px; text-align: center; }
+.cm-rep__img { width: 96px; height: 96px; object-fit: contain; image-rendering: pixelated; }
+.cm-rep__name { font-size: 1.05rem; font-weight: 900; color: var(--text); margin-top: 4px; }
+.cm-rep__meta { font-size: .8rem; font-weight: 700; color: var(--text-dim); }
 
 @media (max-width: 768px) {
   .cm-item__thumb { width: 52px; height: 52px; }

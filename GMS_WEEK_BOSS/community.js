@@ -28,6 +28,15 @@ function cmEsc(s) {
 function cmToken() { return localStorage.getItem('gms_cloud_token') || ''; }
 function cmLoggedIn() { return !!cmToken(); }
 
+/* 관리자는 남의 글·댓글도 지울 수 있다. 실제 판단은 서버(ADMIN_IDS)가 하고,
+   여기서는 버튼을 보여줄지만 정한다 — 이 값을 위조해도 서버에서 막힌다.
+   _csAdmin은 cloudsave.js가 로그인 응답의 isAdmin으로 채워 둔 전역이다. */
+function cmIsAdmin() { return typeof _csAdmin !== 'undefined' && _csAdmin === true; }
+function cmCanDelete(authorId) {
+  if (!cmLoggedIn()) return false;
+  return authorId === (localStorage.getItem('gms_cloud_id') || '') || cmIsAdmin();
+}
+
 async function cmApi(action, extra) {
   const r = await fetch('/api/community', {
     method: 'POST',
@@ -262,8 +271,7 @@ async function cmRenderPost(sec) {
   }
 
   const p = j.post;
-  const myId = localStorage.getItem('gms_cloud_id') || '';
-  const canDeletePost = cmLoggedIn() && p.authorId === myId;
+  const canDeletePost = cmCanDelete(p.authorId);
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
@@ -301,11 +309,11 @@ async function cmRenderPost(sec) {
     renderCommunity();
   });
 
-  cmPaintComments(j.comments, myId);
+  cmPaintComments(j.comments);
   document.getElementById('cmCommentBtn')?.addEventListener('click', cmSubmitComment);
 }
 
-function cmPaintComments(comments, myId) {
+function cmPaintComments(comments) {
   const box = document.getElementById('cmClist');
   if (!box) return;
   if (!comments.length) { box.innerHTML = '<p class="empty">아직 댓글이 없습니다.</p>'; return; }
@@ -314,7 +322,7 @@ function cmPaintComments(comments, myId) {
       <div class="cm-c__head">
         <span class="cm-c__nick">${cmEsc(c.authorNick)}</span>
         <span class="cm-c__time">${cmFmtTime(c.createdAt)}</span>
-        ${cmLoggedIn() && c.authorId === myId ? `<button class="cm-c__del" data-cid="${cmEsc(c.id)}" title="댓글 삭제">×</button>` : ''}
+        ${cmCanDelete(c.authorId) ? `<button class="cm-c__del" data-cid="${cmEsc(c.id)}" title="댓글 삭제">×</button>` : ''}
       </div>
       <div class="cm-c__body">${cmEsc(c.body)}</div>
     </div>`).join('');

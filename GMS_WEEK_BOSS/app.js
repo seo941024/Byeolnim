@@ -1606,6 +1606,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 09. 01.',
+    items: [
+      {
+        head: '하이퍼스탯 최적화 계산기가 생겼습니다',
+        desc: '남은 하이퍼스탯 포인트를 어느 스탯에 쓰는 게 가장 이득인지 계산해 추천해드립니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 26.',
     items: [
       {
@@ -1655,7 +1664,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-26-community-replies-push',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-09-01-hyperstat',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

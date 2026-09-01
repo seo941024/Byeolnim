@@ -93,6 +93,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 const NAV_LABELS = {
   wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
+  hyperstat: '하이퍼스탯 최적화',
   liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',

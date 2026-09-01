@@ -378,8 +378,10 @@ function _frCalcAndRender() {
 
   // 지금 입력한 주사위 눈과 무관하게, 이 팀·보너스 주사위 구성으로 가능한 범위만 본다
   const { min, max } = _frCalcRange();
-  const rangeEl = document.getElementById('frResultRange');
-  if (rangeEl) rangeEl.textContent = `${min.toLocaleString()} ~ ${max.toLocaleString()}`;
+  const minEl = document.getElementById('frRangeMin');
+  const maxEl = document.getElementById('frRangeMax');
+  if (minEl) minEl.textContent = min.toLocaleString();
+  if (maxEl) maxEl.textContent = max.toLocaleString();
 
   const target = parseInt(document.getElementById('frTarget')?.value);
   const passEl = document.getElementById('frPass');
@@ -857,6 +859,22 @@ function initFrontier() {
       <div id="frTeamBadges" class="fr-badges mt8"></div>
     </div>
 
+    <!-- 지금 고른 팀·보너스 주사위로 나올 수 있는 최저점/최고점 — 주사위를
+         일일이 넣어보기 전에 먼저 보여야 의미가 있으므로 점수 계산기보다 위. -->
+    <div class="card mt16">
+      <div class="card__title">이 조합으로 가능한 점수</div>
+      <div class="fr-dice-row mt8">
+        <div class="sf-res-item" style="flex:1">
+          <span class="sf-res-label">최저점</span>
+          <span class="sf-res-val big" id="frRangeMin">0</span>
+        </div>
+        <div class="sf-res-item" style="flex:1">
+          <span class="sf-res-label">최고점</span>
+          <span class="sf-res-val big" id="frRangeMax">0</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 아래: 점수 계산기 -->
     <div class="card mt16">
       <div class="card__title">라운드 점수 계산기</div>
@@ -892,11 +910,6 @@ function initFrontier() {
         <span class="sf-res-label">최종 점수</span>
         <span class="sf-res-val big" id="frResultScore">0</span>
       </div>
-      <div class="sf-res-item">
-        <span class="sf-res-label">가능한 점수 범위</span>
-        <span class="sf-res-val" id="frResultRange" style="font-size:.85rem"></span>
-      </div>
-      <p class="dt-help" style="margin-top:-4px">지금 고른 팀·보너스 주사위 구성 그대로, 주사위 눈만 다르게 나왔을 때 최저점부터 최고점까지 나올 수 있는 범위입니다.</p>
       <div id="frPass" class="fr-pass"></div>
     </div>`;
 

@@ -321,6 +321,30 @@ function _frSyncDiceOptions() {
   });
 }
 
+/* 지금 고른 팀 잠재·보너스 주사위 구성은 그대로 두고, 주사위 눈(1~cap)만
+   모든 조합으로 돌려봤을 때 나올 수 있는 최저점~최고점을 계산한다. 실제
+   라운드에서 주사위 눈은 무작위로 나오니 "이 조합이면 최악/최선일 때 몇
+   점까지 가능한가"를 보여주는 용도다. prevent(주사위 상한) 옵션이 있으면
+   _frDiceCap()이 이미 그 상한을 계산해주므로 그 안에서만 돌리면 된다 —
+   상한을 무시하고 1~6을 다 돌리면 실제로 나올 수 없는 조합까지 세게 된다. */
+function _frCalcRange() {
+  const cap = _frDiceCap();
+  let min = Infinity, max = -Infinity;
+  for (let a = 1; a <= cap; a++) {
+    for (let b = 1; b <= cap; b++) {
+      for (let c = 1; c <= cap; c++) {
+        const dice = [a, b, c];
+        const { addSum, mult } = _frAggregate(dice);
+        const raw = (a + b + c + addSum) * mult;
+        const score = Math.floor(raw + 1e-9);
+        if (score < min) min = score;
+        if (score > max) max = score;
+      }
+    }
+  }
+  return { min, max };
+}
+
 function _frCalcAndRender() {
   _frSyncDiceOptions();
   const dice = ['frDice1', 'frDice2', 'frDice3'].map(id => parseInt(document.getElementById(id)?.value) || 0);
@@ -351,6 +375,11 @@ function _frCalcAndRender() {
   document.getElementById('frResultScore').textContent = score.toLocaleString();
   document.getElementById('frResultFormula').textContent =
     `(${diceSum} + ${fmt(addSum)}) × ${fmt(mult)} = ${fmt(raw)} → 내림 ${score.toLocaleString()}`;
+
+  // 지금 입력한 주사위 눈과 무관하게, 이 팀·보너스 주사위 구성으로 가능한 범위만 본다
+  const { min, max } = _frCalcRange();
+  const rangeEl = document.getElementById('frResultRange');
+  if (rangeEl) rangeEl.textContent = `${min.toLocaleString()} ~ ${max.toLocaleString()}`;
 
   const target = parseInt(document.getElementById('frTarget')?.value);
   const passEl = document.getElementById('frPass');
@@ -863,6 +892,11 @@ function initFrontier() {
         <span class="sf-res-label">최종 점수</span>
         <span class="sf-res-val big" id="frResultScore">0</span>
       </div>
+      <div class="sf-res-item">
+        <span class="sf-res-label">가능한 점수 범위</span>
+        <span class="sf-res-val" id="frResultRange" style="font-size:.85rem"></span>
+      </div>
+      <p class="dt-help" style="margin-top:-4px">지금 고른 팀·보너스 주사위 구성 그대로, 주사위 눈만 다르게 나왔을 때 최저점부터 최고점까지 나올 수 있는 범위입니다.</p>
       <div id="frPass" class="fr-pass"></div>
     </div>`;
 

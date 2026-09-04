@@ -2417,8 +2417,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-rank-row:last-child { border-bottom: none; }
 .ci-rank-row span { color: var(--text-sub); font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ci-rank-row b { font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.ci-income-done { font-style: normal; color: var(--text-dim); font-weight: 700; }
 
-/* 좌측 카드 하단 랭킹 */
+/* 좌측 카드 하단 — 랭킹(있으면) + 이번 주 예상 수익 */
 .ci-card__ranks { margin-top: 0; padding: 5px 11px 7px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
 .ci-ranks-title { font-size: .64rem; font-weight: 800; color: var(--text-sub); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
 .ci-card__ranks .ci-rank-row { padding: 2px 0; font-size: clamp(.62rem, .46rem + .9cqw, .95rem); }

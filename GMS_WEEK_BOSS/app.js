@@ -1294,10 +1294,19 @@ function renderCharInfo() {
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);
     const headHtml = headSrc ? `<img class="ci-jobicon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
-    const rankRow = f?.rank ? `
-      <div class="ci-card__ranks">
-        <div class="ci-rank-row"><span>${region} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>
-      </div>` : '';
+    const rankRowHtml = f?.rank
+      ? `<div class="ci-rank-row"><span>${region} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : '';
+    // 보스 수익 계산기에서 체크한 것 - 대여비. weekTotal(updateCrystalBar)과 같은 식이라
+    // 사이드바 합계와 카드에 찍힌 숫자가 항상 일치한다.
+    const weekly = charWeeklyMeso(ch) - rentalWeeklyCost(ch);
+    // 카드의 정보 칸은 일러스트 고정폭(112px) 때문에 실측 145px 안팎으로 좁다.
+    // fmtMeso 전체 표기("4억 4,467만 5,000 메소")는 여기서 값만으로도 108px를 먹어
+    // "이번 주 예상 수익" 라벨이 "이번…"으로 잘렸다(실측) — 라벨을 줄여도 근본
+    // 해결이 안 돼서, 히스토그램 축에 쓰던 fmtMesoCompact("4.4억")로 바꿨다.
+    // 정확한 값은 title(호버)로 남긴다.
+    const weeklyRowHtml = `<div class="ci-rank-row"><span>주간 수익</span><b${weekly < 0 ? ' style="color:var(--danger)"' : ''} title="${fmtMeso(weekly)}">${ch.weekDone ? '<i class="ci-income-done">완료 · </i>' : ''}${fmtMesoCompact(weekly)}</b></div>`;
+    // 랭킹 유무와 무관하게 항상 보이는 하나의 카드 하단 블록으로 합친다
+    const rankRow = `<div class="ci-card__ranks">${rankRowHtml}${weeklyRowHtml}</div>`;
     const isActive = i === state.activeChar;
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
@@ -1617,6 +1626,15 @@ const NOTICE_LOG = [
   },
   */
   {
+    date: '2026. 09. 01.',
+    items: [
+      {
+        head: '캐릭터 카드에서 이번 주 예상 수익을 바로 볼 수 있습니다',
+        desc: '보스 수익 계산기에서 체크한 보스와 대여비를 반영한 순수익이 캐릭터 카드 하단에 표시됩니다. 정확한 금액은 마우스를 올리면 볼 수 있습니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 08. 26.',
     items: [
       {
@@ -1666,7 +1684,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-08-26-community-replies-push',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-09-01-card-income',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

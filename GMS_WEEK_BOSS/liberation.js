@@ -22,6 +22,10 @@ const genState = (() => {
   let s = def;
   try { s = Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.genesis) || '{}')); }
   catch { return def; }
+  // startDate는 "오늘부터 시뮬레이션"의 기준점이라 저장된 옛날 값을 그대로 불러오면
+  // 안 된다 — 그 사이 지난 리셋들을 하나도 안 지난 것처럼 계산해서 예상 해방일이
+  // 완전히 틀어진다(예: 몇 달 전에 켜뒀던 값이 계속 남아있던 문제). 열 때마다 오늘로.
+  s.startDate = todayStr();
   // 더스크 난이도 키를 hard → chaos로 고쳤으므로, 예전에 hard로 저장된 선택을 옮겨준다.
   // 안 하면 TRACE_YIELD에 없는 키라 획득량이 0으로 잡힌다.
   if (s.sel && s.sel.dusk && s.sel.dusk.diff === 'hard') s.sel.dusk = { ...s.sel.dusk, diff: 'chaos' };
@@ -385,8 +389,11 @@ function renderGenesis() {
 ═══════════════════════════════════════════════ */
 const destState = (() => {
   const def = { heldResolve: 0, sel: {}, startDate: todayStr(), questIdx: 0 };
-  try { return Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.destiny) || '{}')); }
+  let s = def;
+  try { s = Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.destiny) || '{}')); }
   catch { return def; }
+  s.startDate = todayStr();   // genState와 같은 이유 — 저장된 옛날 날짜를 쓰면 안 됨
+  return s;
 })();
 function saveDest() { localStorage.setItem(STORAGE_KEYS.destiny, JSON.stringify(destState)); }
 function fmtResolve(n) { return Number(n).toLocaleString(); }
@@ -691,8 +698,11 @@ function renderDestiny() {
 ═══════════════════════════════════════════════ */
 const astraState = (() => {
   const def = { startDate: todayStr(), weaponIdx: 0, areaIdx: 0, heldFrag: 0, heldTrace: 0, sel: {} };
-  try { return Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.astra) || '{}')); }
+  let s = def;
+  try { s = Object.assign(def, JSON.parse(localStorage.getItem(STORAGE_KEYS.astra) || '{}')); }
   catch { return def; }
+  s.startDate = todayStr();   // genState와 같은 이유 — 저장된 옛날 날짜를 쓰면 안 됨
+  return s;
 })();
 function saveAstra() { localStorage.setItem(STORAGE_KEYS.astra, JSON.stringify(astraState)); }
 function fmtAstra(n) { return Number(n).toLocaleString(); }

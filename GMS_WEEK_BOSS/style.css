@@ -9,7 +9,7 @@
    프리텐다드로 보인다. 다른 폰트들처럼 font/ 폴더에 로컬로 받아 넣었다
    (CDN 안 씀 — 오프라인 PWA 캐시가 로컬 경로 기준이라 외부 CDN 폰트는
    서비스워커가 못 챙긴다). 45~920 굵기를 전부 담고 있어서 body에서
-   font-weight:600(세미볼드)로 바로 쓸 수 있다. */
+   font-weight:800(엑스트라볼드) 등 원하는 굵기로 바로 쓸 수 있다. */
 @font-face {
   font-family: '고딕';
   src: url('font/PretendardVariable.woff2') format('woff2-variations');

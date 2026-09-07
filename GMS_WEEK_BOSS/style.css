@@ -3,6 +3,17 @@
    ============================================= */
 
 /* ── @font-face ── */
+/* 본문 기본 서체 — Pretendard(가변 폰트). 다른 폰트들처럼 font/ 폴더에
+   직접 받아 넣었다(CDN 안 씀 — 오프라인 PWA 캐시 대상이 로컬 파일이라
+   외부 CDN 폰트는 서비스워커가 못 챙긴다, 인터넷 느린 사용자 대비도 됨).
+   45~920 굵기를 전부 담고 있어서 body에서 font-weight:600(세미볼드)로
+   바로 쓸 수 있다. */
+@font-face {
+  font-family: 'Pretendard Variable';
+  src: url('font/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 45 920;
+  font-style: normal;
+}
 @font-face {
   font-family: '고딕';
   src: url('font/ONE_Mobile_Title.ttf') format('truetype');
@@ -218,7 +229,8 @@
    스크롤바 자리를 항상 예약해두면 나타나도 폭이 안 변한다. */
 html { font-size: 17px; scrollbar-gutter: stable; }
 body {
-  font-family: '고딕', 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-family: 'Pretendard Variable', '고딕', 'Segoe UI', 'Malgun Gothic', sans-serif;
+  font-weight: 600;
   background: var(--bg);
   background-attachment: fixed;
   color: var(--text);

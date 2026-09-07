@@ -1741,9 +1741,9 @@ document.addEventListener('DOMContentLoaded', showNoticeModal);
 
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
-  // 프리텐다드는 가변 폰트라 굵기를 세미볼드(600)로 지정해야 원하는 두께로 나온다 —
-  // 다른 폰트(고딕/Maple/8bit)는 굵기가 하나뿐이라 기본값(normal)으로 되돌린다.
-  document.body.style.fontWeight = name === 'Pretendard Variable' ? '600' : '';
+  // '고딕'은 실제로는 가변 폰트(Pretendard)라 굵기를 세미볼드(600)로 지정해야
+  // 원하는 두께로 나온다 — 나머지(Maple/8bit)는 굵기가 하나뿐이라 기본값으로.
+  document.body.style.fontWeight = name === '고딕' ? '600' : '';
   document.body.dataset.font = name;
   applyRootFontSize();
   localStorage.setItem(FONT_KEY, name);
@@ -1818,7 +1818,7 @@ load();
 })();
 
 applyRegionUI();
-applyFont(localStorage.getItem(FONT_KEY) || 'Pretendard Variable');
+applyFont(localStorage.getItem(FONT_KEY) || '고딕');
 renderCharList();
 renderBossTable();
 renderCharInfo();

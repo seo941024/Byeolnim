@@ -235,7 +235,7 @@ function sfRenderStarPanel(to, done) {
 function sfStopAuto() {
   if (_sfAutoTimer) { clearInterval(_sfAutoTimer); _sfAutoTimer = null; }
   const btn = document.getElementById('sfBtnAuto');
-  if (btn) { btn.textContent = '자동 강화'; btn.classList.remove('sbtn--danger'); btn.classList.add('sbtn--primary'); }
+  if (btn) { btn.textContent = '자동 강화 [A]'; btn.classList.remove('sbtn--danger'); btn.classList.add('sbtn--primary'); }
 }
 
 function initStarforce() {
@@ -292,10 +292,10 @@ function initStarforce() {
     sfEnhanceOnce();
   });
 
-  /* 스페이스바로 강화. 스타포스 탭의 직접 강화하기가 열려 있을 때만 동작하고,
-     입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. 스크롤 기본 동작도 막는다. */
+  /* S=강화, R=초기화, A=자동. 스타포스 탭의 직접 강화하기가 열려 있을 때만
+     동작하고, 입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     const sec = document.getElementById('sec-starforce');
     if (!sec?.classList.contains('active')) return;
     if (document.getElementById('sfRightSimulate')?.style.display === 'none') return;
@@ -303,15 +303,16 @@ function initStarforce() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay[style*="flex"]')) return;
     e.preventDefault();
-    sfStopAuto();
-    sfEnhanceOnce();
+    if (e.code === 'KeyS') { sfStopAuto(); sfEnhanceOnce(); }
+    else if (e.code === 'KeyR') { document.getElementById('sfBtnReset')?.click(); }
+    else if (e.code === 'KeyA') { document.getElementById('sfBtnAuto')?.click(); }
   });
 
   // 자동 강화
   document.getElementById('sfBtnAuto')?.addEventListener('click', () => {
     if (_sfAutoTimer) { sfStopAuto(); return; }
     const btn = document.getElementById('sfBtnAuto');
-    btn.textContent = '■ 중지';
+    btn.textContent = '■ 중지 [A]';
     btn.classList.remove('sbtn--primary'); btn.classList.add('sbtn--danger');
     _sfAutoTimer = setInterval(() => {
       const cont = sfEnhanceOnce(true);   // 자동은 목표 성수에서 멈춘다

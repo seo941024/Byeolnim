@@ -505,7 +505,7 @@ let _flameAutoDone = 0;
 function _flameStopAuto(msg) {
   if (_flameAutoTimer) { clearInterval(_flameAutoTimer); _flameAutoTimer = null; }
   const btn = document.getElementById('flameBtnAuto');
-  if (btn) { btn.textContent = '목표까지 자동'; btn.classList.remove('sbtn--danger'); }
+  if (btn) { btn.textContent = '목표까지 자동 [A]'; btn.classList.remove('sbtn--danger'); }
   _flameRenderHand();
   if (msg) alert(msg);
 }
@@ -516,7 +516,7 @@ function _flameStartAuto() {
   if (!_flameHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
 
   const btn = document.getElementById('flameBtnAuto');
-  if (btn) { btn.textContent = '■ 중지'; btn.classList.add('sbtn--danger'); }
+  if (btn) { btn.textContent = '■ 중지 [A]'; btn.classList.add('sbtn--danger'); }
   _flameAutoDone = 0;
 
   _flameAutoTimer = setInterval(() => {
@@ -698,8 +698,8 @@ function initAddOption() {
         <div id="flameTabHand" style="display:none">
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary w100" id="flameBtnRoll">불꽃 사용 [S]</button>
-            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnAuto">목표까지 자동</button>
-            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnHandReset">초기화</button>
+            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnAuto">목표까지 자동 [A]</button>
+            <button class="sbtn sbtn--ghost w100 mt8" id="flameBtnHandReset">초기화 [R]</button>
           </div>
         </div>
 
@@ -813,18 +813,19 @@ function initAddOption() {
   document.getElementById('flameBtnAuto')?.addEventListener('click', _flameStartAuto);
   document.getElementById('flameBtnHandReset')?.addEventListener('click', () => { _flameStopAuto(); _flameHandReset(); });
 
-  /* 스페이스바로 굴리기. 추옵 탭의 직접 불꽃 쓰기가 열려 있을 때만 동작하고,
-     입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
+  /* S=굴리기, R=초기화, A=자동. 추옵 탭의 직접 불꽃 쓰기가 열려 있을 때만
+     동작하고, 입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     if (!sec.classList.contains('active')) return;
     if (document.getElementById('flameTabHand')?.style.display === 'none') return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay.open')) return;
     e.preventDefault();
-    _flameStopAuto();
-    _flameRollOnce();
+    if (e.code === 'KeyS') { _flameStopAuto(); _flameRollOnce(); }
+    else if (e.code === 'KeyR') { document.getElementById('flameBtnHandReset')?.click(); }
+    else if (e.code === 'KeyA') { document.getElementById('flameBtnAuto')?.click(); }
   });
 
   _flameHandReset();

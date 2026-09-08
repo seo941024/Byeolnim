@@ -685,7 +685,7 @@ let _hrAutoDone = 0;
 function _hrStopAuto(msg) {
   if (_hrAutoTimer) { clearInterval(_hrAutoTimer); _hrAutoTimer = null; }
   const btn = document.getElementById('hrAutoBtn');
-  if (btn) { btn.textContent = '목표까지 자동'; btn.classList.remove('sbtn--danger'); }
+  if (btn) { btn.textContent = '목표까지 자동 [A]'; btn.classList.remove('sbtn--danger'); }
   _hrRender();
   if (msg) alert(msg);
 }
@@ -695,7 +695,7 @@ function _hrStartAuto() {
   if (!_hrHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
 
   const btn = document.getElementById('hrAutoBtn');
-  if (btn) { btn.textContent = '■ 중지'; btn.classList.add('sbtn--danger'); }
+  if (btn) { btn.textContent = '■ 중지 [A]'; btn.classList.add('sbtn--danger'); }
   _hrAutoDone = 0;
 
   _hrAutoTimer = setInterval(() => {
@@ -805,11 +805,11 @@ async function initCube() {
   document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });
   _hrReset();
 
-  /* 스페이스바로 재설정. 큐브 탭의 직접 큐브 까기가 열려 있을 때만 동작하고,
-     입력칸/셀렉트에 포커스가 있으면(값을 고치는 중이면) 가로채지 않는다.
-     기본 동작(스크롤·버튼 재클릭)도 막는다. */
+  /* S=까기, R=초기화, A=자동. 큐브 탭의 직접 큐브 까기가 열려 있을 때만
+     동작하고, 입력칸/셀렉트에 포커스가 있으면(값을 고치는 중이면) 가로채지
+     않는다. 기본 동작(스크롤·버튼 재클릭)도 막는다. */
   document.addEventListener('keydown', e => {
-    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     const sec = document.getElementById('sec-cube');
     if (!sec?.classList.contains('active')) return;
     if (document.getElementById('cubeTabHandroll')?.style.display === 'none') return;
@@ -817,8 +817,9 @@ async function initCube() {
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay[style*="flex"]')) return;  // 모달 떠 있으면 무시
     e.preventDefault();
-    _hrStopAuto();
-    _hrRoll();
+    if (e.code === 'KeyS') { _hrStopAuto(); _hrRoll(); }
+    else if (e.code === 'KeyR') { document.getElementById('hrResetBtn')?.click(); }
+    else if (e.code === 'KeyA') { document.getElementById('hrAutoBtn')?.click(); }
   });
 
   // 탭 전환

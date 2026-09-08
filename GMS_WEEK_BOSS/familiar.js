@@ -105,7 +105,7 @@ let _famAutoTimer = null;
 function _famStopAuto(msg) {
   if (_famAutoTimer) { clearTimeout(_famAutoTimer); _famAutoTimer = null; }
   const btn = document.getElementById('famAutoBtn');
-  if (btn) btn.textContent = '목표까지 자동';
+  if (btn) btn.textContent = '목표까지 자동 [A]';
   if (msg) alert(msg);
 }
 
@@ -114,7 +114,7 @@ function _famStartAuto() {
   if (_famAutoTimer) { _famStopAuto(); return; }
   if (!_famHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
   const btn = document.getElementById('famAutoBtn');
-  if (btn) btn.textContent = '중지';
+  if (btn) btn.textContent = '중지 [A]';
 
   const step = () => {
     const D = _famData();
@@ -267,14 +267,14 @@ let _ruAutoTimer = null;
 function _ruStopAuto() {
   if (_ruAutoTimer) { clearTimeout(_ruAutoTimer); _ruAutoTimer = null; }
   const b = document.getElementById('ruAutoBtn');
-  if (b) b.textContent = '유니크까지 자동';
+  if (b) b.textContent = '유니크까지 자동 [A]';
 }
 
 function _ruStartAuto() {
   if (_ruAutoTimer) { _ruStopAuto(); return; }
   if (_ruState.done) { alert('이미 유니크입니다. 초기화 후 다시 시작해주세요.'); return; }
   const b = document.getElementById('ruAutoBtn');
-  if (b) b.textContent = '중지';
+  if (b) b.textContent = '중지 [A]';
   const step = function () {
     for (let i = 0; i < 200; i++) {
       _ruStep();
@@ -356,8 +356,8 @@ function initFamiliar() {
 
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary cube-btn-full" id="ruRollBtn">등급업 [S]</button>
-            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruAutoBtn">유니크까지 자동</button>
-            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruResetBtn">초기화</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruAutoBtn">유니크까지 자동 [A]</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="ruResetBtn">초기화 [R]</button>
           </div>
         </div>
 
@@ -404,8 +404,8 @@ function initFamiliar() {
 
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary cube-btn-full" id="famRollBtn">옵션 재설정 [S]</button>
-            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famAutoBtn">목표까지 자동</button>
-            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famResetBtn">초기화</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famAutoBtn">목표까지 자동 [A]</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="famResetBtn">초기화 [R]</button>
           </div>
         </div>
 
@@ -466,16 +466,23 @@ function initFamiliar() {
     });
   });
 
-  /* S 키 — 지금 열려 있는 탭에 맞는 동작을 한다 */
+  /* S=굴리기, R=초기화, A=자동 — 지금 열려 있는 탭에 맞는 동작을 한다 */
   document.addEventListener('keydown', function (e) {
-    if (e.code !== 'KeyS' || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     if (!document.getElementById('sec-familiar').classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay[style*="flex"]')) return;
     e.preventDefault();
-    if (document.getElementById('famTabRankup').style.display !== 'none') { _ruStopAuto(); _ruRollOnce(); }
-    else { _famStopAuto(); _famRollOnce(); }
+    const isRankup = document.getElementById('famTabRankup').style.display !== 'none';
+    if (e.code === 'KeyS') {
+      if (isRankup) { _ruStopAuto(); _ruRollOnce(); }
+      else { _famStopAuto(); _famRollOnce(); }
+    } else if (e.code === 'KeyR') {
+      document.getElementById(isRankup ? 'ruResetBtn' : 'famResetBtn')?.click();
+    } else if (e.code === 'KeyA') {
+      document.getElementById(isRankup ? 'ruAutoBtn' : 'famAutoBtn')?.click();
+    }
   });
 
   _famRefreshGoals();

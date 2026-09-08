@@ -1741,10 +1741,7 @@ document.addEventListener('DOMContentLoaded', showNoticeModal);
 
 function applyFont(name) {
   document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
-  // '고딕'은 실제로는 가변 폰트(Pretendard)라 굵기를 지정해야 원하는 두께로
-  // 나온다 — 세미볼드(600)는 얇다는 피드백으로 엑스트라볼드(800)로 올림.
-  // 나머지(Maple/8bit)는 굵기가 하나뿐이라 기본값으로.
-  document.body.style.fontWeight = name === '고딕' ? '800' : '';
+  document.body.style.fontWeight = '';
   document.body.dataset.font = name;
   applyRootFontSize();
   localStorage.setItem(FONT_KEY, name);

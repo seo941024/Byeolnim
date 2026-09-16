@@ -104,6 +104,9 @@
       <button class="sb-nav__item" data-sec="hexa">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" alt=""></span><span>헥사 계산기</span>
       </button>
+      <button class="sb-nav__item" data-sec="gearcompare">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Genesis_Dual_Bowguns.png" alt="" onerror="this.style.display='none'"></span><span>장비 교체 비교</span>
+      </button>
       <!-- 하이퍼스탯 최적화 — 2026-09-01 배포했다가 레벨당 증가량이 검증 안 된
            추정치라 바로 내림(사용자 지적). hyperstat.js 파일은 남겨뒀으니 데이터
            검증되면 이 주석만 풀면 됨.
@@ -255,6 +258,9 @@
         </div>
       </div>
     </section>
+
+    <!-- ══════ 장비 교체 비교 ══════ (gearcompare.js가 채운다) -->
+    <section class="sec" id="sec-gearcompare"></section>
 
     <!-- ══════ 해방 계산기 ══════ -->
     <section class="sec" id="sec-addoption"></section>
@@ -808,8 +814,10 @@
 <script src="data_bosshp.js?v=20260819b"></script>
 <script src="data_liberation.js?v=20260826b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20260901i"></script>
+<script src="app.js?v=20260916a"></script>
 <script src="hexa.js?v=20260826d"></script>
+<script src="data_gearcompare.js?v=20260916a"></script>
+<script src="gearcompare.js?v=20260916a"></script>
 <!-- <script src="hyperstat.js?v=20260901a"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20260901a"></script>
 <script src="starforce_sim.js?v=20260907a"></script>

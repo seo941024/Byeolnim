@@ -93,7 +93,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 const NAV_LABELS = {
   wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
-  gearcompare: '장비 교체 비교',
+  // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
   liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', bosshp: '보스 정보', serverstatus: '서버 상태',
@@ -1615,6 +1615,7 @@ window.addEventListener('resize', applyRootFontSize);
       id를 새 값으로 바꿔야 예전에 "확인"을 누른 사람에게도 새 공지가 다시 뜬다. */
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
+  /* 장비 교체 비교 공지 — 사용자 요청으로 기능 자체를 내려서 같이 주석 처리
   {
     date: '2026. 09. 16.',
     items: [
@@ -1624,6 +1625,7 @@ const NOTICE_LOG = [
       },
     ],
   },
+  */
   /* 하이퍼스탯 최적화 공지 — 데이터 검증 전까지 내림
   {
     date: '2026. 09. 01.',
@@ -1694,7 +1696,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-09-16-gearcompare',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-09-01-card-income',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

@@ -1615,6 +1615,15 @@ window.addEventListener('resize', applyRootFontSize);
       id를 새 값으로 바꿔야 예전에 "확인"을 누른 사람에게도 새 공지가 다시 뜬다. */
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
+  {
+    date: '2026. 09. 24.',
+    items: [
+      {
+        head: '보스 드랍 아이템의 인게임 설명을 볼 수 있습니다',
+        desc: '보스 정보에서 아이템 아이콘에 마우스를 올리면 이름이, 한 번 더 클릭하면 실제 게임 속 설명 문구가 뜹니다. 아직 일부 아이템은 설명이 등록되지 않았습니다.',
+      },
+    ],
+  },
   /* 장비 교체 비교 공지 — 사용자 요청으로 기능 자체를 내려서 같이 주석 처리
   {
     date: '2026. 09. 16.',
@@ -1696,7 +1705,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-09-01-card-income',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-09-24-item-desc',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

@@ -1772,6 +1772,21 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .bhp-drop-item:hover .bhp-drop-item__name,
 .bhp-drop-item:focus-visible .bhp-drop-item__name { opacity: 1; visibility: visible; }
+.bhp-drop-item { cursor: pointer; }
+
+/* 아이템을 클릭하면 뜨는 인게임 설명 — body 직속 고정 위치(모달 스크롤에 안 잘리게) */
+.bhp-item-desc {
+  position: fixed; left: 0; top: 0; z-index: 2000;
+  width: max-content; max-width: 240px;
+  padding: 10px 14px; border-radius: 10px;
+  background: var(--bg-card, var(--bg2)); border: 2px solid var(--border-hl, var(--primary));
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .13s;
+}
+.bhp-item-desc.open { opacity: 1; visibility: visible; }
+.bhp-item-desc__name { font-size: .92rem; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+.bhp-item-desc__body { font-size: .82rem; line-height: 1.5; color: var(--text-sub); white-space: normal; }
 @media (max-width: 640px) {
   .bhp-drop-modal { flex-direction: column; align-items: center; }
   .bhp-drop-modal__items { width: 100%; }

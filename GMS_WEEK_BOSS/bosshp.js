@@ -139,8 +139,9 @@ function _bhpDescOutside(e) {
 }
 function _bhpToggleDesc(itemEl, file, name) {
   if (_bhpDescOpenFile === file) { _bhpCloseDesc(); return; }
+  // 화면엔 한국어(KMS) 설명만 띄운다. GMS 영문(desc_en)은 참고용으로 데이터에만 남아있다.
   const entry = (typeof ITEM_DESC !== 'undefined') ? ITEM_DESC[file] : null;
-  const desc = entry?.desc_en;
+  const desc = entry?.desc_kr;
   const el = _bhpDescEl();
   el.innerHTML = `
     <div class="bhp-item-desc__name">${name}</div>

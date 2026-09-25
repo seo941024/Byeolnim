@@ -3,11 +3,16 @@
 
    두 탭:
      1. 증폭 — 소울 에테르+메소를 써서 무기의 증폭 단계를 1→4까지 올린다.
-        실패해도 게이지가 쌓이고, 게이지가 100%에 닿으면 다음 시도는 확정 성공.
-        처음 1단계에 성공하는 순간 잠재능력(레어, 7종 중 1개 랜덤)이 생긴다.
-     2. 잠재 — 그 잠재능력을 재설정(옵션 다시 뽑기)하거나 등급업(레어→…→레전드리)한다.
+        실패마다 성공률 자체가 오르고(failInc), 별개로 게이지도 쌓여 게이지가
+        100%에 닿으면 다음 시도는 확정 성공(둘 다 실측 확인된 규칙).
+        처음 1단계에 성공하는 순간 잠재능력(레어, 3줄)이 생긴다.
+     2. 잠재 — 그 잠재능력을 재설정(3줄 다시 뽑기)하거나 등급업(레어→…→레전드리)한다.
+        등급업은 줄 종류는 유지하고 수치만 새 등급 기준으로 다시 뽑는다.
 
-   옵션 수치는 data_soul.js에 적어둔 대로 아직 placeholder다(공식 자료 없음).
+   잠재능력이 3줄이고 STR/DEX/INT/LUK이 개별 옵션으로 나온다는 건 실제 게임
+   스트리밍 화면 캡처로 확인된 사실이다(자세한 경위는 data_soul.js 머리
+   주석 참고) — "옵션 1개만 부여"로 되돌리지 말 것.
+   옵션 수치는 공격력/마력/보스데미지 3개만 근사치가 있고 나머지는 이름만 나온다.
    ═══════════════════════════════════════════════════════════ */
 
 function _soulData() { return window.SOUL_DATA; }
@@ -17,8 +22,7 @@ let _soulState = {
   stage: 0,       // 0~4, 0=미증폭
   gauge: 0,       // 0~1, 다음 증폭 시도의 게이지
   grade: null,    // null | RARE | EPIC | UNIQUE | LEGENDARY
-  option: null,   // { key, label }
-  value: 0,
+  lines: [],      // [{ key, label, value }] x 3 (POT_LINES)
   tries: 0, fails: 0, mesoSpent: 0,
   etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 },
   log: [],        // 증폭 기록
@@ -30,9 +34,19 @@ let _sgState = {
   log: [],        // 등급업+재설정 기록
 };
 
-function _soulRerollValue() {
-  if (!_soulState.grade || !_soulState.option) return;
-  _soulState.value = soulRollValue(_soulState.option.key, _soulState.grade, _soulState.stage);
+/* 등급업 때 쓴다 — 줄 종류(옵션)는 그대로 두고 수치만 새 등급 기준으로 다시 뽑는다. */
+function _soulRerollLineValues() {
+  if (!_soulState.grade) return;
+  _soulState.lines = _soulState.lines.map(l => ({ ...l, value: soulRollValue(l.key, _soulState.grade, _soulState.stage) }));
+}
+
+/* 현재 목표에서 몇 번 실패했는지는 게이지를 gaugeStep으로 나눠서 되돌린다
+   (게이지가 실패 횟수 × gaugeStep으로 쌓이므로) — 실패 카운터를 따로 안 둬도 된다. */
+function _soulAmpFailsAtTarget(info) {
+  return Math.round(_soulState.gauge / info.gaugeStep);
+}
+function _soulAmpChanceNow(info) {
+  return Math.min(1, info.chance + _soulAmpFailsAtTarget(info) * info.failInc);
 }
 
 /* ── 증폭 ── */
@@ -47,8 +61,9 @@ function _soulAmpStep() {
   _soulState.etherSpent[target]++;
 
   const forced = _soulState.gauge >= 1;
-  const ok = forced || Math.random() < info.chance;
-  _soulState.log.unshift({ n: _soulState.tries, target, ok, forced });
+  const chanceNow = _soulAmpChanceNow(info);
+  const ok = forced || Math.random() < chanceNow;
+  _soulState.log.unshift({ n: _soulState.tries, target, ok, forced, chance: chanceNow });
   if (_soulState.log.length > 200) _soulState.log.length = 200;
 
   if (ok) {
@@ -56,9 +71,11 @@ function _soulAmpStep() {
     _soulState.gauge = 0;
     if (!_soulState.grade) {
       _soulState.grade = 'RARE';
-      _soulState.option = soulPickOption();
+      _soulState.lines = soulRollLines('RARE', target);
+    } else {
+      // 이미 잠재가 있으면 단계가 올랐으니 줄 종류는 유지하고 수치만 새 단계로 다시 뽑는다
+      _soulRerollLineValues();
     }
-    _soulRerollValue();
   } else {
     _soulState.fails++;
     _soulState.gauge = Math.min(1, _soulState.gauge + info.gaugeStep);
@@ -70,7 +87,7 @@ function _soulAmpRollOnce() { _soulAmpStep(); _soulRenderAmp(); }
 
 function _soulAmpReset() {
   _soulStopAmpAuto();
-  _soulState = { stage: 0, gauge: 0, grade: null, option: null, value: 0, tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
+  _soulState = { stage: 0, gauge: 0, grade: null, lines: [], tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
   _soulRenderAmp();
   _soulRenderPotential();
 }
@@ -104,16 +121,15 @@ function _soulStartAmpAuto() {
   step();
 }
 
-/* ── 잠재: 재설정(옵션 다시 뽑기) ── */
+/* ── 잠재: 재설정(3줄 다시 뽑기) ── */
 function _soulResetStep() {
   const D = _soulData();
   if (!_soulState.grade) return false;
   const cost = D.RESET_MESO[_soulState.grade];
   _sgState.rsTries++;
   _sgState.rsMesoSpent += cost;
-  _soulState.option = soulPickOption();
-  _soulRerollValue();
-  _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, option: _soulState.option, grade: _soulState.grade });
+  _soulState.lines = soulRollLines(_soulState.grade, _soulState.stage);
+  _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, lines: _soulState.lines, grade: _soulState.grade });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
   return true;
 }
@@ -140,7 +156,7 @@ function _soulStartResetAuto() {
   const step = () => {
     for (let i = 0; i < 2000; i++) {
       _soulResetStep();
-      if (_soulState.option.key === goal) { _soulStopResetAuto(); _soulRenderPotential(); return; }
+      if (_soulState.lines.some(l => l.key === goal)) { _soulStopResetAuto(); _soulRenderPotential(); return; }
       if (_sgState.rsTries >= SOUL_RESET_AUTO_MAX) {
         _soulStopResetAuto(`${SOUL_RESET_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 옵션이 나오지 않아 멈췄습니다.`);
         _soulRenderPotential(); return;
@@ -164,7 +180,7 @@ function _soulGradeUpStep() {
   const ok = Math.random() < info.chance;
   _sgState.log.unshift({ type: 'gradeup', n: _sgState.guTries, from: _soulState.grade, ok });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
-  if (ok) { _soulState.grade = info.to; _soulRerollValue(); }
+  if (ok) { _soulState.grade = info.to; _soulRerollLineValues(); }
   else _sgState.guFails++;
   return ok;
 }
@@ -217,7 +233,8 @@ function _soulRenderAmp() {
   document.getElementById('soulAmpStageNow').textContent = stage === 0 ? '미증폭' : `${stage}단계`;
   const lbl = document.getElementById('soulAmpTargetLbl');
   if (lbl) lbl.textContent = done ? '—' : `${target}단계`;
-  document.getElementById('soulAmpChance').textContent = done ? '—' : Math.round(info.chance * 100) + '%';
+  const chanceNow = done ? 0 : _soulAmpChanceNow(info);
+  document.getElementById('soulAmpChance').textContent = done ? '—' : (Math.round(chanceNow * 1000) / 10) + '%';
   document.getElementById('soulAmpGaugeTxt').textContent = done ? '—' : Math.round(_soulState.gauge * 100) + '%';
   const gaugeFill = document.getElementById('soulAmpGaugeFill');
   if (gaugeFill) gaugeFill.style.width = done ? '0%' : Math.round(_soulState.gauge * 100) + '%';
@@ -236,7 +253,7 @@ function _soulRenderAmp() {
   document.getElementById('soulAmpLog').innerHTML = _soulState.log.map(e => `
     <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
       <span class="fam-log-n">${e.n}</span>
-      <span class="fam-log-line">${e.target}단계 시도</span>
+      <span class="fam-log-line">${e.target}단계 시도 (${(Math.round(e.chance * 1000) / 10)}%)</span>
       <span class="ru-log-res ${e.ok ? 'ok' : 'no'}">${e.ok ? '성공' : '실패'}</span>
       ${e.forced ? '<span class="ru-log-pity">게이지 만렙</span>' : ''}
     </div>`).join('');
@@ -254,7 +271,7 @@ function _soulRenderPotential() {
   document.getElementById('soulPotTitle').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '없음';
 
   document.getElementById('soulPotLines').innerHTML = has
-    ? `<div class="pot-line" data-grade="${_soulState.grade}">${_soulState.option.label}${_soulState.value != null ? ` +${_soulState.value}%` : ''}</div>`
+    ? _soulState.lines.map(l => `<div class="pot-line" data-grade="${_soulState.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('')
     : `<div class="pot-line pot-line--empty">증폭 탭에서 1단계 이상 증폭하면 생깁니다</div>`;
 
   // 재설정
@@ -278,7 +295,7 @@ function _soulRenderPotential() {
     if (e.type === 'reset') return `
       <div class="fam-log-row">
         <span class="fam-log-n">R${e.n}</span>
-        <span class="fam-log-line" data-grade="${e.grade}">재설정 → ${e.option.label}</span>
+        <span class="fam-log-line" data-grade="${e.grade}">재설정 → ${e.lines.map(l => l.label).join(' / ')}</span>
       </div>`;
     return `
       <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
@@ -454,7 +471,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260925b';
+      s.src = 'data_soul.js?v=20260925c';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

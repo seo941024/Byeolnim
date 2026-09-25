@@ -254,7 +254,7 @@ function _soulRenderPotential() {
   document.getElementById('soulPotTitle').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '없음';
 
   document.getElementById('soulPotLines').innerHTML = has
-    ? `<div class="pot-line" data-grade="${_soulState.grade}">${_soulState.option.label} +${_soulState.value}%</div>`
+    ? `<div class="pot-line" data-grade="${_soulState.grade}">${_soulState.option.label}${_soulState.value != null ? ` +${_soulState.value}%` : ''}</div>`
     : `<div class="pot-line pot-line--empty">증폭 탭에서 1단계 이상 증폭하면 생깁니다</div>`;
 
   // 재설정
@@ -454,7 +454,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260925a';
+      s.src = 'data_soul.js?v=20260925b';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

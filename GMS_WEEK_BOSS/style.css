@@ -521,9 +521,14 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ru-now[data-grade="RARE"]   { color: var(--gt-rare); }
 .ru-now[data-grade="EPIC"]   { color: var(--gt-epic); }
 .ru-now[data-grade="UNIQUE"] { color: var(--gt-unique); }
+.ru-now[data-grade="LEGENDARY"] { color: var(--gt-legendary); }
 .ru-log-res { font-weight: 800; }
 .ru-log-res.ok { color: var(--success); }
 .ru-log-res.no { color: var(--danger); }
+
+/* 소울 증폭 게이지 — 실패할수록 채워지다 가득 차면 다음 시도가 확정 성공 */
+.soul-gauge { height: 8px; border-radius: 999px; background: var(--bg3); overflow: hidden; margin: 4px 0 10px; }
+.soul-gauge__fill { height: 100%; background: var(--grad); transition: width .2s ease; }
 .ru-log-pity { font-size: .68rem; font-weight: 800; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 0 5px; }
 
 /* ── 패밀리어 ── */

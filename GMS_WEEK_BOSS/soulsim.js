@@ -161,22 +161,38 @@ function _soulResetStep() {
 }
 function _soulResetOnce() { _soulResetStep(); _soulRenderPotential(); }
 
-/* 목표 옵션 3칸(큐브 직작과 같은 방식) — 고른 옵션 키의 개수만큼 지금 줄에서
-   똑같은 키가 그만큼 나와야 만족한다(예: 두 칸에 "공격력"을 고르면 공격력이
-   2줄 이상 나와야 함). */
-function _soulGetGoalKeys() {
-  return ['soulResetGoal1', 'soulResetGoal2', 'soulResetGoal3']
-    .map(id => document.getElementById(id)?.value)
-    .filter(Boolean);
+/* 목표 옵션 3칸 — 큐브 직작과 똑같은 판정: 같은 키를 한 칸에만 적으면 세 줄
+   합산 기준, 같은 키를 여러 칸에 나눠 적으면 그 칸 수만큼 각 줄이 따로
+   만족해야 한다. 수치를 안 적으면(0 또는 빈칸) 그 키가 나왔는지 존재만 본다. */
+function _soulGetGoals() {
+  const byKey = {};
+  for (let i = 1; i <= 3; i++) {
+    const key = document.getElementById(`soulResetGoal${i}`)?.value;
+    if (!key) continue;
+    const v = parseFloat(document.getElementById(`soulResetGoalVal${i}`)?.value);
+    (byKey[key] = byKey[key] || []).push(!isNaN(v) && v > 0 ? v : 0);
+  }
+  Object.values(byKey).forEach(a => a.sort((x, y) => y - x));
+  return Object.entries(byKey);
 }
+function _soulGetGoalKeys() { return _soulGetGoals().map(([k]) => k); }
 function _soulGoalsMet(lines) {
-  const goals = _soulGetGoalKeys();
+  const goals = _soulGetGoals();
   if (!goals.length) return false;
-  const need = {};
-  goals.forEach(k => { need[k] = (need[k] || 0) + 1; });
-  const have = {};
-  lines.forEach(l => { have[l.key] = (have[l.key] || 0) + 1; });
-  return Object.entries(need).every(([k, n]) => (have[k] || 0) >= n);
+  for (const [key, targets] of goals) {
+    const vals = lines.filter(l => l.key === key).map(l => l.value || 0).sort((a, b) => b - a);
+    if (targets.every(t => t === 0)) {
+      if (vals.length < targets.length) return false;
+      continue;
+    }
+    if (targets.length === 1) {
+      if (vals.reduce((a, b) => a + b, 0) < targets[0]) return false;
+    } else {
+      if (targets.length > vals.length) return false;
+      for (let i = 0; i < targets.length; i++) if ((vals[i] || 0) < targets[i]) return false;
+    }
+  }
+  return true;
 }
 
 const SOUL_RESET_AUTO_MAX = 200000;
@@ -353,10 +369,11 @@ function initSoul() {
           <div class="sf-res-item"><span class="sf-res-label">등급업</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
 
           <div class="card__title mt16">목표 옵션</div>
-          <div class="cube-goal-hint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-            <select class="sel" id="soulResetGoal1">${_soulBuildGoalOpts()}</select>
-            <select class="sel" id="soulResetGoal2">${_soulBuildGoalOpts()}</select>
-            <select class="sel" id="soulResetGoal3">${_soulBuildGoalOpts()}</select>
+          <div class="cube-goal-hint">한 칸에만 적으면 세 줄 합산, 같은 옵션을 여러 칸에 적으면 그 칸 수만큼 따로 떠야 합니다. 수치는 안 적어도 됩니다(그 옵션이 나오기만 하면 만족).</div>
+          <div id="soulGoalRows">
+            <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal1">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal1" disabled></div>
+            <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal2">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal2" disabled></div>
+            <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal3">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal3" disabled></div>
           </div>
 
           <div class="cube-btns mt16">
@@ -408,6 +425,17 @@ function initSoul() {
   document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
   document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
   document.getElementById('soulGuResetBtn').addEventListener('click', _soulPotFullReset);
+
+  // 목표 옵션 칸: 수치 데이터가 있는 옵션(numeric)을 고를 때만 수치 입력을 열어준다
+  for (let i = 1; i <= 3; i++) {
+    document.getElementById(`soulResetGoal${i}`).addEventListener('change', e => {
+      const D = _soulData();
+      const opt = D.OPTIONS.find(o => o.key === e.target.value);
+      const valInp = document.getElementById(`soulResetGoalVal${i}`);
+      valInp.disabled = !opt?.numeric;
+      if (!opt?.numeric) valInp.value = '';
+    });
+  }
 
   /* S=주 동작, A=자동, R=초기화 — 열린 탭 기준 */
   document.addEventListener('keydown', e => {

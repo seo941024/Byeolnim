@@ -1,13 +1,14 @@
 /* ═══════════════════════════════════════════════
-   소울 증폭 시뮬레이터 (2026-09-17 정식 업데이트 반영)
+   소울 증폭 시뮬레이터
 
-   두 탭:
+   두 탭은 서로 독립적이다:
      1. 증폭 — 소울 에테르+메소를 써서 무기의 증폭 단계를 1→4까지 올린다.
         실패마다 성공률 자체가 오르고(failInc), 별개로 게이지도 쌓여 게이지가
         100%에 닿으면 다음 시도는 확정 성공(둘 다 실측 확인된 규칙).
-        처음 1단계에 성공하는 순간 잠재능력(레어, 3줄)이 생긴다.
-     2. 잠재 — 그 잠재능력을 재설정(3줄 다시 뽑기)하거나 등급업(레어→…→레전드리)한다.
-        등급업은 줄 종류는 유지하고 수치만 새 등급 기준으로 다시 뽑는다.
+     2. 잠재 — 등급·단계를 직접 골라 잠재능력(3줄)을 재설정하거나 등급업한다.
+        증폭을 실제로 진행하지 않아도 바로 쓸 수 있다(사용자 요청으로
+        증폭 진행 상황과 분리함 — 예전엔 증폭 1단계를 성공해야만 잠재가
+        생기는 구조였는데, 그냥 잠재만 따로 테스트하고 싶을 때 불편했음).
 
    잠재능력이 3줄이고 STR/DEX/INT/LUK이 개별 옵션으로 나온다는 건 실제 게임
    스트리밍 화면 캡처로 확인된 사실이다(자세한 경위는 data_soul.js 머리
@@ -22,28 +23,19 @@ function _soulIconSrc(g) { return `images/icons/${(g || 'rare').toLowerCase()}.p
 let _soulState = {
   stage: 0,       // 0~4, 0=미증폭
   gauge: 0,       // 0~1, 다음 증폭 시도의 게이지
-  grade: null,    // null | RARE | EPIC | UNIQUE | LEGENDARY
-  lines: [],      // [{ key, label, value }] x 3 (POT_LINES)
   tries: 0, fails: 0, mesoSpent: 0,
   etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 },
   log: [],        // 증폭 기록
 };
 
-let _soulPotStage = 1; // 잠재 탭에서 "몇 단계 기준으로 볼지" 미리보기용 — 실제 증폭 단계(_soulState.stage)와 별개
+// 잠재 탭 전용 상태 — 증폭 탭(_soulState)과 완전히 별개다.
+let _soulPotState = { grade: 'RARE', stage: 1, lines: [] };
 
 let _sgState = {
   guTries: 0, guFails: 0, guMesoSpent: 0,
   rsTries: 0, rsMesoSpent: 0,
   log: [],        // 등급업+재설정 기록
 };
-
-/* 등급업/단계업 때 쓴다 — 줄 종류(옵션)는 그대로 두고, 각 줄에 배정되는
-   등급(자체 등급 1줄 + 아래 등급 2줄)과 그에 따른 수치를 새로 뽑는다. */
-function _soulRerollLineValues() {
-  if (!_soulState.grade) return;
-  const lineGrades = soulLineGrades(_soulState.grade);
-  _soulState.lines = _soulState.lines.map((l, i) => ({ ...l, grade: lineGrades[i], value: soulRollValue(l.key, lineGrades[i], _soulState.stage) }));
-}
 
 /* 현재 목표에서 몇 번 실패했는지는 게이지를 gaugeStep으로 나눠서 되돌린다
    (게이지가 실패 횟수 × gaugeStep으로 쌓이므로) — 실패 카운터를 따로 안 둬도 된다. */
@@ -73,15 +65,7 @@ function _soulAmpStep() {
 
   if (ok) {
     _soulState.stage = target;
-    _soulPotStage = target;
     _soulState.gauge = 0;
-    if (!_soulState.grade) {
-      _soulState.grade = 'RARE';
-      _soulState.lines = soulRollLines('RARE', target);
-    } else {
-      // 이미 잠재가 있으면 단계가 올랐으니 줄 종류는 유지하고 수치만 새 단계로 다시 뽑는다
-      _soulRerollLineValues();
-    }
   } else {
     _soulState.fails++;
     _soulState.gauge = Math.min(1, _soulState.gauge + info.gaugeStep);
@@ -93,10 +77,8 @@ function _soulAmpRollOnce() { _soulAmpStep(); _soulRenderAmp(); }
 
 function _soulAmpReset() {
   _soulStopAmpAuto();
-  _soulState = { stage: 0, gauge: 0, grade: null, lines: [], tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
-  _soulPotStage = 1;
+  _soulState = { stage: 0, gauge: 0, tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
   _soulRenderAmp();
-  _soulRenderPotential();
 }
 
 const SOUL_AMP_AUTO_MAX = 200000;
@@ -116,7 +98,7 @@ function _soulStartAmpAuto() {
   const step = () => {
     for (let i = 0; i < 500; i++) {
       _soulAmpStep();
-      if (_soulState.stage >= goal) { _soulStopAmpAuto(); _soulRenderAmp(); _soulRenderPotential(); return; }
+      if (_soulState.stage >= goal) { _soulStopAmpAuto(); _soulRenderAmp(); return; }
       if (_soulState.tries >= SOUL_AMP_AUTO_MAX) {
         _soulStopAmpAuto(`${SOUL_AMP_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 단계에 닿지 못해 멈췄습니다.`);
         _soulRenderAmp(); return;
@@ -128,22 +110,53 @@ function _soulStartAmpAuto() {
   step();
 }
 
+/* ── 잠재: 등급/단계 직접 선택 ── */
+function _soulPotSetGrade(grade) {
+  _soulPotState.grade = grade;
+  _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
+  _soulRenderPotential();
+}
+function _soulPotSetStage(stage) {
+  _soulPotState.stage = stage;
+  _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
+  _soulRenderPotential();
+}
+function _soulPotFullReset() {
+  _soulStopResetAuto(); _soulStopGuAuto();
+  _soulPotState = { grade: 'RARE', stage: 1, lines: soulRollLines('RARE', 1) };
+  _sgState = { guTries: 0, guFails: 0, guMesoSpent: 0, rsTries: 0, rsMesoSpent: 0, log: [] };
+  _soulRenderPotential();
+}
+
 /* ── 잠재: 재설정(3줄 다시 뽑기) ── */
 function _soulResetStep() {
   const D = _soulData();
-  if (!_soulState.grade) return false;
-  const cost = D.RESET_MESO[_soulState.grade];
+  const cost = D.RESET_MESO[_soulPotState.grade];
   _sgState.rsTries++;
   _sgState.rsMesoSpent += cost;
-  _soulState.lines = soulRollLines(_soulState.grade, _soulState.stage);
-  _soulPotStage = _soulState.stage;
-  _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, lines: _soulState.lines, grade: _soulState.grade });
+  _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
+  _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
   return true;
 }
-function _soulResetOnce() {
-  if (!_soulState.grade) { alert('먼저 증폭 탭에서 1단계 이상 증폭해야 잠재능력이 생깁니다.'); return; }
-  _soulResetStep(); _soulRenderPotential();
+function _soulResetOnce() { _soulResetStep(); _soulRenderPotential(); }
+
+/* 목표 옵션 3칸(큐브 직작과 같은 방식) — 고른 옵션 키의 개수만큼 지금 줄에서
+   똑같은 키가 그만큼 나와야 만족한다(예: 두 칸에 "공격력"을 고르면 공격력이
+   2줄 이상 나와야 함). */
+function _soulGetGoalKeys() {
+  return ['soulResetGoal1', 'soulResetGoal2', 'soulResetGoal3']
+    .map(id => document.getElementById(id)?.value)
+    .filter(Boolean);
+}
+function _soulGoalsMet(lines) {
+  const goals = _soulGetGoalKeys();
+  if (!goals.length) return false;
+  const need = {};
+  goals.forEach(k => { need[k] = (need[k] || 0) + 1; });
+  const have = {};
+  lines.forEach(l => { have[l.key] = (have[l.key] || 0) + 1; });
+  return Object.entries(need).every(([k, n]) => (have[k] || 0) >= n);
 }
 
 const SOUL_RESET_AUTO_MAX = 200000;
@@ -156,15 +169,13 @@ function _soulStopResetAuto(msg) {
 }
 function _soulStartResetAuto() {
   if (_soulResetAutoTimer) { _soulStopResetAuto(); return; }
-  if (!_soulState.grade) { alert('먼저 증폭 탭에서 1단계 이상 증폭해야 잠재능력이 생깁니다.'); return; }
-  const goal = document.getElementById('soulResetGoal')?.value || '';
-  if (!goal) { alert('목표 옵션을 먼저 골라주세요.'); return; }
+  if (!_soulGetGoalKeys().length) { alert('목표 옵션을 먼저 골라주세요.'); return; }
   const b = document.getElementById('soulResetAutoBtn');
   if (b) b.textContent = '중지 [A]';
   const step = () => {
     for (let i = 0; i < 2000; i++) {
       _soulResetStep();
-      if (_soulState.lines.some(l => l.key === goal)) { _soulStopResetAuto(); _soulRenderPotential(); return; }
+      if (_soulGoalsMet(_soulPotState.lines)) { _soulStopResetAuto(); _soulRenderPotential(); return; }
       if (_sgState.rsTries >= SOUL_RESET_AUTO_MAX) {
         _soulStopResetAuto(`${SOUL_RESET_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 옵션이 나오지 않아 멈췄습니다.`);
         _soulRenderPotential(); return;
@@ -179,22 +190,22 @@ function _soulStartResetAuto() {
 /* ── 잠재: 등급업 ── */
 function _soulGradeUpStep() {
   const D = _soulData();
-  if (!_soulState.grade) return false;
-  const info = D.GRADEUP[_soulState.grade];
+  const info = D.GRADEUP[_soulPotState.grade];
   if (!info) return false; // 이미 레전드리
-  const cost = D.RESET_MESO[_soulState.grade]; // 공식 재료가 없어 재설정 비용을 임시로 씀
+  const cost = D.RESET_MESO[_soulPotState.grade]; // 공식 재료가 없어 재설정 비용을 임시로 씀
   _sgState.guTries++;
   _sgState.guMesoSpent += cost;
   const ok = Math.random() < info.chance;
-  _sgState.log.unshift({ type: 'gradeup', n: _sgState.guTries, from: _soulState.grade, ok });
+  _sgState.log.unshift({ type: 'gradeup', n: _sgState.guTries, from: _soulPotState.grade, ok });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
-  if (ok) { _soulState.grade = info.to; _soulPotStage = _soulState.stage; _soulRerollLineValues(); }
-  else _sgState.guFails++;
+  if (ok) {
+    _soulPotState.grade = info.to;
+    _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
+  } else _sgState.guFails++;
   return ok;
 }
 function _soulGradeUpOnce() {
-  if (!_soulState.grade) { alert('먼저 증폭 탭에서 1단계 이상 증폭해야 잠재능력이 생깁니다.'); return; }
-  if (_soulState.grade === 'LEGENDARY') { alert('이미 레전드리입니다.'); return; }
+  if (_soulPotState.grade === 'LEGENDARY') { alert('이미 레전드리입니다.'); return; }
   _soulGradeUpStep(); _soulRenderPotential();
 }
 
@@ -208,17 +219,16 @@ function _soulStopGuAuto(msg) {
 }
 function _soulStartGuAuto() {
   if (_soulGuAutoTimer) { _soulStopGuAuto(); return; }
-  if (!_soulState.grade) { alert('먼저 증폭 탭에서 1단계 이상 증폭해야 잠재능력이 생깁니다.'); return; }
   const D = _soulData();
   const goal = document.getElementById('soulGuGoal')?.value || 'LEGENDARY';
-  if (D.GRADES.indexOf(_soulState.grade) >= D.GRADES.indexOf(goal)) { alert('이미 목표 등급 이상입니다.'); return; }
+  if (D.GRADES.indexOf(_soulPotState.grade) >= D.GRADES.indexOf(goal)) { alert('이미 목표 등급 이상입니다.'); return; }
   const b = document.getElementById('soulGuAutoBtn');
   if (b) b.textContent = '중지 [G]';
   const step = () => {
     for (let i = 0; i < 500; i++) {
-      if (!D.GRADEUP[_soulState.grade]) break;
+      if (!D.GRADEUP[_soulPotState.grade]) break;
       _soulGradeUpStep();
-      if (D.GRADES.indexOf(_soulState.grade) >= D.GRADES.indexOf(goal)) { _soulStopGuAuto(); _soulRenderPotential(); return; }
+      if (D.GRADES.indexOf(_soulPotState.grade) >= D.GRADES.indexOf(goal)) { _soulStopGuAuto(); _soulRenderPotential(); return; }
       if (_sgState.guTries >= SOUL_GU_AUTO_MAX) {
         _soulStopGuAuto(`${SOUL_GU_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 등급에 닿지 못해 멈췄습니다.`);
         _soulRenderPotential(); return;
@@ -273,36 +283,33 @@ function _soulRenderAmp() {
 function _soulRenderPotential() {
   const D = _soulData(); if (!D) return;
   const panel = document.getElementById('soulPotPanel');
-  const has = !!_soulState.grade;
+  const grade = _soulPotState.grade;
 
-  panel.dataset.grade = _soulState.grade || 'RARE';
-  document.getElementById('soulPotIcon').src = _soulIconSrc(_soulState.grade);
-  document.getElementById('soulPotIcon').style.display = has ? '' : 'none';
+  panel.dataset.grade = grade;
+  document.getElementById('soulPotIcon').src = _soulIconSrc(grade);
+  document.getElementById('soulPotBadge').textContent = grade[0];
 
-  const stageRow = document.getElementById('soulPotStageRow');
-  if (stageRow) stageRow.style.display = has ? '' : 'none';
+  const gradeSel = document.getElementById('soulPotGrade');
+  if (gradeSel && gradeSel.value !== grade) gradeSel.value = grade;
   const stageSel = document.getElementById('soulPotStage');
-  if (stageSel) {
-    stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotStage ? ' selected' : ''}>${s}단계</option>`).join('');
-  }
+  if (stageSel) stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotState.stage ? ' selected' : ''}>${s}단계</option>`).join('');
 
-  document.getElementById('soulPotLines').innerHTML = has
-    ? _soulState.lines.map(l => `<div class="pot-line" data-grade="${l.grade || _soulState.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('')
-    : `<div class="pot-line pot-line--empty">증폭 탭에서 1단계 이상 증폭하면 생깁니다</div>`;
+  document.getElementById('soulPotLines').innerHTML = _soulPotState.lines
+    .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('');
 
   // 재설정
-  document.getElementById('soulResetCost').textContent = has ? fmtMeso(D.RESET_MESO[_soulState.grade]) : '—';
+  document.getElementById('soulResetCost').textContent = fmtMeso(D.RESET_MESO[grade]);
   document.getElementById('soulResetTries').textContent = _sgState.rsTries.toLocaleString();
   document.getElementById('soulResetMesoSpent').textContent = fmtMeso(_sgState.rsMesoSpent);
 
   // 등급업
-  const guInfo = has ? D.GRADEUP[_soulState.grade] : null;
-  document.getElementById('soulGuNow').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '—';
-  if (has) document.getElementById('soulGuNow').dataset.grade = _soulState.grade;
+  const guInfo = D.GRADEUP[grade];
+  document.getElementById('soulGuNow').textContent = D.GRADE_LABEL[grade];
+  document.getElementById('soulGuNow').dataset.grade = grade;
   document.getElementById('soulGuChance').textContent = guInfo ? (guInfo.chance * 100).toFixed(4).replace(/\.?0+$/, '') + '%' : '—';
-  document.getElementById('soulGuCost').textContent = guInfo ? fmtMeso(D.RESET_MESO[_soulState.grade]) : '—';
+  document.getElementById('soulGuCost').textContent = guInfo ? fmtMeso(D.RESET_MESO[grade]) : '—';
   const guBtn = document.getElementById('soulGuRollBtn');
-  if (guBtn) { guBtn.disabled = !guInfo; guBtn.textContent = !has ? '등급업 [D]' : (guInfo ? '등급업 시도 [D]' : '레전드리 달성'); }
+  if (guBtn) { guBtn.disabled = !guInfo; guBtn.textContent = guInfo ? '등급업 시도 [D]' : '레전드리 달성'; }
   document.getElementById('soulGuTries').textContent = _sgState.guTries.toLocaleString();
   document.getElementById('soulGuFails').textContent = _sgState.guFails.toLocaleString();
   document.getElementById('soulGuMesoSpent').textContent = fmtMeso(_sgState.guMesoSpent);
@@ -322,9 +329,13 @@ function _soulRenderPotential() {
   }).join('');
 }
 
-function _soulBuildResetGoalOpts() {
+function _soulBuildGoalOpts(selected) {
   const D = _soulData();
-  return '<option value="">-</option>' + D.OPTIONS.map(o => `<option value="${o.key}">${o.label}</option>`).join('');
+  return '<option value="">-</option>' + D.OPTIONS.map(o => `<option value="${o.key}"${o.key === selected ? ' selected' : ''}>${o.label}</option>`).join('');
+}
+function _soulBuildGradeOpts() {
+  const D = _soulData();
+  return D.GRADES.map(g => `<option value="${g}">${D.GRADE_LABEL[g]}</option>`).join('');
 }
 function _soulBuildGuGoalOpts() {
   const D = _soulData();
@@ -338,6 +349,8 @@ function initSoul() {
   const sec = document.getElementById('sec-soul');
   const D = _soulData();
   if (!sec || !D) return;
+
+  _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">소울 증폭 시뮬레이터</h2></div>
@@ -387,30 +400,6 @@ function initSoul() {
     <div id="soulTabPotential" style="display:none">
       <div class="sf-layout">
         <div class="card">
-          <div class="card__title">현재 잠재능력</div>
-          <div class="cube-goal-hint mt8" id="soulPotStageRow" style="display:none">단계 선택 <select class="sel" id="soulPotStage"></select></div>
-          <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
-            <div class="pot-panel__head">
-              <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
-              <span>소울 잠재</span>
-            </div>
-            <div class="pot-panel__lines" id="soulPotLines"></div>
-          </div>
-
-          <div class="card__title mt16">잠재 재설정</div>
-          <div class="sf-res-item"><span class="sf-res-label">비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--primary cube-btn-full" id="soulResetBtn">잠재 재설정 [S]</button>
-          </div>
-          <div class="cube-goal-hint mt16">목표 옵션 <select class="sel" id="soulResetGoal">${_soulBuildResetGoalOpts()}</select></div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--ghost cube-btn-full" id="soulResetAutoBtn">목표 옵션까지 자동 [A]</button>
-          </div>
-          <div class="sf-res-item mt16"><span class="sf-res-label">재설정 횟수</span><span class="sf-res-val" id="soulResetTries">0</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulResetMesoSpent">0 메소</span></div>
-        </div>
-
-        <div class="card">
           <div class="card__title">등급업</div>
           <div class="sf-res-item"><span class="sf-res-label">현재 등급</span><span class="sf-res-val ru-now" id="soulGuNow">-</span></div>
           <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="soulGuChance">-</span></div>
@@ -430,6 +419,37 @@ function initSoul() {
           <div class="card__title mt16">기록</div>
           <div id="soulGuLog" class="fam-log"></div>
         </div>
+
+        <div class="card">
+          <div class="card__title">잠재옵션</div>
+          <div class="cube-goal-hint mt8">등급 선택 <select class="sel" id="soulPotGrade">${_soulBuildGradeOpts()}</select></div>
+          <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
+          <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
+            <div class="pot-panel__head">
+              <span class="grade-badge" id="soulPotBadge">R</span>
+              <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
+              <span>잠재옵션</span>
+            </div>
+            <div class="pot-panel__lines" id="soulPotLines"></div>
+          </div>
+
+          <div class="card__title mt16">잠재 재설정</div>
+          <div class="sf-res-item"><span class="sf-res-label">비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
+          <div class="cube-btns mt8">
+            <button class="sbtn sbtn--primary cube-btn-full" id="soulResetBtn">잠재 재설정 [S]</button>
+          </div>
+          <div class="cube-goal-hint mt16" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            목표 옵션
+            <select class="sel" id="soulResetGoal1">${_soulBuildGoalOpts()}</select>
+            <select class="sel" id="soulResetGoal2">${_soulBuildGoalOpts()}</select>
+            <select class="sel" id="soulResetGoal3">${_soulBuildGoalOpts()}</select>
+          </div>
+          <div class="cube-btns mt8">
+            <button class="sbtn sbtn--ghost cube-btn-full" id="soulResetAutoBtn">목표 옵션까지 자동 [A]</button>
+          </div>
+          <div class="sf-res-item mt16"><span class="sf-res-label">재설정 횟수</span><span class="sf-res-val" id="soulResetTries">0</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulResetMesoSpent">0 메소</span></div>
+        </div>
       </div>
     </div>`;
 
@@ -447,18 +467,15 @@ function initSoul() {
 
   document.getElementById('soulAmpRollBtn').addEventListener('click', () => { _soulStopAmpAuto(); _soulAmpRollOnce(); });
   document.getElementById('soulAmpAutoBtn').addEventListener('click', _soulStartAmpAuto);
-  document.getElementById('soulAmpResetBtn').addEventListener('click', () => { _soulAmpReset(); _sgState = { guTries: 0, guFails: 0, guMesoSpent: 0, rsTries: 0, rsMesoSpent: 0, log: [] }; _soulRenderPotential(); });
+  document.getElementById('soulAmpResetBtn').addEventListener('click', _soulAmpReset);
 
-  document.getElementById('soulPotStage').addEventListener('change', e => {
-    _soulPotStage = Number(e.target.value) || 1;
-    if (_soulState.grade) _soulState.lines = _soulState.lines.map(l => ({ ...l, value: soulRollValue(l.key, l.grade, _soulPotStage) }));
-    _soulRenderPotential();
-  });
+  document.getElementById('soulPotGrade').addEventListener('change', e => { _soulStopResetAuto(); _soulStopGuAuto(); _soulPotSetGrade(e.target.value); });
+  document.getElementById('soulPotStage').addEventListener('change', e => { _soulStopResetAuto(); _soulStopGuAuto(); _soulPotSetStage(Number(e.target.value) || 1); });
   document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
   document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
   document.getElementById('soulGuRollBtn').addEventListener('click', () => { _soulStopGuAuto(); _soulGradeUpOnce(); });
   document.getElementById('soulGuAutoBtn').addEventListener('click', _soulStartGuAuto);
-  document.getElementById('soulGuResetBtn').addEventListener('click', () => { _soulAmpReset(); _sgState = { guTries: 0, guFails: 0, guMesoSpent: 0, rsTries: 0, rsMesoSpent: 0, log: [] }; _soulRenderPotential(); });
+  document.getElementById('soulGuResetBtn').addEventListener('click', _soulPotFullReset);
 
   /* S=주 동작, A=증폭/재설정 자동, G=등급업 자동, D=등급업 시도, R=초기화 — 열린 탭 기준 */
   document.addEventListener('keydown', e => {

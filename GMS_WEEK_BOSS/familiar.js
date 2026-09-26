@@ -344,8 +344,6 @@ function initFamiliar() {
 
     <!-- ══ 등급업 ══ -->
     <div id="famTabRankup">
-      <p class="dt-help">레어부터 시작해 유니크까지 올립니다. 등급업 확률과 필요 포인트는 넥슨 공식 수치이고, 천장은 정해진 횟수만큼 연속 실패하면 다음 시도가 확정으로 성공하는 규칙입니다.</p>
-
       <div class="sf-layout">
         <!-- 왼쪽: 카드 그림 + 버튼 -->
         <div class="card fam-cardcol">
@@ -382,8 +380,6 @@ function initFamiliar() {
 
     <!-- ══ 옵션 ══ -->
     <div id="famTabOption" style="display:none">
-      <p class="dt-help">패밀리어 카드로 잠재 옵션을 재설정합니다. 두 줄 중 아랫줄은 한 단계 아래 등급에서 뜨고, 드물게 두 줄 모두 현재 등급에서 뜹니다.</p>
-
       <div class="sf-layout">
         <div class="card fam-cardcol">
           <div class="fam-cardview">

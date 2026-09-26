@@ -5,33 +5,35 @@
      https://maplestory.nexon.com/news/update/813
    보조로 참고한 유저 정리글:
      https://www.inven.co.kr/board/maple/5974/7175972
+   2026-09-26 나무위키 "소울웨폰" 문서(사용자 제공 스크린샷)로 재확인함 —
+   실패당 상승분/게이지스텝/게이지완충횟수 표가 지금 값과 정확히 일치
+   (1단계 1%·4.00%·25, 2단계 0.6%·3.03%·33, 3단계 0.4%·2.33%·43,
+   4단계 0.3%·2.00%·50). 등급업 확률·재설정 비용도 동일하게 일치 확인됨.
 
-   [실패할 때마다 확률이 오른다는 것] — 처음엔 "게이지 100%에서 확정 성공"만
-   구현했는데, 그건 별개 규칙이고 성공률 자체도 실패마다 오른다(사용자 확인).
-   1회 실패당 상승분(failInc)은 위 인벤글의 "약식 기대값" 역산치를 썼다.
+   [잠재능력이 3줄, 첫 줄은 항상 잠재 자체 등급이라는 것 — 2026-09-26
+   나무위키 "소울 잠재능력 재설정 > 등급 설정확률" 표로 확정] 첫 번째 옵션은
+   100% 잠재 자체 등급. 두·세 번째 옵션은 각각 독립적으로:
+     - 레어 잠재: 1/51 확률로 레어(자체), 50/51 확률로 "노멀"(레어보다 낮은,
+       가중치 표가 없는 등급 — 데이터가 없어 수치는 안 보여줌)
+     - 에픽 잠재: 1/21 확률로 에픽(자체), 20/21 확률로 레어(한 단계 아래)
+     - 유니크 잠재: 1/51 확률로 유니크(자체), 50/51 확률로 에픽(한 단계 아래)
+       (원문 표는 "1/51"로만 보였는데 51분모 기준 나머지 확률이 안 맞아서
+       50/51로 보정 — 레어·유니크 두 분모가 같은 51이라 일관성 있음)
+     - 레전드리 잠재: 1/201 확률로 레전드리(자체), 200/201 확률로 유니크
+   즉 "이탈"은 실제로는 낮은 확률로 한 단계 아래가 아니라 자체 등급이 다시
+   나오는 경우를 가리키는 말이었다(전에 반대로 이해해서 구현했었음).
 
-   [잠재능력이 3줄이라는 것] — 실제 게임 스트리밍 화면 캡처로 확인됨(사용자
-   제공). 처음엔 "7종 중 1개만 부여"로 잘못 만들었었다 — 되돌리지 말 것.
-   그 화면에서 STR/DEX/LUK이 개별 옵션으로(올스탯으로 묶이지 않고) 나오는
-   것도 확인됐고, 같은 옵션(공격력)이 한 아이템에 두 줄 겹쳐 나오는 것도
-   확인됐다 → 3줄을 옵션 풀에서 중복 허용, 동일 확률로 각각 독립적으로 뽑는
-   방식으로 구현.
+   [옵션 풀 + 등급별 가중치 — 2026-09-26 나무위키 "옵션 등장 가중치" 표로
+   확정, 사용자 스크린샷 제공] 아래 w:{RARE,EPIC,UNIQUE,LEGENDARY} 그대로
+   옮김(도합 51/34/43/39로 원문 합계와 일치 확인). "노멀" 등급 줄은 가중치
+   표가 없어 임시로 레어 표를 재사용한다(가정치 — 확인되면 고칠 것).
 
-   [옵션별 수치 — 2026-09-26 재수정] 처음엔 "등급×단계별 랜덤 범위"로 잘못
-   만들었었다. 사용자가 실제 게임에서 확인한 바로는 랜덤이 아니라:
-     1) 수치 = 0.5 × 등급랭크(레어1·에픽2·유니크3·레전드리4) × 단계, 고정값.
-        (유니크 1단계 1.5%, 레전드리 1단계 2%, 2단계 3%/4%로 실측 확인됨)
-     2) 3줄 중 1줄은 "잠재 자체 등급"의 값, 나머지 2줄은 "그 한 단계 아래
-        등급"의 값이 뜬다(레어는 아래 등급이 없어 3줄 다 레어 값).
-        예: 에픽 잠재 → 에픽/레어/레어, 유니크 잠재 → 유니크/에픽/에픽.
-     3) 낮은 확률로 이 규칙을 벗어난 "이탈" 등급도 나온다고 함 — 정확한
-        확률을 몰라서 이번엔 구현 안 함(TODO, 확인되면 추가).
-   레어(0.5%)·에픽(1%) 쪽은 사용자가 직접 확인한 값이 아니라, 확인된 유니크
-   (1.5%)·레전드리(2%) 두 지점과 정확히 들어맞는 공식(0.5×랭크×단계)을 그대로
-   확장한 값이다 — 틀렸을 수 있으니 실측되면 고칠 것.
-   STR/DEX/INT/LUK은 스샷에서 "LUK +8"(고정치, %아님) 한 건만 확인돼서 표를
-   만들 근거가 부족해 이름만 보여준다. 그 외(올스탯·Max HP·크리티컬 확률)도
-   수치 자료가 없어 이름만.
+   [옵션 수치 크기] 나무위키 표는 가중치만 있고 실제 %수치는 안 나와 있다.
+   %형 옵션(numeric:true)은 여전히 "0.5 × 등급랭크(레어1·에픽2·유니크3·
+   레전드리4) × 단계"로 계산한다 — 유니크 1단계 1.5%·레전드리 1단계 2%·
+   2단계 3%/4%는 사용자 실측 확인값이고, 레어(0.5%)·에픽(1%)은 그 공식을
+   그대로 확장한 추정치라 확인되면 달라질 수 있다. "노멀" 등급 줄은 수치
+   자료가 전혀 없어 null(이름만 표시).
    ═══════════════════════════════════════════════════════════ */
 
 const SOUL_STAGES = [1, 2, 3, 4];
@@ -58,7 +60,7 @@ const SOUL_ETHER_BOSS = {
 };
 
 const SOUL_GRADES = ['RARE', 'EPIC', 'UNIQUE', 'LEGENDARY'];
-const SOUL_GRADE_LABEL = { RARE: '레어', EPIC: '에픽', UNIQUE: '유니크', LEGENDARY: '레전드리' };
+const SOUL_GRADE_LABEL = { RARE: '레어', EPIC: '에픽', UNIQUE: '유니크', LEGENDARY: '레전드리', NORMAL: '노멀' };
 const SOUL_GRADE_RANK = { RARE: 1, EPIC: 2, UNIQUE: 3, LEGENDARY: 4 };
 
 // 등급업 확률 — 공식. 소모 재료는 공지에 없어 재설정 비용을 그대로 빌려 쓴다(placeholder).
@@ -71,27 +73,46 @@ const SOUL_GRADEUP = {
 // 잠재 재설정 비용 — 공식
 const SOUL_RESET_MESO = { RARE: 20_000_000, EPIC: 40_000_000, UNIQUE: 65_000_000, LEGENDARY: 88_000_000 };
 
-// 옵션 풀 — 한 줄마다 이 중 하나가 동일 확률로 뽑힌다(중복 허용, 3줄).
-// numeric:true 인 것만 화면에 수치를 보여준다(사용자 확인: 공격력/마력/
-// 보스데미지/데미지/몬스터 방어율 무시 5개가 수치형).
+// 두·세 번째 옵션 줄이 "잠재 자체 등급"으로 나올 확률과, 아닐 때 내려가는 등급.
+const SOUL_LINE_OWN_PROB = { RARE: 1 / 51, EPIC: 1 / 21, UNIQUE: 1 / 51, LEGENDARY: 1 / 201 };
+const SOUL_LINE_BELOW = { RARE: 'NORMAL', EPIC: 'RARE', UNIQUE: 'EPIC', LEGENDARY: 'UNIQUE' };
+
+// 옵션 풀 — w는 등급별 가중치(나무위키 표 그대로). numeric:true 인 것만
+// 화면에 %수치를 보여준다.
 const SOUL_OPTIONS = [
-  { key: 'atk',       label: '공격력',                    numeric: true },
-  { key: 'matk',      label: '마력',                      numeric: true },
-  { key: 'bossDmg',   label: '보스 몬스터 공격 시 데미지', numeric: true },
-  { key: 'dmgPct',    label: '데미지',                    numeric: true },
-  { key: 'ignoreDef', label: '몬스터 방어율 무시',        numeric: true },
-  { key: 'str',       label: 'STR' },
-  { key: 'dex',       label: 'DEX' },
-  { key: 'int_',      label: 'INT' },
-  { key: 'luk',       label: 'LUK' },
-  { key: 'allstat',   label: '올스탯' },
-  { key: 'maxhp',     label: 'Max HP' },
-  { key: 'crit',      label: '크리티컬 확률' },
+  { key: 'str',        label: 'STR 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'dex',        label: 'DEX 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'int_',       label: 'INT 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'luk',        label: 'LUK 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'maxhp',      label: '최대 HP 증가',                numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'maxmp',      label: '최대 MP 증가',                numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'speed',      label: '이동속도 증가',               numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'jump',       label: '점프력 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'atk',        label: '공격력 증가',                 numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
+  { key: 'matk',       label: '마력 증가',                   numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
+  { key: 'def',        label: '방어력 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'strPct',     label: 'STR %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'dexPct',     label: 'DEX %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'intPct',     label: 'INT %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'lukPct',     label: 'LUK %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'maxhpPct',   label: '최대 HP %증가',               numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'maxmpPct',   label: '최대 MP %증가',               numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'atkPct',     label: '공격력% 증가',                numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'matkPct',    label: '마력% 증가',                  numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'crit',       label: '크리티컬 확률 증가',           numeric: true,  w: { RARE: 2, EPIC: 1, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'dmgPct',     label: '데미지 %증가',                numeric: true,  w: { RARE: 1, EPIC: 1, UNIQUE: 1, LEGENDARY: 1 } },
+  { key: 'allstat',    label: '올스탯 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'allstatPct', label: '올스탯 %증가',                numeric: true,  w: { RARE: 0, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'hpDrain',    label: '공격 시 일정 확률로 HP 회복',  numeric: false, w: { RARE: 0, EPIC: 3, UNIQUE: 3, LEGENDARY: 0 } },
+  { key: 'mpDrain',    label: '공격 시 일정 확률로 MP 회복',  numeric: false, w: { RARE: 0, EPIC: 3, UNIQUE: 3, LEGENDARY: 0 } },
+  { key: 'bossDmg',    label: '보스 공격 시 데미지 % 증가',   numeric: true,  w: { RARE: 0, EPIC: 0, UNIQUE: 1, LEGENDARY: 1 } },
+  { key: 'ignoreDef',  label: '몬스터 방어율 무시',          numeric: true,  w: { RARE: 0, EPIC: 2, UNIQUE: 1, LEGENDARY: 1 } },
 ];
 
-/* numeric 옵션의 고정 수치(%) — 랜덤이 아니라 등급 랭크와 단계로 정확히
-   정해진다(사용자 확인). 소수점 한 자리까지만 남긴다. */
+/* numeric 옵션의 고정 수치(%) — 랜덤이 아니라 등급 랭크와 단계로 정해진다.
+   "노멀"은 랭크·수치 자료가 없어 null. 소수점 한 자리까지만 남긴다. */
 function soulTierValue(grade, stage) {
+  if (grade === 'NORMAL') return null;
   const rank = SOUL_GRADE_RANK[grade];
   return Math.round(0.5 * rank * stage * 10) / 10;
 }
@@ -104,42 +125,46 @@ function soulRollValue(optionKey, grade, stage) {
   return soulTierValue(grade, stage);
 }
 
-function soulPickOption() {
-  return SOUL_OPTIONS[Math.floor(Math.random() * SOUL_OPTIONS.length)];
-}
-
-/* 3줄 중 1줄은 잠재 자체 등급, 나머지 2줄은 그 한 단계 아래 등급의 수치가
-   뜬다(레어는 아래 등급이 없어 3줄 다 레어). 어느 줄이 "자체 등급"인지는
-   무작위로 섞는다 — 항상 첫 줄이라는 근거는 없어서. */
-function soulLineGrades(ownerGrade) {
-  const idx = SOUL_GRADES.indexOf(ownerGrade);
-  const belowGrade = SOUL_GRADES[Math.max(0, idx - 1)];
-  const arr = idx === 0 ? [ownerGrade, ownerGrade, ownerGrade] : [ownerGrade, belowGrade, belowGrade];
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [arr[i], arr[j]] = [arr[j], arr[i]];
+/* 등급별 가중치로 옵션 하나를 뽑는다. "노멀"은 가중치 표가 없어 레어 표를
+   임시로 재사용한다(가정치). */
+function soulPickOption(grade) {
+  const g = grade === 'NORMAL' ? 'RARE' : (grade || 'RARE');
+  const pool = SOUL_OPTIONS.filter(o => (o.w[g] || 0) > 0);
+  const total = pool.reduce((s, o) => s + o.w[g], 0);
+  let r = Math.random() * total;
+  for (const o of pool) {
+    r -= o.w[g];
+    if (r <= 0) return o;
   }
-  return arr;
+  return pool[pool.length - 1];
 }
 
-/* 잠재능력 한 판 = 3줄. 줄마다 독립적으로 옵션 풀에서 뽑으므로 같은 옵션이
-   두 번 겹칠 수 있다(실측 확인됨 — 공격력이 두 줄에 겹친 사례 있었음).
-   각 줄의 수치는 그 줄에 배정된 등급(soulLineGrades)과 잠재 단계로 정해진다. */
+/* 두·세 번째 옵션 줄에 배정될 등급 하나를 뽑는다(첫 줄은 항상 잠재 자체 등급). */
+function soulLineGradeFor(ownerGrade) {
+  return Math.random() < SOUL_LINE_OWN_PROB[ownerGrade] ? ownerGrade : SOUL_LINE_BELOW[ownerGrade];
+}
+
+/* 3줄의 등급 배정: 첫 줄은 100% 잠재 자체 등급, 나머지 2줄은 각각 독립적으로
+   soulLineGradeFor로 뽑는다(나무위키 "등급 설정확률" 표 기준). */
+function soulLineGrades(ownerGrade) {
+  return [ownerGrade, soulLineGradeFor(ownerGrade), soulLineGradeFor(ownerGrade)];
+}
+
+/* 잠재능력 한 판 = 3줄. 줄마다 배정된 등급의 가중치로 옵션을 뽑으므로 같은
+   옵션이 두 번 겹칠 수 있다(실측 확인됨 — 공격력이 두 줄에 겹친 사례 있었음). */
 function soulRollLines(grade, stage) {
   const lineGrades = soulLineGrades(grade);
   return lineGrades.map(g => {
-    const opt = soulPickOption();
+    const opt = soulPickOption(g);
     return { key: opt.key, label: opt.label, grade: g, value: soulRollValue(opt.key, g, stage) };
   });
 }
 
 const SOUL_SOURCE_NOTE =
-  '증폭 성공률·게이지·등급업 확률·재설정 비용은 넥슨 공식 패치노트(2026.09.17) 기준입니다. ' +
-  '잠재능력은 3줄이고, 그중 1줄은 잠재 자체 등급의 수치, 나머지 2줄은 한 단계 아래 등급의 수치가 ' +
-  '나옵니다(공격력·마력·보스 몬스터 공격 시 데미지·데미지·몬스터 방어율 무시 5개 옵션). ' +
-  '유니크·레전드리 수치는 사용자 실측 확인값이고, 레어·에픽은 같은 공식(0.5%×등급×단계)으로 ' +
-  '확장한 값이라 확인되면 달라질 수 있습니다. 나머지 옵션(STR·DEX·INT·LUK·올스탯·Max HP·크리티컬 ' +
-  '확률)은 수치 자료가 없어 옵션 이름만 표시됩니다.';
+  '증폭 성공률·게이지·등급업 확률·재설정 비용, 옵션 풀과 등급별 가중치, 줄 등급 배정 확률은 ' +
+  '나무위키 "소울웨폰" 문서(2026.09.26 확인) 기준입니다. 옵션 %수치 크기는 표에 없어 유니크·레전드리 ' +
+  '실측값(0.5%×등급랭크×단계)을 레어·에픽까지 확장한 추정치이며, 확인되면 달라질 수 있습니다. ' +
+  '"노멀" 등급 줄은 가중치·수치 자료가 없어 레어 가중치를 임시로 쓰고 수치는 이름만 표시합니다.';
 
 if (typeof window !== 'undefined') {
   window.SOUL_DATA = {

@@ -242,13 +242,17 @@ function _soulRenderAmp() {
   const gaugeFill = document.getElementById('soulAmpGaugeFill');
   if (gaugeFill) gaugeFill.style.width = done ? '0%' : Math.round(_soulState.gauge * 100) + '%';
   document.getElementById('soulAmpMeso').textContent = done ? '—' : fmtMeso(info.meso);
-  document.getElementById('soulAmpEtherLbl').textContent = done ? '—' : `소울 에테르 ${target}단계 (${D.ETHER_BOSS[target]})`;
+  document.getElementById('soulAmpEtherLbl').innerHTML = done ? '—'
+    : `<img class="crystal-icon" src="images/icons/aether_${target}.webp" alt="" onerror="this.style.display='none'"> 소울 에테르 ${target}단계 (${D.ETHER_BOSS[target]})`;
 
   document.getElementById('soulAmpTries').textContent = _soulState.tries.toLocaleString();
   document.getElementById('soulAmpFails').textContent = _soulState.fails.toLocaleString();
   document.getElementById('soulAmpMesoSpent').textContent = fmtMeso(_soulState.mesoSpent);
-  document.getElementById('soulAmpEtherSpent').innerHTML = D.STAGES
-    .map(s => `${s}단계 ${_soulState.etherSpent[s]}개`).join(' · ');
+  document.getElementById('soulAmpEtherSpent').innerHTML = D.STAGES.map(s => `
+    <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
+      <img class="crystal-icon" src="images/icons/aether_${s}.webp" alt="" onerror="this.style.display='none'">
+      <span>${_soulState.etherSpent[s]}개</span>
+    </div>`).join('');
 
   const btn = document.getElementById('soulAmpRollBtn');
   if (btn) { btn.disabled = done; btn.textContent = done ? '4단계 달성' : `증폭 시도 [S]`; }
@@ -364,7 +368,7 @@ function initSoul() {
           <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val" id="soulAmpTries">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="soulAmpFails">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulAmpMesoSpent">0 메소</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">소모 에테르</span><span class="sf-res-val" id="soulAmpEtherSpent">-</span></div>
+          <div class="sf-res-item" style="align-items:flex-start"><span class="sf-res-label">소모 에테르</span><div id="soulAmpEtherSpent"></div></div>
 
           <div class="card__title mt16">기록</div>
           <div id="soulAmpLog" class="fam-log"></div>
@@ -474,7 +478,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926a';
+      s.src = 'data_soul.js?v=20260926b';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

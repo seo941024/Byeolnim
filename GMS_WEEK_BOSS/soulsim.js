@@ -287,7 +287,6 @@ function _soulRenderPotential() {
 
   panel.dataset.grade = grade;
   document.getElementById('soulPotIcon').src = _soulIconSrc(grade);
-  document.getElementById('soulPotBadge').textContent = grade[0];
 
   const gradeSel = document.getElementById('soulPotGrade');
   if (gradeSel && gradeSel.value !== grade) gradeSel.value = grade;
@@ -426,7 +425,6 @@ function initSoul() {
           <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
           <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
             <div class="pot-panel__head">
-              <span class="grade-badge" id="soulPotBadge">R</span>
               <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
               <span>잠재옵션</span>
             </div>

@@ -6,7 +6,7 @@
 
 function _polData() { return window.POLISH_DATA; }
 
-let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, log: [] };
+let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, lifeLocked: false, log: [] };
 
 function _polStep() {
   const D = _polData();
@@ -19,6 +19,7 @@ function _polStep() {
   _polState.stonesUsed[_polState.type] += _polState.count;
   const ok = Math.random() < chance;
   if (!ok) _polState.fails++;
+  else if (_polState.type === 'life') _polState.lifeLocked = true; // 생명의 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
   _polState.log.unshift({ n: _polState.tries, type: t.key, count: _polState.count, chance, ok });
   if (_polState.log.length > 200) _polState.log.length = 200;
   return ok;
@@ -28,7 +29,7 @@ function _polRollOnce() { _polStep(); _polRender(); }
 
 function _polReset() {
   _polStopAuto();
-  _polState = { type: _polState.type, count: _polState.count, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, log: [] };
+  _polState = { type: _polState.type, count: _polState.count, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, lifeLocked: false, log: [] };
   _polRender();
 }
 
@@ -82,15 +83,21 @@ function _polRender() {
   document.getElementById('polCost').textContent = fmtMeso(cost);
   document.getElementById('polConfirmNote').style.display = chance >= 1 ? '' : 'none';
 
+  const locked = _polState.type === 'life' && _polState.lifeLocked;
+  document.getElementById('polLockedNote').style.display = locked ? '' : 'none';
+  document.getElementById('polRollBtn').disabled = locked;
+  document.getElementById('polAutoBtn').disabled = locked;
+  document.getElementById('polCount').disabled = locked;
+
   document.getElementById('polTries').textContent = _polState.tries.toLocaleString();
   document.getElementById('polFails').textContent = _polState.fails.toLocaleString();
   document.getElementById('polSuccesses').textContent = (_polState.tries - _polState.fails).toLocaleString();
   document.getElementById('polMesoSpent').textContent = fmtMeso(_polState.mesoSpent);
-  document.getElementById('polStonesUsed').innerHTML = Object.values(D.TYPES).map(pt => `
+  document.getElementById('polStonesUsed').innerHTML = `
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
-      <img class="crystal-icon" src="${pt.icon}" alt="" onerror="this.style.display='none'">
-      <span>${_polState.stonesUsed[pt.key]}개</span>
-    </div>`).join('');
+      <img class="crystal-icon" src="${t.icon}" alt="" onerror="this.style.display='none'">
+      <span>${_polState.stonesUsed[_polState.type]}개</span>
+    </div>`;
 
   document.getElementById('polLog').innerHTML = _polState.log.map(e => `
     <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
@@ -121,6 +128,7 @@ function initPolish() {
         <div class="sf-res-item mt16"><span class="sf-res-label">성공률</span><span class="sf-res-val" id="polChance">100%</span></div>
         <div class="sf-res-item"><span class="sf-res-label">1회당 메소</span><span class="sf-res-val" id="polCost">0 메소</span></div>
         <p class="dt-help" id="polConfirmNote" style="display:none">※ 최대 개수라 이번 시도는 확정 성공입니다.</p>
+        <p class="dt-help" id="polLockedNote" style="display:none">※ 생명의 연마석은 한 번 성공하면 끝입니다. 초기화해야 다시 시도할 수 있습니다.</p>
 
         <div class="cube-btns mt16">
           <button class="sbtn sbtn--primary cube-btn-full" id="polRollBtn">연마 시도 [S]</button>

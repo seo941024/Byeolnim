@@ -2921,10 +2921,23 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
 
   /* 보스HP 카드: 5열 → 2열, 글자 자동 축소 (6) */
   .bhp-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
-  .bhp-card__name { font-size: .9rem; }
+  .bhp-card__name { font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .bhp-active-diff .dpill { font-size: clamp(.55rem, 3.5vw, 1.3rem); padding: 4px 2px; }
-  .bhp-phase { font-size: .8rem; }
-  .bhp-phase__val { font-size: .88rem; }
+  .bhp-phase { font-size: .75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .bhp-phase__val { font-size: .82rem; white-space: nowrap; }
+
+  /* 추옵 시뮬레이터 상단 탭: 좁은 화면에서 2줄로 꺾이며 헤더와 겹치는 문제 (2) */
+  .sf-tabs { width: 100%; }
+  .sf-tab { flex: 1; padding: 10px 4px; font-size: .78rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* 스타포스 단계별 확률: 라벨+숫자가 세로로 쪼개지는 문제 (2) */
+  .sf-stage-info { flex-direction: column; align-items: flex-end; gap: 1px; font-size: .68rem; }
+  .sf-stage-prob--succ, .sf-stage-prob--fail, .sf-stage-prob--dest { white-space: nowrap; }
+  .sf-my-result { flex-wrap: wrap; }
+  .sf-my-result__tag, .sf-my-result__meso { white-space: nowrap; }
+
+  /* 서버 상태: 긴 월드명(Challengers-Heroic 등)이 꺾이는 문제 (4) */
+  .icon-lbl { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; display: inline-block; }
 
   /* 보스 패널 헤더: 캐릭터명 + 결정석 + 초기화 줄바꿈 방지 */
   .boss-panel__head { flex-wrap: wrap; gap: 6px; padding: 10px 14px; }

@@ -369,7 +369,6 @@ function initSoul() {
           <div class="sf-res-item"><span class="sf-res-label">등급업</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
 
           <div class="card__title mt16">목표 옵션</div>
-          <div class="cube-goal-hint">한 칸에만 적으면 세 줄 합산, 같은 옵션을 여러 칸에 적으면 그 칸 수만큼 따로 떠야 합니다. 수치는 안 적어도 됩니다(그 옵션이 나오기만 하면 만족).</div>
           <div id="soulGoalRows">
             <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal1">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal1" disabled></div>
             <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal2">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal2" disabled></div>

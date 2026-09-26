@@ -6,7 +6,7 @@
 
 function _polData() { return window.POLISH_DATA; }
 
-let _polState = { type: 'life', count: 10, tries: 0, fails: 0, mesoSpent: 0, log: [] };
+let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, log: [] };
 
 function _polStep() {
   const D = _polData();
@@ -89,7 +89,7 @@ function _polRender() {
   document.getElementById('polLog').innerHTML = _polState.log.map(e => `
     <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
       <span class="fam-log-n">${e.n}</span>
-      <span class="fam-log-line">${D.TYPES[e.type].label} ${e.count}개 (${(Math.round(e.chance * 1000) / 10)}%)</span>
+      <span class="fam-log-line">${D.TYPES[e.type].label} ${e.count}개 · ${Math.round(e.chance * 1000) / 10}%</span>
       <span class="ru-log-res ${e.ok ? 'ok' : 'no'}">${e.ok ? '성공' : '실패'}</span>
     </div>`).join('');
 }
@@ -101,11 +101,11 @@ function initPolish() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">연마석 시뮬레이터</h2></div>
-    <p class="dt-help">생명의 연마석(개당 10%)·신념의 연마석(개당 5%) 중 하나를 골라 몇 개 등록할지 정하면, 등록한 개수만큼 성공률이 쌓입니다(개수 × 개당 확률). 최대 개수를 다 채우면 100% 확정 성공입니다.</p>
+    <p class="dt-help">생명의 연마석은 개당 10%, 신념의 연마석은 개당 5%입니다. 하나를 골라 몇 개 등록할지 정하면 등록한 개수만큼 성공률이 쌓입니다. 최대 개수를 다 채우면 100% 확정 성공입니다.</p>
 
     <div class="sf-tabs">
-      <button class="sf-tab pol-type-tab active" data-poltype="life">생명의 연마석</button>
-      <button class="sf-tab pol-type-tab" data-poltype="faith">신념의 연마석</button>
+      <button class="sf-tab pol-type-tab active" data-poltype="life"><img class="crystal-icon" src="${D.TYPES.life.icon}" alt="" onerror="this.style.display='none'"> 생명의 연마석</button>
+      <button class="sf-tab pol-type-tab" data-poltype="faith"><img class="crystal-icon" src="${D.TYPES.faith.icon}" alt="" onerror="this.style.display='none'"> 신념의 연마석</button>
     </div>
     <hr class="sec-sep" />
 
@@ -114,7 +114,7 @@ function initPolish() {
         <div class="card__title">등록</div>
         <div class="cube-goal-hint mt8">등록 개수 <select class="sel" id="polCount">${_polBuildCountOpts()}</select></div>
         <div class="sf-res-item mt16"><span class="sf-res-label">성공률</span><span class="sf-res-val" id="polChance">100%</span></div>
-        <div class="sf-res-item"><span class="sf-res-label">메소 소비(1회)</span><span class="sf-res-val" id="polCost">0 메소</span></div>
+        <div class="sf-res-item"><span class="sf-res-label">1회 메소 소비</span><span class="sf-res-val" id="polCost">0 메소</span></div>
         <p class="dt-help" id="polConfirmNote" style="display:none">※ 최대 개수라 이번 시도는 확정 성공입니다.</p>
 
         <div class="cube-btns mt16">
@@ -143,7 +143,7 @@ function initPolish() {
       if (tab.dataset.poltype === _polState.type) return;
       _polStopAuto();
       _polState.type = tab.dataset.poltype;
-      _polState.count = D.TYPES[_polState.type].maxCount;
+      _polState.count = 1;
       _polRender();
     });
   });

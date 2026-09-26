@@ -478,7 +478,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926b';
+      s.src = 'data_soul.js?v=20260926c';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

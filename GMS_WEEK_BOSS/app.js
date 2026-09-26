@@ -96,7 +96,8 @@ const NAV_LABELS = {
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
   liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
-  cube: '큐브 시뮬레이터', bosshp: '보스 정보', serverstatus: '서버 상태',
+  cube: '큐브 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
+  bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',
 };
 function navigateTo(sec) {
@@ -120,6 +121,7 @@ function navigateTo(sec) {
   if (sec === 'cube' && typeof ensureCubeReady === 'function') ensureCubeReady();
   if (sec === 'familiar' && typeof ensureFamiliarReady === 'function') ensureFamiliarReady();
   if (sec === 'soul' && typeof ensureSoulReady === 'function') ensureSoulReady();
+  if (sec === 'polish' && typeof ensurePolishReady === 'function') ensurePolishReady();
   if (sec === 'frontier' && typeof initFrontier === 'function') initFrontier();
   if (sec === 'hexa')      renderAllHexaLists();
 }
@@ -1617,6 +1619,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 09. 26.',
+    items: [
+      {
+        head: '연마석 시뮬레이터가 생겼습니다',
+        desc: '생명의 연마석(개당 10%)·신념의 연마석(개당 5%) 중 골라 몇 개 등록할지 정하면 등록 개수만큼 성공률이 쌓입니다. 최대 개수(생명 10개/신념 20개)를 채우면 100% 확정 성공입니다.',
+      },
+    ],
+  },
+  {
     date: '2026. 09. 25.',
     items: [
       {
@@ -1715,7 +1726,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-09-25-soul-sim',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-09-26-polish-sim',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

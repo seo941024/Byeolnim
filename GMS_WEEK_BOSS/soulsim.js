@@ -12,7 +12,8 @@
    잠재능력이 3줄이고 STR/DEX/INT/LUK이 개별 옵션으로 나온다는 건 실제 게임
    스트리밍 화면 캡처로 확인된 사실이다(자세한 경위는 data_soul.js 머리
    주석 참고) — "옵션 1개만 부여"로 되돌리지 말 것.
-   옵션 수치는 공격력/마력/보스데미지 3개만 근사치가 있고 나머지는 이름만 나온다.
+   옵션 수치는 공격력/마력/보스데미지/데미지/몬스터 방어율 무시 5개만 근사치가
+   있고(등급 랭크×단계로 고정, data_soul.js 참고) 나머지는 이름만 나온다.
    ═══════════════════════════════════════════════════════════ */
 
 function _soulData() { return window.SOUL_DATA; }
@@ -34,10 +35,12 @@ let _sgState = {
   log: [],        // 등급업+재설정 기록
 };
 
-/* 등급업 때 쓴다 — 줄 종류(옵션)는 그대로 두고 수치만 새 등급 기준으로 다시 뽑는다. */
+/* 등급업/단계업 때 쓴다 — 줄 종류(옵션)는 그대로 두고, 각 줄에 배정되는
+   등급(자체 등급 1줄 + 아래 등급 2줄)과 그에 따른 수치를 새로 뽑는다. */
 function _soulRerollLineValues() {
   if (!_soulState.grade) return;
-  _soulState.lines = _soulState.lines.map(l => ({ ...l, value: soulRollValue(l.key, _soulState.grade, _soulState.stage) }));
+  const lineGrades = soulLineGrades(_soulState.grade);
+  _soulState.lines = _soulState.lines.map((l, i) => ({ ...l, grade: lineGrades[i], value: soulRollValue(l.key, lineGrades[i], _soulState.stage) }));
 }
 
 /* 현재 목표에서 몇 번 실패했는지는 게이지를 gaugeStep으로 나눠서 되돌린다
@@ -271,7 +274,7 @@ function _soulRenderPotential() {
   document.getElementById('soulPotTitle').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '없음';
 
   document.getElementById('soulPotLines').innerHTML = has
-    ? _soulState.lines.map(l => `<div class="pot-line" data-grade="${_soulState.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('')
+    ? _soulState.lines.map(l => `<div class="pot-line" data-grade="${l.grade || _soulState.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('')
     : `<div class="pot-line pot-line--empty">증폭 탭에서 1단계 이상 증폭하면 생깁니다</div>`;
 
   // 재설정
@@ -471,7 +474,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260925c';
+      s.src = 'data_soul.js?v=20260926a';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

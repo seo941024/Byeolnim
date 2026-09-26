@@ -17,10 +17,21 @@
    확인됐다 → 3줄을 옵션 풀에서 중복 허용, 동일 확률로 각각 독립적으로 뽑는
    방식으로 구현.
 
-   [옵션별 수치] — 공격력/마력/보스데미지 3개만 SOUL_ATK_RANGE를 공유해서
-   보여준다. STR/DEX/INT/LUK은 스샷에서 "LUK +8"(고정치, %아님) 한 건만
-   확인돼서 표를 만들 근거가 부족해 이름만 보여준다. 그 외(올스탯·Max HP·
-   크리티컬 확률·몬스터 방어율 무시)도 수치 자료가 없어 이름만.
+   [옵션별 수치 — 2026-09-26 재수정] 처음엔 "등급×단계별 랜덤 범위"로 잘못
+   만들었었다. 사용자가 실제 게임에서 확인한 바로는 랜덤이 아니라:
+     1) 수치 = 0.5 × 등급랭크(레어1·에픽2·유니크3·레전드리4) × 단계, 고정값.
+        (유니크 1단계 1.5%, 레전드리 1단계 2%, 2단계 3%/4%로 실측 확인됨)
+     2) 3줄 중 1줄은 "잠재 자체 등급"의 값, 나머지 2줄은 "그 한 단계 아래
+        등급"의 값이 뜬다(레어는 아래 등급이 없어 3줄 다 레어 값).
+        예: 에픽 잠재 → 에픽/레어/레어, 유니크 잠재 → 유니크/에픽/에픽.
+     3) 낮은 확률로 이 규칙을 벗어난 "이탈" 등급도 나온다고 함 — 정확한
+        확률을 몰라서 이번엔 구현 안 함(TODO, 확인되면 추가).
+   레어(0.5%)·에픽(1%) 쪽은 사용자가 직접 확인한 값이 아니라, 확인된 유니크
+   (1.5%)·레전드리(2%) 두 지점과 정확히 들어맞는 공식(0.5×랭크×단계)을 그대로
+   확장한 값이다 — 틀렸을 수 있으니 실측되면 고칠 것.
+   STR/DEX/INT/LUK은 스샷에서 "LUK +8"(고정치, %아님) 한 건만 확인돼서 표를
+   만들 근거가 부족해 이름만 보여준다. 그 외(올스탯·Max HP·크리티컬 확률)도
+   수치 자료가 없어 이름만.
    ═══════════════════════════════════════════════════════════ */
 
 const SOUL_STAGES = [1, 2, 3, 4];
@@ -48,6 +59,7 @@ const SOUL_ETHER_BOSS = {
 
 const SOUL_GRADES = ['RARE', 'EPIC', 'UNIQUE', 'LEGENDARY'];
 const SOUL_GRADE_LABEL = { RARE: '레어', EPIC: '에픽', UNIQUE: '유니크', LEGENDARY: '레전드리' };
+const SOUL_GRADE_RANK = { RARE: 1, EPIC: 2, UNIQUE: 3, LEGENDARY: 4 };
 
 // 등급업 확률 — 공식. 소모 재료는 공지에 없어 재설정 비용을 그대로 빌려 쓴다(placeholder).
 const SOUL_GRADEUP = {
@@ -60,11 +72,14 @@ const SOUL_GRADEUP = {
 const SOUL_RESET_MESO = { RARE: 20_000_000, EPIC: 40_000_000, UNIQUE: 65_000_000, LEGENDARY: 88_000_000 };
 
 // 옵션 풀 — 한 줄마다 이 중 하나가 동일 확률로 뽑힌다(중복 허용, 3줄).
-// numeric:true 인 것만 화면에 수치를 보여준다.
+// numeric:true 인 것만 화면에 수치를 보여준다(사용자 확인: 공격력/마력/
+// 보스데미지/데미지/몬스터 방어율 무시 5개가 수치형).
 const SOUL_OPTIONS = [
   { key: 'atk',       label: '공격력',                    numeric: true },
   { key: 'matk',      label: '마력',                      numeric: true },
   { key: 'bossDmg',   label: '보스 몬스터 공격 시 데미지', numeric: true },
+  { key: 'dmgPct',    label: '데미지',                    numeric: true },
+  { key: 'ignoreDef', label: '몬스터 방어율 무시',        numeric: true },
   { key: 'str',       label: 'STR' },
   { key: 'dex',       label: 'DEX' },
   { key: 'int_',      label: 'INT' },
@@ -72,55 +87,59 @@ const SOUL_OPTIONS = [
   { key: 'allstat',   label: '올스탯' },
   { key: 'maxhp',     label: 'Max HP' },
   { key: 'crit',      label: '크리티컬 확률' },
-  { key: 'ignoreDef', label: '몬스터 방어율 무시' },
 ];
 
-/* 공격력/마력/보스데미지 공용 수치 범위(%) — [등급][단계-1] = [최소, 최대].
-   출처: 인벤 유저 정리글(공격력% 항목만 일부 기재)
-     https://www.inven.co.kr/board/maple/5974/7175972
-   실제로 적혀 있던 건 레전드리 1~4단계 전부와, 레어/에픽/유니크는 1단계뿐이었다.
-   그 실측값들이 전부 "단계 배수(×1,×2,×3,×4)"로 정확히 들어맞아서(레전드리
-   1.5~2% → 2단계 3~4% → 3단계 4.5~6% → 4단계 6~8%, 딱 2배·3배·4배),
-   비어 있는 칸(레어/에픽/유니크의 2~4단계)도 그 배수 규칙으로 채웠다.
-   ⚠ 레어/에픽/유니크의 2~4단계, 그리고 마력·보스데미지가 정말로 공격력과
-   완전히 같은 수치인지는 게임 내에서 직접 확인된 게 아니라 추정이다. */
-const SOUL_ATK_RANGE = {
-  RARE:      [[0.5, 0.5], [1, 1],   [1.5, 1.5], [2, 2]],
-  EPIC:      [[0.5, 1],   [1, 2],   [1.5, 3],   [2, 4]],
-  UNIQUE:    [[1, 1.5],   [2, 3],   [3, 4.5],   [4, 6]],
-  LEGENDARY: [[1.5, 2],   [3, 4],   [4.5, 6],   [6, 8]],
-};
+/* numeric 옵션의 고정 수치(%) — 랜덤이 아니라 등급 랭크와 단계로 정확히
+   정해진다(사용자 확인). 소수점 한 자리까지만 남긴다. */
+function soulTierValue(grade, stage) {
+  const rank = SOUL_GRADE_RANK[grade];
+  return Math.round(0.5 * rank * stage * 10) / 10;
+}
 
-/* numeric 옵션이면 [최소,최대]% 사이 값을, 아니면 null을 돌려준다(화면에 옵션
-   이름만 뜨게). 소수점 한 자리까지만 남긴다 — 실측값이 0.5% 단위였다. */
+/* numeric 옵션이면 그 등급·단계의 고정 수치를, 아니면 null을 돌려준다(화면에
+   옵션 이름만 뜨게). */
 function soulRollValue(optionKey, grade, stage) {
   const opt = SOUL_OPTIONS.find(o => o.key === optionKey);
   if (!opt || !opt.numeric) return null;
-  const [min, max] = SOUL_ATK_RANGE[grade][stage - 1];
-  const raw = min + Math.random() * (max - min);
-  return Math.round(raw * 10) / 10;
+  return soulTierValue(grade, stage);
 }
 
 function soulPickOption() {
   return SOUL_OPTIONS[Math.floor(Math.random() * SOUL_OPTIONS.length)];
 }
 
-/* 잠재능력 한 판 = 3줄. 줄마다 독립적으로 옵션 풀에서 뽑으므로 같은 옵션이
-   두 번 겹칠 수 있다(실측 확인됨 — 공격력이 두 줄에 겹친 사례 있었음). */
-function soulRollLines(grade, stage) {
-  const lines = [];
-  for (let i = 0; i < SOUL_POT_LINES; i++) {
-    const opt = soulPickOption();
-    lines.push({ key: opt.key, label: opt.label, value: soulRollValue(opt.key, grade, stage) });
+/* 3줄 중 1줄은 잠재 자체 등급, 나머지 2줄은 그 한 단계 아래 등급의 수치가
+   뜬다(레어는 아래 등급이 없어 3줄 다 레어). 어느 줄이 "자체 등급"인지는
+   무작위로 섞는다 — 항상 첫 줄이라는 근거는 없어서. */
+function soulLineGrades(ownerGrade) {
+  const idx = SOUL_GRADES.indexOf(ownerGrade);
+  const belowGrade = SOUL_GRADES[Math.max(0, idx - 1)];
+  const arr = idx === 0 ? [ownerGrade, ownerGrade, ownerGrade] : [ownerGrade, belowGrade, belowGrade];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
   }
-  return lines;
+  return arr;
+}
+
+/* 잠재능력 한 판 = 3줄. 줄마다 독립적으로 옵션 풀에서 뽑으므로 같은 옵션이
+   두 번 겹칠 수 있다(실측 확인됨 — 공격력이 두 줄에 겹친 사례 있었음).
+   각 줄의 수치는 그 줄에 배정된 등급(soulLineGrades)과 잠재 단계로 정해진다. */
+function soulRollLines(grade, stage) {
+  const lineGrades = soulLineGrades(grade);
+  return lineGrades.map(g => {
+    const opt = soulPickOption();
+    return { key: opt.key, label: opt.label, grade: g, value: soulRollValue(opt.key, g, stage) };
+  });
 }
 
 const SOUL_SOURCE_NOTE =
   '증폭 성공률·게이지·등급업 확률·재설정 비용은 넥슨 공식 패치노트(2026.09.17) 기준입니다. ' +
-  '잠재능력은 3줄이고, 공격력·마력·보스 몬스터 공격 시 데미지의 수치는 커뮤니티 실측값(레전드리 전 ' +
-  '단계, 나머지 등급 1단계)을 단계 배수로 확장한 근사치입니다. 나머지 옵션(STR·DEX·INT·LUK·올스탯· ' +
-  'Max HP·크리티컬 확률·몬스터 방어율 무시)은 수치 자료가 없어 옵션 이름만 표시됩니다.';
+  '잠재능력은 3줄이고, 그중 1줄은 잠재 자체 등급의 수치, 나머지 2줄은 한 단계 아래 등급의 수치가 ' +
+  '나옵니다(공격력·마력·보스 몬스터 공격 시 데미지·데미지·몬스터 방어율 무시 5개 옵션). ' +
+  '유니크·레전드리 수치는 사용자 실측 확인값이고, 레어·에픽은 같은 공식(0.5%×등급×단계)으로 ' +
+  '확장한 값이라 확인되면 달라질 수 있습니다. 나머지 옵션(STR·DEX·INT·LUK·올스탯·Max HP·크리티컬 ' +
+  '확률)은 수치 자료가 없어 옵션 이름만 표시됩니다.';
 
 if (typeof window !== 'undefined') {
   window.SOUL_DATA = {

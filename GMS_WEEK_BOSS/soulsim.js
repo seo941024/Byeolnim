@@ -279,9 +279,10 @@ function _soulRenderPotential() {
   document.getElementById('soulPotIcon').src = _soulIconSrc(_soulState.grade);
   document.getElementById('soulPotIcon').style.display = has ? '' : 'none';
 
+  const stageRow = document.getElementById('soulPotStageRow');
+  if (stageRow) stageRow.style.display = has ? '' : 'none';
   const stageSel = document.getElementById('soulPotStage');
   if (stageSel) {
-    stageSel.disabled = !has;
     stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotStage ? ' selected' : ''}>${s}단계</option>`).join('');
   }
 
@@ -387,7 +388,7 @@ function initSoul() {
       <div class="sf-layout">
         <div class="card">
           <div class="card__title">현재 잠재능력</div>
-          <div class="cube-goal-hint mt8">미리 볼 단계 <select class="sel" id="soulPotStage"></select></div>
+          <div class="cube-goal-hint mt8" id="soulPotStageRow" style="display:none">단계 선택 <select class="sel" id="soulPotStage"></select></div>
           <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
             <div class="pot-panel__head">
               <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
@@ -489,7 +490,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926f';
+      s.src = 'data_soul.js?v=20260926g';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

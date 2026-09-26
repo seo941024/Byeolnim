@@ -166,8 +166,8 @@ function _soulResetOnce() { _soulResetStep(); _soulRenderPotential(); }
    잠재 자체 등급 값, 2·3번째 줄은 한 단계 아래 등급 값(이탈은 드물어서
    기본값으로는 안 씀 — 레어처럼 아래 등급이 없으면 자체 등급 값으로 대체). */
 const SOUL_PRESETS = [
-  { label: '공격력% 3줄', key: 'atkPct' },
-  { label: '마력% 3줄',   key: 'matkPct' },
+  { label: '공격력 3줄', key: 'atkPct' },
+  { label: '마력 3줄',   key: 'matkPct' },
 ];
 function _soulApplyPreset(key) {
   const D = _soulData();

@@ -541,6 +541,22 @@ function _hrLineGrade(ln, grade) {
   return (lower && lp > cp) ? lower : grade;
 }
 
+/* 시작 등급을 바꿔도 목표 칸의 카테고리 선택은 그대로 남아있는데(등급과 무관하게
+   전체 옵션을 보여주므로), 수치는 예전 등급 기준 최댓값 그대로 굳어 있었다 —
+   레어에서 프리셋으로 채운 4%가 레전드리로 바꿔도 그대로 4%인 식. 등급이 바뀔
+   때마다 채워진 칸을 전부 새 등급 기준 최댓값으로 다시 계산한다. */
+function _hrRecomputeGoalValues() {
+  const grade = _hrGrade();
+  document.querySelectorAll('#hrGoalRows .cube-goal-row').forEach((row, i) => {
+    const cat = row.querySelector('.cube-opt-cat');
+    const inp = row.querySelector('.cube-opt-inp');
+    if (!cat?.value || cat.selectedOptions[0]?.dataset.type === 'unique') return;
+    const g = _hrLineGrade(i + 1, grade);
+    const v = _hrMaxStatValue(cat.value, g) ?? _hrMaxStatValue(cat.value, grade);
+    if (v != null) inp.value = v;
+  });
+}
+
 /* 자주 쓰는 조합. part를 같이 지정해서 버튼 하나로 부위까지 맞춘다.
    perLineMax인 프리셋은 각 줄에 그 카테고리의 실제 최댓값을 넣는다(_hrMaxStatValue) —
    "일단 뜨기만 하면" 이 아니라 "그 옵션이 최대치로 떴을 때"만 멈추게 하려는 것.
@@ -798,7 +814,7 @@ async function initCube() {
 
   // 시작 등급을 바꾸면 진행 상황을 초기화한다
   // 시작 등급이 바뀌면 목표 칸 옵션 목록도 그 등급 기준으로 다시 채워야 한다
-  document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); _refreshAllRows(); });
+  document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); _refreshAllRows(); _hrRecomputeGoalValues(); });
   document.getElementById('hrRollBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrRoll(); });
   document.getElementById('hrAutoBtn')?.addEventListener('click',_hrStartAuto);
   document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });

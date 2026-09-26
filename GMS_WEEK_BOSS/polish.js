@@ -6,7 +6,7 @@
 
 function _polData() { return window.POLISH_DATA; }
 
-let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, lifeLocked: false, log: [] };
+let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
 
 function _polStep() {
   const D = _polData();
@@ -19,7 +19,7 @@ function _polStep() {
   _polState.stonesUsed[_polState.type] += _polState.count;
   const ok = Math.random() < chance;
   if (!ok) _polState.fails++;
-  else if (_polState.type === 'life') _polState.lifeLocked = true; // 생명의 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
+  else _polState.locked[_polState.type] = true; // 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
   _polState.log.unshift({ n: _polState.tries, type: t.key, count: _polState.count, chance, ok });
   if (_polState.log.length > 200) _polState.log.length = 200;
   return ok;
@@ -29,7 +29,7 @@ function _polRollOnce() { _polStep(); _polRender(); }
 
 function _polReset() {
   _polStopAuto();
-  _polState = { type: _polState.type, count: _polState.count, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, lifeLocked: false, log: [] };
+  _polState = { type: _polState.type, count: _polState.count, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
   _polRender();
 }
 
@@ -83,7 +83,7 @@ function _polRender() {
   document.getElementById('polCost').textContent = fmtMeso(cost);
   document.getElementById('polConfirmNote').style.display = chance >= 1 ? '' : 'none';
 
-  const locked = _polState.type === 'life' && _polState.lifeLocked;
+  const locked = _polState.locked[_polState.type];
   document.getElementById('polRollBtn').disabled = locked;
   document.getElementById('polAutoBtn').disabled = locked;
   document.getElementById('polCount').disabled = locked;

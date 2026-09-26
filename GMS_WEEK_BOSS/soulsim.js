@@ -161,6 +161,31 @@ function _soulResetStep() {
 }
 function _soulResetOnce() { _soulResetStep(); _soulRenderPotential(); }
 
+/* 자주 쓰는 프리셋(큐브 직작의 "공격력 3줄"류와 같은 방식) — 3칸 전부 같은
+   옵션으로 채우고, 수치는 지금 등급·단계 기준 실제 값으로 채운다. 1번째 줄은
+   잠재 자체 등급 값, 2·3번째 줄은 한 단계 아래 등급 값(이탈은 드물어서
+   기본값으로는 안 씀 — 레어처럼 아래 등급이 없으면 자체 등급 값으로 대체). */
+const SOUL_PRESETS = [
+  { label: '공격력% 3줄', key: 'atkPct' },
+  { label: '마력% 3줄',   key: 'matkPct' },
+];
+function _soulApplyPreset(key) {
+  const D = _soulData();
+  const grade = _soulPotState.grade, stage = _soulPotState.stage;
+  const idx = D.GRADES.indexOf(grade);
+  const below = idx > 0 ? D.GRADES[idx - 1] : null;
+  const v1 = soulTierValue(grade, stage);
+  const v2 = below ? soulTierValue(below, stage) : v1;
+  const vals = [v1, v2, v2];
+  for (let i = 1; i <= 3; i++) {
+    const sel = document.getElementById(`soulResetGoal${i}`);
+    sel.value = key;
+    sel.dispatchEvent(new Event('change'));
+    const inp = document.getElementById(`soulResetGoalVal${i}`);
+    if (!inp.disabled) inp.value = vals[i - 1];
+  }
+}
+
 /* 목표 옵션 3칸 — 큐브 직작과 똑같은 판정: 같은 키를 한 칸에만 적으면 세 줄
    합산 기준, 같은 키를 여러 칸에 나눠 적으면 그 칸 수만큼 각 줄이 따로
    만족해야 한다. 수치를 안 적으면(0 또는 빈칸) 그 키가 나왔는지 존재만 본다. */
@@ -369,6 +394,7 @@ function initSoul() {
           <div class="sf-res-item"><span class="sf-res-label">등급업</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
 
           <div class="card__title mt16">목표 옵션</div>
+          <div class="hr-preset" id="soulPresets"></div>
           <div id="soulGoalRows">
             <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal1">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal1" disabled></div>
             <div class="cube-goal-row"><select class="sel cube-opt-cat" id="soulResetGoal2">${_soulBuildGoalOpts()}</select><input class="inp cube-opt-inp" type="number" min="0" placeholder="수치" id="soulResetGoalVal2" disabled></div>
@@ -435,6 +461,12 @@ function initSoul() {
       if (!opt?.numeric) valInp.value = '';
     });
   }
+
+  document.getElementById('soulPresets').innerHTML = SOUL_PRESETS
+    .map((p, i) => `<button class="sbtn sbtn--ghost hr-preset__btn" data-preset="${i}">${p.label}</button>`).join('');
+  document.getElementById('soulPresets').querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => _soulApplyPreset(SOUL_PRESETS[+btn.dataset.preset].key));
+  });
 
   /* S=주 동작, A=자동, R=초기화 — 열린 탭 기준 */
   document.addEventListener('keydown', e => {

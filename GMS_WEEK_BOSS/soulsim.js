@@ -204,11 +204,6 @@ function _soulGradeUpStep() {
   } else _sgState.guFails++;
   return ok;
 }
-function _soulGradeUpOnce() {
-  if (_soulPotState.grade === 'LEGENDARY') { alert('이미 레전드리입니다.'); return; }
-  _soulGradeUpStep(); _soulRenderPotential();
-}
-
 const SOUL_GU_AUTO_MAX = 200000;
 let _soulGuAutoTimer = null;
 function _soulStopGuAuto(msg) {
@@ -307,8 +302,8 @@ function _soulRenderPotential() {
   document.getElementById('soulGuNow').dataset.grade = grade;
   document.getElementById('soulGuChance').textContent = guInfo ? (guInfo.chance * 100).toFixed(4).replace(/\.?0+$/, '') + '%' : '—';
   document.getElementById('soulGuCost').textContent = guInfo ? fmtMeso(D.RESET_MESO[grade]) : '—';
-  const guBtn = document.getElementById('soulGuRollBtn');
-  if (guBtn) { guBtn.disabled = !guInfo; guBtn.textContent = guInfo ? '등급업 시도 [D]' : '레전드리 달성'; }
+  const guAutoBtn = document.getElementById('soulGuAutoBtn');
+  if (guAutoBtn) { guAutoBtn.disabled = !guInfo; guAutoBtn.textContent = guInfo ? '목표 등급까지 자동 [G]' : '레전드리 달성'; }
   document.getElementById('soulGuTries').textContent = _sgState.guTries.toLocaleString();
   document.getElementById('soulGuFails').textContent = _sgState.guFails.toLocaleString();
   document.getElementById('soulGuMesoSpent').textContent = fmtMeso(_sgState.guMesoSpent);
@@ -403,20 +398,14 @@ function initSoul() {
           <div class="sf-res-item"><span class="sf-res-label">현재 등급</span><span class="sf-res-val ru-now" id="soulGuNow">-</span></div>
           <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="soulGuChance">-</span></div>
           <div class="sf-res-item"><span class="sf-res-label">비용</span><span class="sf-res-val" id="soulGuCost">-</span></div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--primary cube-btn-full" id="soulGuRollBtn">등급업 시도 [D]</button>
-          </div>
           <div class="cube-goal-hint mt16">목표 등급 <select class="sel" id="soulGuGoal">${_soulBuildGuGoalOpts()}</select></div>
           <div class="cube-btns mt8">
-            <button class="sbtn sbtn--ghost cube-btn-full" id="soulGuAutoBtn">목표 등급까지 자동 [G]</button>
+            <button class="sbtn sbtn--primary cube-btn-full" id="soulGuAutoBtn">목표 등급까지 자동 [G]</button>
             <button class="sbtn sbtn--ghost cube-btn-full mt8" id="soulGuResetBtn">전체 초기화 [R]</button>
           </div>
           <div class="sf-res-item mt16"><span class="sf-res-label">시도</span><span class="sf-res-val" id="soulGuTries">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="soulGuFails">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulGuMesoSpent">0 메소</span></div>
-
-          <div class="card__title mt16">기록</div>
-          <div id="soulGuLog" class="fam-log"></div>
         </div>
 
         <div class="card">
@@ -447,6 +436,9 @@ function initSoul() {
           </div>
           <div class="sf-res-item mt16"><span class="sf-res-label">재설정 횟수</span><span class="sf-res-val" id="soulResetTries">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulResetMesoSpent">0 메소</span></div>
+
+          <div class="card__title mt16">타임라인</div>
+          <div id="soulGuLog" class="fam-log"></div>
         </div>
       </div>
     </div>`;
@@ -471,13 +463,12 @@ function initSoul() {
   document.getElementById('soulPotStage').addEventListener('change', e => { _soulStopResetAuto(); _soulStopGuAuto(); _soulPotSetStage(Number(e.target.value) || 1); });
   document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
   document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
-  document.getElementById('soulGuRollBtn').addEventListener('click', () => { _soulStopGuAuto(); _soulGradeUpOnce(); });
   document.getElementById('soulGuAutoBtn').addEventListener('click', _soulStartGuAuto);
   document.getElementById('soulGuResetBtn').addEventListener('click', _soulPotFullReset);
 
-  /* S=주 동작, A=증폭/재설정 자동, G=등급업 자동, D=등급업 시도, R=초기화 — 열린 탭 기준 */
+  /* S=주 동작, A=증폭/재설정 자동, G=등급업 자동, R=초기화 — 열린 탭 기준 */
   document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA', 'KeyG', 'KeyD'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA', 'KeyG'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     if (!document.getElementById('sec-soul')?.classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
@@ -485,7 +476,6 @@ function initSoul() {
     e.preventDefault();
     const isAmp = document.getElementById('soulTabAmp').style.display !== 'none';
     if (e.code === 'KeyS') document.getElementById(isAmp ? 'soulAmpRollBtn' : 'soulResetBtn')?.click();
-    else if (e.code === 'KeyD' && !isAmp) document.getElementById('soulGuRollBtn')?.click();
     else if (e.code === 'KeyA') document.getElementById(isAmp ? 'soulAmpAutoBtn' : 'soulResetAutoBtn')?.click();
     else if (e.code === 'KeyG' && !isAmp) document.getElementById('soulGuAutoBtn')?.click();
     else if (e.code === 'KeyR') document.getElementById(isAmp ? 'soulAmpResetBtn' : 'soulGuResetBtn')?.click();

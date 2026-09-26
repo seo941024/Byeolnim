@@ -29,6 +29,8 @@ let _soulState = {
   log: [],        // 증폭 기록
 };
 
+let _soulPotStage = 1; // 잠재 탭에서 "몇 단계 기준으로 볼지" 미리보기용 — 실제 증폭 단계(_soulState.stage)와 별개
+
 let _sgState = {
   guTries: 0, guFails: 0, guMesoSpent: 0,
   rsTries: 0, rsMesoSpent: 0,
@@ -71,6 +73,7 @@ function _soulAmpStep() {
 
   if (ok) {
     _soulState.stage = target;
+    _soulPotStage = target;
     _soulState.gauge = 0;
     if (!_soulState.grade) {
       _soulState.grade = 'RARE';
@@ -91,6 +94,7 @@ function _soulAmpRollOnce() { _soulAmpStep(); _soulRenderAmp(); }
 function _soulAmpReset() {
   _soulStopAmpAuto();
   _soulState = { stage: 0, gauge: 0, grade: null, lines: [], tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
+  _soulPotStage = 1;
   _soulRenderAmp();
   _soulRenderPotential();
 }
@@ -132,6 +136,7 @@ function _soulResetStep() {
   _sgState.rsTries++;
   _sgState.rsMesoSpent += cost;
   _soulState.lines = soulRollLines(_soulState.grade, _soulState.stage);
+  _soulPotStage = _soulState.stage;
   _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, lines: _soulState.lines, grade: _soulState.grade });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
   return true;
@@ -183,7 +188,7 @@ function _soulGradeUpStep() {
   const ok = Math.random() < info.chance;
   _sgState.log.unshift({ type: 'gradeup', n: _sgState.guTries, from: _soulState.grade, ok });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
-  if (ok) { _soulState.grade = info.to; _soulRerollLineValues(); }
+  if (ok) { _soulState.grade = info.to; _soulPotStage = _soulState.stage; _soulRerollLineValues(); }
   else _sgState.guFails++;
   return ok;
 }
@@ -243,7 +248,7 @@ function _soulRenderAmp() {
   if (gaugeFill) gaugeFill.style.width = done ? '0%' : Math.round(_soulState.gauge * 100) + '%';
   document.getElementById('soulAmpMeso').textContent = done ? '—' : fmtMeso(info.meso);
   document.getElementById('soulAmpEtherLbl').innerHTML = done ? '—'
-    : `<img class="crystal-icon" src="images/icons/aether_${target}.webp" alt="" onerror="this.style.display='none'"> 소울 에테르 ${target}단계 (${D.ETHER_BOSS[target]})`;
+    : `<img class="crystal-icon" src="images/icons/aether_${target}.webp" alt="" onerror="this.style.display='none'"> 소울 에테르 ${target}단계 · ${D.ETHER_BOSS[target]}`;
 
   document.getElementById('soulAmpTries').textContent = _soulState.tries.toLocaleString();
   document.getElementById('soulAmpFails').textContent = _soulState.fails.toLocaleString();
@@ -260,7 +265,7 @@ function _soulRenderAmp() {
   document.getElementById('soulAmpLog').innerHTML = _soulState.log.map(e => `
     <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
       <span class="fam-log-n">${e.n}</span>
-      <span class="fam-log-line">${e.target}단계 시도 (${(Math.round(e.chance * 1000) / 10)}%)</span>
+      <span class="fam-log-line">${e.target}단계 시도 · ${Math.round(e.chance * 1000) / 10}%</span>
       <span class="ru-log-res ${e.ok ? 'ok' : 'no'}">${e.ok ? '성공' : '실패'}</span>
       ${e.forced ? '<span class="ru-log-pity">게이지 만렙</span>' : ''}
     </div>`).join('');
@@ -276,6 +281,12 @@ function _soulRenderPotential() {
   document.getElementById('soulPotIcon').src = _soulIconSrc(_soulState.grade);
   document.getElementById('soulPotIcon').style.display = has ? '' : 'none';
   document.getElementById('soulPotTitle').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '없음';
+
+  const stageSel = document.getElementById('soulPotStage');
+  if (stageSel) {
+    stageSel.disabled = !has;
+    stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotStage ? ' selected' : ''}>${s}단계</option>`).join('');
+  }
 
   document.getElementById('soulPotLines').innerHTML = has
     ? _soulState.lines.map(l => `<div class="pot-line" data-grade="${l.grade || _soulState.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('')
@@ -380,7 +391,7 @@ function initSoul() {
     <div id="soulTabPotential" style="display:none">
       <div class="sf-layout">
         <div class="card">
-          <div class="card__title">현재 잠재능력</div>
+          <div class="cube-goal-hint" style="justify-content:space-between"><span class="card__title" style="margin:0">현재 잠재능력</span> 단계 <select class="sel" id="soulPotStage"></select></div>
           <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
             <div class="pot-panel__head">
               <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
@@ -442,6 +453,11 @@ function initSoul() {
   document.getElementById('soulAmpAutoBtn').addEventListener('click', _soulStartAmpAuto);
   document.getElementById('soulAmpResetBtn').addEventListener('click', () => { _soulAmpReset(); _sgState = { guTries: 0, guFails: 0, guMesoSpent: 0, rsTries: 0, rsMesoSpent: 0, log: [] }; _soulRenderPotential(); });
 
+  document.getElementById('soulPotStage').addEventListener('change', e => {
+    _soulPotStage = Number(e.target.value) || 1;
+    if (_soulState.grade) _soulState.lines = _soulState.lines.map(l => ({ ...l, value: soulRollValue(l.key, l.grade, _soulPotStage) }));
+    _soulRenderPotential();
+  });
   document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
   document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
   document.getElementById('soulGuRollBtn').addEventListener('click', () => { _soulStopGuAuto(); _soulGradeUpOnce(); });
@@ -478,7 +494,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926c';
+      s.src = 'data_soul.js?v=20260926c'; // 데이터 파일은 이번 수정에서 내용 변경 없음
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

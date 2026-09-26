@@ -724,7 +724,6 @@ function _hrRender() {
   if (!panel) return;
 
   panel.dataset.grade = _hrState.grade;
-  document.getElementById('hrPanelGrade').textContent = _GRADE_KR[_hrState.grade] || '—';
   const iconEl = document.getElementById('hrPanelIcon');
   if (iconEl) { iconEl.src = _gradeIconSrc(_hrState.grade); iconEl.style.display = ''; }
 

@@ -116,16 +116,34 @@ function _soulStartAmpAuto() {
 }
 
 /* ── 잠재: 등급/단계 직접 선택 ── */
+/* 목표 칸에 채워둔 수치도 등급·단계가 바뀌면 그 기준으로 다시 계산한다
+   (큐브 직작 목표 수치 버그 수정과 같은 이유 — 1번 칸은 그 등급 자체 값,
+   나머지 채워진 칸은 한 단계 아래 등급 값으로, 프리셋 계산과 동일한 규칙). */
+function _soulRecomputeGoalValues() {
+  const D = _soulData();
+  const grade = _soulPotState.grade, stage = _soulPotState.stage;
+  const idx = D.GRADES.indexOf(grade);
+  const below = idx > 0 ? D.GRADES[idx - 1] : null;
+  for (let i = 1; i <= 3; i++) {
+    const sel = document.getElementById(`soulResetGoal${i}`);
+    const opt = D.OPTIONS.find(o => o.key === sel?.value);
+    const inp = document.getElementById(`soulResetGoalVal${i}`);
+    if (!opt?.numeric || !inp || inp.disabled) continue;
+    inp.value = soulTierValue(i === 1 ? grade : (below || grade), stage);
+  }
+}
 function _soulPotSetGrade(grade) {
   _soulPotState.grade = grade;
   _soulPotState.gradeStreak = 0;
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
   _soulRenderPotential();
+  _soulRecomputeGoalValues();
 }
 function _soulPotSetStage(stage) {
   _soulPotState.stage = stage;
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
   _soulRenderPotential();
+  _soulRecomputeGoalValues();
 }
 function _soulPotFullReset() {
   _soulStopResetAuto();

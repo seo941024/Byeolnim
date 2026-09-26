@@ -160,16 +160,10 @@ function soulRollLines(grade, stage) {
   });
 }
 
-const SOUL_SOURCE_NOTE =
-  '증폭 성공률·게이지·등급업 확률·재설정 비용, 옵션 풀과 등급별 가중치, 줄 등급 배정 확률은 ' +
-  '나무위키 "소울웨폰" 문서 2026.09.26 확인 기준입니다. 옵션 %수치 크기는 표에 없어 유니크·레전드리 ' +
-  '실측값 0.5%×등급랭크×단계를 레어·에픽까지 확장한 추정치이며, 확인되면 달라질 수 있습니다. ' +
-  '"노멀" 등급 줄은 가중치·수치 자료가 없어 레어 가중치를 임시로 쓰고 수치는 이름만 표시합니다.';
-
 if (typeof window !== 'undefined') {
   window.SOUL_DATA = {
     STAGES: SOUL_STAGES, POT_LINES: SOUL_POT_LINES, STAGE_INFO: SOUL_STAGE_INFO, ETHER_BOSS: SOUL_ETHER_BOSS,
     GRADES: SOUL_GRADES, GRADE_LABEL: SOUL_GRADE_LABEL, GRADEUP: SOUL_GRADEUP,
-    RESET_MESO: SOUL_RESET_MESO, OPTIONS: SOUL_OPTIONS, SOURCE_NOTE: SOUL_SOURCE_NOTE,
+    RESET_MESO: SOUL_RESET_MESO, OPTIONS: SOUL_OPTIONS,
   };
 }

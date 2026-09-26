@@ -3228,7 +3228,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .dt-card__edit:hover { background: rgba(var(--hue),.18); color: var(--primary); }
 .dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
-.dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; }
+.dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; word-break: keep-all; }
 .dt-step2-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .dt-step2-portrait { flex: none; width: 112px; height: 112px; border-radius: var(--radius-sm); object-fit: contain; image-rendering: pixelated; background: rgba(0,0,0,.2); }
 .dt-step2-namebox { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }

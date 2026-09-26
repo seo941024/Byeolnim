@@ -247,8 +247,6 @@ function _soulRenderAmp() {
   const gaugeFill = document.getElementById('soulAmpGaugeFill');
   if (gaugeFill) gaugeFill.style.width = done ? '0%' : Math.round(_soulState.gauge * 100) + '%';
   document.getElementById('soulAmpMeso').textContent = done ? '—' : fmtMeso(info.meso);
-  document.getElementById('soulAmpEtherLbl').innerHTML = done ? '—'
-    : `<img class="crystal-icon" src="images/icons/aether_${target}.webp" alt="" onerror="this.style.display='none'"> 소울 에테르 ${target}단계 · ${D.ETHER_BOSS[target]}`;
 
   document.getElementById('soulAmpTries').textContent = _soulState.tries.toLocaleString();
   document.getElementById('soulAmpFails').textContent = _soulState.fails.toLocaleString();
@@ -280,7 +278,6 @@ function _soulRenderPotential() {
   panel.dataset.grade = _soulState.grade || 'RARE';
   document.getElementById('soulPotIcon').src = _soulIconSrc(_soulState.grade);
   document.getElementById('soulPotIcon').style.display = has ? '' : 'none';
-  document.getElementById('soulPotTitle').textContent = has ? D.GRADE_LABEL[_soulState.grade] : '없음';
 
   const stageSel = document.getElementById('soulPotStage');
   if (stageSel) {
@@ -343,7 +340,6 @@ function initSoul() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">소울 증폭 시뮬레이터</h2></div>
-    <p class="dt-help">2026.09.17 업데이트로 추가된 소울 증폭을 흉내 내봅니다. 성공률·게이지·등급업 확률·재설정 비용은 공식 수치이고, 옵션별 정확한 수치 범위는 아직 공개되지 않아 임시값을 씁니다.</p>
 
     <div class="sf-tabs">
       <button class="sf-tab active" data-soultab="amp">증폭 시뮬레이터</button>
@@ -355,14 +351,13 @@ function initSoul() {
     <div id="soulTabAmp">
       <div class="sf-layout">
         <div class="card">
-          <div class="card__title">지금 상태</div>
+          <div class="card__title">증폭 단계</div>
           <div class="sf-res-item"><span class="sf-res-label">현재 단계</span><span class="sf-res-val" id="soulAmpStageNow">미증폭</span></div>
           <div class="sf-res-item"><span class="sf-res-label">다음 목표</span><span class="sf-res-val" id="soulAmpTargetLbl">1단계</span></div>
           <div class="sf-res-item"><span class="sf-res-label">성공률</span><span class="sf-res-val" id="soulAmpChance">5%</span></div>
           <div class="sf-res-item"><span class="sf-res-label">게이지</span><span class="sf-res-val" id="soulAmpGaugeTxt">0%</span></div>
           <div class="soul-gauge"><div class="soul-gauge__fill" id="soulAmpGaugeFill" style="width:0%"></div></div>
           <div class="sf-res-item"><span class="sf-res-label">메소 소비</span><span class="sf-res-val" id="soulAmpMeso">5억 메소</span></div>
-          <p class="dt-help" id="soulAmpEtherLbl" style="margin-top:6px">소울 에테르 1단계</p>
 
           <div class="cube-btns mt16">
             <button class="sbtn sbtn--primary cube-btn-full" id="soulAmpRollBtn">증폭 시도 [S]</button>
@@ -391,11 +386,12 @@ function initSoul() {
     <div id="soulTabPotential" style="display:none">
       <div class="sf-layout">
         <div class="card">
-          <div class="cube-goal-hint" style="justify-content:space-between"><span class="card__title" style="margin:0">현재 잠재능력</span> 단계 <select class="sel" id="soulPotStage"></select></div>
+          <div class="card__title">현재 잠재능력</div>
+          <div class="cube-goal-hint mt8">미리 볼 단계 <select class="sel" id="soulPotStage"></select></div>
           <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
             <div class="pot-panel__head">
               <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
-              <span>소울 잠재 <span id="soulPotTitle">없음</span></span>
+              <span>소울 잠재</span>
             </div>
             <div class="pot-panel__lines" id="soulPotLines"></div>
           </div>
@@ -434,7 +430,6 @@ function initSoul() {
           <div id="soulGuLog" class="fam-log"></div>
         </div>
       </div>
-      <p class="dt-help mt16">${D.SOURCE_NOTE}</p>
     </div>`;
 
   // 탭 전환
@@ -494,7 +489,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926c'; // 데이터 파일은 이번 수정에서 내용 변경 없음
+      s.src = 'data_soul.js?v=20260926f';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

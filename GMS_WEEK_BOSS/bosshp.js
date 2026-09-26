@@ -19,7 +19,7 @@ function _bhpEnsureOverlay() {
     overlay.id = 'bhpOverlay';
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
+    overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('open'); _bhpCloseDesc(); } });
   }
   return overlay;
 }
@@ -56,7 +56,7 @@ function _bhpOpenDropsModal(boss) {
         <div class="bhp-drop-sec__diff"><span class="dpill ${meta.cls} sel"><span class="dpill__t">${meta.label}</span></span></div>
         <div class="bhp-drop-modal__itemlist">
           ${items.map(it => `
-            <div class="bhp-drop-item" tabindex="0">
+            <div class="bhp-drop-item" tabindex="0" data-file="${it.file}" data-name="${it.name}">
               <img class="bhp-drop-item__icon" src="images/WANT/${it.file}" alt="${it.name}" onerror="this.style.visibility='hidden'">
               <span class="bhp-drop-item__name">${it.name}</span>
             </div>`).join('')}
@@ -83,8 +83,11 @@ function _bhpOpenDropsModal(boss) {
         </div>
       </div>
     </div>`;
-  document.getElementById('bhpModalClose').addEventListener('click', () => overlay.classList.remove('open'));
+  document.getElementById('bhpModalClose').addEventListener('click', () => { overlay.classList.remove('open'); _bhpCloseDesc(); });
   overlay.classList.add('open');
+  overlay.querySelectorAll('.bhp-drop-item').forEach(el => {
+    el.addEventListener('click', () => _bhpToggleDesc(el, el.dataset.file, el.dataset.name));
+  });
 
   // 움직이는 보스 사진(gif) → 팝업 전용 정지컷(png) → 카드 썸네일 순으로 시도한다.
   // gif가 없는 보스는 images/bosses_gif/<stem>.png 를 넣어두면 그걸 쓴다.
@@ -107,6 +110,54 @@ function _bhpOpenDropsModal(boss) {
     });
     imgEl.src = candidates[0];
   }
+}
+
+/* ── 드랍 아이템 인게임 설명 (클릭하면 열림) ──
+   호버는 이름만(.bhp-drop-item__name, CSS) 보여주고, 클릭하면 실제 인게임
+   설명 텍스트를 body 직속 고정 위치 패널로 띄운다. 모달 본문이
+   overflow:auto라 아이템 안에 넣으면 스크롤에 잘리므로(과거 캘린더 툴팁에서
+   겪은 문제와 동일) body에 붙이고 좌표만 계산해서 옮긴다. */
+let _bhpDescOpenFile = null;
+function _bhpDescEl() {
+  let el = document.getElementById('bhpDescTip');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'bhpDescTip';
+    el.className = 'bhp-item-desc';
+    document.body.appendChild(el);
+  }
+  return el;
+}
+function _bhpCloseDesc() {
+  document.getElementById('bhpDescTip')?.classList.remove('open');
+  _bhpDescOpenFile = null;
+  document.removeEventListener('click', _bhpDescOutside, true);
+}
+function _bhpDescOutside(e) {
+  if (e.target.closest('.bhp-drop-item') || e.target.closest('#bhpDescTip')) return;
+  _bhpCloseDesc();
+}
+function _bhpToggleDesc(itemEl, file, name) {
+  if (_bhpDescOpenFile === file) { _bhpCloseDesc(); return; }
+  // 화면엔 한국어(KMS) 설명만 띄운다. GMS 영문(desc_en)은 참고용으로 데이터에만 남아있다.
+  const entry = (typeof ITEM_DESC !== 'undefined') ? ITEM_DESC[file] : null;
+  const desc = entry?.desc_kr;
+  const el = _bhpDescEl();
+  el.innerHTML = `
+    <div class="bhp-item-desc__name">${name}</div>
+    <div class="bhp-item-desc__body">${desc ? desc.replace(/\n/g, '<br>') : '아직 등록된 설명이 없습니다.'}</div>`;
+  el.classList.add('open');
+  _bhpDescOpenFile = file;
+
+  const a = itemEl.getBoundingClientRect();
+  const t = el.getBoundingClientRect();
+  const x = Math.min(window.innerWidth - t.width - 8, Math.max(8, a.left + a.width / 2 - t.width / 2));
+  const above = a.top - t.height - 10;
+  el.style.left = x + 'px';
+  el.style.top = (above >= 8 ? above : a.bottom + 10) + 'px';
+
+  // 지금 이 클릭으로 열렸는데 같은 틱에서 바로 "바깥 클릭"으로 잡히지 않게 다음 틱에 건다
+  setTimeout(() => document.addEventListener('click', _bhpDescOutside, true), 0);
 }
 
 function parseBossHpValue(value) {

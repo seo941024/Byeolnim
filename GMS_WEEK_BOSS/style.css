@@ -521,9 +521,14 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .ru-now[data-grade="RARE"]   { color: var(--gt-rare); }
 .ru-now[data-grade="EPIC"]   { color: var(--gt-epic); }
 .ru-now[data-grade="UNIQUE"] { color: var(--gt-unique); }
+.ru-now[data-grade="LEGENDARY"] { color: var(--gt-legendary); }
 .ru-log-res { font-weight: 800; }
 .ru-log-res.ok { color: var(--success); }
 .ru-log-res.no { color: var(--danger); }
+
+/* 소울 증폭 게이지 — 실패할수록 채워지다 가득 차면 다음 시도가 확정 성공 */
+.soul-gauge { height: 8px; border-radius: 999px; background: var(--bg3); overflow: hidden; margin: 4px 0 10px; }
+.soul-gauge__fill { height: 100%; background: var(--grad); transition: width .2s ease; }
 .ru-log-pity { font-size: .68rem; font-weight: 800; color: var(--accent); border: 1px solid var(--accent); border-radius: 5px; padding: 0 5px; }
 
 /* ── 패밀리어 ── */
@@ -1772,6 +1777,21 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .bhp-drop-item:hover .bhp-drop-item__name,
 .bhp-drop-item:focus-visible .bhp-drop-item__name { opacity: 1; visibility: visible; }
+.bhp-drop-item { cursor: pointer; }
+
+/* 아이템을 클릭하면 뜨는 인게임 설명 — body 직속 고정 위치(모달 스크롤에 안 잘리게) */
+.bhp-item-desc {
+  position: fixed; left: 0; top: 0; z-index: 2000;
+  width: max-content; max-width: 240px;
+  padding: 10px 14px; border-radius: 10px;
+  background: var(--bg-card, var(--bg2)); border: 2px solid var(--border-hl, var(--primary));
+  box-shadow: 0 8px 24px rgba(0,0,0,.5);
+  pointer-events: none;
+  opacity: 0; visibility: hidden; transition: opacity .13s;
+}
+.bhp-item-desc.open { opacity: 1; visibility: visible; }
+.bhp-item-desc__name { font-size: .92rem; font-weight: 900; color: var(--text); margin-bottom: 4px; }
+.bhp-item-desc__body { font-size: .82rem; line-height: 1.5; color: var(--text-sub); white-space: normal; }
 @media (max-width: 640px) {
   .bhp-drop-modal { flex-direction: column; align-items: center; }
   .bhp-drop-modal__items { width: 100%; }

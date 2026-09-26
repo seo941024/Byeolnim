@@ -65,12 +65,16 @@ function _ssRender(statusData, maintData) {
   // 아이콘 파일이 없는 월드는 빈 문자열이 돌아와서 이름만 표시된다.
   const iconOf = world => serverIconSrc(world) || serverIconSrc(world.split('-')[0]) || '';
 
+  // 챌린저스는 한시 이벤트 월드라 시즌이 아니면 채널이 전부 0으로 찍혀 계속 "점검 중"으로만
+  // 보인다. 넥슨 API가 알아서 빼주는 게 아니라 매번 이렇게 나오므로, 여기서 직접 걸러낸다.
+  const visibleWorlds = statusData.worlds.filter(w => !/challeng/i.test(w.world));
+
   // 2열 그리드에서 1열은 전부 인터랙티브, 2열은 전부 히로익이 되도록 짝지어 배치한다.
   // 히로익: Kronos(45)·Hyperion(70)·Solis(46)와 이름에 Heroic이 붙은 이벤트 월드.
   const HEROIC_IDS = new Set([45, 46, 70]);
   const isHeroic = w => HEROIC_IDS.has(w.worldId) || /heroic/i.test(w.world);
-  const inter = statusData.worlds.filter(w => !isHeroic(w));
-  const heroic = statusData.worlds.filter(isHeroic);
+  const inter = visibleWorlds.filter(w => !isHeroic(w));
+  const heroic = visibleWorlds.filter(isHeroic);
   const ordered = [];
   for (let i = 0; i < Math.max(inter.length, heroic.length); i++) {
     if (inter[i])  ordered.push(inter[i]);

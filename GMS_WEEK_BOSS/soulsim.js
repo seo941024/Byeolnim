@@ -268,7 +268,7 @@ function _soulRenderPotential() {
   }
 
   document.getElementById('soulPotLines').innerHTML = _soulPotState.lines
-    .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('');
+    .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.value != null ? `${l.label.replace(/\s*%$/, '')} : +${l.value}%` : l.label}</div>`).join('');
 
   document.getElementById('soulResetTries').textContent = _sgState.rsTries.toLocaleString();
   document.getElementById('soulResetMesoSpent').textContent = fmtMeso(_sgState.rsMesoSpent);

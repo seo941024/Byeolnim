@@ -145,9 +145,12 @@ function _soulPotSetStage(stage) {
   _soulRenderPotential();
   _soulRecomputeGoalValues();
 }
+/* 큐브 직작의 _hrReset과 동일 — 지금 골라둔 등급·단계는 그대로 두고
+   재설정 진행 상황(횟수·메소·기록·천장)만 초기화한다. */
 function _soulPotFullReset() {
   _soulStopResetAuto();
-  _soulPotState = { grade: 'RARE', stage: 1, lines: soulRollLines('RARE', 1), gradeStreak: 0 };
+  const grade = _soulPotState.grade, stage = _soulPotState.stage;
+  _soulPotState = { grade, stage, lines: soulRollLines(grade, stage), gradeStreak: 0 };
   _sgState = { rsTries: 0, rsMesoSpent: 0, log: [] };
   _soulRenderPotential();
 }

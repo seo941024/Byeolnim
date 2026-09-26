@@ -6,7 +6,7 @@
 
 function _polData() { return window.POLISH_DATA; }
 
-let _polState = { type: 'life', count: 1, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
+let _polState = { type: 'life', count: 1, tries: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
 
 function _polStep() {
   const D = _polData();
@@ -18,8 +18,7 @@ function _polStep() {
   _polState.mesoSpent += cost;
   _polState.stonesUsed[_polState.type] += _polState.count;
   const ok = Math.random() < chance;
-  if (!ok) _polState.fails++;
-  else _polState.locked[_polState.type] = true; // 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
+  if (ok) _polState.locked[_polState.type] = true; // 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
   _polState.log.unshift({ n: _polState.tries, type: t.key, count: _polState.count, chance, ok });
   if (_polState.log.length > 200) _polState.log.length = 200;
   return ok;
@@ -29,7 +28,7 @@ function _polRollOnce() { _polStep(); _polRender(); }
 
 function _polReset() {
   _polStopAuto();
-  _polState = { type: _polState.type, count: _polState.count, tries: 0, fails: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
+  _polState = { type: _polState.type, count: _polState.count, tries: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
   _polRender();
 }
 
@@ -89,8 +88,6 @@ function _polRender() {
   document.getElementById('polCount').disabled = locked;
 
   document.getElementById('polTries').textContent = _polState.tries.toLocaleString();
-  document.getElementById('polFails').textContent = _polState.fails.toLocaleString();
-  document.getElementById('polSuccesses').textContent = (_polState.tries - _polState.fails).toLocaleString();
   document.getElementById('polMesoSpent').textContent = fmtMeso(_polState.mesoSpent);
   document.getElementById('polStonesUsed').innerHTML = `
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
@@ -140,8 +137,6 @@ function initPolish() {
       <div class="card">
         <div class="card__title">누적</div>
         <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val" id="polTries">0</span></div>
-        <div class="sf-res-item"><span class="sf-res-label">성공</span><span class="sf-res-val" id="polSuccesses">0</span></div>
-        <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="polFails">0</span></div>
         <div class="sf-res-item" style="align-items:flex-start"><span class="sf-res-label">사용한 연마석</span><div id="polStonesUsed"></div></div>
         <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="polMesoSpent">0 메소</span></div>
 

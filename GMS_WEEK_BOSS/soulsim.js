@@ -6,9 +6,14 @@
         실패마다 성공률 자체가 오르고(failInc), 별개로 게이지도 쌓여 게이지가
         100%에 닿으면 다음 시도는 확정 성공(둘 다 실측 확인된 규칙).
      2. 잠재 — 큐브 직작과 같은 방식. 등급·단계를 드롭다운으로 직접 고르고
-        잠재능력(3줄)을 재설정한다. 등급업은 확률형 RNG 단계 없이 그냥
-        드롭다운으로 등급을 바꾸는 것으로 대체함(사용자 판단 — 큐브도
-        "시작 등급"을 드롭다운으로 고를 뿐 별도 등급업 시도 단계가 없음).
+        잠재능력(3줄)을 재설정한다. 등급업은 "등급업 시도"라는 별도 버튼이
+        아니라, 잠재 재설정을 할 때마다 같이 굴러가는 확률이다(나무위키
+        "재설정 횟수" 표로 확인 — 재설정 한 번마다 등급업 확률 판정이 같이
+        일어나고, 그 등급에서 재설정을 ceil번 했는데 안 오르면 다음 재설정에서
+        무조건 확정 상승하는 천장이 있다: 레어→에픽 100번, 에픽→유니크
+        256번, 유니크→레전드리 451번). 처음엔 등급업 버튼을 아예 없애면서
+        이 천장 메커니즘까지 같이 날려먹은 적이 있음 — 등급업 "버튼"만 없앤
+        거고 확률+천장 로직 자체는 재설정 안에 반드시 살아있어야 함.
         증폭을 실제로 진행하지 않아도 바로 쓸 수 있다(증폭 진행 상황과 분리).
 
    잠재능력이 3줄이고 STR/DEX/INT/LUK이 개별 옵션으로 나온다는 건 실제 게임
@@ -24,13 +29,14 @@ function _soulIconSrc(g) { return `images/icons/${(g || 'rare').toLowerCase()}.p
 let _soulState = {
   stage: 0,       // 0~4, 0=미증폭
   gauge: 0,       // 0~1, 다음 증폭 시도의 게이지
-  tries: 0, fails: 0, mesoSpent: 0,
+  tries: 0, mesoSpent: 0,
   etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 },
   log: [],        // 증폭 기록
 };
 
 // 잠재 탭 전용 상태 — 증폭 탭(_soulState)과 완전히 별개다.
-let _soulPotState = { grade: 'RARE', stage: 1, lines: [] };
+// gradeStreak: 지금 등급에서 등급업 없이 재설정한 횟수(천장 판정용).
+let _soulPotState = { grade: 'RARE', stage: 1, lines: [], gradeStreak: 0 };
 
 let _sgState = {
   rsTries: 0, rsMesoSpent: 0,
@@ -67,7 +73,6 @@ function _soulAmpStep() {
     _soulState.stage = target;
     _soulState.gauge = 0;
   } else {
-    _soulState.fails++;
     _soulState.gauge = Math.min(1, _soulState.gauge + info.gaugeStep);
   }
   return ok;
@@ -77,7 +82,7 @@ function _soulAmpRollOnce() { _soulAmpStep(); _soulRenderAmp(); }
 
 function _soulAmpReset() {
   _soulStopAmpAuto();
-  _soulState = { stage: 0, gauge: 0, tries: 0, fails: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
+  _soulState = { stage: 0, gauge: 0, tries: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
   _soulRenderAmp();
 }
 
@@ -113,6 +118,7 @@ function _soulStartAmpAuto() {
 /* ── 잠재: 등급/단계 직접 선택 ── */
 function _soulPotSetGrade(grade) {
   _soulPotState.grade = grade;
+  _soulPotState.gradeStreak = 0;
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
   _soulRenderPotential();
 }
@@ -123,19 +129,33 @@ function _soulPotSetStage(stage) {
 }
 function _soulPotFullReset() {
   _soulStopResetAuto();
-  _soulPotState = { grade: 'RARE', stage: 1, lines: soulRollLines('RARE', 1) };
+  _soulPotState = { grade: 'RARE', stage: 1, lines: soulRollLines('RARE', 1), gradeStreak: 0 };
   _sgState = { rsTries: 0, rsMesoSpent: 0, log: [] };
   _soulRenderPotential();
 }
 
-/* ── 잠재: 재설정(3줄 다시 뽑기) ── */
+/* ── 잠재: 재설정(3줄 다시 뽑기) ── 등급업은 별도 시도가 아니라 재설정할 때마다
+   같이 굴러가는 확률 + 천장이다(나무위키 "재설정 횟수" 표). */
 function _soulResetStep() {
   const D = _soulData();
   const cost = D.RESET_MESO[_soulPotState.grade];
   _sgState.rsTries++;
   _sgState.rsMesoSpent += cost;
+
+  const gu = D.GRADEUP[_soulPotState.grade];
+  let upgraded = false;
+  if (gu) {
+    _soulPotState.gradeStreak++;
+    const forced = _soulPotState.gradeStreak >= gu.ceil;
+    if (forced || Math.random() < gu.chance) {
+      _soulPotState.grade = gu.to;
+      _soulPotState.gradeStreak = 0;
+      upgraded = true;
+    }
+  }
+
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
-  _sgState.log.unshift({ n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade });
+  _sgState.log.unshift({ n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade, upgraded });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
   return true;
 }
@@ -206,7 +226,6 @@ function _soulRenderAmp() {
   document.getElementById('soulAmpMeso').textContent = done ? '—' : fmtMeso(info.meso);
 
   document.getElementById('soulAmpTries').textContent = _soulState.tries.toLocaleString();
-  document.getElementById('soulAmpFails').textContent = _soulState.fails.toLocaleString();
   document.getElementById('soulAmpMesoSpent').textContent = fmtMeso(_soulState.mesoSpent);
   document.getElementById('soulAmpEtherSpent').innerHTML = D.STAGES.map(s => `
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
@@ -241,6 +260,12 @@ function _soulRenderPotential() {
   if (stageSel) stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotState.stage ? ' selected' : ''}>${s}단계</option>`).join('');
 
   document.getElementById('soulResetCost').textContent = fmtMeso(D.RESET_MESO[grade]);
+  const gu = D.GRADEUP[grade];
+  const streakEl = document.getElementById('soulGuStreak');
+  if (streakEl) {
+    streakEl.closest('.sf-res-item').style.display = gu ? '' : 'none';
+    if (gu) streakEl.textContent = `${_soulPotState.gradeStreak} / ${gu.ceil}`;
+  }
 
   document.getElementById('soulPotLines').innerHTML = _soulPotState.lines
     .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('');
@@ -249,9 +274,9 @@ function _soulRenderPotential() {
   document.getElementById('soulResetMesoSpent').textContent = fmtMeso(_sgState.rsMesoSpent);
 
   document.getElementById('soulGuLog').innerHTML = _sgState.log.map(e => `
-    <div class="fam-log-row">
+    <div class="fam-log-row${e.upgraded ? ' is-hit' : ''}">
       <span class="fam-log-n">${e.n}</span>
-      <span class="fam-log-line" data-grade="${e.grade}">${D.GRADE_LABEL[e.grade]} ${e.lines.map(l => l.label).join(' / ')}</span>
+      <span class="fam-log-line" data-grade="${e.grade}">${e.upgraded ? `${D.GRADE_LABEL[e.grade]} 등급업 · ` : ''}${e.lines.map(l => l.label).join(' / ')}</span>
     </div>`).join('');
 }
 
@@ -308,7 +333,6 @@ function initSoul() {
         <div class="card">
           <div class="card__title">누적</div>
           <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val" id="soulAmpTries">0</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="soulAmpFails">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulAmpMesoSpent">0 메소</span></div>
           <div class="sf-res-item" style="align-items:flex-start"><span class="sf-res-label">소모 에테르</span><div id="soulAmpEtherSpent"></div></div>
 
@@ -326,6 +350,7 @@ function initSoul() {
           <div class="cube-goal-hint mt8">등급 선택 <select class="sel" id="soulPotGrade">${_soulBuildGradeOpts()}</select></div>
           <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
           <div class="sf-res-item mt16"><span class="sf-res-label">재설정 비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">등급업까지</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
 
           <div class="card__title mt16">목표 옵션</div>
           <div class="cube-goal-hint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
@@ -412,7 +437,7 @@ function ensureSoulReady(cb) {
   if (!_soulLoading) {
     _soulLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260926g';
+      s.src = 'data_soul.js?v=20260927a';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
       document.body.appendChild(s);

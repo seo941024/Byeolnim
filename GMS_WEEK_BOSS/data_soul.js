@@ -63,11 +63,14 @@ const SOUL_GRADES = ['RARE', 'EPIC', 'UNIQUE', 'LEGENDARY'];
 const SOUL_GRADE_LABEL = { RARE: '레어', EPIC: '에픽', UNIQUE: '유니크', LEGENDARY: '레전드리', NORMAL: '노멀' };
 const SOUL_GRADE_RANK = { RARE: 1, EPIC: 2, UNIQUE: 3, LEGENDARY: 4 };
 
-// 등급업 확률 — 공식. 소모 재료는 공지에 없어 재설정 비용을 그대로 빌려 쓴다(placeholder).
+// 등급업은 별도 버튼이 아니라 "잠재 재설정"을 할 때마다 같이 굴러가는 확률이다
+// (나무위키 "재설정 횟수" 표, 2026-09-27 확인). ceil은 그 등급에서 재설정을
+// ceil번 했는데도 등급업이 안 됐으면 그 다음 재설정에서 무조건 확정 상승하는
+// 천장 횟수. 소모 재료는 공지에 없어 재설정 비용을 그대로 빌려 쓴다(placeholder).
 const SOUL_GRADEUP = {
-  RARE:   { to: 'EPIC',      chance: 0.015    },
-  EPIC:   { to: 'UNIQUE',    chance: 0.005875 },
-  UNIQUE: { to: 'LEGENDARY', chance: 0.003322 },
+  RARE:   { to: 'EPIC',      chance: 0.015,    ceil: 100 },
+  EPIC:   { to: 'UNIQUE',    chance: 0.005875, ceil: 256 },
+  UNIQUE: { to: 'LEGENDARY', chance: 0.003322, ceil: 451 },
 };
 
 // 잠재 재설정 비용 — 공식
@@ -80,32 +83,32 @@ const SOUL_LINE_BELOW = { RARE: 'NORMAL', EPIC: 'RARE', UNIQUE: 'EPIC', LEGENDAR
 // 옵션 풀 — w는 등급별 가중치(나무위키 표 그대로). numeric:true 인 것만
 // 화면에 %수치를 보여준다.
 const SOUL_OPTIONS = [
-  { key: 'str',        label: 'STR 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'dex',        label: 'DEX 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'int_',       label: 'INT 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'luk',        label: 'LUK 증가',                   numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'maxhp',      label: '최대 HP 증가',                numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'maxmp',      label: '최대 MP 증가',                numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'speed',      label: '이동속도 증가',               numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'jump',       label: '점프력 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'atk',        label: '공격력 증가',                 numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
-  { key: 'matk',       label: '마력 증가',                   numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
-  { key: 'def',        label: '방어력 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'strPct',     label: 'STR %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'dexPct',     label: 'DEX %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'intPct',     label: 'INT %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'lukPct',     label: 'LUK %증가',                  numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'maxhpPct',   label: '최대 HP %증가',               numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'maxmpPct',   label: '최대 MP %증가',               numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
-  { key: 'atkPct',     label: '공격력% 증가',                numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'matkPct',    label: '마력% 증가',                  numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'crit',       label: '크리티컬 확률 증가',           numeric: true,  w: { RARE: 2, EPIC: 1, UNIQUE: 2, LEGENDARY: 2 } },
-  { key: 'dmgPct',     label: '데미지 %증가',                numeric: true,  w: { RARE: 1, EPIC: 1, UNIQUE: 1, LEGENDARY: 1 } },
-  { key: 'allstat',    label: '올스탯 증가',                 numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
-  { key: 'allstatPct', label: '올스탯 %증가',                numeric: true,  w: { RARE: 0, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'str',        label: 'STR',                        numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'dex',        label: 'DEX',                        numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'int_',       label: 'INT',                        numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'luk',        label: 'LUK',                        numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'maxhp',      label: '최대 HP',                    numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'maxmp',      label: '최대 MP',                    numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'speed',      label: '이동속도',                    numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'jump',       label: '점프력',                      numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'atk',        label: '공격력',                      numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
+  { key: 'matk',       label: '마력',                        numeric: false, w: { RARE: 2, EPIC: 0, UNIQUE: 0, LEGENDARY: 1 } },
+  { key: 'def',        label: '방어력',                      numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'strPct',     label: 'STR %',                       numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'dexPct',     label: 'DEX %',                       numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'intPct',     label: 'INT %',                       numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'lukPct',     label: 'LUK %',                       numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'maxhpPct',   label: '최대 HP %',                   numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'maxmpPct',   label: '최대 MP %',                   numeric: true,  w: { RARE: 2, EPIC: 3, UNIQUE: 3, LEGENDARY: 3 } },
+  { key: 'atkPct',     label: '공격력%',                     numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'matkPct',    label: '마력%',                       numeric: true,  w: { RARE: 1, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'crit',       label: '크리티컬 확률',                numeric: true,  w: { RARE: 2, EPIC: 1, UNIQUE: 2, LEGENDARY: 2 } },
+  { key: 'dmgPct',     label: '데미지 %',                    numeric: true,  w: { RARE: 1, EPIC: 1, UNIQUE: 1, LEGENDARY: 1 } },
+  { key: 'allstat',    label: '올스탯',                      numeric: false, w: { RARE: 3, EPIC: 0, UNIQUE: 0, LEGENDARY: 0 } },
+  { key: 'allstatPct', label: '올스탯 %',                    numeric: true,  w: { RARE: 0, EPIC: 2, UNIQUE: 2, LEGENDARY: 2 } },
   { key: 'hpDrain',    label: '공격 시 일정 확률로 HP 회복',  numeric: false, w: { RARE: 0, EPIC: 3, UNIQUE: 3, LEGENDARY: 0 } },
   { key: 'mpDrain',    label: '공격 시 일정 확률로 MP 회복',  numeric: false, w: { RARE: 0, EPIC: 3, UNIQUE: 3, LEGENDARY: 0 } },
-  { key: 'bossDmg',    label: '보스 공격 시 데미지 % 증가',   numeric: true,  w: { RARE: 0, EPIC: 0, UNIQUE: 1, LEGENDARY: 1 } },
+  { key: 'bossDmg',    label: '보스 공격 시 데미지 %',       numeric: true,  w: { RARE: 0, EPIC: 0, UNIQUE: 1, LEGENDARY: 1 } },
   { key: 'ignoreDef',  label: '몬스터 방어율 무시',          numeric: true,  w: { RARE: 0, EPIC: 2, UNIQUE: 1, LEGENDARY: 1 } },
 ];
 

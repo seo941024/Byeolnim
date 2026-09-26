@@ -350,7 +350,7 @@ function initSoul() {
           <div class="cube-goal-hint mt8">등급 선택 <select class="sel" id="soulPotGrade">${_soulBuildGradeOpts()}</select></div>
           <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
           <div class="sf-res-item mt16"><span class="sf-res-label">재설정 비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">등급업까지</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
+          <div class="sf-res-item"><span class="sf-res-label">등급업</span><span class="sf-res-val" id="soulGuStreak">-</span></div>
 
           <div class="card__title mt16">목표 옵션</div>
           <div class="cube-goal-hint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">

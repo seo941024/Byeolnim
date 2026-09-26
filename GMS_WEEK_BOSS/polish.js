@@ -84,7 +84,6 @@ function _polRender() {
   document.getElementById('polConfirmNote').style.display = chance >= 1 ? '' : 'none';
 
   const locked = _polState.type === 'life' && _polState.lifeLocked;
-  document.getElementById('polLockedNote').style.display = locked ? '' : 'none';
   document.getElementById('polRollBtn').disabled = locked;
   document.getElementById('polAutoBtn').disabled = locked;
   document.getElementById('polCount').disabled = locked;
@@ -128,7 +127,6 @@ function initPolish() {
         <div class="sf-res-item mt16"><span class="sf-res-label">성공률</span><span class="sf-res-val" id="polChance">100%</span></div>
         <div class="sf-res-item"><span class="sf-res-label">1회당 메소</span><span class="sf-res-val" id="polCost">0 메소</span></div>
         <p class="dt-help" id="polConfirmNote" style="display:none">※ 최대 개수라 이번 시도는 확정 성공입니다.</p>
-        <p class="dt-help" id="polLockedNote" style="display:none">※ 생명의 연마석은 한 번 성공하면 끝입니다. 초기화해야 다시 시도할 수 있습니다.</p>
 
         <div class="cube-btns mt16">
           <button class="sbtn sbtn--primary cube-btn-full" id="polRollBtn">연마 시도 [S]</button>

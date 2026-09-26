@@ -5,10 +5,11 @@
      1. 증폭 — 소울 에테르+메소를 써서 무기의 증폭 단계를 1→4까지 올린다.
         실패마다 성공률 자체가 오르고(failInc), 별개로 게이지도 쌓여 게이지가
         100%에 닿으면 다음 시도는 확정 성공(둘 다 실측 확인된 규칙).
-     2. 잠재 — 등급·단계를 직접 골라 잠재능력(3줄)을 재설정하거나 등급업한다.
-        증폭을 실제로 진행하지 않아도 바로 쓸 수 있다(사용자 요청으로
-        증폭 진행 상황과 분리함 — 예전엔 증폭 1단계를 성공해야만 잠재가
-        생기는 구조였는데, 그냥 잠재만 따로 테스트하고 싶을 때 불편했음).
+     2. 잠재 — 큐브 직작과 같은 방식. 등급·단계를 드롭다운으로 직접 고르고
+        잠재능력(3줄)을 재설정한다. 등급업은 확률형 RNG 단계 없이 그냥
+        드롭다운으로 등급을 바꾸는 것으로 대체함(사용자 판단 — 큐브도
+        "시작 등급"을 드롭다운으로 고를 뿐 별도 등급업 시도 단계가 없음).
+        증폭을 실제로 진행하지 않아도 바로 쓸 수 있다(증폭 진행 상황과 분리).
 
    잠재능력이 3줄이고 STR/DEX/INT/LUK이 개별 옵션으로 나온다는 건 실제 게임
    스트리밍 화면 캡처로 확인된 사실이다(자세한 경위는 data_soul.js 머리
@@ -32,9 +33,8 @@ let _soulState = {
 let _soulPotState = { grade: 'RARE', stage: 1, lines: [] };
 
 let _sgState = {
-  guTries: 0, guFails: 0, guMesoSpent: 0,
   rsTries: 0, rsMesoSpent: 0,
-  log: [],        // 등급업+재설정 기록
+  log: [],        // 재설정 기록
 };
 
 /* 현재 목표에서 몇 번 실패했는지는 게이지를 gaugeStep으로 나눠서 되돌린다
@@ -122,9 +122,9 @@ function _soulPotSetStage(stage) {
   _soulRenderPotential();
 }
 function _soulPotFullReset() {
-  _soulStopResetAuto(); _soulStopGuAuto();
+  _soulStopResetAuto();
   _soulPotState = { grade: 'RARE', stage: 1, lines: soulRollLines('RARE', 1) };
-  _sgState = { guTries: 0, guFails: 0, guMesoSpent: 0, rsTries: 0, rsMesoSpent: 0, log: [] };
+  _sgState = { rsTries: 0, rsMesoSpent: 0, log: [] };
   _soulRenderPotential();
 }
 
@@ -135,7 +135,7 @@ function _soulResetStep() {
   _sgState.rsTries++;
   _sgState.rsMesoSpent += cost;
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
-  _sgState.log.unshift({ type: 'reset', n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade });
+  _sgState.log.unshift({ n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
   return true;
 }
@@ -187,54 +187,6 @@ function _soulStartResetAuto() {
   step();
 }
 
-/* ── 잠재: 등급업 ── */
-function _soulGradeUpStep() {
-  const D = _soulData();
-  const info = D.GRADEUP[_soulPotState.grade];
-  if (!info) return false; // 이미 레전드리
-  const cost = D.RESET_MESO[_soulPotState.grade]; // 공식 재료가 없어 재설정 비용을 임시로 씀
-  _sgState.guTries++;
-  _sgState.guMesoSpent += cost;
-  const ok = Math.random() < info.chance;
-  _sgState.log.unshift({ type: 'gradeup', n: _sgState.guTries, from: _soulPotState.grade, ok });
-  if (_sgState.log.length > 200) _sgState.log.length = 200;
-  if (ok) {
-    _soulPotState.grade = info.to;
-    _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
-  } else _sgState.guFails++;
-  return ok;
-}
-const SOUL_GU_AUTO_MAX = 200000;
-let _soulGuAutoTimer = null;
-function _soulStopGuAuto(msg) {
-  if (_soulGuAutoTimer) { clearTimeout(_soulGuAutoTimer); _soulGuAutoTimer = null; }
-  const b = document.getElementById('soulGuAutoBtn');
-  if (b) b.textContent = '목표 등급까지 자동 [G]';
-  if (msg) alert(msg);
-}
-function _soulStartGuAuto() {
-  if (_soulGuAutoTimer) { _soulStopGuAuto(); return; }
-  const D = _soulData();
-  const goal = document.getElementById('soulGuGoal')?.value || 'LEGENDARY';
-  if (D.GRADES.indexOf(_soulPotState.grade) >= D.GRADES.indexOf(goal)) { alert('이미 목표 등급 이상입니다.'); return; }
-  const b = document.getElementById('soulGuAutoBtn');
-  if (b) b.textContent = '중지 [G]';
-  const step = () => {
-    for (let i = 0; i < 500; i++) {
-      if (!D.GRADEUP[_soulPotState.grade]) break;
-      _soulGradeUpStep();
-      if (D.GRADES.indexOf(_soulPotState.grade) >= D.GRADES.indexOf(goal)) { _soulStopGuAuto(); _soulRenderPotential(); return; }
-      if (_sgState.guTries >= SOUL_GU_AUTO_MAX) {
-        _soulStopGuAuto(`${SOUL_GU_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 등급에 닿지 못해 멈췄습니다.`);
-        _soulRenderPotential(); return;
-      }
-    }
-    _soulRenderPotential();
-    _soulGuAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
-
 /* ── 렌더: 증폭 탭 ── */
 function _soulRenderAmp() {
   const D = _soulData(); if (!D) return;
@@ -274,7 +226,7 @@ function _soulRenderAmp() {
     </div>`).join('');
 }
 
-/* ── 렌더: 잠재 탭 ── */
+/* ── 렌더: 잠재 탭 (큐브 직작과 같은 좌 설정 / 우 결과 배치) ── */
 function _soulRenderPotential() {
   const D = _soulData(); if (!D) return;
   const panel = document.getElementById('soulPotPanel');
@@ -288,39 +240,19 @@ function _soulRenderPotential() {
   const stageSel = document.getElementById('soulPotStage');
   if (stageSel) stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotState.stage ? ' selected' : ''}>${s}단계</option>`).join('');
 
+  document.getElementById('soulResetCost').textContent = fmtMeso(D.RESET_MESO[grade]);
+
   document.getElementById('soulPotLines').innerHTML = _soulPotState.lines
     .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.label}${l.value != null ? ` +${l.value}%` : ''}</div>`).join('');
 
-  // 재설정
-  document.getElementById('soulResetCost').textContent = fmtMeso(D.RESET_MESO[grade]);
   document.getElementById('soulResetTries').textContent = _sgState.rsTries.toLocaleString();
   document.getElementById('soulResetMesoSpent').textContent = fmtMeso(_sgState.rsMesoSpent);
 
-  // 등급업
-  const guInfo = D.GRADEUP[grade];
-  document.getElementById('soulGuNow').textContent = D.GRADE_LABEL[grade];
-  document.getElementById('soulGuNow').dataset.grade = grade;
-  document.getElementById('soulGuChance').textContent = guInfo ? (guInfo.chance * 100).toFixed(4).replace(/\.?0+$/, '') + '%' : '—';
-  document.getElementById('soulGuCost').textContent = guInfo ? fmtMeso(D.RESET_MESO[grade]) : '—';
-  const guAutoBtn = document.getElementById('soulGuAutoBtn');
-  if (guAutoBtn) { guAutoBtn.disabled = !guInfo; guAutoBtn.textContent = guInfo ? '목표 등급까지 자동 [G]' : '레전드리 달성'; }
-  document.getElementById('soulGuTries').textContent = _sgState.guTries.toLocaleString();
-  document.getElementById('soulGuFails').textContent = _sgState.guFails.toLocaleString();
-  document.getElementById('soulGuMesoSpent').textContent = fmtMeso(_sgState.guMesoSpent);
-
-  document.getElementById('soulGuLog').innerHTML = _sgState.log.map(e => {
-    if (e.type === 'reset') return `
-      <div class="fam-log-row">
-        <span class="fam-log-n">R${e.n}</span>
-        <span class="fam-log-line" data-grade="${e.grade}">재설정 → ${e.lines.map(l => l.label).join(' / ')}</span>
-      </div>`;
-    return `
-      <div class="fam-log-row${e.ok ? ' is-hit' : ''}">
-        <span class="fam-log-n">G${e.n}</span>
-        <span class="fam-log-line" data-grade="${e.from}">${D.GRADE_LABEL[e.from]} 등급업</span>
-        <span class="ru-log-res ${e.ok ? 'ok' : 'no'}">${e.ok ? '성공' : '실패'}</span>
-      </div>`;
-  }).join('');
+  document.getElementById('soulGuLog').innerHTML = _sgState.log.map(e => `
+    <div class="fam-log-row">
+      <span class="fam-log-n">${e.n}</span>
+      <span class="fam-log-line" data-grade="${e.grade}">${D.GRADE_LABEL[e.grade]} ${e.lines.map(l => l.label).join(' / ')}</span>
+    </div>`).join('');
 }
 
 function _soulBuildGoalOpts(selected) {
@@ -330,10 +262,6 @@ function _soulBuildGoalOpts(selected) {
 function _soulBuildGradeOpts() {
   const D = _soulData();
   return D.GRADES.map(g => `<option value="${g}">${D.GRADE_LABEL[g]}</option>`).join('');
-}
-function _soulBuildGuGoalOpts() {
-  const D = _soulData();
-  return D.GRADES.map(g => `<option value="${g}"${g === 'LEGENDARY' ? ' selected' : ''}>${D.GRADE_LABEL[g]}</option>`).join('');
 }
 function _soulBuildAmpGoalOpts() {
   return _soulData().STAGES.map(s => `<option value="${s}"${s === 4 ? ' selected' : ''}>${s}단계</option>`).join('');
@@ -394,24 +322,29 @@ function initSoul() {
     <div id="soulTabPotential" style="display:none">
       <div class="sf-layout">
         <div class="card">
-          <div class="card__title">등급업</div>
-          <div class="sf-res-item"><span class="sf-res-label">현재 등급</span><span class="sf-res-val ru-now" id="soulGuNow">-</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">등급업 확률</span><span class="sf-res-val" id="soulGuChance">-</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">비용</span><span class="sf-res-val" id="soulGuCost">-</span></div>
-          <div class="cube-goal-hint mt16">목표 등급 <select class="sel" id="soulGuGoal">${_soulBuildGuGoalOpts()}</select></div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--primary cube-btn-full" id="soulGuAutoBtn">목표 등급까지 자동 [G]</button>
-            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="soulGuResetBtn">전체 초기화 [R]</button>
+          <div class="card__title">설정</div>
+          <div class="cube-goal-hint mt8">등급 선택 <select class="sel" id="soulPotGrade">${_soulBuildGradeOpts()}</select></div>
+          <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
+          <div class="sf-res-item mt16"><span class="sf-res-label">재설정 비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
+
+          <div class="card__title mt16">목표 옵션</div>
+          <div class="cube-goal-hint" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+            <select class="sel" id="soulResetGoal1">${_soulBuildGoalOpts()}</select>
+            <select class="sel" id="soulResetGoal2">${_soulBuildGoalOpts()}</select>
+            <select class="sel" id="soulResetGoal3">${_soulBuildGoalOpts()}</select>
           </div>
-          <div class="sf-res-item mt16"><span class="sf-res-label">시도</span><span class="sf-res-val" id="soulGuTries">0</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">실패</span><span class="sf-res-val" id="soulGuFails">0</span></div>
-          <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulGuMesoSpent">0 메소</span></div>
+
+          <div class="cube-btns mt16">
+            <button class="sbtn sbtn--primary cube-btn-full" id="soulResetBtn">잠재 재설정 [S]</button>
+          </div>
+          <div class="cube-btns mt8">
+            <button class="sbtn sbtn--ghost cube-btn-full" id="soulResetAutoBtn">목표 옵션까지 자동 [A]</button>
+            <button class="sbtn sbtn--ghost cube-btn-full mt8" id="soulGuResetBtn">초기화 [R]</button>
+          </div>
         </div>
 
         <div class="card">
-          <div class="card__title">잠재옵션</div>
-          <div class="cube-goal-hint mt8">등급 선택 <select class="sel" id="soulPotGrade">${_soulBuildGradeOpts()}</select></div>
-          <div class="cube-goal-hint">단계 선택 <select class="sel" id="soulPotStage"></select></div>
+          <div class="card__title">결과</div>
           <div class="pot-panel mt8" id="soulPotPanel" data-grade="RARE">
             <div class="pot-panel__head">
               <img class="pot-panel__icon" id="soulPotIcon" src="" alt="" onerror="this.style.display='none'">
@@ -420,20 +353,6 @@ function initSoul() {
             <div class="pot-panel__lines" id="soulPotLines"></div>
           </div>
 
-          <div class="card__title mt16">잠재 재설정</div>
-          <div class="sf-res-item"><span class="sf-res-label">비용</span><span class="sf-res-val" id="soulResetCost">-</span></div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--primary cube-btn-full" id="soulResetBtn">잠재 재설정 [S]</button>
-          </div>
-          <div class="cube-goal-hint mt16" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
-            목표 옵션
-            <select class="sel" id="soulResetGoal1">${_soulBuildGoalOpts()}</select>
-            <select class="sel" id="soulResetGoal2">${_soulBuildGoalOpts()}</select>
-            <select class="sel" id="soulResetGoal3">${_soulBuildGoalOpts()}</select>
-          </div>
-          <div class="cube-btns mt8">
-            <button class="sbtn sbtn--ghost cube-btn-full" id="soulResetAutoBtn">목표 옵션까지 자동 [A]</button>
-          </div>
           <div class="sf-res-item mt16"><span class="sf-res-label">재설정 횟수</span><span class="sf-res-val" id="soulResetTries">0</span></div>
           <div class="sf-res-item"><span class="sf-res-label">소모 메소</span><span class="sf-res-val" id="soulResetMesoSpent">0 메소</span></div>
 
@@ -451,7 +370,7 @@ function initSoul() {
       const t = tab.dataset.soultab;
       document.getElementById('soulTabAmp').style.display = t === 'amp' ? '' : 'none';
       document.getElementById('soulTabPotential').style.display = t === 'potential' ? '' : 'none';
-      _soulStopAmpAuto(); _soulStopResetAuto(); _soulStopGuAuto();
+      _soulStopAmpAuto(); _soulStopResetAuto();
     });
   });
 
@@ -459,16 +378,15 @@ function initSoul() {
   document.getElementById('soulAmpAutoBtn').addEventListener('click', _soulStartAmpAuto);
   document.getElementById('soulAmpResetBtn').addEventListener('click', _soulAmpReset);
 
-  document.getElementById('soulPotGrade').addEventListener('change', e => { _soulStopResetAuto(); _soulStopGuAuto(); _soulPotSetGrade(e.target.value); });
-  document.getElementById('soulPotStage').addEventListener('change', e => { _soulStopResetAuto(); _soulStopGuAuto(); _soulPotSetStage(Number(e.target.value) || 1); });
+  document.getElementById('soulPotGrade').addEventListener('change', e => { _soulStopResetAuto(); _soulPotSetGrade(e.target.value); });
+  document.getElementById('soulPotStage').addEventListener('change', e => { _soulStopResetAuto(); _soulPotSetStage(Number(e.target.value) || 1); });
   document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
   document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
-  document.getElementById('soulGuAutoBtn').addEventListener('click', _soulStartGuAuto);
   document.getElementById('soulGuResetBtn').addEventListener('click', _soulPotFullReset);
 
-  /* S=주 동작, A=증폭/재설정 자동, G=등급업 자동, R=초기화 — 열린 탭 기준 */
+  /* S=주 동작, A=자동, R=초기화 — 열린 탭 기준 */
   document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA', 'KeyG'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
+    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
     if (!document.getElementById('sec-soul')?.classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
@@ -477,7 +395,6 @@ function initSoul() {
     const isAmp = document.getElementById('soulTabAmp').style.display !== 'none';
     if (e.code === 'KeyS') document.getElementById(isAmp ? 'soulAmpRollBtn' : 'soulResetBtn')?.click();
     else if (e.code === 'KeyA') document.getElementById(isAmp ? 'soulAmpAutoBtn' : 'soulResetAutoBtn')?.click();
-    else if (e.code === 'KeyG' && !isAmp) document.getElementById('soulGuAutoBtn')?.click();
     else if (e.code === 'KeyR') document.getElementById(isAmp ? 'soulAmpResetBtn' : 'soulGuResetBtn')?.click();
   });
 

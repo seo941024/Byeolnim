@@ -292,7 +292,7 @@ function _soulRenderAmp() {
   document.getElementById('soulAmpEtherSpent').innerHTML = D.STAGES.map(s => `
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
       <img class="crystal-icon" src="images/icons/aether_${s}.webp" alt="" onerror="this.style.display='none'">
-      <span>${_soulState.etherSpent[s]}개</span>
+      <span style="display:inline-block;min-width:2ch;text-align:right">${_soulState.etherSpent[s]}</span><span>개</span>
     </div>`).join('');
 
   const btn = document.getElementById('soulAmpRollBtn');

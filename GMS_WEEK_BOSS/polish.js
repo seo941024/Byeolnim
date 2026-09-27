@@ -92,7 +92,7 @@ function _polRender() {
   document.getElementById('polStonesUsed').innerHTML = `
     <div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:.86rem;font-weight:800;color:var(--text)">
       <img class="crystal-icon" src="${t.icon}" alt="" onerror="this.style.display='none'">
-      <span>${_polState.stonesUsed[_polState.type]}개</span>
+      <span style="display:inline-block;min-width:2ch;text-align:right">${_polState.stonesUsed[_polState.type]}</span><span>개</span>
     </div>`;
 
   document.getElementById('polLog').innerHTML = _polState.log.map(e => `

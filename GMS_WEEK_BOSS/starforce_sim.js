@@ -282,8 +282,10 @@ function initStarforce() {
     el.addEventListener('input', _sfRecalcDebounced);
     // 값을 확정할 때 빈 칸·모순까지 포함해 전부 정리한다
     el.addEventListener('change', () => { _sfClampInputs(); sfRenderResult(); _sfRecalcExpected(); });
-    // 타이핑 도중에도 상한은 즉시 걸고, 별칸 수가 달라지므로 판을 다시 그린다
-    el.addEventListener('input', () => { _sfClampMaxWhileTyping(el); sfRenderResult(); });
+    // 타이핑 도중 상한 클램프는 sfTo·sfFrom(별 개수)에만 건다 — sfLevel(장비
+    // 레벨)까지 걸려 있으면 레벨 값 자체가 별 상한(20대)으로 잘려버린다.
+    if (id !== 'sfLevel') el.addEventListener('input', () => { _sfClampMaxWhileTyping(el); sfRenderResult(); });
+    else el.addEventListener('input', () => { sfRenderResult(); });
   });
 
   // 강화 1회

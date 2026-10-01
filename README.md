@@ -1,6 +1,6 @@
 # byeolnim.app
 
-개인 사이드 프로젝트 웹앱. 배포 방법은 [`README_DEPLOY.md`](./README_DEPLOY.md) 참고.
+개인 사이드 프로젝트 웹앱. 배포 방법은 [`GMS_WEEK_BOSS/README_DEPLOY.md`](./GMS_WEEK_BOSS/README_DEPLOY.md) 참고.
 
 ## 기술 스택
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261002c" />
+  <link rel="stylesheet" href="style.css?v=20261002e" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
@@ -87,7 +87,7 @@
     <!-- 네비게이션 -->
     <nav class="sb-nav">
       <button class="sb-nav__item" data-sec="meundi">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meet-and-greet-assigned-seating-ticket.png" alt="" onerror="this.style.display='none'"></span><span>메이플 운빨 디펜스 공략</span>
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meet-and-greet-assigned-seating-ticket.png" alt="" onerror="this.style.display='none'"></span><span>메이플 운빨 디펜스</span>
       </button>
       <button class="sb-nav__item" data-sec="wantchannel">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Quick_Move_-_Auction_House.png" alt="" onerror="this.style.display='none'"></span><span>오늘의 채널 추천</span>
@@ -123,27 +123,34 @@
       <button class="sb-nav__item" data-sec="liberation">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Destiny_Dual_Bowguns_(Stage_2).png" alt="" onerror="this.style.display='none'"></span><span>해방 계산기</span>
       </button>
-      <button class="sb-nav__item" data-sec="addoption">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Black_Rebirth_Flame.png" alt="" onerror="this.style.display='none'"></span><span>추옵 시뮬레이터</span>
-      </button>
-      <button class="sb-nav__item" data-sec="starforce">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Golden_Hammer.png" alt="" onerror="this.style.display='none'"></span><span>스타포스 시뮬레이터</span>
-      </button>
-      <button class="sb-nav__item" data-sec="cube">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Cube.png" alt="" onerror="this.style.display='none'"></span><span>큐브 시뮬레이터</span>
-      </button>
       <button class="sb-nav__item" data-sec="frontier">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>미스틱 프론티어 계산기</span>
       </button>
-      <button class="sb-nav__item" data-sec="familiar">
+      <div class="sb-group" id="sbSimGroup">
+        <button class="sb-nav__item sb-group__head" type="button">
+          <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Golden_Hammer.png" alt="" onerror="this.style.display='none'"></span><span>시뮬레이터</span><span class="sb-group__chev">▾</span>
+        </button>
+        <div class="sb-group__list">
+          <button class="sb-nav__item" data-sec="addoption">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Black_Rebirth_Flame.png" alt="" onerror="this.style.display='none'"></span><span>추가 옵션 시뮬레이터</span>
+      </button>
+          <button class="sb-nav__item" data-sec="starforce">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Golden_Hammer.png" alt="" onerror="this.style.display='none'"></span><span>스타포스 시뮬레이터</span>
+      </button>
+          <button class="sb-nav__item" data-sec="cube">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Cube.png" alt="" onerror="this.style.display='none'"></span><span>큐브 시뮬레이터</span>
+      </button>
+          <button class="sb-nav__item" data-sec="familiar">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Use_Mystical_Familiar_Card.png" alt="" onerror="this.style.display='none'"></span><span>패밀리어 시뮬레이터</span>
       </button>
-      <button class="sb-nav__item" data-sec="soul">
+          <button class="sb-nav__item" data-sec="soul">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/aether_4.webp" alt="" onerror="this.style.display='none'"></span><span>소울 증폭 시뮬레이터</span>
       </button>
-      <button class="sb-nav__item" data-sec="polish">
+          <button class="sb-nav__item" data-sec="polish">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Use_Grindstone_of_Life.png" alt="" onerror="this.style.display='none'"></span><span>연마석 시뮬레이터</span>
       </button>
+        </div>
+      </div>
       <button class="sb-nav__item" data-sec="bosshp">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/boss.webp" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
       </button>
@@ -834,15 +841,15 @@
 <script src="data_itemdesc.js?v=20260924b"></script>
 <script src="data_liberation.js?v=20260826b"></script>
 <script src="starforce.js?v=20260819f"></script>
-<script src="app.js?v=20261002b"></script>
+<script src="app.js?v=20261002d"></script>
 <script src="hexa.js?v=20260826d"></script>
 <!-- <script src="data_gearcompare.js?v=20260916a"></script> 장비 교체 비교 — 내림
 <script src="gearcompare.js?v=20260916a"></script> -->
 <!-- <script src="hyperstat.js?v=20260901a"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20260901a"></script>
 <script src="starforce_sim.js?v=20260927a"></script>
-<script src="cube.js?v=20260927a"></script><script src="familiar.js?v=20260926a"></script><script src="soulsim.js?v=20260927j"></script><script src="polish.js?v=20260927b"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20260901b"></script><script src="meundi.js?v=20261002g"></script>
-<script src="addoption.js?v=20260907a"></script><script src="bosshp.js?v=20260924b"></script>
+<script src="cube.js?v=20260927a"></script><script src="familiar.js?v=20260926a"></script><script src="soulsim.js?v=20260927j"></script><script src="polish.js?v=20260927b"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20260901b"></script><script src="meundi.js?v=20261002h"></script>
+<script src="addoption.js?v=20261002a"></script><script src="bosshp.js?v=20260924b"></script>
 <script src="serverstatus.js?v=20260925a"></script><script src="vendor/quill/quill.min.js?v=1.3.7"></script><script src="community.js?v=20260826l"></script>
 <script src="dailytasks.js?v=20260826c"></script>
 <script src="wantchannel.js?v=20260819b"></script>

@@ -3506,3 +3506,13 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-combo .mu-u { width: 26px; padding: 3px 0; }
 .mu-rd-how { margin-top: 8px; font-weight: 700; font-size: .86rem; word-break: keep-all; }
 .mu-note--wide { max-width: none; margin-top: 4px; line-height: 1.5; }
+
+/* ── 사이드바 시뮬레이터 그룹 ── */
+.sb-group__head { width: 100%; }
+.sb-group__chev { margin-left: auto; font-size: .8rem; opacity: .7; transition: transform .2s; }
+.sb-group.open .sb-group__chev { transform: rotate(180deg); }
+.sb-group.has-active .sb-group__head { color: var(--text); }
+.sb-group__list { display: none; flex-direction: column; margin: 2px 0 4px 14px; padding-left: 8px; border-left: 2px solid var(--border); }
+.sb-group.open .sb-group__list { display: flex; }
+.mu-ref { margin-top: 10px; font-size: .84rem; color: var(--text-sub); word-break: break-all; }
+.mu-ref a { color: var(--primary); text-decoration: underline; }

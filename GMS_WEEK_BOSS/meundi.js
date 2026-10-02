@@ -222,6 +222,7 @@ function _muGuideHtml() {
       <div class="card__title">리롤별 살 수 있는 레벨</div>
       ${MU_LEVELS.map(([roll, lv, wave]) => `<div class="sf-res-item"><span class="sf-res-label">${roll}리롤 · 웨이브 ${wave}</span><span class="sf-res-val">${lv}</span></div>`).join('')}
     </div>
+    <div class="mu-ref">참고 링크 : <a href="https://nighttroupe.netlify.app/" target="_blank" rel="noopener">https://nighttroupe.netlify.app/</a></div>
     ${_muRedditGuideHtml()}`;
 }
 

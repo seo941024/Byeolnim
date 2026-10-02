@@ -91,11 +91,11 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
 const NAV_LABELS = {
-  meundi: '메이플 운빨 디펜스 공략', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  meundi: '메이플 운빨 디펜스', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
-  liberation: '해방 계산기', addoption: '추옵 시뮬레이터', starforce: '스타포스 시뮬레이터',
+  liberation: '해방 계산기', addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
   bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',
@@ -106,6 +106,12 @@ function navigateTo(sec) {
   document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   if (btn) btn.classList.add('active');
+  // 시뮬레이터 그룹 안의 메뉴가 열리면 그룹도 펼치고 머리를 강조한다
+  const grp = btn?.closest('.sb-group');
+  document.querySelectorAll('.sb-group').forEach(g => {
+    g.classList.toggle('has-active', g === grp);
+    if (g === grp) g.classList.add('open');
+  });
   const secEl = document.getElementById('sec-' + sec);
   if (secEl) secEl.classList.add('active');
   if (sec === 'charinfo') renderCharInfo();
@@ -126,8 +132,11 @@ function navigateTo(sec) {
   if (sec === 'meundi' && typeof initMeundi === 'function') initMeundi();
   if (sec === 'hexa')      renderAllHexaLists();
 }
-document.querySelectorAll('.sb-nav__item').forEach(btn => {
+document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
   btn.addEventListener('click', () => { navigateTo(btn.dataset.sec); closeSidebar(); });
+});
+document.querySelectorAll('.sb-group__head').forEach(head => {
+  head.addEventListener('click', () => head.closest('.sb-group').classList.toggle('open'));
 });
 document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
 

@@ -601,7 +601,7 @@ function initAddOption() {
     </div>`).join('');
 
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">추옵 시뮬레이터</h2></div>
+    <div class="sec-head"><h2 class="sec-title">추가 옵션 시뮬레이터</h2></div>
 
     <!-- 탭 -->
     <div class="sf-tabs">

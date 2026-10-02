@@ -193,8 +193,8 @@ function _muSheetHtml() {
     <div class="mu-keys">
       <span class="mu-chip">레벨업 : 등급이 높은 순부터, 같은 등급일 경우 빨강 &gt; 노랑 &gt; 검정 순으로 강화</span>
     </div>
-    <div class="card mt16">
-      <div class="mu-panel-h"><span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span></div>
+    <div class="card mt16" id="muFullCard">
+      <div class="mu-panel-h"><span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span>${window.documentPictureInPicture ? '<button class="mu-pip" type="button">별도 창</button>' : ''}</div>
       ${_muRowsHtml(MU_CONFIRMED)}
     </div>
     <div class="card mt16">
@@ -233,6 +233,41 @@ function _muRender() {
   document.querySelectorAll('#sec-meundi .sf-tab').forEach(t => t.classList.toggle('active', t.dataset.mutab === _muTab));
 }
 
+/* 풀클리어 카드만 항상 위에 떠 있는 별도 창으로 띄운다. 현재 페이지의 스타일시트를 그대로 복사한다. */
+async function _muPip() {
+  const src = document.getElementById('muFullCard');
+  if (!src || !window.documentPictureInPicture) return;
+  const old = documentPictureInPicture.window;
+  if (old) old.close();
+  const win = await documentPictureInPicture.requestWindow({
+    width: Math.min(Math.max(src.offsetWidth, 420), 760),
+    height: Math.min(src.offsetHeight + 24, 720),
+  });
+  const d = win.document;
+  [...document.styleSheets].forEach(ss => {
+    if (ss.href) {
+      const l = d.createElement('link');
+      l.rel = 'stylesheet'; l.href = ss.href;
+      d.head.appendChild(l);
+    } else {
+      try {
+        const st = d.createElement('style');
+        st.textContent = [...ss.cssRules].map(r => r.cssText).join('\n');
+        d.head.appendChild(st);
+      } catch {}
+    }
+  });
+  const theme = document.documentElement.getAttribute('data-theme');
+  if (theme) d.documentElement.setAttribute('data-theme', theme);
+  const cs = getComputedStyle(document.body);
+  d.body.style.cssText = `margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}`;
+  const clone = src.cloneNode(true);
+  clone.removeAttribute('id');
+  clone.classList.remove('mt16');
+  clone.querySelector('.mu-pip')?.remove();
+  d.body.appendChild(clone);
+}
+
 function initMeundi() {
   const sec = document.getElementById('sec-meundi');
   if (!sec || sec.dataset.inited) return;
@@ -245,5 +280,6 @@ function initMeundi() {
     </div>
     <div id="muBody"></div>`;
   sec.querySelectorAll('.sf-tab').forEach(t => t.addEventListener('click', () => { _muTab = t.dataset.mutab; _muRender(); }));
+  document.getElementById('muBody').addEventListener('click', e => { if (e.target.closest('.mu-pip')) _muPip().catch(err => console.warn('[meundi] PiP 실패', err)); });
   _muRender();
 }

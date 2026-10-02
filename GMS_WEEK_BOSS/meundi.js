@@ -195,11 +195,11 @@ function _muSheetHtml() {
       <span class="mu-chip">PIP모드로 창을 띄워서 메이플스토리를 플레이하며 편하게 공략카드를 볼 수 있습니다.</span>
     </div>
     <div class="card mt16" id="muFullCard">
-      <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span></div>
+      <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">보상 : 솔 에르다 조각 500개</span></div>
       ${_muRowsHtml(MU_CONFIRMED)}
     </div>
     <div class="card mt16">
-      <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">솔 에르다 조각 250</span></div>
+      <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>
       ${_muRowsHtml(MU_WAVE10)}
     </div>
     <div class="card mt16">

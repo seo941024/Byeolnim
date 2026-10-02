@@ -3509,8 +3509,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* ── 사이드바 시뮬레이터 그룹 ── */
 .sb-group__head { width: 100%; }
-.sb-group__chev { margin-left: auto; font-size: .8rem; opacity: .7; transition: transform .2s; }
-.sb-group.open .sb-group__chev { transform: rotate(180deg); }
 .sb-group.has-active .sb-group__head { color: var(--text); }
 .sb-group__list { display: none; flex-direction: column; margin: 2px 0 4px 14px; padding-left: 8px; border-left: 2px solid var(--border); }
 .sb-group.open .sb-group__list { display: flex; }

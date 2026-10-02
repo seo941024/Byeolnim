@@ -3509,6 +3509,13 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* ── 사이드바 시뮬레이터 그룹 ── */
 .sb-group__head { width: 100%; }
 .sb-group.has-active .sb-group__head { color: var(--text); }
+.sb-group.open .sb-group__head {
+  background-image: linear-gradient(90deg, rgba(246,199,68,.30), rgba(var(--hue-l),.26));
+  border: 1px solid rgba(246,199,68,.4);
+  color: var(--accent);
+  box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 12px rgba(246,199,68,.08);
+  text-shadow: 0 0 8px rgba(246,199,68,.35);
+}
 .sb-group__list { display: none; flex-direction: column; margin: 2px 0 4px 14px; padding-left: 8px; border-left: 2px solid var(--border); }
 .sb-group.open .sb-group__list { display: flex; }
 .mu-ref { margin-top: 10px; font-size: .84rem; color: var(--text-sub); word-break: break-all; }

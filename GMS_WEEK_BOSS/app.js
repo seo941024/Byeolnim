@@ -1279,6 +1279,56 @@ async function refreshStaleChars() {
   }
 }
 
+/* 코디 컬렉션. 넥슨 아바타 주소는 코디가 같아도 조회할 때마다 바뀌는 암호문이라
+   주소 비교로는 코디 변화를 알 수 없다. 이미지를 받아 내용 해시를 비교하고,
+   주소별 해시는 브라우저에 저장해 다음부터는 새 주소만 받는다. */
+const CI_HASH_KEY = 'ciImgHash';
+function ciHashCache() { try { return JSON.parse(localStorage.getItem(CI_HASH_KEY) || '{}'); } catch { return {}; } }
+async function ciImgHash(url, cache) {
+  if (cache[url]) return cache[url];
+  try {
+    const r = await fetch(proxiedImgSrc(url));
+    if (!r.ok) return null;
+    const d = await crypto.subtle.digest('SHA-1', await r.arrayBuffer());
+    return (cache[url] = [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join(''));
+  } catch { return null; }
+}
+function ciAgo(s) {
+  const t = s.ts || Date.parse(s.date) || Date.now();
+  const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
+  if (m < 60) return '방금 전';
+  const h = Math.floor(m / 60);
+  if (h < 24) return h + '시간 전';
+  const d = Math.floor(h / 24);
+  if (d < 30) return d + '일 전';
+  if (d < 365) return Math.floor(d / 30) + '개월 전';
+  return Math.floor(d / 365) + '년 전';
+}
+async function ciFillLooks(ch) {
+  const f = ch?.fetched, el = document.getElementById('ciLooks');
+  if (!f || !el) return;
+  const arr = (loadHist()[histKeyOf(f)] || []).filter(s => s.img);
+  const cache = ciHashCache();
+  const runs = [];                       // 최신 코디부터. rec 은 그 코디가 처음 기록된 스냅샷
+  for (let i = arr.length - 1; i >= 0 && runs.length < 8; i -= 6) {
+    const batch = arr.slice(Math.max(0, i - 5), i + 1).reverse();
+    const hashes = await Promise.all(batch.map(s => ciImgHash(s.img, cache)));
+    for (let k = 0; k < batch.length && runs.length < 8; k++) {
+      const key = hashes[k] || 'u:' + batch[k].img;
+      const last = runs[runs.length - 1];
+      if (last && last.key === key) last.rec = batch[k];
+      else runs.push({ key, rec: batch[k] });
+    }
+  }
+  try {
+    const keys = Object.keys(cache);
+    if (keys.length > 500) keys.slice(0, keys.length - 500).forEach(k => delete cache[k]);
+    localStorage.setItem(CI_HASH_KEY, JSON.stringify(cache));
+  } catch { /* 저장 실패는 무시 */ }
+  if (document.getElementById('ciLooks') !== el) return;
+  el.innerHTML = runs.slice(0, 7).map(r => `<div class="ci-looks__item"><img src="${proxiedImgSrc(r.rec.img)}" alt="" onerror="this.style.visibility='hidden'" /><span>${ciAgo(r.rec)}</span></div>`).join('');
+}
+
 /* 선택 캐릭터의 레벨 / 경험치 기록 그래프. 세로축은 레벨에 경험치 비율을 더한 값이고,
    필요 경험치 표가 없는 레벨은 비율 없이 레벨만 쓴다. */
 function ciExpChartHtml(ch) {
@@ -1324,23 +1374,9 @@ function ciExpChartHtml(ch) {
       <text class="ci-exp__val" x="${lx(i).toFixed(1)}" y="${(ly(s) - 11).toFixed(1)}">${s.level}</text>
       <text class="ci-exp__x" x="${lx(i).toFixed(1)}" y="${LH - 10}">${md(s.date)}</text>`).join('');
 
-  /* 코디 컬렉션: 이미지가 바뀐 시점마다 하나, 최근 7개 */
-  const looks = [];
-  arr.forEach((s, i) => { if (s.img && (i === 0 || s.img !== arr[i - 1].img)) looks.push(s); });
-  const ago = s => {
-    const t = s.ts || Date.parse(s.date) || Date.now();
-    const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
-    if (m < 60) return '방금 전';
-    const h = Math.floor(m / 60);
-    if (h < 24) return h + '시간 전';
-    const d = Math.floor(h / 24);
-    if (d < 30) return d + '일 전';
-    if (d < 365) return Math.floor(d / 30) + '개월 전';
-    return Math.floor(d / 365) + '년 전';
-  };
-  const codyHtml = looks.length ? `
+  const codyHtml = arr.some(s => s.img) ? `
       <div class="card mt16"><div class="card__title">코디 컬렉션</div>
-        <div class="ci-looks">${looks.slice(-7).reverse().map(s => `<div class="ci-looks__item"><img src="${proxiedImgSrc(s.img)}" alt="" onerror="this.style.visibility='hidden'" /><span>${ago(s)}</span></div>`).join('')}</div>
+        <div class="ci-looks" id="ciLooks"></div>
       </div>` : '';
 
   return `
@@ -1420,6 +1456,7 @@ function renderCharInfo() {
   }).join('');
 
   box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>${ciExpChartHtml(state.chars[state.activeChar])}`;
+  ciFillLooks(state.chars[state.activeChar]);
   box.querySelectorAll('.cg-card__save').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();

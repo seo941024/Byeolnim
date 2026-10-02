@@ -127,33 +127,35 @@ async function _muPip() {
   if (!src || !window.documentPictureInPicture) return;
   const old = documentPictureInPicture.window;
   if (old) old.close();
-  const win = await documentPictureInPicture.requestWindow({
-    width: Math.min(Math.max(src.offsetWidth, 420), 760),
-    height: Math.min(src.offsetHeight + 24, 720),
-  });
+  const PW = 900;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
+  const win = await documentPictureInPicture.requestWindow({ width: 600, height: 400 });
   const d = win.document;
-  [...document.styleSheets].forEach(ss => {
-    if (ss.href) {
-      const l = d.createElement('link');
-      l.rel = 'stylesheet'; l.href = ss.href;
-      d.head.appendChild(l);
-    } else {
-      try {
-        const st = d.createElement('style');
-        st.textContent = [...ss.cssRules].map(r => r.cssText).join('\n');
-        d.head.appendChild(st);
-      } catch {}
-    }
-  });
+  const links = [...document.styleSheets].filter(ss => ss.href).map(ss => `<link rel="stylesheet" href="${ss.href}">`).join('');
   const theme = document.documentElement.getAttribute('data-theme');
-  if (theme) d.documentElement.setAttribute('data-theme', theme);
   const cs = getComputedStyle(document.body);
-  d.body.style.cssText = `margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}`;
   const clone = src.cloneNode(true);
   clone.removeAttribute('id');
   clone.classList.remove('mt16');
   clone.querySelector('.mu-pip')?.remove();
-  d.body.appendChild(clone);
+  d.documentElement.style.cssText = `background:${cs.backgroundColor}`;
+  d.body.style.cssText = `margin:0;overflow:hidden;background:${cs.backgroundColor}`;
+  const fr = d.createElement('iframe');
+  fr.style.cssText = `position:absolute;left:0;top:0;border:0;width:${PW}px;height:600px;transform-origin:0 0;background:transparent`;
+  fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}</head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}">${clone.outerHTML}</body></html>`;
+  const fit = () => {
+    const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 600;
+    fr.style.height = h + 'px';
+    const s = Math.min(win.innerWidth / PW, win.innerHeight / h);
+    fr.style.transform = `translate(${(win.innerWidth - PW * s) / 2}px,${(win.innerHeight - h * s) / 2}px) scale(${s})`;
+  };
+  fr.addEventListener('load', () => {
+    fit();
+    const h = fr.contentDocument.body.firstElementChild.offsetHeight + 16;
+    try { win.resizeTo(600, Math.round(600 * h / PW) + (win.outerHeight - win.innerHeight)); } catch {}
+    fit();
+  });
+  win.addEventListener('resize', fit);
+  d.body.appendChild(fr);
 }
 
 function initMeundi() {

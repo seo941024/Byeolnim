@@ -191,18 +191,18 @@ function _muRedditGuideHtml() {
 function _muSheetHtml() {
   return `
     <div class="mu-keys">
-      <span class="mu-chip">레벨 우선 S, 동점은 빨강 노랑 검정</span>
+      <span class="mu-chip">레벨업 : 등급이 높은 순부터, 같은 등급일 경우 빨강 &gt; 노랑 &gt; 검정 순으로 강화</span>
     </div>
     <div class="card mt16">
-      <div class="mu-panel-h"><span class="mu-badge mu-badge--ok">확정</span><span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span></div>
+      <div class="mu-panel-h"><span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span></div>
       ${_muRowsHtml(MU_CONFIRMED)}
     </div>
     <div class="card mt16">
-      <div class="mu-panel-h"><span class="mu-badge mu-badge--ok">확정</span><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">솔 에르다 조각 250</span></div>
+      <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">솔 에르다 조각 250</span></div>
       ${_muRowsHtml(MU_WAVE10)}
     </div>
     <div class="card mt16">
-      <div class="mu-panel-h"><span class="mu-badge mu-badge--warn">제보</span><span class="card__title" style="margin:0">미확인</span></div>
+      <div class="mu-panel-h"><span class="card__title" style="margin:0">미확인</span></div>
       ${_muRowsHtml(MU_REPORTED)}
     </div>
     ${_muRedditSheetHtml()}`;

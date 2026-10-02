@@ -192,9 +192,10 @@ function _muSheetHtml() {
   return `
     <div class="mu-keys">
       <span class="mu-chip">레벨업 : 등급이 높은 순부터, 같은 등급일 경우 빨강 &gt; 노랑 &gt; 검정 순으로 강화</span>
+      <span class="mu-chip">PIP모드로 창을 띄워서 메이플스토리를 플레이하며 편하게 공략카드를 볼 수 있습니다.</span>
     </div>
     <div class="card mt16" id="muFullCard">
-      <div class="mu-panel-h"><span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span>${window.documentPictureInPicture ? '<button class="mu-pip" type="button">별도 창</button>' : ''}</div>
+      <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">솔 에르다 조각 500</span></div>
       ${_muRowsHtml(MU_CONFIRMED)}
     </div>
     <div class="card mt16">

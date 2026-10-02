@@ -3472,8 +3472,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* ── 메운디 ── */
 .mu-keys { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
-.mu-chip { padding: 4px 10px; border-radius: 99px; font-size: .78rem; font-weight: 700; background: var(--bg2); color: var(--text-sub); border: 1px solid var(--border); }
-.mu-chip--r { color: #e5484d; } .mu-chip--k { color: var(--text); } .mu-chip--y { color: #d9a400; }
+.mu-chip { font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.5; word-break: keep-all; }
 .mu-panel-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
 .mu-badge { padding: 2px 10px; border-radius: 99px; font-size: .75rem; font-weight: 800; }
 .mu-badge--ok { background: var(--success-l); color: var(--success); }

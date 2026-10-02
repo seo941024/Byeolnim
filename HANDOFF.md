@@ -7,7 +7,7 @@
 
 **새로 생긴 것**
 - 연마석: `polish.js` + `data_polish.js`. 생명 개당 10%·최대 10개, 신념 5%·20개, 개수×확률 선형. 성공하면 그 종류는 초기화 전까지 잠김, 사용 개수는 종류별로 따로 셈.
-- 메이플 운빨 디펜스: `meundi.js`. 출처는 nighttroupe.netlify.app(Go Go Sidekick 치트시트)과 레딧 정리글. 값은 원본 그대로, 임의로 고치거나 채우지 말 것. 용어는 roll→리롤, run→도전, 문체는 합니다체.
+- 메이플 운빨 디펜스: `meundi.js`. 출처는 nighttroupe.netlify.app(Go Go Sidekick 치트시트). 레딧 정리글은 제거함. 값은 원본 그대로, 임의로 고치거나 채우지 말 것. 용어는 roll→문맥에 맞는 뽑기 표현, run→도전, 문체는 합니다체. 풀클리어 카드에 PIP모드 버튼, Chrome 계열 Document PiP.
 - 루트 `README.md`: 기술 스택과 ELT 파이프라인 설명(면접 용). 게임 얘기는 뺐음.
 - 사이드바: 시뮬레이터 6종을 `#sbSimGroup`으로 묶음(아이콘 `Etc_Magic_Whetstone.png`, 화살표·들여쓰기 없음). 클릭 핸들러가 `.sb-nav__item[data-sec]`로 바뀌었으니 그룹 머리에 `data-sec` 달지 말 것. 이름: 추가 옵션 시뮬레이터, 메이플 운빨 디펜스.
 

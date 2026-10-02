@@ -1324,6 +1324,25 @@ function ciExpChartHtml(ch) {
       <text class="ci-exp__val" x="${lx(i).toFixed(1)}" y="${(ly(s) - 11).toFixed(1)}">${s.level}</text>
       <text class="ci-exp__x" x="${lx(i).toFixed(1)}" y="${LH - 10}">${md(s.date)}</text>`).join('');
 
+  /* 코디 컬렉션: 이미지가 바뀐 시점마다 하나, 최근 7개 */
+  const looks = [];
+  arr.forEach((s, i) => { if (s.img && (i === 0 || s.img !== arr[i - 1].img)) looks.push(s); });
+  const ago = s => {
+    const t = s.ts || Date.parse(s.date) || Date.now();
+    const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
+    if (m < 60) return '방금 전';
+    const h = Math.floor(m / 60);
+    if (h < 24) return h + '시간 전';
+    const d = Math.floor(h / 24);
+    if (d < 30) return d + '일 전';
+    if (d < 365) return Math.floor(d / 30) + '개월 전';
+    return Math.floor(d / 365) + '년 전';
+  };
+  const codyHtml = looks.length ? `
+      <div class="card mt16"><div class="card__title">코디 컬렉션</div>
+        <div class="ci-looks">${looks.slice(-7).reverse().map(s => `<div class="ci-looks__item"><img src="${proxiedImgSrc(s.img)}" alt="" onerror="this.style.visibility='hidden'" /><span>${ago(s)}</span></div>`).join('')}</div>
+      </div>` : '';
+
   const nowP = pct(last);
   return `
     <div class="ci-exp">
@@ -1333,7 +1352,7 @@ function ciExpChartHtml(ch) {
           <svg class="ci-exp__svg" viewBox="0 0 ${BW} ${BH}"><line class="ci-exp__axis" x1="0" x2="${BW}" y1="${BH - BB}" y2="${BH - BB}"/>${bars}</svg></div>
         <div class="card"><div class="card__title">레벨 히스토리</div>
           <svg class="ci-exp__svg" viewBox="0 0 ${LW} ${LH}"><line class="ci-exp__axis" x1="0" x2="${LW}" y1="${base}" y2="${base}"/>${area}${lv.length > 1 ? `<polyline class="ci-exp__line" points="${line}"/>` : ''}${pts}</svg></div>
-      </div>
+      </div>${codyHtml}
     </div>`;
 }
 

@@ -91,7 +91,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
 const NAV_LABELS = {
-  wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  meundi: '메운디', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
@@ -123,6 +123,7 @@ function navigateTo(sec) {
   if (sec === 'soul' && typeof ensureSoulReady === 'function') ensureSoulReady();
   if (sec === 'polish' && typeof ensurePolishReady === 'function') ensurePolishReady();
   if (sec === 'frontier' && typeof initFrontier === 'function') initFrontier();
+  if (sec === 'meundi' && typeof initMeundi === 'function') initMeundi();
   if (sec === 'hexa')      renderAllHexaLists();
 }
 document.querySelectorAll('.sb-nav__item').forEach(btn => {
@@ -1619,6 +1620,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 10. 02.',
+    items: [
+      {
+        head: '메운디 탭 추가',
+        desc: '사이드킥 스쿼드 치트시트와 가이드를 한국어로 정리. 확정 조합과 제보 조합 구분.',
+      },
+    ],
+  },
+  {
     date: '2026. 09. 26.',
     items: [
       {
@@ -1738,7 +1748,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-09-26-soul-goal-preset',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-02-meundi',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

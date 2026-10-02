@@ -1284,33 +1284,55 @@ async function refreshStaleChars() {
 function ciExpChartHtml(ch) {
   const f = ch?.fetched;
   if (!f?.name) return '';
-  let arr = loadHist()[histKeyOf(f)] || [];
+  let arr = (loadHist()[histKeyOf(f)] || []).filter(s => s.level && s.date);
   if (!arr.length && f.level) arr = [{ date: todayStr(), level: f.level, exp: Number(f.exp) || 0 }];
-  const pts = arr.filter(s => s.level).map(s => {
-    const pct = expPercent(s.level, s.exp);
-    return { date: s.date, level: s.level, pct, y: s.level + (pct == null ? 0 : pct / 100), t: Date.parse(s.date) || 0 };
-  });
-  if (!pts.length) return '';
-  const label = p => `Lv. ${p.level}${p.pct == null ? '' : ' ' + p.pct.toFixed(2) + '%'}`;
-  const W = 600, H = 200, PX = 14, PT = 16, PB = 16;
-  let lo = Math.min(...pts.map(p => p.y)), hi = Math.max(...pts.map(p => p.y));
-  if (hi - lo < 0.05) { lo -= 0.5; hi += 0.5; }
-  const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
-  const xOf = p => pts.length < 2 || t1 === t0 ? W / 2 : PX + (p.t - t0) / (t1 - t0) * (W - PX * 2);
-  const yOf = p => PT + (1 - (p.y - lo) / (hi - lo)) * (H - PT - PB);
-  const line = pts.map(p => `${xOf(p).toFixed(1)},${yOf(p).toFixed(1)}`).join(' ');
-  const base = H - PB;
-  const area = pts.length > 1 ? `<polygon class="ci-exp__area" points="${xOf(pts[0]).toFixed(1)},${base} ${line} ${xOf(pts[pts.length - 1]).toFixed(1)},${base}"/>` : '';
-  const dots = pts.map((p, i) => `<circle class="ci-exp__dot${i === pts.length - 1 ? ' ci-exp__dot--last' : ''}" cx="${xOf(p).toFixed(1)}" cy="${yOf(p).toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3}"><title>${p.date} ${label(p)}</title></circle>`).join('');
-  const grid = [0, 1, 2].map(i => `<line class="ci-exp__grid" x1="0" x2="${W}" y1="${PT + i * (H - PT - PB) / 2}" y2="${PT + i * (H - PT - PB) / 2}"/>`).join('');
-  const first = pts[0], last = pts[pts.length - 1];
+  if (!arr.length) return '';
+  const md = d => { const [, m, dd] = d.split('-'); return `${+m}월 ${+dd}일`; };
+  const pct = s => expPercent(s.level, s.exp);
+  const last = arr[arr.length - 1];
+
+  /* 경험치: 최근 7일. 기록이 없는 날은 변화가 없던 날이라 직전 기록 값을 그대로 쓴다. */
+  const lastT = Date.parse(last.date);
+  const days = [];
+  for (let k = 6; k >= 0; k--) {
+    const d = new Date(lastT - k * 86400000).toISOString().slice(0, 10);
+    const rec = [...arr].reverse().find(s => s.date <= d);
+    if (rec) days.push({ date: d, level: rec.level, pct: pct(rec) });
+  }
+  const BW = 440, BH = 210, BT = 26, BB = 30;
+  const maxP = Math.max(1, ...days.map(d => d.pct || 0));
+  const slot = BW / days.length, bw = Math.min(46, slot * 0.6);
+  const bars = days.map((d, i) => {
+    const cx = slot * i + slot / 2;
+    const h = d.pct == null ? 0 : d.pct / maxP * (BH - BT - BB);
+    const y = BH - BB - h;
+    return `<rect class="ci-exp__bar" x="${(cx - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h, 0).toFixed(1)}" rx="4"><title>${md(d.date)} Lv. ${d.level}${d.pct == null ? '' : ' ' + d.pct.toFixed(2) + '%'}</title></rect>
+      <text class="ci-exp__val" x="${cx.toFixed(1)}" y="${(y - 6).toFixed(1)}">${d.pct == null ? d.level : d.pct.toFixed(3).replace(/0$/, '') + '%'}</text>
+      <text class="ci-exp__x" x="${cx.toFixed(1)}" y="${BH - 10}">${md(d.date)}</text>`;
+  }).join('');
+
+  /* 레벨: 처음 기록과 레벨이 바뀐 날, 마지막 기록 */
+  const lv = arr.filter((s, i) => i === 0 || s.level !== arr[i - 1].level || i === arr.length - 1);
+  const LW = 440, LH = 210, LP = 30;
+  const lo = Math.min(...lv.map(s => s.level)), hi = Math.max(...lv.map(s => s.level));
+  const lx = i => lv.length < 2 ? LW / 2 : LP + i * (LW - LP * 2) / (lv.length - 1);
+  const ly = s => hi === lo ? LH / 2 - 8 : 36 + (1 - (s.level - lo) / (hi - lo)) * (LH - 36 - 56);
+  const line = lv.map((s, i) => `${lx(i).toFixed(1)},${ly(s).toFixed(1)}`).join(' ');
+  const base = LH - 30;
+  const area = lv.length > 1 ? `<polygon class="ci-exp__area" points="${lx(0).toFixed(1)},${base} ${line} ${lx(lv.length - 1).toFixed(1)},${base}"/>` : '';
+  const pts = lv.map((s, i) => `<circle class="ci-exp__dot" cx="${lx(i).toFixed(1)}" cy="${ly(s).toFixed(1)}" r="4.5"/>
+      <text class="ci-exp__val" x="${lx(i).toFixed(1)}" y="${(ly(s) - 11).toFixed(1)}">${s.level}</text>
+      <text class="ci-exp__x" x="${lx(i).toFixed(1)}" y="${LH - 10}">${md(s.date)}</text>`).join('');
+
+  const nowP = pct(last);
   return `
-    <div class="card mt16 ci-exp">
-      <div class="card__title">${escHtml(ch.name)} 레벨 / 경험치</div>
-      <svg class="ci-exp__svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grid}${area}${pts.length > 1 ? `<polyline class="ci-exp__line" points="${line}"/>` : ''}${dots}</svg>
-      <div class="ci-exp__foot">
-        ${pts.length > 1 ? `<div><span>${first.date}</span><b>${label(first)}</b></div>` : ''}
-        <div><span>${last.date}</span><b>${label(last)}</b></div>
+    <div class="ci-exp">
+      <div class="ci-exp__head">${escHtml(ch.name)} 레벨 / 경험치<b>Lv. ${last.level}${nowP == null ? '' : ' ' + nowP.toFixed(2) + '%'}</b></div>
+      <div class="ci-exp__row">
+        <div class="card"><div class="card__title">경험치 히스토리</div>
+          <svg class="ci-exp__svg" viewBox="0 0 ${BW} ${BH}"><line class="ci-exp__axis" x1="0" x2="${BW}" y1="${BH - BB}" y2="${BH - BB}"/>${bars}</svg></div>
+        <div class="card"><div class="card__title">레벨 히스토리</div>
+          <svg class="ci-exp__svg" viewBox="0 0 ${LW} ${LH}"><line class="ci-exp__axis" x1="0" x2="${LW}" y1="${base}" y2="${base}"/>${area}${lv.length > 1 ? `<polyline class="ci-exp__line" points="${line}"/>` : ''}${pts}</svg></div>
       </div>
     </div>`;
 }

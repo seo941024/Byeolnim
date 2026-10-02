@@ -140,7 +140,7 @@ function _muSquadHtml(code) {
 function _muRowsHtml(rows) {
   return rows.map(r => `
     <div class="mu-row">
-      <div class="mu-head">${r.roll != null ? `<span class="mu-node">${r.roll}리롤</span><span class="mu-wave">웨이브 ${r.wave}</span>` : `<span class="mu-wave">${r.head}</span>`}</div>
+      <div class="mu-head">${r.roll != null ? `<span class="mu-roll">리롤 횟수 : ${r.roll}</span><span class="mu-wave">웨이브 ${r.wave}</span>` : `<span class="mu-wave">${r.head}</span>`}</div>
       <div class="mu-cards">${r.squads.map(_muSquadHtml).join('')}</div>
     </div>`).join('');
 }

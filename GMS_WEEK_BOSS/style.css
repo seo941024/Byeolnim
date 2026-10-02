@@ -3479,9 +3479,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-badge--ok { background: var(--success-l); color: var(--success); }
 .mu-badge--warn { background: rgba(246,199,68,.18); color: #d9a400; }
 .mu-pay { margin-left: auto; font-size: .85rem; font-weight: 800; color: var(--accent); }
-.mu-row { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
-.mu-head { flex: 0 0 76px; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-.mu-node { min-width: 28px; padding: 2px 8px; border-radius: 99px; text-align: center; font-weight: 900; background: var(--primary); color: #fff; }
+.mu-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
+.mu-head { flex: 0 0 104px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.mu-roll { font-size: .82rem; font-weight: 800; color: var(--text); white-space: nowrap; }
 .mu-wave { font-size: .78rem; color: var(--text-sub); font-weight: 700; word-break: keep-all; }
 .mu-cards { flex: 1; display: flex; flex-wrap: wrap; gap: 8px; }
 .mu-card { padding: 6px; border-radius: 10px; border: 1.5px solid var(--border); background: var(--bg2); }
@@ -3495,7 +3495,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-steps { margin: 8px 0 0 18px; padding: 0; display: flex; flex-direction: column; gap: 8px; line-height: 1.6; font-size: .88rem; word-break: keep-all; }
 .mu-st { display: flex; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); font-size: .88rem; word-break: keep-all; }
 .mu-st b { flex: 0 0 150px; }
-@media (max-width: 520px) { .mu-row { flex-direction: column; gap: 6px; } .mu-head { flex-direction: row; align-items: center; flex: none; } .mu-st { flex-direction: column; gap: 2px; } .mu-st b { flex: none; } }
+@media (max-width: 520px) { .mu-row { flex-direction: column; align-items: flex-start; gap: 6px; } .mu-head { flex-direction: row; align-items: center; flex: none; } .mu-st { flex-direction: column; gap: 2px; } .mu-st b { flex: none; } }
 .mu-rd { padding: 12px 0; border-top: 1px solid var(--border); }
 .mu-rd-tldr { margin-top: 4px; font-weight: 800; font-size: .9rem; word-break: keep-all; line-height: 1.5; }
 .mu-rd-h { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }

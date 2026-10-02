@@ -3477,7 +3477,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-badge { padding: 2px 10px; border-radius: 99px; font-size: .75rem; font-weight: 800; }
 .mu-badge--ok { background: var(--success-l); color: var(--success); }
 .mu-badge--warn { background: rgba(246,199,68,.18); color: #d9a400; }
-.mu-pip { padding: 4px 16px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: 1.2rem; font-weight: 800; letter-spacing: .6px; cursor: pointer; }
+.mu-pip { padding: 4px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: .95rem; font-weight: 800; cursor: pointer; }
 .mu-pip:hover { filter: brightness(1.08); }
 .mu-pay { margin-left: auto; font-size: .85rem; font-weight: 800; color: var(--accent); }
 .mu-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }

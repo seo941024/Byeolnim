@@ -3507,8 +3507,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .ci-exp__area { fill: var(--primary); fill-opacity: .14; }
 .ci-exp__line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linejoin: round; }
 .ci-exp__dot { fill: var(--bg2); stroke: var(--primary); stroke-width: 2.5; }
-.ci-looks { display: flex; flex-wrap: wrap; justify-content: center; gap: 18px 16px; }
-.ci-looks__item { display: flex; flex-direction: column; align-items: center; gap: 8px; width: 96px; }
+.ci-looks { display: grid; grid-template-columns: repeat(7, 1fr); gap: 18px 8px; }
+.ci-looks__item { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+@media (max-width: 760px) { .ci-looks { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); } }
 .ci-looks__item img { width: 96px; height: 96px; object-fit: contain; object-position: bottom center; image-rendering: pixelated; }
 .ci-looks__item span { font-size: .82rem; font-weight: 700; color: var(--text-sub); }
 @media (max-width: 760px) { .ci-exp__row { grid-template-columns: 1fr; } }

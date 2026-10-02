@@ -237,7 +237,7 @@ function initMeundi() {
   if (!sec || sec.dataset.inited) return;
   sec.dataset.inited = '1';
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">메운디</h2></div>
+    <div class="sec-head"><h2 class="sec-title">메이플 운빨 디펜스 공략</h2></div>
     <div class="sf-tabs">
       <button class="sf-tab active" data-mutab="sheet">치트시트</button>
       <button class="sf-tab" data-mutab="guide">가이드</button>

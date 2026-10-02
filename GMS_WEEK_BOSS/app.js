@@ -91,7 +91,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
 const NAV_LABELS = {
-  meundi: '메운디', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  meundi: '메이플 운빨 디펜스 공략', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
@@ -1623,7 +1623,7 @@ const NOTICE_LOG = [
     date: '2026. 10. 02.',
     items: [
       {
-        head: '메운디 탭 추가',
+        head: '메이플 운빨 디펜스 공략 탭 추가',
         desc: '사이드킥 스쿼드 치트시트와 가이드를 한국어로 정리. 확정 조합과 제보 조합 구분.',
       },
     ],

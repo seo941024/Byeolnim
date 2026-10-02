@@ -1343,10 +1343,9 @@ function ciExpChartHtml(ch) {
         <div class="ci-looks">${looks.slice(-7).reverse().map(s => `<div class="ci-looks__item"><img src="${proxiedImgSrc(s.img)}" alt="" onerror="this.style.visibility='hidden'" /><span>${ago(s)}</span></div>`).join('')}</div>
       </div>` : '';
 
-  const nowP = pct(last);
   return `
     <div class="ci-exp">
-      <div class="ci-exp__head">${escHtml(ch.name)} 레벨 / 경험치<b>Lv. ${last.level}${nowP == null ? '' : ' ' + nowP.toFixed(2) + '%'}</b></div>
+      <div class="ci-exp__head">${escHtml(ch.name)} 레벨 / 경험치</div>
       <div class="ci-exp__row">
         <div class="card"><div class="card__title">경험치 히스토리</div>
           <svg class="ci-exp__svg" viewBox="0 0 ${BW} ${BH}"><line class="ci-exp__axis" x1="0" x2="${BW}" y1="${BH - BB}" y2="${BH - BB}"/>${bars}</svg></div>

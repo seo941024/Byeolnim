@@ -3497,7 +3497,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 .ci-exp { margin-top: 16px; }
 .ci-exp__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; font-size: 1.2rem; font-weight: 800; color: var(--text-sub); }
-.ci-exp__head b { font-size: 1.1rem; color: var(--text); }
 .ci-exp__row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .ci-exp__row .card__title { font-size: 1rem; text-transform: none; margin-bottom: 8px; }
 .ci-exp__svg { display: block; width: 100%; height: auto; overflow: visible; }
@@ -3510,7 +3509,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .ci-exp__dot { fill: var(--bg2); stroke: var(--primary); stroke-width: 2.5; }
 .ci-looks { display: flex; flex-wrap: wrap; gap: 18px 28px; }
 .ci-looks__item { display: flex; flex-direction: column; align-items: center; gap: 8px; min-width: 96px; }
-.ci-looks__item img { height: 120px; width: auto; object-fit: contain; image-rendering: pixelated; }
+.ci-looks__item img { width: 96px; height: 96px; object-fit: contain; object-position: bottom center; image-rendering: pixelated; }
 .ci-looks__item span { font-size: .82rem; font-weight: 700; color: var(--text-sub); }
 @media (max-width: 760px) { .ci-exp__row { grid-template-columns: 1fr; } }
 

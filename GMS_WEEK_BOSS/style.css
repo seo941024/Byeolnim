@@ -3495,6 +3495,19 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-st b { flex: 0 0 150px; }
 @media (max-width: 520px) { .mu-row { flex-direction: column; align-items: flex-start; gap: 6px; } .mu-head { flex-direction: row; align-items: center; flex: none; } .mu-st { flex-direction: column; gap: 2px; } .mu-st b { flex: none; } }
 
+.ci-exp .card__title { text-transform: none; }
+.ci-exp__svg { display: block; width: 100%; height: 200px; border: 1.5px solid var(--border); border-radius: 12px; background: var(--bg2); }
+.ci-exp__grid { stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.ci-exp__area { fill: var(--primary); fill-opacity: .18; }
+.ci-exp__line { fill: none; stroke: var(--primary); stroke-width: 2.5; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.ci-exp__dot { fill: var(--primary); }
+.ci-exp__dot--last { stroke: var(--accent); stroke-width: 2; }
+.ci-exp__foot { display: flex; justify-content: space-between; gap: 12px; margin-top: 10px; }
+.ci-exp__foot div { display: flex; flex-direction: column; gap: 2px; }
+.ci-exp__foot div:last-child { align-items: flex-end; }
+.ci-exp__foot span { font-size: .78rem; color: var(--text-sub); font-weight: 700; }
+.ci-exp__foot b { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+
 /* ── 사이드바 시뮬레이터 그룹 ── */
 .sb-group__head { width: 100%; }
 .sb-group.has-active .sb-group__head { color: var(--text); }

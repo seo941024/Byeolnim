@@ -154,7 +154,19 @@ async function _muPip() {
     try { win.resizeTo(600, Math.round(600 * h / PW) + (win.outerHeight - win.innerHeight)); } catch {}
     fit();
   });
-  win.addEventListener('resize', fit);
+  /* 창 비율 보정: 드래그를 놓으면 높이를 카드 비율에 맞춰 되돌린다. 브라우저가 사용자 조작 없는 크기 변경을 막으면 조용히 무시된다. */
+  let fixTimer = 0;
+  win.addEventListener('resize', () => {
+    fit();
+    clearTimeout(fixTimer);
+    fixTimer = setTimeout(() => {
+      const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 0;
+      if (!h) return;
+      const want = Math.round(win.innerWidth * h / PW);
+      if (Math.abs(want - win.innerHeight) < 3) return;
+      try { win.resizeBy(0, want - win.innerHeight); } catch {}
+    }, 150);
+  });
   d.body.appendChild(fr);
 }
 

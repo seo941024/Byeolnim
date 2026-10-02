@@ -1279,6 +1279,42 @@ async function refreshStaleChars() {
   }
 }
 
+/* 선택 캐릭터의 레벨 / 경험치 기록 그래프. 세로축은 레벨에 경험치 비율을 더한 값이고,
+   필요 경험치 표가 없는 레벨은 비율 없이 레벨만 쓴다. */
+function ciExpChartHtml(ch) {
+  const f = ch?.fetched;
+  if (!f?.name) return '';
+  let arr = loadHist()[histKeyOf(f)] || [];
+  if (!arr.length && f.level) arr = [{ date: todayStr(), level: f.level, exp: Number(f.exp) || 0 }];
+  const pts = arr.filter(s => s.level).map(s => {
+    const pct = expPercent(s.level, s.exp);
+    return { date: s.date, level: s.level, pct, y: s.level + (pct == null ? 0 : pct / 100), t: Date.parse(s.date) || 0 };
+  });
+  if (!pts.length) return '';
+  const label = p => `Lv. ${p.level}${p.pct == null ? '' : ' ' + p.pct.toFixed(2) + '%'}`;
+  const W = 600, H = 200, PX = 14, PT = 16, PB = 16;
+  let lo = Math.min(...pts.map(p => p.y)), hi = Math.max(...pts.map(p => p.y));
+  if (hi - lo < 0.05) { lo -= 0.5; hi += 0.5; }
+  const t0 = pts[0].t, t1 = pts[pts.length - 1].t;
+  const xOf = p => pts.length < 2 || t1 === t0 ? W / 2 : PX + (p.t - t0) / (t1 - t0) * (W - PX * 2);
+  const yOf = p => PT + (1 - (p.y - lo) / (hi - lo)) * (H - PT - PB);
+  const line = pts.map(p => `${xOf(p).toFixed(1)},${yOf(p).toFixed(1)}`).join(' ');
+  const base = H - PB;
+  const area = pts.length > 1 ? `<polygon class="ci-exp__area" points="${xOf(pts[0]).toFixed(1)},${base} ${line} ${xOf(pts[pts.length - 1]).toFixed(1)},${base}"/>` : '';
+  const dots = pts.map((p, i) => `<circle class="ci-exp__dot${i === pts.length - 1 ? ' ci-exp__dot--last' : ''}" cx="${xOf(p).toFixed(1)}" cy="${yOf(p).toFixed(1)}" r="${i === pts.length - 1 ? 5 : 3}"><title>${p.date} ${label(p)}</title></circle>`).join('');
+  const grid = [0, 1, 2].map(i => `<line class="ci-exp__grid" x1="0" x2="${W}" y1="${PT + i * (H - PT - PB) / 2}" y2="${PT + i * (H - PT - PB) / 2}"/>`).join('');
+  const first = pts[0], last = pts[pts.length - 1];
+  return `
+    <div class="card mt16 ci-exp">
+      <div class="card__title">${escHtml(ch.name)} 레벨 / 경험치</div>
+      <svg class="ci-exp__svg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">${grid}${area}${pts.length > 1 ? `<polyline class="ci-exp__line" points="${line}"/>` : ''}${dots}</svg>
+      <div class="ci-exp__foot">
+        ${pts.length > 1 ? `<div><span>${first.date}</span><b>${label(first)}</b></div>` : ''}
+        <div><span>${last.date}</span><b>${label(last)}</b></div>
+      </div>
+    </div>`;
+}
+
 const CHARINFO_HEAD = `
   <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>
   <p class="dt-help">추가한 캐릭터들을 카드로 모아 보여줍니다. 카드를 눌러 캐릭터를 선택하고, 드래그로 순서를 바꿀 수 있습니다.</p>`;
@@ -1343,7 +1379,7 @@ function renderCharInfo() {
       </div>`;
   }).join('');
 
-  box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>`;
+  box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>${ciExpChartHtml(state.chars[state.activeChar])}`;
   box.querySelectorAll('.cg-card__save').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();

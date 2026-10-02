@@ -1301,8 +1301,8 @@ function ciAgo(s) {
   if (h < 24) return h + '시간 전';
   const d = Math.floor(h / 24);
   if (d < 30) return d + '일 전';
-  if (d < 365) return Math.floor(d / 30) + '개월 전';
-  return Math.floor(d / 365) + '년 전';
+  if (d <= 360) return Math.ceil(d / 30) + '개월 전';
+  return Math.max(1, Math.floor(d / 365)) + '년 전';
 }
 async function ciFillLooks(ch) {
   const f = ch?.fetched, el = document.getElementById('ciLooks');

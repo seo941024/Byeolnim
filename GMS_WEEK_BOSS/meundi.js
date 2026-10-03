@@ -200,6 +200,9 @@ async function _muPip() {
   clone.removeAttribute('id');
   clone.classList.remove('mt16');
   clone.querySelector('.mu-pip')?.remove();
+  /* 제보 카드는 창에서 뺀다. 카드가 많으면 창이 길어져 글자가 작아진다. */
+  clone.querySelectorAll('.mu-card--rep').forEach(c => c.remove());
+  clone.querySelectorAll('.mu-row').forEach(r => { if (!r.querySelector('.mu-card')) r.remove(); });
   d.documentElement.style.cssText = `background:${cs.backgroundColor}`;
   d.body.style.cssText = `margin:0;overflow:hidden;background:${cs.backgroundColor}`;
   const fr = d.createElement('iframe');

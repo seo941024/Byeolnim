@@ -47,11 +47,6 @@ const MU_WAVE10_REPORTED = [
    표에서 가능한 범위는 3300 이상 3330 미만이고 직접 확인된 값이 아니다. */
 const MU_ROLL_COST = 150, MU_UP_BASE = 100, MU_UP_STEP = 5, MU_GAUGE_CAP = 3300;
 
-const MU_REPORTED = [
-  { head: '웨이브 10 · 뽑기 8회까지', squads: ['A10 A7 B0', 'A10 B0 A7', 'B0 A7 A10', 'S? C? C?!레벨 미기록', 'C? C? S?!레벨 미기록', 'S? D? D?!레벨 미기록'] },
-  { head: '실패 사례', squads: ['A10 A0 A9!뽑기 6회 기준 웨이브 10, 적 약 10마리 남음', 'B3 B10 S10!뽑기 3회 기준 풀클리어까지 적 2마리 부족', 'S10 E1 C10!뽑기 4회 기준 웨이브 10, 적 5마리 남음, 갤러리 후기'] },
-];
-
 const MU_STEPS = [
   '주간 보상으로 스킬 강화를 선택하면 솔 에르다 조각으로 받습니다. 주간 초기화 전까지 변경할 수 없습니다.',
   '자신과 레벨 차이가 20 이내인 몬스터가 있는 맵에서 사이드킥 호출기를 열고 사냥해 게이지를 채웁니다. GO를 누르면 사이드킥이 소환되고 S부터 E까지 랭크가 랜덤으로 정해집니다.',
@@ -153,10 +148,6 @@ function _muSheetHtml() {
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>
       ${_muRowsHtml(_muMerge(MU_WAVE10, MU_WAVE10_REPORTED, false))}
-    </div>
-    <div class="card mt16">
-      <div class="mu-panel-h"><span class="card__title" style="margin:0">미확인</span></div>
-      ${_muRowsHtml(MU_REPORTED)}
     </div>`;
 }
 

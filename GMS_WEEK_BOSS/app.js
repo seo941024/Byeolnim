@@ -1748,6 +1748,10 @@ const NOTICE_LOG = [
         head: '운빨 디펜스 실패 사례 레벨 기재',
         desc: '뽑기 6회 A 세 장 실패 사례에 레벨 10, 0, 9 반영.',
       },
+      {
+        head: '풀클리어 제보 조합을 풀클리어 카드로 이동',
+        desc: '미확인에 있던 풀클리어 제보 4조합을 풀클리어 카드 아래에 제보로 표시, PIP모드에도 포함.',
+      },
     ],
   },
   {
@@ -1879,7 +1883,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-03-meundi',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-03-meundi-b',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

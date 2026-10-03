@@ -22,8 +22,11 @@ const MU_WAVE10 = [
   { roll: 8, wave: 3, squads: ['S10 B0 B7', 'B7 S10 B0', 'B7 B0 S10'] },
 ];
 
+const MU_FULL_REPORTED = [
+  { head: '제보', squads: ['B10 B10 C10', 'B10 C10 C8!최저 제보', 'A10 D3 C10', 'A10 D8 E2!최저 제보'] },
+];
+
 const MU_REPORTED = [
-  { head: '풀클리어', squads: ['B10 B10 C10', 'B10 C10 C8!최저 제보', 'A10 D3 C10', 'A10 D8 E2!최저 제보'] },
   { head: '웨이브 10 · 뽑기 8회까지', squads: ['A10 A7 B0', 'A10 B0 A7', 'B0 A7 A10', 'S? C? C?!레벨 미기록', 'C? C? S?!레벨 미기록', 'S? D? D?!레벨 미기록'] },
   { head: '실패 사례', squads: ['A10 A0 A9!뽑기 6회 기준 웨이브 10, 적 약 10마리 남음', 'B3 B10 S10!뽑기 3회 기준 풀클리어까지 적 2마리 부족'] },
 ];
@@ -85,7 +88,7 @@ function _muSheetHtml() {
     </div>
     <div class="card mt16" id="muFullCard">
       <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">보상 : 솔 에르다 조각 500개</span></div>
-      ${_muRowsHtml(MU_CONFIRMED)}
+      ${_muRowsHtml(MU_CONFIRMED)}${_muRowsHtml(MU_FULL_REPORTED)}
     </div>
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>

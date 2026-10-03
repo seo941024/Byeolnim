@@ -1742,6 +1742,15 @@ window.addEventListener('resize', applyRootFontSize);
 // 하루 단위로 쌓는다. 맨 위가 최신. 같은 날 또 배포하면 그 날 items에 줄만 추가하면 된다.
 const NOTICE_LOG = [
   {
+    date: '2026. 10. 03.',
+    items: [
+      {
+        head: '운빨 디펜스 실패 사례 레벨 기재',
+        desc: '뽑기 6회 A 세 장 실패 사례에 레벨 10, 0, 9 반영.',
+      },
+    ],
+  },
+  {
     date: '2026. 10. 02.',
     items: [
       {
@@ -1870,7 +1879,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-02-meundi',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-03-meundi',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

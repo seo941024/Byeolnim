@@ -1760,6 +1760,10 @@ const NOTICE_LOG = [
         head: '풀클리어 제보 2건 삭제',
         desc: '레벨 합이 가능한 최대치를 넘는 B 10 B 10 C 10, B 10 C 10 C 8 제거.',
       },
+      {
+        head: '풀클리어 제보를 뽑기 횟수 행으로 이동',
+        desc: '게이지 계산으로 제보 조합이 속하는 뽑기 횟수를 구해 해당 행에 표시. 뽑기 4회, 5회 행 추가.',
+      },
     ],
   },
   {
@@ -1891,7 +1895,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-03-meundi-e',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-03-meundi-f',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

@@ -25,9 +25,17 @@ const MU_WAVE10 = [
   { roll: 8, wave: 3, squads: ['S10 B0 B7', 'B7 S10 B0', 'B7 B0 S10'] },
 ];
 
+/* 풀클리어 제보 조합. 뽑기 횟수는 적지 않고 _muFullRows가 레벨 합계로 계산해 해당 행에 넣는다. */
 const MU_FULL_REPORTED = [
-  { head: '제보', squads: ['A10 D3 C10', 'A10 D8 E2!최저 제보', 'S10 A10 C2!뽑기 4회, 레벨은 글에 없어 높은 등급부터 채워 계산, 갤러리 후기', 'S10 A10 D1!뽑기 5회, 3초 남기고 클리어, 갤러리 후기'] },
+  'A10 D3 C10', 'A10 D8 E2!최저 제보',
+  'S10 A10 C2!레벨은 글에 없어 높은 등급부터 채워 계산, 갤러리 후기',
+  'S10 A10 D1!3초 남기고 클리어, 갤러리 후기',
 ];
+
+/* 게이지 계산. 뽑기 1회는 150, 레벨 n에서 n+1로 올리는 강화는 100 + 5n이다. 등급과 무관하다.
+   총량 3300은 사용자가 준 규칙을 원본 표(MU_LEVELS 전 행)에 대 보니 이 값에서 전부 맞아서 쓴다.
+   표에서 가능한 범위는 3300 이상 3330 미만이고 직접 확인된 값이 아니다. */
+const MU_ROLL_COST = 150, MU_UP_BASE = 100, MU_UP_STEP = 5, MU_GAUGE_CAP = 3300;
 
 const MU_REPORTED = [
   { head: '웨이브 10 · 뽑기 8회까지', squads: ['A10 A7 B0', 'A10 B0 A7', 'B0 A7 A10', 'S? C? C?!레벨 미기록', 'C? C? S?!레벨 미기록', 'S? D? D?!레벨 미기록'] },
@@ -63,6 +71,38 @@ const MU_LEVELS = [
 
 let _muTab = 'sheet';
 
+const _muUpCost = lv => MU_UP_BASE * lv + MU_UP_STEP * lv * (lv - 1) / 2;
+
+/* 레벨 합계를 쓰고 남은 게이지로 뽑을 수 있는 최대 횟수. 레벨이 "?"면 계산할 수 없어 null. */
+function _muLastRoll(code) {
+  const lvs = code.split('!')[0].replace('*', '').split(' ').map(t => parseInt(t.slice(1), 10));
+  if (lvs.some(Number.isNaN)) return null;
+  const spend = lvs.reduce((s, lv) => s + _muUpCost(lv), 0);
+  return Math.floor((MU_GAUGE_CAP - spend) / MU_ROLL_COST);
+}
+
+/* 확정 행에 풀클리어 제보를 뽑기 횟수별로 합친다. 없는 횟수는 행을 새로 만들고 웨이브는 MU_LEVELS 표를 따른다.
+   처음 세 번이 기본이라 3회 미만이 나오면 불가능한 조합으로 보고 뺀다. 레벨 미기록은 맨 아래 제보 행에 둔다. */
+function _muFullRows() {
+  const rows = MU_CONFIRMED.map(r => ({ ...r, squads: [...r.squads] }));
+  const unknown = [];
+  MU_FULL_REPORTED.forEach(code => {
+    const roll = _muLastRoll(code);
+    if (roll == null) { unknown.push(code); return; }
+    if (roll < 3) { console.warn('[meundi] 레벨 합이 게이지를 넘어 제외', code); return; }
+    const tagged = code.includes('!') ? code : code + '!제보';
+    let row = rows.find(r => r.roll === roll);
+    if (!row) {
+      row = { roll, wave: (MU_LEVELS.find(l => l[0] === roll) || [])[2], squads: [] };
+      rows.push(row);
+      rows.sort((a, b) => a.roll - b.roll);
+    }
+    row.squads.push(tagged);
+  });
+  if (unknown.length) rows.push({ head: '제보', squads: unknown });
+  return rows;
+}
+
 function _muSquadHtml(code) {
   let [body, note] = code.split('!');
   const shaky = body.endsWith('*');
@@ -91,7 +131,7 @@ function _muSheetHtml() {
     </div>
     <div class="card mt16" id="muFullCard">
       <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">보상 : 솔 에르다 조각 500개</span></div>
-      ${_muRowsHtml(MU_CONFIRMED)}${_muRowsHtml(MU_FULL_REPORTED)}
+      ${_muRowsHtml(_muFullRows())}
     </div>
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>

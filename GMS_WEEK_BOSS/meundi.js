@@ -6,9 +6,10 @@
    붙은 건 원본에서 점선이나 별표로 표시된 근소/빡빡한 조합. 순서는 빨강, 검정, 노랑.
    확정 항목은 원본의 Confirmed, 제보 항목은 Reported이며 원본 값을 그대로
    옮겼다 — 임의로 고치거나 추정해 채우지 말 것.
-   "갤러리 후기"가 붙은 항목은 원본이 아니라 디시 GMS 히로익 갤러리 글(400469, 400435, 400442)에서
-   옮긴 단일 제보다. 슬롯 순서는 글에 적힌 순서를 그대로 썼고 확인된 게 아니다.
-   원본 풀클리어 제보 중 B10 B10 C10, B10 C10 C8은 레벨 합이 가능한 최대치를 넘어 뺐다.
+   파란 테두리(rep:) 카드는 원본이 아니라 디시 GMS 히로익 갤러리에서 사용자가 사진 있는 글만 모아 준 단일 제보다.
+   슬롯 순서는 글에 적힌 순서를 그대로 썼고 확인된 게 아니다.
+   원본 풀클리어 제보 중 B10 B10 C10, B10 C10 C8은 레벨 합이 가능한 최대치를 넘고,
+   A10 D8 E2와 A10 D3 C10은 S가 없어서 뺐다.
    용어: 원본의 roll은 문맥에 따라 뽑기, 뽑는다 등으로, run은 도전으로 옮긴다.
    ═══════════════════════════════════════════════════════════ */
 
@@ -25,10 +26,20 @@ const MU_WAVE10 = [
   { roll: 8, wave: 3, squads: ['S10 B0 B7', 'B7 S10 B0', 'B7 B0 S10'] },
 ];
 
-/* 풀클리어 제보 조합. 뽑기 횟수는 적지 않고 _muFullRows가 레벨 합계로 계산해 해당 행에 넣는다. */
+/* 제보 조합. 뽑기 횟수는 적지 않고 _muMerge가 레벨 합계로 계산해 해당 행에 넣는다.
+   풀클리어는 S가 없으면 불가능해서 S가 없는 조합은 넣지 않는다. 표기는 마지막 편성의 슬롯 순서와 레벨이다.
+   아래 두 목록은 갤러리에서 사진이 있는 제보만 모은 것이다. */
 const MU_FULL_REPORTED = [
-  'A10 D3 C10',
-  'S10 A10 C2!', 'S10 A10 D1!',
+  'S10 D1 S10', 'A10 D1 S10', 'A10 S10 C1', 'S10 S9 D0', 'A10 S10 E1',
+  'B7 C0 S10', 'E0 S8 S10', 'S10 C1 A10', 'S10 E0 S8', 'B0 S8 S10',
+  'S10 S9 B0', 'S10 A9 B0', 'S10 C0 S7', 'S10 S5 B0', 'E0 S9 S10',
+  'S10 A10 C2', 'S10 A10 D1',
+];
+
+const MU_WAVE10_REPORTED = [
+  'S10 C0 A8', 'A9 S10 E0', 'S10 A5 B4', 'S10 C0 A7', 'S10 B0 A8',
+  'D0 S6 S10', 'A7 C0 S10', 'B0 A6 S10', 'S10 D0 A6', 'B5 S10 B4',
+  'S10 B0 A7', 'S10 D0 A9', 'A7 E0 S10', 'S10 A9 D0', 'C0 A9 S10',
 ];
 
 /* 게이지 계산. 뽑기 1회는 150, 레벨 n에서 n+1로 올리는 강화는 100 + 5n이다. 등급과 무관하다.
@@ -80,29 +91,35 @@ function _muLastRoll(code) {
   return Math.floor((MU_GAUGE_CAP - spend) / MU_ROLL_COST);
 }
 
-/* 확정 행에 풀클리어 제보를 뽑기 횟수별로 합친다. 없는 횟수는 행을 새로 만들고 웨이브는 MU_LEVELS 표를 따른다.
-   처음 세 번이 기본이라 3회 미만이 나오면 불가능한 조합으로 보고 뺀다. 레벨 미기록은 맨 아래 제보 행에 둔다. */
-function _muFullRows() {
-  const rows = MU_CONFIRMED.map(r => ({ ...r, squads: [...r.squads] }));
+/* 확정 행에 제보를 뽑기 횟수별로 합친다. 없는 횟수는 행을 새로 만들고 웨이브는 MU_LEVELS 표를 따른다.
+   처음 세 번이 기본이라 3회 미만이 나오면 불가능한 조합으로 보고 뺀다. 같은 조합이 이미 그 행에 있으면 넣지 않는다.
+   레벨 미기록은 맨 아래 제보 행에 둔다. 제보 카드는 앞에 rep:를 붙여 구분한다. */
+const _muKey = code => code.split('!')[0].replace('*', '');
+
+function _muMerge(base, reported, needS) {
+  const rows = base.map(r => ({ ...r, squads: [...r.squads] }));
   const unknown = [];
-  MU_FULL_REPORTED.forEach(code => {
+  reported.forEach(code => {
+    if (needS && !/S/.test(_muKey(code).replace(/[0-9?]/g, ''))) { console.warn('[meundi] S가 없어 제외', code); return; }
     const roll = _muLastRoll(code);
-    if (roll == null) { unknown.push(code); return; }
+    if (roll == null) { unknown.push('rep:' + code); return; }
     if (roll < 3) { console.warn('[meundi] 레벨 합이 게이지를 넘어 제외', code); return; }
-    const tagged = code.includes('!') ? code : code + '!제보';
     let row = rows.find(r => r.roll === roll);
     if (!row) {
       row = { roll, wave: (MU_LEVELS.find(l => l[0] === roll) || [])[2], squads: [] };
       rows.push(row);
       rows.sort((a, b) => a.roll - b.roll);
     }
-    row.squads.push(tagged);
+    if (row.squads.some(s => _muKey(s.replace(/^rep:/, '')) === _muKey(code))) return;
+    row.squads.push('rep:' + code);
   });
   if (unknown.length) rows.push({ head: '제보', squads: unknown });
   return rows;
 }
 
 function _muSquadHtml(code) {
+  const rep = code.startsWith('rep:');
+  if (rep) code = code.slice(4);
   let [body, note] = code.split('!');
   const shaky = body.endsWith('*');
   if (shaky) body = body.slice(0, -1);
@@ -112,7 +129,7 @@ function _muSquadHtml(code) {
     const team = ['red', 'black', 'yellow'][i];
     return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.webp" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>${lv}</span></div>`;
   }).join('');
-  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : ''}><div class="mu-units">${tiles}</div>${note ? `<div class="mu-note">${note}</div>` : ''}</div>`;
+  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : ''}><div class="mu-units">${tiles}</div>${note ? `<div class="mu-note">${note}</div>` : ''}</div>`;
 }
 
 function _muRowsHtml(rows) {
@@ -127,15 +144,16 @@ function _muSheetHtml() {
   return `
     <div class="mu-keys">
       <span class="mu-chip">레벨업 : 등급이 높은 순부터, 같은 등급일 경우 빨강 &gt; 노랑 &gt; 검정 순으로 강화</span>
+      <span class="mu-chip">파란 테두리 : 갤러리 단일 제보, 확정 아님</span>
       <span class="mu-chip">PIP모드로 창을 띄워서 메이플스토리를 플레이하며 편하게 공략카드를 볼 수 있습니다.</span>
     </div>
     <div class="card mt16" id="muFullCard">
       <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">보상 : 솔 에르다 조각 500개</span></div>
-      ${_muRowsHtml(_muFullRows())}
+      ${_muRowsHtml(_muMerge(MU_CONFIRMED, MU_FULL_REPORTED, true))}
     </div>
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>
-      ${_muRowsHtml(MU_WAVE10)}
+      ${_muRowsHtml(_muMerge(MU_WAVE10, MU_WAVE10_REPORTED, false))}
     </div>
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">미확인</span></div>

@@ -27,7 +27,7 @@ const MU_WAVE10 = [
 
 /* 풀클리어 제보 조합. 뽑기 횟수는 적지 않고 _muFullRows가 레벨 합계로 계산해 해당 행에 넣는다. */
 const MU_FULL_REPORTED = [
-  'A10 D3 C10', 'A10 D8 E2!최저 제보',
+  'A10 D3 C10',
   'S10 A10 C2!', 'S10 A10 D1!',
 ];
 

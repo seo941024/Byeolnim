@@ -1757,8 +1757,8 @@ const NOTICE_LOG = [
         desc: '4뽑 S A C와 5뽑 S A D 풀클리어, 4뽑 S E C 실패. 단일 제보라 슬롯 순서는 미확인, 4뽑 S A C 레벨은 계산값.',
       },
       {
-        head: '풀클리어 제보 2건 삭제',
-        desc: '레벨 합이 가능한 최대치를 넘는 B 10 B 10 C 10, B 10 C 10 C 8 제거.',
+        head: '풀클리어 제보 3건 삭제',
+        desc: '레벨 합이 가능한 최대치를 넘는 B 10 B 10 C 10, B 10 C 10 C 8과 S 없이는 불가능한 A 10 D 8 E 2 제거.',
       },
       {
         head: '풀클리어 제보를 뽑기 횟수 행으로 이동',
@@ -1899,7 +1899,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-03-meundi-g',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-03-meundi-h',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

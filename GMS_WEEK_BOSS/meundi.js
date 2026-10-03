@@ -127,7 +127,7 @@ function _muSquadHtml(code) {
     const rank = t[0], lv = t.slice(1);
     const cls = ['r', 'k', 'y'][i];
     const team = ['Red', 'Black', 'Yellow'][i];
-    return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.png?v=20261003c" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>Lv. ${lv}</span></div>`;
+    return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.png?v=20261003d" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>Lv. ${lv}</span></div>`;
   }).join('');
   return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : note ? ` title="${note}"` : ''}><div class="mu-units">${tiles}</div></div>`;
 }

@@ -126,10 +126,10 @@ function _muSquadHtml(code) {
   const tiles = body.split(' ').map((t, i) => {
     const rank = t[0], lv = t.slice(1);
     const cls = ['r', 'k', 'y'][i];
-    const team = ['red', 'black', 'yellow'][i];
-    return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.webp" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>${lv}</span></div>`;
+    const team = ['Red', 'Black', 'Yellow'][i];
+    return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.png" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>Lv. ${lv}</span></div>`;
   }).join('');
-  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : ''}><div class="mu-units">${tiles}</div>${note ? `<div class="mu-note">${note}</div>` : ''}</div>`;
+  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : note ? ` title="${note}"` : ''}><div class="mu-units">${tiles}</div></div>`;
 }
 
 function _muRowsHtml(rows) {
@@ -144,7 +144,6 @@ function _muSheetHtml() {
   return `
     <div class="mu-keys">
       <span class="mu-chip">레벨업 : 등급이 높은 순부터, 같은 등급일 경우 빨강 &gt; 노랑 &gt; 검정 순으로 강화</span>
-      <span class="mu-chip">파란 테두리 : 갤러리 단일 제보, 확정 아님</span>
       <span class="mu-chip">PIP모드로 창을 띄워서 메이플스토리를 플레이하며 편하게 공략카드를 볼 수 있습니다.</span>
     </div>
     <div class="card mt16" id="muFullCard">

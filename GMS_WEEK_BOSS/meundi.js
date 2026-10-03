@@ -190,7 +190,7 @@ async function _muPip() {
   if (!src || !window.documentPictureInPicture) return;
   const old = documentPictureInPicture.window;
   if (old) old.close();
-  const PW = 1000;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
+  const PW = 1150;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
   /* preferInitialWindowPlacement가 없으면 브라우저가 지난번 크기를 되살려 좁고 긴 창이 뜰 수 있다 */
   const win = await documentPictureInPicture.requestWindow({ width: PW, height: 600, preferInitialWindowPlacement: true });
   const d = win.document;

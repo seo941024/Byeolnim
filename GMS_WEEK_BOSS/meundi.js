@@ -190,8 +190,9 @@ async function _muPip() {
   if (!src || !window.documentPictureInPicture) return;
   const old = documentPictureInPicture.window;
   if (old) old.close();
-  const PW = 900;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
-  const win = await documentPictureInPicture.requestWindow({ width: 600, height: 400 });
+  const PW = 1100;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
+  /* preferInitialWindowPlacement가 없으면 브라우저가 지난번 크기를 되살려 좁고 긴 창이 뜰 수 있다 */
+  const win = await documentPictureInPicture.requestWindow({ width: PW, height: 600, preferInitialWindowPlacement: true });
   const d = win.document;
   const links = [...document.styleSheets].filter(ss => ss.href).map(ss => `<link rel="stylesheet" href="${ss.href}">`).join('');
   const theme = document.documentElement.getAttribute('data-theme');
@@ -217,7 +218,7 @@ async function _muPip() {
   fr.addEventListener('load', () => {
     fit();
     const h = fr.contentDocument.body.firstElementChild.offsetHeight + 16;
-    try { win.resizeTo(600, Math.round(600 * h / PW) + (win.outerHeight - win.innerHeight)); } catch {}
+    try { win.resizeTo(PW, Math.round(PW * h / PW) + (win.outerHeight - win.innerHeight)); } catch {}
     fit();
   });
   /* 창 비율 보정: 드래그를 놓으면 높이를 카드 비율에 맞춰 되돌린다. 브라우저가 사용자 조작 없는 크기 변경을 막으면 조용히 무시된다. */

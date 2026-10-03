@@ -17,6 +17,12 @@
   src: url('font/Maple.ttf') format('truetype');
   font-weight: normal; font-style: normal;
 }
+/* 가변 폰트 한 파일에 일반과 Bold가 모두 들어 있다. font-weight 값에 따라 굵기가 실제 글꼴로 나온다. */
+@font-face {
+  font-family: 'Pretendard';
+  src: url('font/PretendardVariable.woff2') format('woff2-variations');
+  font-weight: 45 920; font-style: normal;
+}
 @font-face {
   font-family: '8bit';
   src: url('font/8bit.ttf') format('truetype');

@@ -208,7 +208,7 @@ async function _muPip() {
   d.body.style.cssText = `margin:0;overflow:hidden;background:${cs.backgroundColor}`;
   const fr = d.createElement('iframe');
   fr.style.cssText = `position:absolute;left:0;top:0;border:0;width:${PW}px;height:600px;transform-origin:0 0;background:transparent`;
-  fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}<style>.mu-cards{flex-wrap:nowrap}</style></head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}">${clone.outerHTML}</body></html>`;
+  fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}<style>.mu-cards{flex-wrap:nowrap}</style></head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily.replace(/"/g, "'")}">${clone.outerHTML}</body></html>`;
   const fit = () => {
     const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 600;
     fr.style.height = h + 'px';

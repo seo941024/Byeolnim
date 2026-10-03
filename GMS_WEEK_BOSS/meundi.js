@@ -190,7 +190,7 @@ async function _muPip() {
   if (!src || !window.documentPictureInPicture) return;
   const old = documentPictureInPicture.window;
   if (old) old.close();
-  const PW = 1100;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
+  const PW = 1000;   // 카드를 이 폭으로 그려 두고 창 크기에 맞춰 통째로 축소 확대한다
   /* preferInitialWindowPlacement가 없으면 브라우저가 지난번 크기를 되살려 좁고 긴 창이 뜰 수 있다 */
   const win = await documentPictureInPicture.requestWindow({ width: PW, height: 600, preferInitialWindowPlacement: true });
   const d = win.document;
@@ -208,7 +208,7 @@ async function _muPip() {
   d.body.style.cssText = `margin:0;overflow:hidden;background:${cs.backgroundColor}`;
   const fr = d.createElement('iframe');
   fr.style.cssText = `position:absolute;left:0;top:0;border:0;width:${PW}px;height:600px;transform-origin:0 0;background:transparent`;
-  fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}</head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}">${clone.outerHTML}</body></html>`;
+  fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}<style>.mu-cards{flex-wrap:nowrap}</style></head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily}">${clone.outerHTML}</body></html>`;
   const fit = () => {
     const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 600;
     fr.style.height = h + 'px';

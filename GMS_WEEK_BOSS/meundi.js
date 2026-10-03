@@ -28,8 +28,7 @@ const MU_WAVE10 = [
 /* 풀클리어 제보 조합. 뽑기 횟수는 적지 않고 _muFullRows가 레벨 합계로 계산해 해당 행에 넣는다. */
 const MU_FULL_REPORTED = [
   'A10 D3 C10', 'A10 D8 E2!최저 제보',
-  'S10 A10 C2!레벨은 글에 없어 높은 등급부터 채워 계산, 갤러리 후기',
-  'S10 A10 D1!3초 남기고 클리어, 갤러리 후기',
+  'S10 A10 C2!', 'S10 A10 D1!',
 ];
 
 /* 게이지 계산. 뽑기 1회는 150, 레벨 n에서 n+1로 올리는 강화는 100 + 5n이다. 등급과 무관하다.
@@ -110,7 +109,8 @@ function _muSquadHtml(code) {
   const tiles = body.split(' ').map((t, i) => {
     const rank = t[0], lv = t.slice(1);
     const cls = ['r', 'k', 'y'][i];
-    return `<div class="mu-u mu-u--${cls}"><b>${rank}</b><span${lv === '0' ? ' class="mu-zero"' : ''}>${lv}</span></div>`;
+    const team = ['red', 'black', 'yellow'][i];
+    return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.webp" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>${lv}</span></div>`;
   }).join('');
   return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : ''}><div class="mu-units">${tiles}</div>${note ? `<div class="mu-note">${note}</div>` : ''}</div>`;
 }

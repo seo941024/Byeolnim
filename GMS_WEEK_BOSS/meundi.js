@@ -108,8 +108,20 @@ function _muMerge(base, reported, needS) {
     if (row.squads.some(s => _muKey(s.replace(/^rep:/, '')) === _muKey(code))) return;
     row.squads.push('rep:' + code);
   });
-  if (unknown.length) rows.push({ head: '제보', squads: unknown });
-  return rows;
+  /* 널널컷 제거: 같은 슬롯에 같은 랭크이면서 레벨이 모두 같거나 낮은 다른 카드가 있으면 그 카드가 더 최소컷이라 뺀다.
+     랭크가 다른 조합끼리는 우열을 가리지 않는다. */
+  const parse = c => { const t = _muKey(c.replace(/^rep:/, '')).split(' '); return { ranks: t.map(x => x[0]).join(''), lvs: t.map(x => parseInt(x.slice(1), 10)) }; };
+  const all = rows.flatMap(r => r.squads).map(parse);
+  rows.forEach(r => {
+    r.squads = r.squads.filter(s => {
+      if (!s.startsWith('rep:')) return true;
+      const me = parse(s);
+      return !all.some(o => o !== me && o.ranks === me.ranks && o.lvs.every((l, i) => l <= me.lvs[i]) && o.lvs.some((l, i) => l < me.lvs[i]));
+    });
+  });
+  const kept = rows.filter(r => r.squads.length);
+  if (unknown.length) kept.push({ head: '제보', squads: unknown });
+  return kept;
 }
 
 function _muSquadHtml(code) {

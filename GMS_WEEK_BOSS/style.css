@@ -1691,8 +1691,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    좁아지면 auto-fill이 알아서 7,6,…,2,1열로 줄인다
    (캐릭터 카드 .cg-grid에서 이미 쓰던 것과 같은 패턴). */
 .bhp-grid {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
-  gap: 12px; max-width: 1604px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(max(190px, calc((100% - 48px) / 5)), 1fr));
+  gap: 12px; max-width: none;
 }
 .bhp-card {
   background: var(--panel-veil);
@@ -1804,7 +1804,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .bhp-card__body { padding: 12px 14px; display: flex; flex-direction: column; flex: 1; }
 .bhp-card__top { display: flex; flex-direction: column; gap: 7px; }
-.bhp-card__name { font-size: 1.2rem; font-weight: 900; display: flex; align-items: center; gap: 6px; color: var(--text); flex: 1; min-width: 0; overflow: hidden; }
+.bhp-card__name { font-size: 1.05rem; font-weight: 900; display: flex; align-items: center; gap: 6px; color: var(--text); flex: 1; min-width: 0; overflow: hidden; }
 .bhp-card__name-t { display: inline-block; white-space: nowrap; transform-origin: left center; }
 .bhp-card__info { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
 .bhp-lv { font-size: .82rem; color: var(--text-sub); font-weight: 800; }

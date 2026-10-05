@@ -249,6 +249,20 @@ function renderBusPanel(groups) {
   });
 }
 
+/* 이름이 칸보다 길면 줄바꿈 대신 글자 가로폭만 줄여 한 줄에 맞춘다. 칸이 안 보이는 상태에서는 건너뛴다. */
+function _bhpFitNames() {
+  document.querySelectorAll('.bhp-card__name').forEach(box => {
+    const t = box.firstElementChild;
+    if (!t || !box.clientWidth) return;
+    t.style.transform = '';
+    if (t.scrollWidth > box.clientWidth) t.style.transform = 'scaleX(' + (box.clientWidth / t.scrollWidth).toFixed(3) + ')';
+  });
+}
+{
+  let _bhpFitT = 0;
+  window.addEventListener('resize', () => { clearTimeout(_bhpFitT); _bhpFitT = setTimeout(_bhpFitNames, 120); });
+}
+
 function renderBossHPTable() {
   const norm = s => s.replace(/\s/g, '');
 
@@ -332,7 +346,7 @@ function renderBossHPTable() {
       <div class="bhp-card__body">
         <div class="bhp-card__top">
           <div class="bhp-name-row">
-            <div class="bhp-card__name">${active.nameOverride || boss.name}</div>
+            <div class="bhp-card__name"><span class="bhp-card__name-t">${active.nameOverride || boss.name}</span></div>
             <label class="bus-toggle-wrap" title="버스 참조에 추가">
               <input type="checkbox" class="bus-toggle-input" data-boss="${boss.name}"${isOn ? ' checked' : ''} />
               <span class="bus-toggle-track"><span class="bus-toggle-thumb"></span></span>
@@ -351,6 +365,9 @@ function renderBossHPTable() {
       </div>
     </div>`;
   }).join('');
+
+  /* 이름이 칸보다 길면 줄바꿈 대신 글자 가로폭만 줄여 한 줄에 맞춘다(장평). */
+  _bhpFitNames();
 
   container.querySelectorAll('.bhp-diff-sel').forEach(sel => {
     sel.addEventListener('change', () => {

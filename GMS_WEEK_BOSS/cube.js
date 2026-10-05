@@ -207,33 +207,32 @@ function _makeRow() {
   return row;
 }
 
-/* 직접 큐브 까기 목표 한 칸. 기본 줄 뒤에 '또는' 줄을 붙일 수 있고, 붙인 줄이 있으면
-   그 칸은 한 줄이 그 중 어느 옵션이든 만족하면 되는 칸이 된다. */
-function _makeHrGoal() {
-  const wrap=document.createElement('div');
-  wrap.className='hr-goal';
-  const main=_makeRow();
-  const orBtn=document.createElement('button');
-  orBtn.type='button'; orBtn.className='hr-or-btn'; orBtn.textContent='또는';
-  main.appendChild(orBtn);
-  const alts=document.createElement('div');
-  alts.className='hr-goal__alts';
-  orBtn.addEventListener('click',()=>{ alts.appendChild(_makeAltRow()); _refreshAllRows(); });
-  wrap.append(main, alts);
-  return wrap;
+/* 직접 큐브 까기 목표 세트. 옵션 시뮬레이터처럼 세트마다 세 줄이고, 세트가 여럿이면
+   그중 하나라도 만족하면 멈춘다. */
+function _addHrSet() {
+  const container=document.getElementById('hrGoalRows');
+  const set=document.createElement('div');
+  set.className='hr-set';
+  set.innerHTML=`
+    <div class="cube-set__head">
+      <span class="cube-set__title"></span>
+      <button class="cube-set__del" title="삭제">✕</button>
+    </div>
+    <div class="cube-set__rows"></div>`;
+  set.querySelector('.cube-set__del').addEventListener('click',()=>{ set.remove(); _renumberHrSets(); });
+  const rowsEl=set.querySelector('.cube-set__rows');
+  for(let i=0;i<3;i++) rowsEl.appendChild(_makeRow());
+  container.appendChild(set);
+  _renumberHrSets();
+  _refreshAllRows();
 }
 
-function _makeAltRow() {
-  const row=_makeRow();
-  row.classList.add('cube-goal-row--alt');
-  const lbl=document.createElement('span');
-  lbl.className='hr-or-lbl'; lbl.textContent='또는';
-  row.prepend(lbl);
-  const del=document.createElement('button');
-  del.type='button'; del.className='hr-or-del'; del.textContent='✕';
-  del.addEventListener('click',()=>row.remove());
-  row.appendChild(del);
-  return row;
+function _renumberHrSets() {
+  const sets=document.querySelectorAll('#hrGoalRows .hr-set');
+  sets.forEach((s,i)=>{
+    s.querySelector('.cube-set__title').textContent=`세트 ${i+1}`;
+    s.querySelector('.cube-set__del').style.display = sets.length>1 ? '' : 'none';
+  });
 }
 
 function _addSet() {
@@ -576,8 +575,8 @@ function _hrLineGrade(ln, grade) {
    때마다 채워진 칸을 전부 새 등급 기준 최댓값으로 다시 계산한다. */
 function _hrRecomputeGoalValues() {
   const grade = _hrGrade();
-  document.querySelectorAll('#hrGoalRows .hr-goal').forEach((goal, i) => {
-    goal.querySelectorAll('.cube-goal-row').forEach(row => {
+  document.querySelectorAll('#hrGoalRows .hr-set').forEach(set => {
+    set.querySelectorAll('.cube-goal-row').forEach((row, i) => {
       const cat = row.querySelector('.cube-opt-cat');
       const inp = row.querySelector('.cube-opt-inp');
       if (!cat?.value || cat.selectedOptions[0]?.dataset.type === 'unique') return;
@@ -641,8 +640,7 @@ function _hrApplyPreset(preset) {
       })
     : preset.rows;
 
-  document.querySelectorAll('#hrGoalRows .cube-goal-row--alt').forEach(r => r.remove());
-  const rowEls = [...document.querySelectorAll('#hrGoalRows .hr-goal > .cube-goal-row')];
+  const rowEls = [...document.querySelectorAll('#hrGoalRows .hr-set:first-child .cube-goal-row')];
   rowEls.forEach((row, i) => {
     const cat = row.querySelector('.cube-opt-cat');
     const inp = row.querySelector('.cube-opt-inp');
@@ -656,43 +654,32 @@ function _hrApplyPreset(preset) {
   });
 }
 
-/* 목표 칸을 읽어 {slots, uniques, byCat} 형태로 정리한다.
-   '또는' 줄이 붙은 칸은 slots로 빠진다 — 한 줄이 그 칸의 옵션 중 하나를 만족하면 되고,
-   칸마다 서로 다른 줄이어야 한다. 나머지 칸은 옵션 시뮬레이터와 같은 규칙이다. */
+/* 목표 세트들을 읽어 [{uniques, byCat}, ...] 로 정리한다(_computeAllSets의 preparedSets와 동일).
+   비어 있는 세트는 뺀다. */
 function _hrGetGoals() {
-  const slots = [], uniques = [], byCat = {};
-  document.querySelectorAll('#hrGoalRows .hr-goal').forEach(goal => {
-    const opts = [];
-    goal.querySelectorAll('.cube-goal-row').forEach(row => {
+  const out = [];
+  document.querySelectorAll('#hrGoalRows .hr-set').forEach(set => {
+    const uniques = [], byCat = {};
+    set.querySelectorAll('.cube-goal-row').forEach(row => {
       const catSel = row.querySelector('.cube-opt-cat');
       const sel = catSel.selectedOptions[0];
       if (!sel || !catSel.value || sel.dataset.type === 'none') return;
-      if (sel.dataset.type === 'unique') { opts.push({ cat: catSel.value, unique: true }); return; }
+      if (sel.dataset.type === 'unique') { uniques.push(catSel.value); return; }
       const v = parseFloat(row.querySelector('.cube-opt-inp').value);
-      if (!isNaN(v) && v > 0) opts.push({ cat: catSel.value, v });
+      if (!isNaN(v) && v > 0) (byCat[catSel.value] = byCat[catSel.value] || []).push(v);
     });
-    if (!opts.length) return;
-    if (opts.length > 1) { slots.push(opts); return; }
-    const o = opts[0];
-    if (o.unique) uniques.push(o.cat);
-    else (byCat[o.cat] = byCat[o.cat] || []).push(o.v);
+    // 큰 목표부터 큰 값에 맞춰야 그리디 매칭이 옳게 된다
+    Object.values(byCat).forEach(a => a.sort((x, y) => y - x));
+    if (uniques.length || Object.keys(byCat).length) out.push({ uniques, byCat: Object.entries(byCat) });
   });
-  // 큰 목표부터 큰 값에 맞춰야 그리디 매칭이 옳게 된다
-  Object.values(byCat).forEach(a => a.sort((x, y) => y - x));
-  return { slots, uniques, byCat: Object.entries(byCat) };
+  return out;
 }
 
 function _hrHasGoals() {
-  const g = _hrGetGoals();
-  return g.slots.length > 0 || g.uniques.length > 0 || g.byCat.length > 0;
+  return _hrGetGoals().length > 0;
 }
 
-function _hrLineFitsSlot(line, slot) {
-  return slot.some(o => o.unique ? line.name === o.cat : (_statContrib(line.name)[o.cat] || 0) >= o.v);
-}
-
-/* 단독 칸(uniques, byCat)이 주어진 줄들로 만족되는지 */
-function _hrPlainMet(g, lines) {
+function _hrSetMet(g, lines) {
   const names = lines.map(l => l.name);
   for (const u of g.uniques) if (!names.includes(u)) return false;
   for (const [cat, targets] of g.byCat) {
@@ -708,16 +695,9 @@ function _hrPlainMet(g, lines) {
   return true;
 }
 
-/* 지금 뜬 세 줄이 목표를 만족하는지. '또는' 칸에 줄을 하나씩 배정해 보고,
-   배정되지 않은 나머지 줄로 단독 칸을 판정한다. */
+/* 지금 뜬 세 줄이 세트 중 하나라도 만족하는지 */
 function _hrGoalsMet(lines) {
-  const g = _hrGetGoals();
-  if (!g.slots.length && !g.uniques.length && !g.byCat.length) return false;
-  const assign = (k, used) => {
-    if (k === g.slots.length) return _hrPlainMet(g, lines.filter((_, i) => !used.includes(i)));
-    return lines.some((ln, i) => !used.includes(i) && _hrLineFitsSlot(ln, g.slots[k]) && assign(k + 1, [...used, i]));
-  };
-  return assign(0, []);
+  return _hrGetGoals().some(g => _hrSetMet(g, lines));
 }
 
 /* silent=true면 화면을 갱신하지 않는다 — 자동 돌리기에서 매 회 다시 그리면 느려서,
@@ -864,7 +844,8 @@ async function initCube() {
 
   // 직접 큐브 까기 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_refreshAllRows가 채워준다)
   const goalBox = document.getElementById('hrGoalRows');
-  if (goalBox) { for (let i=0;i<3;i++) goalBox.appendChild(_makeHrGoal()); }
+  if (goalBox) _addHrSet();
+  document.getElementById('hrAddSetBtn')?.addEventListener('click',_addHrSet);
   _hrBuildPresets();
   _refreshAllRows();
 

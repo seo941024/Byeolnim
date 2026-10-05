@@ -1615,7 +1615,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .mb8 { margin-bottom: 8px; }
 
 /* 큐브 옵션 세트 */
-.cube-set { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+.cube-set, .hr-set { border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
 .cube-set__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
 .cube-set__title { font-size: .85rem; font-weight: 600; color: var(--text-sub); }
 .cube-set__del { background: none; border: none; color: var(--text-sub); cursor: pointer; font-size: .9rem; padding: 2px 6px; border-radius: 4px; line-height: 1; }
@@ -1625,10 +1625,6 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cube-goal-row .sel { flex: 1; min-width: 0; }
 .cube-goal-row .cube-opt-inp { width: 72px; flex: 0 0 72px; text-align: right; }
 .cube-goal-row .cube-opt-unit { color: var(--text-sub); font-size: .85rem; white-space: nowrap; min-width: 14px; }
-.cube-goal-row--alt { margin-left: 14px; }
-.hr-or-btn, .hr-or-del { flex: 0 0 auto; padding: 4px 10px; border-radius: 8px; border: 1px solid var(--border); background: var(--bg2); color: var(--text-sub); font-size: .78rem; font-weight: 700; cursor: pointer; }
-.hr-or-btn:hover, .hr-or-del:hover { color: var(--text); }
-.hr-or-lbl { flex: 0 0 auto; font-size: .78rem; font-weight: 800; color: var(--accent); }
 .mb16 { margin-bottom: 16px; }
 
 /* ── 보스 트래커 난이도 버튼 ── */

@@ -219,12 +219,27 @@ function _addHrSet() {
       <button class="cube-set__del" title="삭제">✕</button>
     </div>
     <div class="cube-set__rows"></div>`;
-  set.querySelector('.cube-set__del').addEventListener('click',()=>{ set.remove(); _renumberHrSets(); });
+  set.querySelector('.cube-set__del').addEventListener('click',e=>{
+    e.stopPropagation();
+    const wasActive=set.classList.contains('hr-set--active');
+    set.remove(); _renumberHrSets();
+    if (wasActive) _hrSelectSet(document.querySelector('#hrGoalRows .hr-set'));
+  });
+  set.addEventListener('click',()=>_hrSelectSet(set));
   const rowsEl=set.querySelector('.cube-set__rows');
   for(let i=0;i<3;i++) rowsEl.appendChild(_makeRow());
   container.appendChild(set);
   _renumberHrSets();
   _refreshAllRows();
+  _hrSelectSet(set);
+}
+
+/* 프리셋 버튼은 선택된 세트에 적용된다. 세트 박스를 누르면 그 세트가 선택된다. */
+function _hrSelectSet(set) {
+  document.querySelectorAll('#hrGoalRows .hr-set').forEach(s=>s.classList.toggle('hr-set--active', s===set));
+}
+function _hrActiveSet() {
+  return document.querySelector('#hrGoalRows .hr-set--active') || document.querySelector('#hrGoalRows .hr-set');
 }
 
 function _renumberHrSets() {
@@ -640,7 +655,7 @@ function _hrApplyPreset(preset) {
       })
     : preset.rows;
 
-  const rowEls = [...document.querySelectorAll('#hrGoalRows .hr-set:first-child .cube-goal-row')];
+  const rowEls = [...(_hrActiveSet()?.querySelectorAll('.cube-goal-row') || [])];
   rowEls.forEach((row, i) => {
     const cat = row.querySelector('.cube-opt-cat');
     const inp = row.querySelector('.cube-opt-inp');

@@ -8,8 +8,8 @@
    옮겼다 — 임의로 고치거나 추정해 채우지 말 것.
    파란 테두리(rep:) 카드는 원본이 아니라 디시 GMS 히로익 갤러리에서 사용자가 사진 있는 글만 모아 준 단일 제보다.
    슬롯 순서는 글에 적힌 순서를 그대로 썼고 확인된 게 아니다.
-   원본 풀클리어 제보 중 B10 B10 C10, B10 C10 C8은 레벨 합이 가능한 최대치를 넘고,
-   A10 D8 E2와 A10 D3 C10은 S가 없어서 뺐다.
+   원본 풀클리어 제보 B10 B10 C10, B10 C10 C8은 레벨 합이 가능한 최대치를 넘고, A10 D8 E2와 A10 D3 C10은 S가 없다.
+   뽑기 횟수를 계산할 수 없어 MU_FULL_RAW로 따로 두고 풀클리어 카드 맨 아래 제보 행에 그대로 보여준다.
    용어: 원본의 roll은 문맥에 따라 뽑기, 뽑는다 등으로, run은 도전으로 옮긴다.
    ═══════════════════════════════════════════════════════════ */
 
@@ -35,6 +35,8 @@ const MU_FULL_REPORTED = [
   'S10 S9 B0', 'S10 A9 B0', 'S10 C0 S7', 'S10 S5 B0', 'E0 S9 S10',
   'S10 A10 C2', 'S10 A10 D1', 'S10 E0 S7',
 ];
+
+const MU_FULL_RAW = ['B10 B10 C10', 'B10 C10 C8', 'A10 D3 C10', 'A10 D8 E2'];
 
 const MU_WAVE10_REPORTED = [
   'S10 C0 A8', 'A9 S10 E0', 'S10 A5 B4', 'S10 C0 A7', 'S10 B0 A8',
@@ -155,7 +157,7 @@ function _muSheetHtml() {
     </div>
     <div class="card mt16" id="muFullCard">
       <div class="mu-panel-h">${window.documentPictureInPicture ? '<button class="mu-pip" type="button">PIP모드</button>' : ''}<span class="card__title" style="margin:0">풀클리어</span><span class="mu-pay">보상 : 솔 에르다 조각 500개</span></div>
-      ${_muRowsHtml(_muMerge(MU_CONFIRMED, MU_FULL_REPORTED, true))}
+      ${_muRowsHtml([..._muMerge(MU_CONFIRMED, MU_FULL_REPORTED, true), { head: '제보', squads: MU_FULL_RAW.map(c => 'rep:' + c) }])}
     </div>
     <div class="card mt16">
       <div class="mu-panel-h"><span class="card__title" style="margin:0">웨이브 10</span><span class="mu-pay">보상 : 솔 에르다 조각 250개</span></div>

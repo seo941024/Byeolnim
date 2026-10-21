@@ -3689,3 +3689,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-line-reset { padding: 5px 12px; font-size: .78rem; }
 #mxLineBox .mx-row + .mx-row { margin-top: 10px; }
 .mx-notice { margin-top: -10px; color: var(--accent); }
+/* 피부 미리보기: 96×96 맨몸 그림에서 머리 부분만 원본 크기로 */
+.mx-item__icon.mx-skin-icon { object-fit: none; object-position: -30px -22px; }
+.mx-sel__icon.mx-skin-icon { object-fit: none; object-position: -26px -18px; }

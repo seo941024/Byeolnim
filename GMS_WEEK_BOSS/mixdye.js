@@ -15,7 +15,7 @@ const MX_API = 'https://maplestory.io/api';
 const MX_DEFAULT_SKIN = 12018;          // 뽀송 라벤더 피부. 몸 ID는 머리 ID - 10000
 // 커스텀 뽀송 라벤더 컬러라인 피부: 게임에서 선 색을 색조·채도·명도로 바꿀 수 있는 유일한 피부.
 // 원본 그림의 선은 순수한 파란색(0,0,255)이고, 그 픽셀만 바꿔 그린다
-const MX_LINE_SKIN = 12042;
+const MX_LINE_SKINS = [12042, 12043]; // 컬러라인 피부: 파란 선만 색이 바뀐다
 // 기본 헤어·성형·옷이 바뀌어(2026-10-21) 저장 키를 새로 해서 모두 새 기본값으로 시작한다
 const MX_STORE = 'gms_mixdye_v3';
 const MX_COORDI_DATA = 'data_coordi.js?v=20261021a';
@@ -237,14 +237,29 @@ function _mxCompose(g, tH, tF, matte) {
 
 const _mxSkin = () => _mxState.chars[_mxState.g].skin;
 
-/* 커스텀 컬러라인 선 색: 메애기에 등록된 실제 캐릭터의 넥슨 공식 그림 9가지와 맞춘 근사식.
-   - 색상: 파랑 240도 + 색조 (9가지 모두 일치)
-   - 채도: ((100 + 채도) / 100)², 밝기: 0.5 + 명도/100 × (밝게 0.2, 어둡게 0.5) — HSL 기준
-   넥슨 그림이 색을 16단계로 줄여 내려 주는 탓에 더 정밀하게는 못 맞췄다(9가지 중 6가지 일치) */
-function _mxLineColor(sk) {
-  const h = ((240 + sk.tone) % 360) / 360;
-  const s = Math.min(1, Math.max(0, ((100 + sk.chroma) / 100) ** 2));
-  const l = Math.min(1, Math.max(0, 0.5 + sk.bright / 100 * (sk.bright >= 0 ? 0.2 : 0.5)));
+// 영문 이름에 Custom이 붙은 피부만 색조·채도·명도 조절
+const _mxIsCustom = id => /^Custom /.test(_mxSkinName(id));
+const _mxIsLine = id => MX_LINE_SKINS.includes(id);
+const _mxHasShift = sk => _mxIsCustom(sk.id) && (sk.tone || sk.chroma || sk.bright);
+
+/* 색조·채도·명도 변환. 컬러라인 선을 메애기에 등록된 넥슨 공식 그림 9가지와 맞춘 근사식이다.
+   - 색상: 원래 색상 + 색조 (9가지 모두 일치)
+   - 채도: 원래 채도 × ((100 + 채도) / 100)²
+   - 밝기: 밝게는 남은 밝기의 0.4배까지, 어둡게는 현재 밝기에 비례 — HSL 기준
+   넥슨 그림이 색을 16단계로 줄여 내려 주는 탓에 더 정밀하게는 못 맞췄다(9가지 중 6가지 일치).
+   컬러라인이 아닌 커스텀 피부는 같은 식을 피부 전체에 적용한 근사치다 */
+function _mxShift([r, g, b], sk) {
+  r /= 255; g /= 255; b /= 255;
+  const mx = Math.max(r, g, b), mn = Math.min(r, g, b);
+  let h = 0, s = 0, l = (mx + mn) / 2;
+  if (mx !== mn) {
+    const d = mx - mn;
+    s = l > 0.5 ? d / (2 - mx - mn) : d / (mx + mn);
+    h = (mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) / 6;
+  }
+  h = (h + sk.tone / 360) % 1;
+  s = Math.min(1, Math.max(0, s * ((100 + sk.chroma) / 100) ** 2));
+  l = Math.min(1, Math.max(0, sk.bright >= 0 ? l + (1 - l) * 0.4 * sk.bright / 100 : l * (1 + sk.bright / 100)));
   const f = t => {
     const q = l < 0.5 ? l * (1 + s) : l + s - l * s, p = 2 * l - q;
     t = (t + 1) % 1;
@@ -253,12 +268,45 @@ function _mxLineColor(sk) {
   };
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)];
 }
+
+// 바꿀 색 목록: 컬러라인은 파란 선, 그 밖의 커스텀 피부는 맨몸 그림에 쓰인 색에서 검정·흰색을 뺀 것
+const _mxSkinColors = new Map();
+function _mxColorsOfSkin(id) {
+  if (_mxIsLine(id)) return { set: new Set([0x0000ff]), main: [0, 0, 255] };
+  if (_mxSkinColors.has(id)) return _mxSkinColors.get(id);
+  _mxSkinColors.set(id, null);
+  // 목록 아이콘으로 이미 받은 그림은 픽셀을 읽을 수 없어 주소를 달리해 따로 받는다
+  _mxLoadPix(`${_mxSkinPreview(id)}&px=1`).then(img => {
+    const cnt = new Map(), d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      if (d[i + 3] < 128) continue;
+      const c = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+      if (c === 0 || c === 0xffffff) continue;
+      cnt.set(c, (cnt.get(c) || 0) + 1);
+    }
+    // 대표 색: 진한 색 중 가장 많이 쓰인 색, 없으면 가장 많이 쓰인 색
+    const vivid = ([c]) => Math.max(c >> 16, (c >> 8) & 255, c & 255) - Math.min(c >> 16, (c >> 8) & 255, c & 255) >= 60;
+    const byCount = [...cnt].sort((x, y) => y[1] - x[1]);
+    const top = byCount.find(vivid) || byCount[0];
+    const main = top ? [top[0] >> 16, (top[0] >> 8) & 255, top[0] & 255] : [0, 0, 0];
+    _mxSkinColors.set(id, { set: new Set(cnt.keys()), main });
+    if (_mxSkin().id === id) _mxRender();
+  }).catch(() => _mxSkinColors.delete(id));
+  return null;
+}
+
 function _mxApplyLine(img) {
   const sk = _mxSkin();
-  if (sk.id !== MX_LINE_SKIN || (!sk.tone && !sk.chroma && !sk.bright)) return img;
-  const [r, g, b] = _mxLineColor(sk), d = img.data;
+  if (!_mxHasShift(sk)) return img;
+  const C = _mxColorsOfSkin(sk.id);
+  if (!C) return img;
+  const memo = new Map(), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
-    if (d[i] === 0 && d[i + 1] === 0 && d[i + 2] === 255) { d[i] = r; d[i + 1] = g; d[i + 2] = b; }
+    const c = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
+    if (!C.set.has(c)) continue;
+    if (!memo.has(c)) memo.set(c, _mxShift([d[i], d[i + 1], d[i + 2]], sk));
+    const v = memo.get(c);
+    d[i] = v[0]; d[i + 1] = v[1]; d[i + 2] = v[2];
   }
   return img;
 }
@@ -374,13 +422,19 @@ function _mxBuildSkinList() {
   if (_mxLists.skin) return _mxLists.skin;
   const L = _mxListBox('skin');
   for (const r of window.MIXDYE_DATA.skins || []) {
-    const sub = [r[2], `ID ${r[0]}`, r[0] === MX_LINE_SKIN ? '선 색 조절 가능' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(_mxItemIcon(r[0]), r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); });
+    const sub = [r[2], `ID ${r[0]}`, /^Custom /.test(r[1]) ? '색 조절 가능' : ''].filter(Boolean).join(' · ');
+    const el = _mxMakeItem(_mxSkinPreview(r[0]), r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); });
+    el.querySelector('img').classList.add('mx-skin-icon');
     L.box.appendChild(el);
     L.items.push({ el, r, id: r[0], hide: () => false, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
   L.box.appendChild(L.empty);
   return L;
+}
+// 피부 아이템 아이콘은 귀 모양 조각이라 알아보기 어렵다. 그 피부로 그린 맨몸(96×96)을 받아 머리 부분만 보여 준다
+function _mxSkinPreview(head) {
+  const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
+  return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/stand1/0?resize=1&renderMode=1`;
 }
 const _mxSkinName = id => ((window.MIXDYE_DATA.skins || []).find(r => r[0] === id) || [0, `ID ${id}`])[1];
 
@@ -488,6 +542,7 @@ async function _mxShowPart() {
   sec.querySelectorAll('.mx-sex').forEach(b => b.classList.toggle('active', b.dataset.mxg === _mxState.g));
   sec.classList.toggle('is-coordi', coordi);
   sec.classList.toggle('is-skin', skinTab);
+  document.getElementById('mxSelIcon').classList.toggle('mx-skin-icon', skinTab);
 
   if (coordi && !window.COORDI_DATA) {
     for (const L of Object.values(_mxLists)) L.box.style.display = 'none';
@@ -572,17 +627,17 @@ function _mxWornName(slot, id) {
 
 function _mxSkinText() {
   const sk = _mxSkin();
-  const line = sk.id === MX_LINE_SKIN ? ` 색조 ${sk.tone} · 채도 ${sk.chroma} · 명도 ${sk.bright}` : '';
+  const line = _mxIsCustom(sk.id) ? ` 색조 ${sk.tone} · 채도 ${sk.chroma} · 명도 ${sk.bright}` : '';
   return `<b>${_mxEsc(_mxSkinName(sk.id))}</b>${line}`;
 }
 
 function _mxRenderSkinCard() {
-  const sk = _mxSkin(), line = sk.id === MX_LINE_SKIN;
+  const sk = _mxSkin(), line = _mxIsCustom(sk.id);
   const L = _mxLists.skin;
   if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === sk.id);
   const icon = document.getElementById('mxSelIcon');
   icon.style.visibility = '';
-  icon.src = _mxItemIcon(sk.id);
+  icon.src = _mxSkinPreview(sk.id);
   const r = (window.MIXDYE_DATA.skins || []).find(x => x[0] === sk.id) || [sk.id, '', ''];
   document.getElementById('mxSelName').textContent = r[1] || `ID ${sk.id}`;
   document.getElementById('mxSelSub').textContent = [r[2], `ID ${sk.id}`].filter(Boolean).join(' · ');
@@ -592,8 +647,10 @@ function _mxRenderSkinCard() {
     document.getElementById(`mxLine-${k}`).value = sk[k];
     document.getElementById(`mxLineVal-${k}`).textContent = sk[k];
   }
-  const [cr, cg, cb] = _mxLineColor(sk);
+  const C = line && _mxColorsOfSkin(sk.id);
+  const [cr, cg, cb] = C ? _mxShift(C.main, sk) : [0, 0, 255];
   document.getElementById('mxLineSwatch').style.background = `rgb(${cr},${cg},${cb})`;
+  document.getElementById('mxLineLabel').textContent = _mxIsLine(sk.id) ? '선 색' : '대표 색';
 }
 
 function _mxRenderCombo() {
@@ -776,12 +833,12 @@ function initMixdye() {
             <div id="mxLineBox">
               ${[['tone', '색조', 0, 359], ['chroma', '채도', -99, 99], ['bright', '명도', -99, 99]].map(([k, label, lo, hi]) => `
               <div class="mx-row"><span class="mx-label">${label}</span>
-                <div class="mx-line-row"><input class="mx-range" type="range" id="mxLine-${k}" data-line="${k}" min="${lo}" max="${hi}" step="1" aria-label="선 ${label}" /><b class="mx-line-val" id="mxLineVal-${k}"></b></div></div>`).join('')}
-              <div class="mx-row"><span class="mx-label">선 색</span>
-                <div class="mx-line-row"><span class="mx-line-swatch" id="mxLineSwatch"></span><button class="sbtn sbtn--ghost mx-line-reset" type="button">선 색 초기화</button></div></div>
-              <p class="mx-hint">게임처럼 색조·채도·명도로 선 색을 바꿉니다. 실제 게임 색과 조금 다를 수 있습니다.</p>
+                <div class="mx-line-row"><input class="mx-range" type="range" id="mxLine-${k}" data-line="${k}" min="${lo}" max="${hi}" step="1" aria-label="피부 ${label}" /><b class="mx-line-val" id="mxLineVal-${k}"></b></div></div>`).join('')}
+              <div class="mx-row"><span class="mx-label" id="mxLineLabel">선 색</span>
+                <div class="mx-line-row"><span class="mx-line-swatch" id="mxLineSwatch"></span><button class="sbtn sbtn--ghost mx-line-reset" type="button">색 초기화</button></div></div>
+              <p class="mx-hint">게임처럼 색조·채도·명도로 색을 바꿉니다. 컬러라인 피부는 선 색이, 다른 커스텀 피부는 피부 색이 바뀌며 실제 게임 색과 다를 수 있습니다.</p>
             </div>
-            <p class="mx-hint" id="mxLineHint">선 색 조절은 Custom Soft Lavender Color Line Skin에서만 됩니다.</p>
+            <p class="mx-hint" id="mxLineHint">색 조절은 이름에 Custom이 붙은 커스텀 피부에서만 됩니다.</p>
           </div>
           <p class="mx-hint mx-only-coordi">목록에서 아이템을 누르면 입고, 같은 아이템을 다시 누르면 벗습니다. 한벌옷을 입으면 상의·하의가 빠지고, 벗으면 기본 옷으로 돌아옵니다.</p>
         </div>
@@ -892,7 +949,7 @@ function ensureMixdyeReady(cb) {
   if (!_mxLoading) {
     _mxLoading = new Promise((resolve, reject) => {
       const s = document.createElement('script');
-      s.src = 'data_mixdye.js?v=20261021c';
+      s.src = 'data_mixdye.js?v=20261021d';
       s.onload = resolve;
       s.onerror = () => reject(new Error('data_mixdye.js 로드 실패'));
       document.body.appendChild(s);

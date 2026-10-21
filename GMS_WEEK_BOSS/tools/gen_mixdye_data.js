@@ -102,11 +102,13 @@ async function build(key, sex) {
   const faces = await build('face', 1);
   const hairsM = await build('hair', 0);
   const facesM = await build('face', 0);
+  // KMS 데이터에 아직 없는 커스텀 피부의 한국 이름
+  const SKIN_KO = { 12042: '커스텀 뽀송 라벤더 컬러라인 피부', 12043: '커스텀 홍조 라벤더 컬러라인 피부' };
   // 피부: 머리(Head) ID 목록. 몸 ID는 머리 ID - 10000
   const kmsHead = new Map((await getJson(listUrl('KMS', KMS_VERSION, 'Head'))).map(x => [x.id, (x.name || '').trim()]));
   const skins = (await getJson(listUrl('GMS', VERSION, 'Head')))
     .filter(x => x.name)
-    .map(x => [x.id, x.name.trim(), kmsHead.get(x.id) || ''])
+    .map(x => [x.id, x.name.trim(), kmsHead.get(x.id) || SKIN_KO[x.id] || ''])
     .sort((a, b) => a[0] - b[0]);
   const count = rows => `${rows.filter(r => !r[4]).length}종(+성별 미확인 ${rows.filter(r => r[4]).length}종)`;
   const body =

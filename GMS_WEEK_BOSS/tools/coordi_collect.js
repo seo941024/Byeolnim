@@ -74,6 +74,9 @@ async function buildTargets() {
   const D = window.MIXDYE_DATA;
   for (const [s, , , mask] of D.hairs) for (let c = 0; c < 8; c++) if (mask >> c & 1) targets.push({ part: 'hair', id: s + c });
   for (const [s, , , mask] of D.faces) for (let c = 0; c < 9; c++) if (mask >> c & 1) targets.push({ part: 'face', id: s + c * 100 });
+  // 남자 헤어·성형은 따로 이름 붙인 묶음(hair_m, face_m)이라 이미 받은 여자 묶음 번호가 밀리지 않는다
+  for (const [s, , , mask] of D.hairsM || []) for (let c = 0; c < 8; c++) if (mask >> c & 1) targets.push({ part: 'hair_m', id: s + c });
+  for (const [s, , , mask] of D.facesM || []) for (let c = 0; c < 9; c++) if (mask >> c & 1) targets.push({ part: 'face_m', id: s + c * 100 });
 
   const list = await fetchRetry(`${API}/GMS/${VERSION}/item/?&overallCategoryFilter=Equip`);
   for (const P of PARTS) {

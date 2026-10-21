@@ -3664,3 +3664,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   .mx-slots { grid-template-columns: repeat(4, minmax(0,1fr)); }
   #sec-mixdye.is-coordi .mx-card--result { grid-column: auto; }
 }
+
+/* 코디 시뮬레이터 성별 선택 · 기본 옷 표시 */
+.mx-topbar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; }
+.mx-topbar .sf-tabs { margin-bottom: 0; }
+.mx-sextabs .sf-tab { padding: 10px 20px; }
+.mx-basic { font-size: .74rem; font-weight: 700; color: var(--text-dim); padding: 2px 8px; border: 1px solid var(--border); border-radius: var(--radius-sm); margin-left: 4px; }

@@ -30,6 +30,7 @@ const PARTS = {
     colorOf: id => id % 10,
     colors: 8,
     female: new Set([31, 41, 61]),
+    male: new Set([30, 40, 60]),
     mixed: new Set([32, 39, 42]),
     enPrefix: /^(Black|Red|Orange|Blonde|Blond|Yellow|Green|Blue|Purple|Brown)\s+/i,
     koPrefix: /^(검은색|검정색|빨간색|빨강색|주황색|노란색|노랑색|초록색|파란색|파랑색|보라색|갈색)\s*/,
@@ -41,6 +42,7 @@ const PARTS = {
     colorOf: id => Math.floor(id / 100) % 10,
     colors: 9,
     female: new Set([21, 51]),
+    male: new Set([20, 50]),
     mixed: new Set([22]),
     enPrefix: null,
     koPrefix: null,
@@ -53,7 +55,8 @@ async function getJson(url) {
   return r.json();
 }
 
-async function build(key) {
+// sex: 1 여자, 0 남자. 남녀가 섞인 번호대(mixed)는 양쪽 목록에 '성별 미확인'으로 들어간다
+async function build(key, sex) {
   const P = PARTS[key];
   const gms = await getJson(listUrl('GMS', VERSION, P.sub));
   const kms = await getJson(listUrl('KMS', KMS_VERSION, P.sub));
@@ -79,7 +82,8 @@ async function build(key) {
     const gender = sample.requiredGender;
     const bucket = Math.floor(s / 1000);
     let flag;
-    if (gender === 1 || (gender === 2 && P.female.has(bucket))) flag = 0;
+    const own = sex === 1 ? P.female : P.male;
+    if (gender === sex || (gender === 2 && own.has(bucket))) flag = 0;
     else if (gender === 2 && P.mixed.has(bucket)) flag = 1;
     else continue;
     let en = (sample.name || '').trim();
@@ -94,19 +98,24 @@ async function build(key) {
 }
 
 (async () => {
-  const hairs = await build('hair');
-  const faces = await build('face');
+  const hairs = await build('hair', 1);
+  const faces = await build('face', 1);
+  const hairsM = await build('hair', 0);
+  const facesM = await build('face', 0);
   const count = rows => `${rows.filter(r => !r[4]).length}종(+성별 미확인 ${rows.filter(r => r[4]).length}종)`;
   const body =
 `/* 믹스염색 시뮬레이터 목록 — tools/gen_mixdye_data.js가 만든 파일이라 손으로 고치지 말 것.
-   maplestory.io GMS v${VERSION} 기준 여자 헤어 ${count(hairs)}, 여자 성형 ${count(faces)}.
+   maplestory.io GMS v${VERSION} 기준 여자 헤어 ${count(hairs)}, 여자 성형 ${count(faces)},
+   남자 헤어 ${count(hairsM)}, 남자 성형 ${count(facesM)}.
    각 줄: [대표 ID, 영문 이름, 한국 서버 이름, 보유 색 비트, 성별 미확인 여부] */
 window.MIXDYE_DATA = {
   version: '${VERSION}',
   hairs: ${JSON.stringify(hairs)},
   faces: ${JSON.stringify(faces)},
+  hairsM: ${JSON.stringify(hairsM)},
+  facesM: ${JSON.stringify(facesM)},
 };
 `;
   fs.writeFileSync(OUT, body, 'utf8');
-  console.log(`헤어 ${count(hairs)}, 성형 ${count(faces)} → ${OUT}`);
+  console.log(`여자 헤어 ${count(hairs)}, 성형 ${count(faces)} · 남자 헤어 ${count(hairsM)}, 성형 ${count(facesM)} → ${OUT}`);
 })().catch(e => { console.error(e); process.exit(1); });

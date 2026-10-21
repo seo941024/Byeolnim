@@ -21,22 +21,23 @@ const MX_PARTS = {
   hair: {
     key: 'hair', name: '헤어', word: '색', def: 67190,
     idOf: (s, c) => s + c,
+    // 게임 원문 색 이름. 칩 색은 실제 헤어보다 진하게 잡아 서로 구분되게 했다
     colors: [
-      { name: '검은색', sw: '#545252' }, { name: '빨간색', sw: '#ffb4b9' },
-      { name: '주황색', sw: '#ffa885' }, { name: '노란색', sw: '#ffd894' },
-      { name: '초록색', sw: '#a8d8a8' }, { name: '파란색', sw: '#97c7ec' },
-      { name: '보라색', sw: '#eda9d8' }, { name: '갈색', sw: '#c98972' },
+      { name: 'Black', sw: '#2e2c2c' }, { name: 'Red', sw: '#e0414f' },
+      { name: 'Orange', sw: '#f07b2e' }, { name: 'Blonde', sw: '#f0c541' },
+      { name: 'Green', sw: '#3ea55a' }, { name: 'Blue', sw: '#3a7fdc' },
+      { name: 'Purple', sw: '#a04fc8' }, { name: 'Brown', sw: '#8a5636' },
     ],
   },
   face: {
     key: 'face', name: '성형', word: '렌즈', def: 21078,
     idOf: (s, c) => s + c * 100,
     colors: [
-      { name: '검은색', sw: '#363636' }, { name: '파란색', sw: '#234aad' },
-      { name: '빨간색', sw: '#ad1729' }, { name: '초록색', sw: '#148b89' },
-      { name: '헤이즐', sw: '#6b3536' }, { name: '사파이어', sw: '#237eac' },
-      { name: '바이올렛', sw: '#6907aa' }, { name: '자수정', sw: '#ac1866' },
-      { name: '흰색', sw: '#c9c9c9' },
+      { name: 'Black', sw: '#363636' }, { name: 'Blue', sw: '#234aad' },
+      { name: 'Red', sw: '#ad1729' }, { name: 'Green', sw: '#148b89' },
+      { name: 'Hazel', sw: '#6b3536' }, { name: 'Sapphire', sw: '#237eac' },
+      { name: 'Violet', sw: '#6907aa' }, { name: 'Amethyst', sw: '#ac1866' },
+      { name: 'White', sw: '#c9c9c9' },
     ],
   },
 };
@@ -283,8 +284,8 @@ function _mxShowPart() {
 function _mxBuildSwatches(p) {
   const mk = (role, i, label, c) => `<button type="button" class="mx-chip" data-role="${role}" data-i="${i}">${c ? _mxDot(c) : ''}${label}</button>`;
   document.getElementById('mxBaseChips').innerHTML = p.colors.map((c, i) => mk('base', i, c.name, c)).join('');
-  // 빈 선택지는 앱 전체 규칙대로 '-'
-  document.getElementById('mxMixChips').innerHTML = mk('mix', -1, '-', null) + p.colors.map((c, i) => mk('mix', i, c.name, c)).join('');
+  // 빈 선택지는 앱 전체 규칙대로 '-'. 맨 뒤에 둬야 기준 줄과 색 칸이 위아래로 맞는다
+  document.getElementById('mxMixChips').innerHTML = p.colors.map((c, i) => mk('mix', i, c.name, c)).join('') + mk('mix', -1, '-', null);
 }
 
 function _mxPick(role, i) {
@@ -370,8 +371,8 @@ function initMixdye() {
     <p class="dt-help">여자 캐릭터 헤어 ${MX_PARTS.hair.femaleCount.toLocaleString()}종·성형 ${MX_PARTS.face.femaleCount.toLocaleString()}종의 믹스 염색과 믹스 렌즈를 미리 봅니다. 기준 색 위에 믹스 색을 비율만큼 겹쳐 그리는 방식이라 실제 게임 화면과 조금 다를 수 있습니다. 그림은 maplestory.io GMS v${D.version} 데이터입니다.</p>
 
     <div class="sf-tabs">
-      <button class="sf-tab mx-tab" data-mxpart="hair">헤어</button>
-      <button class="sf-tab mx-tab" data-mxpart="face">성형</button>
+      <button class="sf-tab mx-tab" data-mxpart="hair"><img class="mx-tab__icon" src="images/icons/Mix_Hair_Color_Coupon.png" alt="" onerror="this.style.display='none'">헤어</button>
+      <button class="sf-tab mx-tab" data-mxpart="face"><img class="mx-tab__icon" src="images/icons/Mix_Lens_Coupon.png" alt="" onerror="this.style.display='none'">성형</button>
     </div>
     <hr class="sec-sep" />
 
@@ -400,10 +401,9 @@ function initMixdye() {
               <div class="mx-readout">
                 <div class="mx-readout__val" id="mxReadout"></div>
                 <div class="mx-tools">
-                  <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="minus" aria-label="믹스 비율 1% 감소">−1</button>
-                  <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="plus" aria-label="믹스 비율 1% 증가">+1</button>
+                  <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="minus" aria-label="기준 색 1% 늘리기" title="기준 색 1% 늘리기">◀</button>
                   <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="reset">50:50</button>
-                  <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="swap">기준·믹스 교체</button>
+                  <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxact="plus" aria-label="믹스 색 1% 늘리기" title="믹스 색 1% 늘리기">▶</button>
                 </div>
               </div>
               <input class="mx-range" type="range" id="mxRatio" min="1" max="99" step="1" aria-label="믹스 비율" />
@@ -473,7 +473,6 @@ function initMixdye() {
     if (b.dataset.mxact === 'minus') st.ratio = Math.max(1, st.ratio - 1);
     else if (b.dataset.mxact === 'plus') st.ratio = Math.min(99, st.ratio + 1);
     else if (b.dataset.mxact === 'reset') st.ratio = 50;
-    else if (b.dataset.mxact === 'swap' && st.mix >= 0) { [st.base, st.mix] = [st.mix, st.base]; st.ratio = 100 - st.ratio; }
     _mxRender();
   }));
   sec.querySelectorAll('.mx-view').forEach(b => b.addEventListener('click', () => {

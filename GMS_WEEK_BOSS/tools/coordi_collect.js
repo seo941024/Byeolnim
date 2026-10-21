@@ -2,7 +2,8 @@
    GitHub Actions(.github/workflows/coordi-collect.yml)가 6시간마다 돌린다. 설계는 GMS_Calc/COORDI_DESIGN.md.
 
      BLOB_READ_WRITE_TOKEN=... node tools/coordi_collect.js     실제 수집·업로드
-     node tools/coordi_collect.js --dry --limit 3                업로드 없이 표본만 받아 ../../coordi_dry/에 저장
+     node tools/coordi_collect.js --local                        업로드 없이 GMS_Calc/coordi_local/에 저장(git 제외)
+     node tools/coordi_collect.js --local --limit 3              위와 같되 첫 묶음 표본 3개만
 
    - 아이템 데이터에는 모든 동작의 그림이 들어 있어 180~600KB나 된다. 앞모습(stand1)·뒷모습(ladder)
      첫 프레임의 층만 남겨 크기를 크게 줄인다
@@ -24,7 +25,7 @@ const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
 const RETRY_WAITS = [5, 15, 45, 120, 300];
 
 const args = process.argv.slice(2);
-const DRY = args.includes('--dry');
+const DRY = args.includes('--local') || args.includes('--dry');
 const LIMIT = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : 0;
 const TIME_BUDGET_MS = Number(process.env.TIME_BUDGET_MIN || 340) * 60000;   // Actions 6시간 제한보다 여유 있게
 const started = Date.now();
@@ -124,7 +125,9 @@ async function getItem(id) {
 /* ── 저장소: 실제는 Vercel Blob, --dry면 로컬 폴더 ── */
 function makeStore() {
   if (DRY) {
-    const root = path.join(__dirname, '..', '..', 'coordi_dry');
+    const root = path.join(__dirname, '..', '..', 'coordi_local');
+    fs.mkdirSync(root, { recursive: true });
+    fs.writeFileSync(path.join(root, '.gitignore'), '*' + String.fromCharCode(10));
     return {
       async getManifest() { try { return JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')); } catch { return null; } },
       async put(name, body) { const p = path.join(root, name); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, body); },

@@ -202,8 +202,15 @@ function _mxUrls() {
   if (_mxMatte()) {
     u.d = _mxRenderUrl(null, fb, v);
     if (fm !== fb) u.e = _mxRenderUrl(null, fm, v);
+    u.s = _mxSkinUrl(v);
   }
   return u;
+}
+// 맨몸 그림: 무광 머리 아래로 몸 윤곽선이 비치지 않게 윤곽선 위치를 찾는 용도
+function _mxSkinUrl(view) {
+  const head = _mxSkin().id;
+  const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
+  return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1&px=1`;
 }
 const _mxMatte = () => _mxMixOn(MX_PARTS.hair) && MX_MATTE_BASE.includes(100 - _mxState.hair.ratio);
 
@@ -223,8 +230,18 @@ function _mxCompose(g, tH, tF, matte) {
   // 무광: 머리 픽셀(머리 없는 그림과 다른 곳)을 머리 뒤 그림 위에 93% 불투명도로 다시 얹는다
   if (matte && g.d && g.d.data.length === a.length) {
     const D = g.d.data, E = g.e && g.e.data.length === a.length ? g.e.data : null;
+    const S = g.s && g.s.data.length === a.length ? g.s.data : null, W = g.a.width;
+    // 맨몸의 바깥 윤곽선: 불투명한데 위아래좌우 중 투명한 칸이 있는 픽셀
+    const edge = p => {
+      if (!S || S[p * 4 + 3] === 0) return false;
+      const x = p % W, y = (p - x) / W;
+      const empty = q => S[q * 4 + 3] === 0;
+      return x === 0 || y === 0 || x === W - 1 || p + W >= n || empty(p - 1) || empty(p + 1) || empty(p - W) || empty(p + W);
+    };
     for (let p = 0, i = 0; p < n; p++, i += 4) {
       if (a[i] === D[i] && a[i + 1] === D[i + 1] && a[i + 2] === D[i + 2] && a[i + 3] === D[i + 3]) continue;
+      // 머리 아래 윤곽선은 비치게 하지 않는다(게임에서는 머리 가운데에 띠로 보이지 않음)
+      if (edge(p) && D[i] === S[i] && D[i + 1] === S[i + 1] && D[i + 2] === S[i + 2] && D[i + 3] === S[i + 3]) continue;
       const u = [0, 1, 2, 3].map(k => E && tF > 0 ? D[i + k] + (E[i + k] - D[i + k]) * tF : D[i + k]);
       const sa = d[i + 3] / 255 * MX_MATTE_ALPHA, da = u[3] / 255;
       const oa = sa + da * (1 - sa);

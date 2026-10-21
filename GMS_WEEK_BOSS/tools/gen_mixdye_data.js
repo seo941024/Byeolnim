@@ -102,6 +102,12 @@ async function build(key, sex) {
   const faces = await build('face', 1);
   const hairsM = await build('hair', 0);
   const facesM = await build('face', 0);
+  // 피부: 머리(Head) ID 목록. 몸 ID는 머리 ID - 10000
+  const kmsHead = new Map((await getJson(listUrl('KMS', KMS_VERSION, 'Head'))).map(x => [x.id, (x.name || '').trim()]));
+  const skins = (await getJson(listUrl('GMS', VERSION, 'Head')))
+    .filter(x => x.name)
+    .map(x => [x.id, x.name.trim(), kmsHead.get(x.id) || ''])
+    .sort((a, b) => a[0] - b[0]);
   const count = rows => `${rows.filter(r => !r[4]).length}종(+성별 미확인 ${rows.filter(r => r[4]).length}종)`;
   const body =
 `/* 믹스염색 시뮬레이터 목록 — tools/gen_mixdye_data.js가 만든 파일이라 손으로 고치지 말 것.
@@ -114,6 +120,7 @@ window.MIXDYE_DATA = {
   faces: ${JSON.stringify(faces)},
   hairsM: ${JSON.stringify(hairsM)},
   facesM: ${JSON.stringify(facesM)},
+  skins: ${JSON.stringify(skins)},
 };
 `;
   fs.writeFileSync(OUT, body, 'utf8');

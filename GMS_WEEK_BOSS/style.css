@@ -3674,3 +3674,4 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-combo__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 10px; }
 .mx-combo__head .card__title { margin-bottom: 0; }
 .mx-reset { padding: 5px 12px; font-size: .78rem; }
+.mx-matte { margin-left: 10px; padding: 2px 8px; font-size: .74rem; font-style: normal; font-weight: 800; color: var(--accent); border: 1px solid var(--accent); border-radius: var(--radius-sm); vertical-align: middle; }

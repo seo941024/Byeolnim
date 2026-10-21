@@ -16,6 +16,11 @@ const MX_SKIN = [2018, 12018];          // 뽀송 라벤더 피부
 // 기본 헤어·성형·옷이 바뀌어(2026-10-21) 저장 키를 새로 해서 모두 새 기본값으로 시작한다
 const MX_STORE = 'gms_mixdye_v3';
 const MX_COORDI_DATA = 'data_coordi.js?v=20261021a';
+// 무광 구간: 커스텀 믹스 기준 색 비율이 77·84·89일 때 게임은 머리 전체를 약 7% 투명하게 그린다(알파 238).
+// 메애기의 넥슨 공식 그림(반쪽 병아리콩 Black·Orange, 믹스 5~25%)과 픽셀 비교로 확인 — 무광 3구간에서만
+// 머리 픽셀 절반의 알파가 238이고 색은 옆 비율과 같았다. 헤어에 따라 예외가 있다는 제보도 있다
+const MX_MATTE_BASE = [77, 84, 89];
+const MX_MATTE_ALPHA = 238 / 255;
 const MX_SEX = { f: { name: '여자', digit: 1 }, m: { name: '남자', digit: 0 } };   // digit: 아이템 ID 천의 자리 성별 값
 
 // 기본 상하의 — 한벌옷을 입으면 빠지고, 벗으면 돌아온다. 캐시 아이템이 아니라 코디 목록에 없어 이름을 여기 둔다
@@ -148,8 +153,9 @@ function _mxFixColors(p) {
 }
 
 /* ── 그림 ── */
+// hairId가 null이면 머리 없이 그린다(무광 구간에서 머리 뒤를 알아내는 용도)
 function _mxRenderUrl(hairId, faceId, view) {
-  const ids = [...MX_SKIN, faceId, hairId, ...Object.values(_mxEffectiveWorn())];
+  const ids = [...MX_SKIN, faceId, ...(hairId ? [hairId] : []), ...Object.values(_mxEffectiveWorn())];
   const list = JSON.stringify(ids.map(i => ({ itemId: i, version: _mxVer() })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;
 }
@@ -181,10 +187,17 @@ function _mxUrls() {
   const H = MX_PARTS.hair, F = MX_PARTS.face, hs = _mxState.hair, fs = _mxState.face, v = _mxState.view;
   const hb = H.idOf(hs.id, hs.base), hm = _mxMixOn(H) ? H.idOf(hs.id, hs.mix) : hb;
   const fb = F.idOf(fs.id, fs.base), fm = _mxMixOn(F) ? F.idOf(fs.id, fs.mix) : fb;
-  return { a: _mxRenderUrl(hb, fb, v), b: _mxRenderUrl(hm, fb, v), c: _mxRenderUrl(hb, fm, v) };
+  const u = { a: _mxRenderUrl(hb, fb, v), b: _mxRenderUrl(hm, fb, v), c: _mxRenderUrl(hb, fm, v) };
+  // 무광 구간이면 머리를 뺀 그림도 받는다(렌즈 믹스 중이면 믹스 렌즈 쪽도)
+  if (_mxMatte()) {
+    u.d = _mxRenderUrl(null, fb, v);
+    if (fm !== fb) u.e = _mxRenderUrl(null, fm, v);
+  }
+  return u;
 }
+const _mxMatte = () => _mxMixOn(MX_PARTS.hair) && MX_MATTE_BASE.includes(100 - _mxState.hair.ratio);
 
-function _mxCompose(g, tH, tF) {
+function _mxCompose(g, tH, tF, matte) {
   const a = g.a.data, n = g.a.width * g.a.height;
   const out = new ImageData(new Uint8ClampedArray(a), g.a.width, g.a.height);
   const d = out.data;
@@ -197,6 +210,18 @@ function _mxCompose(g, tH, tF) {
   };
   blend(g.b.data, tH, a);
   blend(g.c.data, tF, d);
+  // 무광: 머리 픽셀(머리 없는 그림과 다른 곳)을 머리 뒤 그림 위에 93% 불투명도로 다시 얹는다
+  if (matte && g.d && g.d.data.length === a.length) {
+    const D = g.d.data, E = g.e && g.e.data.length === a.length ? g.e.data : null;
+    for (let p = 0, i = 0; p < n; p++, i += 4) {
+      if (a[i] === D[i] && a[i + 1] === D[i + 1] && a[i + 2] === D[i + 2] && a[i + 3] === D[i + 3]) continue;
+      const u = [0, 1, 2, 3].map(k => E && tF > 0 ? D[i + k] + (E[i + k] - D[i + k]) * tF : D[i + k]);
+      const sa = d[i + 3] / 255 * MX_MATTE_ALPHA, da = u[3] / 255;
+      const oa = sa + da * (1 - sa);
+      for (let k = 0; k < 3; k++) d[i + k] = oa ? (d[i + k] * sa + u[k] * da * (1 - sa)) / oa : 0;
+      d[i + 3] = oa * 255;
+    }
+  }
   return out;
 }
 
@@ -220,7 +245,7 @@ function _mxDrawCards() {
   const g = _mxCur.g;
   const tH = _mxMixOn(MX_PARTS.hair) ? _mxState.hair.ratio / 100 : 0;
   const tF = _mxMixOn(MX_PARTS.face) ? _mxState.face.ratio / 100 : 0;
-  _mxPaint('mxCvResult', _mxCompose(g, tH, tF), 3);
+  _mxPaint('mxCvResult', _mxCompose(g, tH, tF, _mxMatte()), 3);
   if (_mxState.part === 'coordi') return;
   const onHair = _mxState.part === 'hair';
   const mixOn = _mxMixOn(MX_PARTS[_mxState.part]) ? 1 : 0;
@@ -236,11 +261,13 @@ async function _mxDraw() {
   if (_mxCur && _mxCur.key === key) { _mxDrawCards(); return; }
   const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('불러오는 중<span class="mx-status__sub">처음 보는 조합은 시간이 조금 걸립니다</span>'); }, 150);
   try {
-    const [a, b, c] = await Promise.all([_mxLoadPix(u.a), _mxLoadPix(u.b), _mxLoadPix(u.c)]);
+    const names = Object.keys(u);
+    const imgs = await Promise.all(names.map(k => _mxLoadPix(u[k])));
     if (my !== _mxToken) return;
     clearTimeout(slow);
     _mxSetStatus('');
-    _mxCur = { key, g: { a, b, c } };
+    const g = {}; names.forEach((k, i) => { g[k] = imgs[i]; });
+    _mxCur = { key, g };
     _mxDrawCards();
     _mxPrefetch();
   } catch (e) {
@@ -558,7 +585,9 @@ function _mxRender() {
     range.value = st.ratio;
     range.disabled = off;
     document.querySelectorAll('#sec-mixdye [data-mxact]').forEach(b => { b.disabled = off; });
-    document.getElementById('mxReadout').innerHTML = off ? '100<span>:</span>0' : `${100 - st.ratio}<span>:</span>${st.ratio}`;
+    const matte = p.key === 'hair' && _mxMatte();
+    document.getElementById('mxReadout').innerHTML = (off ? '100<span>:</span>0' : `${100 - st.ratio}<span>:</span>${st.ratio}`)
+      + (matte ? '<em class="mx-matte" title="게임에서 이 비율은 머리가 살짝 투명해져 광이 죽어 보입니다">무광</em>' : '');
     document.getElementById('mxEndBase').innerHTML = `${_mxDot(B)}${B.name}`;
     document.getElementById('mxEndMix').innerHTML = off ? '' : `${M.name}${_mxDot(M)}`;
 

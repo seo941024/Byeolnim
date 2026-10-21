@@ -1755,6 +1755,10 @@ const NOTICE_LOG = [
         head: '믹스염색 시뮬레이터 색 선택 정리',
         desc: '색 이름 영어 표기, 선명한 색 칩과 칸 정렬, 비율 조절 화살표 버튼, 쿠폰 아이콘 적용.',
       },
+      {
+        head: '믹스염색 색 이름 인게임 표기로 수정',
+        desc: '헤어 Yellow, 렌즈 Brown·Emerald·Purple로 정정. 색 칩은 두 줄 가운데 정렬, 모바일 세 줄.',
+      },
     ],
   },
   {
@@ -1903,7 +1907,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-21-mixdye-b',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-21-mixdye-c',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

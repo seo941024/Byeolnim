@@ -21,10 +21,11 @@ const MX_PARTS = {
   hair: {
     key: 'hair', name: '헤어', word: '색', def: 67190,
     idOf: (s, c) => s + c,
-    // 게임 원문 색 이름. 칩 색은 실제 헤어보다 진하게 잡아 서로 구분되게 했다
+    // 게임 원문 색 이름(헤어 이름 앞말). 3번은 옛 헤어에 Blonde로 남아 있지만 지금 인게임 표기는 Yellow.
+    // 칩 색은 실제 헤어보다 진하게 잡아 서로 구분되게 했다
     colors: [
       { name: 'Black', sw: '#2e2c2c' }, { name: 'Red', sw: '#e0414f' },
-      { name: 'Orange', sw: '#f07b2e' }, { name: 'Blonde', sw: '#f0c541' },
+      { name: 'Orange', sw: '#f07b2e' }, { name: 'Yellow', sw: '#f0c541' },
       { name: 'Green', sw: '#3ea55a' }, { name: 'Blue', sw: '#3a7fdc' },
       { name: 'Purple', sw: '#a04fc8' }, { name: 'Brown', sw: '#8a5636' },
     ],
@@ -32,11 +33,12 @@ const MX_PARTS = {
   face: {
     key: 'face', name: '성형', word: '렌즈', def: 21078,
     idOf: (s, c) => s + c * 100,
+    // 렌즈 이름은 일회용 렌즈 아이템 5152100~5152108의 원문(One-Time Cosmetic Lens (Black) 등)
     colors: [
       { name: 'Black', sw: '#363636' }, { name: 'Blue', sw: '#234aad' },
       { name: 'Red', sw: '#ad1729' }, { name: 'Green', sw: '#148b89' },
-      { name: 'Hazel', sw: '#6b3536' }, { name: 'Sapphire', sw: '#237eac' },
-      { name: 'Violet', sw: '#6907aa' }, { name: 'Amethyst', sw: '#ac1866' },
+      { name: 'Brown', sw: '#6b3536' }, { name: 'Emerald', sw: '#237eac' },
+      { name: 'Purple', sw: '#6907aa' }, { name: 'Amethyst', sw: '#ac1866' },
       { name: 'White', sw: '#c9c9c9' },
     ],
   },
@@ -286,6 +288,11 @@ function _mxBuildSwatches(p) {
   document.getElementById('mxBaseChips').innerHTML = p.colors.map((c, i) => mk('base', i, c.name, c)).join('');
   // 빈 선택지는 앱 전체 규칙대로 '-'. 맨 뒤에 둬야 기준 줄과 색 칸이 위아래로 맞는다
   document.getElementById('mxMixChips').innerHTML = p.colors.map((c, i) => mk('mix', i, c.name, c)).join('') + mk('mix', -1, '-', null);
+  // 칸 수: 믹스 줄(색 + '-')이 PC는 두 줄, 모바일은 세 줄에 들어가게. 기준 줄도 같은 칸 수라 위아래가 맞는다
+  const n = p.colors.length + 1;
+  const sec = document.getElementById('sec-mixdye');
+  sec.style.setProperty('--mx-cols', Math.ceil(n / 2));
+  sec.style.setProperty('--mx-cols-m', Math.ceil(n / 3));
 }
 
 function _mxPick(role, i) {

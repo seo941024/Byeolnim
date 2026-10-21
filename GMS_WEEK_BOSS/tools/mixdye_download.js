@@ -7,6 +7,7 @@
 
    조합을 미리 다 그릴 수는 없어서(헤어 × 성형 × 색) 부품별로 따로 받는다.
    - base: 대머리 기본 몸(피부만). 헤어·얼굴 층을 뽑을 때 비교 기준
+           outfit_*.png는 같은 몸에 기본 옷을 입힌 것으로, 화면 바탕에만 쓴다
    - hair: 얼굴 없이 헤어만 씌운 그림
    - face: 헤어 없이 얼굴만 씌운 그림. 뒷모습에선 얼굴이 안 보여서 앞모습만
    renderMode=1이면 모든 그림이 96×96에 발끝 위치까지 같아서, 기본 몸과 다른 픽셀만
@@ -21,6 +22,7 @@ const path = require('path');
 const API = 'https://maplestory.io/api';
 const VERSION = '270';
 const SKIN = [2018, 12018];
+const OUTFIT = [1051539];   // mixdye.js의 MX_OUTFIT과 같게
 const OUT = path.join(__dirname, '..', '..', 'mixdye_raw');
 const UA = 'byeolnim-mixdye-downloader (+https://byeolnim.vercel.app)';
 
@@ -45,7 +47,10 @@ function loadList() {
 function buildJobs(D) {
   const jobs = [];
   const add = (dir, name, items, view) => jobs.push({ file: path.join(OUT, dir, `${name}_${view}.png`), url: renderUrl(items, view) });
-  for (const view of ['stand1', 'ladder']) add('base', 'base', SKIN, view);
+  for (const view of ['stand1', 'ladder']) {
+    add('base', 'base', SKIN, view);
+    add('base', 'outfit', [...SKIN, ...OUTFIT], view);
+  }
 
   const hairIds = [], faceIds = [];
   for (const [s, , , mask] of D.hairs) for (let c = 0; c < 8; c++) if (mask >> c & 1) hairIds.push(s + c);

@@ -14,6 +14,7 @@
 
 const MX_API = 'https://maplestory.io/api';
 const MX_SKIN = [2018, 12018];          // 뽀송 라벤더 피부
+const MX_OUTFIT = [1051539];            // Crimson Fate Topcoat — 바탕에만 입힌다(헤어·얼굴 층은 맨몸 기준으로 뽑음)
 const MX_LOCAL_BASE = '';               // 예: 'images/mixdye/' — 비워 두면 maplestory.io에서 받는다
 const MX_STORE = 'gms_mixdye';
 
@@ -95,9 +96,9 @@ function _mxFixColors(p) {
 
 /* ── 그림 ── */
 function _mxImgUrl(kind, id, view) {
-  const name = kind === 'base' ? `base/base_${view}.png` : `${kind}/${id}_${view}.png`;
+  const name = kind === 'base' || kind === 'outfit' ? `base/${kind}_${view}.png` : `${kind}/${id}_${view}.png`;
   if (MX_LOCAL_BASE) return MX_LOCAL_BASE + name;
-  const ids = kind === 'base' ? MX_SKIN : [...MX_SKIN, id];
+  const ids = kind === 'base' ? MX_SKIN : kind === 'outfit' ? [...MX_SKIN, ...MX_OUTFIT] : [...MX_SKIN, id];
   const list = JSON.stringify(ids.map(i => ({ itemId: i, version: window.MIXDYE_DATA.version })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;
 }
@@ -128,7 +129,7 @@ function _mxLoadPix(url) {
 function _mxUrls() {
   const H = MX_PARTS.hair, F = MX_PARTS.face, hs = _mxState.hair, fs = _mxState.face, v = _mxState.view;
   const hb = H.idOf(hs.id, hs.base), hm = _mxMixOn(H) ? H.idOf(hs.id, hs.mix) : hb;
-  const u = { base: _mxImgUrl('base', 0, v), hb: _mxImgUrl('hair', hb, v), hm: _mxImgUrl('hair', hm, v) };
+  const u = { base: _mxImgUrl('base', 0, v), outfit: _mxImgUrl('outfit', 0, v), hb: _mxImgUrl('hair', hb, v), hm: _mxImgUrl('hair', hm, v) };
   // 뒷모습은 얼굴이 안 보여서 성형 그림이 필요 없다(뒷모습 성형 그림은 받아 두지도 않는다)
   if (v === 'stand1') {
     const fb = F.idOf(fs.id, fs.base), fm = _mxMixOn(F) ? F.idOf(fs.id, fs.mix) : fb;
@@ -137,10 +138,12 @@ function _mxUrls() {
   return u;
 }
 
-// 기본 몸 위에 얼굴 층, 그 위에 헤어 층. 층은 기본 몸과 다른 픽셀이다
+// 옷 입은 몸 위에 얼굴 층, 그 위에 헤어 층. 층은 맨몸과 다른 픽셀이다
+// (헤어 뒷머리처럼 몸에 가려진 부분은 맨몸과 같아서 층에 안 들어가고, 옷이 그대로 보인다)
 function _mxCompose(g, tH, tF) {
   const base = g.base.data, n = g.base.width * g.base.height;
-  const out = new ImageData(new Uint8ClampedArray(base), g.base.width, g.base.height);
+  const bg = g.outfit && g.outfit.data.length === base.length ? g.outfit.data : base;
+  const out = new ImageData(new Uint8ClampedArray(bg), g.base.width, g.base.height);
   const d = out.data;
   const differs = (x, i) => x[i] !== base[i] || x[i + 1] !== base[i + 1] || x[i + 2] !== base[i + 2] || x[i + 3] !== base[i + 3];
   const layer = (a, b, t) => {
@@ -375,7 +378,8 @@ function initMixdye() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">믹스염색 시뮬레이터</h2></div>
-    <p class="dt-help">여자 캐릭터 헤어 ${MX_PARTS.hair.femaleCount.toLocaleString()}종·성형 ${MX_PARTS.face.femaleCount.toLocaleString()}종의 믹스 염색과 믹스 렌즈를 미리 봅니다. 기준 색 위에 믹스 색을 비율만큼 겹쳐 그리는 방식이라 실제 게임 화면과 조금 다를 수 있습니다. 그림은 maplestory.io GMS v${D.version} 데이터입니다.</p>
+    <p class="dt-help">여자 캐릭터 헤어 ${MX_PARTS.hair.femaleCount.toLocaleString()}종·성형 ${MX_PARTS.face.femaleCount.toLocaleString()}종의 믹스 염색과 믹스 렌즈를 미리 봅니다. 기준 색 위에 믹스 색을 비율만큼 겹쳐 그리는 방식이라 실제 게임 화면과 조금 다를 수 있습니다.</p>
+    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터와 캐릭터 렌더링을 사용하고 착용 규칙을 참고했습니다. 게임 그림의 권리는 NEXON에 있습니다.</p>
 
     <div class="sf-tabs">
       <button class="sf-tab mx-tab" data-mxpart="hair"><img class="mx-tab__icon" src="images/icons/Mix_Hair_Color_Coupon.png" alt="" onerror="this.style.display='none'">헤어</button>

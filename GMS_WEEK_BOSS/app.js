@@ -143,8 +143,39 @@ document.querySelectorAll('.sb-group__head').forEach(head => {
 });
 document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
 
-/* ── 모바일 사이드바 드로어 토글 ── */
-function closeSidebar() { document.body.classList.remove('sidebar-open'); }
+/* ── 사이드바 ──
+   모바일(≤768px): 햄버거로 여닫는 드로어(sidebar-open).
+   PC: 기본은 숨김. 화면 왼쪽 끝에 마우스를 대면 튀어나오고(sidebar-peek) 벗어나면 다시 숨는다.
+   사이드바의 고정 버튼을 누르면 예전처럼 항상 펼쳐 둔다(sidebar-pinned, 다음 방문에도 유지). */
+function closeSidebar() {
+  document.body.classList.remove('sidebar-open');
+  document.body.classList.remove('sidebar-peek');
+}
+const SIDEBAR_PIN_KEY = 'gms_sidebar_pinned';
+function setSidebarPinned(on) {
+  document.body.classList.toggle('sidebar-pinned', on);
+  document.body.classList.remove('sidebar-peek');
+  const b = document.getElementById('sbBtnPin');
+  if (b) { b.textContent = on ? '고정 해제' : '사이드바 고정'; b.classList.toggle('is-on', on); }
+  try { localStorage.setItem(SIDEBAR_PIN_KEY, on ? '1' : '0'); } catch (e) {}
+}
+(() => {
+  let pinned = false;
+  try { pinned = localStorage.getItem(SIDEBAR_PIN_KEY) === '1'; } catch (e) {}
+  setSidebarPinned(pinned);
+  document.getElementById('sbBtnPin')?.addEventListener('click', () => setSidebarPinned(!document.body.classList.contains('sidebar-pinned')));
+
+  const hot = document.createElement('div');
+  hot.className = 'sidebar-hotzone';
+  document.body.appendChild(hot);
+  let hideTimer = null;
+  const peek = () => { clearTimeout(hideTimer); document.body.classList.add('sidebar-peek'); };
+  const unpeek = () => { clearTimeout(hideTimer); hideTimer = setTimeout(() => document.body.classList.remove('sidebar-peek'), 250); };
+  hot.addEventListener('mouseenter', peek);
+  const sb = document.querySelector('.sidebar');
+  sb?.addEventListener('mouseenter', () => { if (document.body.classList.contains('sidebar-peek')) peek(); });
+  sb?.addEventListener('mouseleave', unpeek);
+})();
 document.getElementById('btnHamburger')?.addEventListener('click', () => {
   document.body.classList.toggle('sidebar-open');
 });
@@ -1759,6 +1790,14 @@ const NOTICE_LOG = [
         head: '믹스염색 색 이름 인게임 표기로 수정',
         desc: '헤어 Yellow, 렌즈 Brown·Emerald·Purple로 정정. 색 칩은 두 줄 가운데 정렬, 모바일 세 줄.',
       },
+      {
+        head: '믹스염색 시뮬레이터 캐릭터에 기본 옷 착용',
+        desc: 'Crimson Fate Topcoat 착용, 자료 출처 표기, 메뉴 아이콘을 마네킹으로 변경.',
+      },
+      {
+        head: 'PC 사이드바 자동 숨김',
+        desc: '화면 왼쪽 끝에 마우스를 대면 사이드바 표시. 사이드바의 "사이드바 고정" 버튼으로 항상 펼쳐 두기 가능.',
+      },
     ],
   },
   {
@@ -1907,7 +1946,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-21-mixdye-c',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-21-mixdye-d',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

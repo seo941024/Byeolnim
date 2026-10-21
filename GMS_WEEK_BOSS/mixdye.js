@@ -29,13 +29,14 @@ const MX_PARTS = {
     // 기본: 여자 Cutie Hair 주황색, 남자 Toben Hair 검은색
     key: 'hair', name: '헤어', word: '색', def: { f: [31000, 2], m: [30000, 0] },
     idOf: (s, c) => s + c,
-    // 게임 원문 색 이름(헤어 이름 앞말). 3번은 옛 헤어에 Blonde로 남아 있지만 지금 인게임 표기는 Yellow.
+    // 인게임 미용실 표기(예: "Blue 55 : Hazel 45"). 3번은 옛 헤어 이름에 Blonde로 남아 있지만 지금은 Yellow,
+    // 6번은 Violet, 7번은 Hazel
     // 칩 색은 실제 헤어보다 진하게 잡아 서로 구분되게 했다
     colors: [
       { name: 'Black', sw: '#2e2c2c' }, { name: 'Red', sw: '#e0414f' },
       { name: 'Orange', sw: '#f07b2e' }, { name: 'Yellow', sw: '#f0c541' },
       { name: 'Green', sw: '#3ea55a' }, { name: 'Blue', sw: '#3a7fdc' },
-      { name: 'Purple', sw: '#a04fc8' }, { name: 'Brown', sw: '#8a5636' },
+      { name: 'Violet', sw: '#a04fc8' }, { name: 'Hazel', sw: '#8a5636' },
     ],
   },
   face: {
@@ -329,7 +330,8 @@ function _mxShowHidden() {
 function _mxFilter() {
   const L = _mxLists[_mxCurrentListKey()];
   if (!L) return;
-  const q = _mxState.q.trim().toLowerCase(), q2 = q.replace(/\s+/g, '');
+  // 게임 미용실 이름을 그대로 붙여 넣어도 찾히게 앞의 ColorBlend는 뺀다
+  const q = _mxState.q.trim().toLowerCase().replace(/^colorblend\s*/, ''), q2 = q.replace(/\s+/g, '');
   const showHidden = _mxShowHidden();
   let shown = 0;
   for (const it of L.items) {

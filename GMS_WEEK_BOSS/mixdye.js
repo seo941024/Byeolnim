@@ -272,7 +272,8 @@ function _mxShift([r, g, b], sk) {
 // 바꿀 색 목록: 컬러라인은 파란 선, 그 밖의 커스텀 피부는 맨몸 그림에 쓰인 색에서 검정·흰색을 뺀 것
 const _mxSkinColors = new Map();
 function _mxColorsOfSkin(id) {
-  if (_mxIsLine(id)) return { set: new Set([0x0000ff]), main: [0, 0, 255] };
+  // 머리카락과 겹친 선은 파랑이 섞인 색으로 그려져서, 파랑이 뚜렷한 색을 모두 선으로 본다
+  if (_mxIsLine(id)) return { has: (r, g, b) => b >= 200 && b - Math.max(r, g) >= 150, main: [0, 0, 255] };
   if (_mxSkinColors.has(id)) return _mxSkinColors.get(id);
   _mxSkinColors.set(id, null);
   // 목록 아이콘으로 이미 받은 그림은 픽셀을 읽을 수 없어 주소를 달리해 따로 받는다
@@ -289,7 +290,8 @@ function _mxColorsOfSkin(id) {
     const byCount = [...cnt].sort((x, y) => y[1] - x[1]);
     const top = byCount.find(vivid) || byCount[0];
     const main = top ? [top[0] >> 16, (top[0] >> 8) & 255, top[0] & 255] : [0, 0, 0];
-    _mxSkinColors.set(id, { set: new Set(cnt.keys()), main });
+    const set = new Set(cnt.keys());
+    _mxSkinColors.set(id, { has: (r, g, b) => set.has((r << 16) | (g << 8) | b), main });
     if (_mxSkin().id === id) _mxRender();
   }).catch(() => _mxSkinColors.delete(id));
   return null;
@@ -302,8 +304,8 @@ function _mxApplyLine(img) {
   if (!C) return img;
   const memo = new Map(), d = img.data;
   for (let i = 0; i < d.length; i += 4) {
+    if (!C.has(d[i], d[i + 1], d[i + 2])) continue;
     const c = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
-    if (!C.set.has(c)) continue;
     if (!memo.has(c)) memo.set(c, _mxShift([d[i], d[i + 1], d[i + 2]], sk));
     const v = memo.get(c);
     d[i] = v[0]; d[i + 1] = v[1]; d[i + 2] = v[2];

@@ -8,14 +8,11 @@
      기본 몸 → 얼굴 → 헤어 순서로 겹치면 어떤 조합이든 만들어진다
    - 믹스는 기준 색 그림 위에 믹스 색 그림을 비율만큼 섞는다
 
-   그림 출처는 _mxImgUrl 하나로 모아 뒀다. tools/mixdye_download.js로 받은 그림을
-   배포하게 되면 MX_LOCAL_BASE만 채우면 된다(파일 이름이 같다).
    ═══════════════════════════════════════════════════════════ */
 
 const MX_API = 'https://maplestory.io/api';
 const MX_SKIN = [2018, 12018];          // 뽀송 라벤더 피부
 const MX_OUTFIT = [1051539];            // Crimson Fate Topcoat — 바탕에만 입힌다(헤어·얼굴 층은 맨몸 기준으로 뽑음)
-const MX_LOCAL_BASE = '';               // 예: 'images/mixdye/' — 비워 두면 maplestory.io에서 받는다
 const MX_STORE = 'gms_mixdye';
 
 const MX_PARTS = {
@@ -96,8 +93,6 @@ function _mxFixColors(p) {
 
 /* ── 그림 ── */
 function _mxImgUrl(kind, id, view) {
-  const name = kind === 'base' || kind === 'outfit' ? `base/${kind}_${view}.png` : `${kind}/${id}_${view}.png`;
-  if (MX_LOCAL_BASE) return MX_LOCAL_BASE + name;
   const ids = kind === 'base' ? MX_SKIN : kind === 'outfit' ? [...MX_SKIN, ...MX_OUTFIT] : [...MX_SKIN, id];
   const list = JSON.stringify(ids.map(i => ({ itemId: i, version: window.MIXDYE_DATA.version })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;

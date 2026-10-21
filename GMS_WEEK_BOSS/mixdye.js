@@ -202,11 +202,11 @@ function _mxUrls() {
   if (_mxMatte()) {
     u.d = _mxRenderUrl(null, fb, v);
     if (fm !== fb) u.e = _mxRenderUrl(null, fm, v);
-    u.s = _mxSkinUrl(v);
   }
+  // 맨몸 그림: 무광 윤곽선 처리와 커스텀 피부 색 조절에서 피부가 보이는 자리를 찾는 용도
+  if (_mxMatte() || _mxIsCustom(_mxSkin().id)) u.s = _mxSkinUrl(v);
   return u;
 }
-// 맨몸 그림: 무광 머리 아래로 몸 윤곽선이 비치지 않게 윤곽선 위치를 찾는 용도
 function _mxSkinUrl(view) {
   const head = _mxSkin().id;
   const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
@@ -286,7 +286,8 @@ function _mxShift([r, g, b], sk) {
   return [f(h + 1 / 3), f(h), f(h - 1 / 3)];
 }
 
-// 바꿀 색 목록: 컬러라인은 파란 선, 그 밖의 커스텀 피부는 맨몸 그림에 쓰인 색에서 검정·흰색을 뺀 것
+// 컬러라인은 파란 선만, 그 밖의 커스텀 피부는 맨몸 그림과 같은 자리·같은 색인 픽셀만 바꾼다.
+// main은 색 견본에 쓰는 대표 색
 const _mxSkinColors = new Map();
 function _mxColorsOfSkin(id) {
   // 머리카락과 겹친 선은 파랑이 섞인 색으로 그려져서, 파랑이 뚜렷한 색을 모두 선으로 본다
@@ -307,8 +308,7 @@ function _mxColorsOfSkin(id) {
     const byCount = [...cnt].sort((x, y) => y[1] - x[1]);
     const top = byCount.find(vivid) || byCount[0];
     const main = top ? [top[0] >> 16, (top[0] >> 8) & 255, top[0] & 255] : [0, 0, 0];
-    const set = new Set(cnt.keys());
-    _mxSkinColors.set(id, { has: (r, g, b) => set.has((r << 16) | (g << 8) | b), main });
+    _mxSkinColors.set(id, { main });
     if (_mxSkin().id === id) _mxRender();
   }).catch(() => _mxSkinColors.delete(id));
   return null;
@@ -317,11 +317,14 @@ function _mxColorsOfSkin(id) {
 function _mxApplyLine(img) {
   const sk = _mxSkin();
   if (!_mxHasShift(sk)) return img;
-  const C = _mxColorsOfSkin(sk.id);
-  if (!C) return img;
-  const memo = new Map(), d = img.data;
+  const d = img.data, S = _mxCur && _mxCur.g.s && _mxCur.g.s.data.length === d.length ? _mxCur.g.s.data : null;
+  let has;
+  if (_mxIsLine(sk.id)) has = _mxColorsOfSkin(sk.id).has;
+  else if (S) has = (r, g, b, i) => S[i + 3] > 0 && S[i] === r && S[i + 1] === g && S[i + 2] === b && (r | g | b) !== 0 && (r & g & b) !== 255;
+  else return img;
+  const memo = new Map();
   for (let i = 0; i < d.length; i += 4) {
-    if (!C.has(d[i], d[i + 1], d[i + 2])) continue;
+    if (!has(d[i], d[i + 1], d[i + 2], i)) continue;
     const c = (d[i] << 16) | (d[i + 1] << 8) | d[i + 2];
     if (!memo.has(c)) memo.set(c, _mxShift([d[i], d[i + 1], d[i + 2]], sk));
     const v = memo.get(c);

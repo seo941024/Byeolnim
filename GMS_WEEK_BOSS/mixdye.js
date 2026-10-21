@@ -678,7 +678,10 @@ function initMixdye() {
         </div>
 
         <div class="card mx-combo">
-          <div class="card__title">현재 조합</div>
+          <div class="mx-combo__head">
+            <div class="card__title">현재 조합</div>
+            <button type="button" class="sbtn sbtn--ghost mx-reset" title="지금 성별 캐릭터의 헤어·성형·코디를 기본으로 되돌립니다">초기화</button>
+          </div>
           <div id="mxCombo"></div>
         </div>
       </div>
@@ -713,7 +716,9 @@ function initMixdye() {
     const chip = e.target.closest('.mx-chip');
     if (chip && !chip.disabled) { _mxPick(chip.dataset.role, +chip.dataset.i); return; }
     const off = e.target.closest('.mx-unwear');
-    if (off) { delete _mxWorn()[off.dataset.slot]; _mxRender(); }
+    if (off) { delete _mxWorn()[off.dataset.slot]; _mxRender(); return; }
+    // 지금 성별 캐릭터의 헤어·성형·코디를 처음 기본값으로 되돌린다(다른 성별은 그대로)
+    if (e.target.closest('.mx-reset')) { _mxState.chars[_mxState.g] = _mxChar(_mxState.g); _mxShowPart(); }
   });
   document.getElementById('mxRatio').addEventListener('input', e => {
     _mxState[_mxState.part].ratio = Number(e.target.value);

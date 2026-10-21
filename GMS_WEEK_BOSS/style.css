@@ -3537,3 +3537,79 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .sb-group.open .sb-group__list { display: flex; }
 .mu-ref { margin-top: 10px; font-size: .84rem; color: var(--text-sub); word-break: break-all; }
 .mu-ref a { color: var(--primary); text-decoration: underline; }
+
+/* ── 믹스염색 시뮬레이터 (mixdye.js) ──
+   왼쪽 목록 카드, 오른쪽 조절 카드 + 기준 원본·믹스 결과·믹스 원본 3칸 비교.
+   캐릭터 그림은 96×96 도트라 정수 배율 + pixelated로만 키운다(흐려지지 않게). */
+.mx-layout { display: grid; grid-template-columns: 320px minmax(0,1fr); gap: 16px; align-items: start; }
+.mx-browser { position: sticky; top: calc(var(--top-h) + 12px); display: flex; flex-direction: column; gap: 8px; padding: 14px; height: calc(100vh - var(--top-h) - 40px); min-height: 420px; }
+.mx-filter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 10px; font-size: .78rem; color: var(--text-sub); }
+.mx-check { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; }
+.mx-check input { accent-color: var(--primary); }
+.mx-list { flex: 1; min-height: 0; overflow-y: auto; position: relative; margin: 0 -6px; padding: 0 6px; }
+.mx-item { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border-radius: var(--radius); border: 1px solid transparent; text-align: left; }
+.mx-item:hover { background: var(--bg-hover); }
+.mx-item.active { background: var(--primary-l); border-color: var(--border-hl); }
+.mx-item__icon { width: 36px; height: 36px; object-fit: none; }
+.mx-item__text { display: flex; flex-direction: column; min-width: 0; }
+.mx-item__en { font-size: .86rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mx-item__ko { font-size: .74rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mx-empty { padding: 20px 8px; text-align: center; font-size: .82rem; color: var(--text-sub); }
+
+.mx-work { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.mx-sel { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; min-width: 0; }
+.mx-sel__icon { width: 44px; height: 44px; object-fit: none; flex: none; }
+.mx-sel__text { min-width: 0; }
+.mx-sel__name { font-size: 1.15rem; font-weight: 900; color: var(--text); overflow-wrap: anywhere; }
+.mx-sel__sub { font-size: .8rem; color: var(--text-sub); }
+.mx-row { display: grid; grid-template-columns: 72px minmax(0,1fr); align-items: center; gap: 8px 12px; }
+.mx-row + .mx-row { margin-top: 12px; }
+.mx-label { font-size: .8rem; font-weight: 800; color: var(--text-sub); }
+.mx-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.mx-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px; border-radius: var(--radius-pill); border: 1px solid var(--border); background: rgba(255,255,255,.04); color: var(--text-sub); font-size: .8rem; font-weight: 700; transition: border-color .15s, color .15s; }
+.mx-chip:hover:not(:disabled) { border-color: var(--border-hl); color: var(--text); }
+.mx-chip.active { border-color: var(--primary); background: var(--primary-l); color: var(--text); }
+.mx-chip:disabled { opacity: .3; cursor: default; }
+.mx-dot { width: 13px; height: 13px; border-radius: 50%; flex: none; box-shadow: inset 0 0 0 1px rgba(0,0,0,.25); }
+.mx-slider { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.mx-readout { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.mx-readout__val { font-size: 1.35rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
+.mx-readout__val span { margin: 0 5px; color: var(--text-dim); }
+.mx-tools { display: flex; flex-wrap: wrap; gap: 6px; }
+.mx-tools .sbtn { padding: 5px 11px; font-size: .78rem; }
+.mx-tools .sbtn:disabled { opacity: .4; cursor: default; }
+.mx-range { width: 100%; height: 26px; accent-color: var(--primary); }
+.mx-range:disabled { opacity: .4; }
+.mx-ends { display: flex; justify-content: space-between; gap: 8px; font-size: .76rem; color: var(--text-sub); }
+.mx-ends span { display: inline-flex; align-items: center; gap: 5px; }
+.mx-ends .mx-dot { width: 10px; height: 10px; }
+
+.mx-viewbar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.mx-viewtabs { margin-bottom: 0; }
+.mx-viewtabs .sf-tab { padding: 7px 20px; font-size: .84rem; }
+.mx-viewnote { font-size: .78rem; color: var(--text-sub); }
+
+.mx-compare { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr) minmax(0,1fr); gap: 12px; align-items: end; }
+.mx-card { padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.mx-card--result { border-color: var(--border-hl); }
+.mx-stage { position: relative; display: grid; place-items: center; border-radius: var(--radius); background: rgba(255,255,255,.05); border: 1px solid var(--border); padding: 8px 0; }
+.mx-stage canvas { max-width: 100%; height: auto; image-rendering: pixelated; }
+.mx-status { position: absolute; inset: 0; display: grid; place-content: center; justify-items: center; gap: 8px; border-radius: var(--radius); background: var(--panel-veil); font-size: .8rem; color: var(--text-sub); text-align: center; }
+.mx-status.is-error { color: var(--danger); font-weight: 700; }
+.mx-cap__title { font-size: .76rem; font-weight: 800; color: var(--text-sub); }
+.mx-cap__val, .mx-combo__val { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 7px; font-size: .86rem; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+.mx-combo .card__title { font-size: .95rem; margin-bottom: 10px; }
+.mx-combo__row { display: grid; grid-template-columns: 48px minmax(0,1fr); gap: 10px; align-items: center; }
+.mx-combo__row + .mx-combo__row { margin-top: 6px; }
+.mx-combo__val b { font-weight: 800; overflow-wrap: anywhere; }
+
+@media (max-width: 920px) {
+  .mx-layout { grid-template-columns: minmax(0,1fr); }
+  .mx-browser { position: static; height: auto; min-height: 0; }
+  .mx-list { flex: none; max-height: 40vh; }
+}
+@media (max-width: 768px) {
+  .mx-compare { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
+  .mx-card--result { grid-column: 1 / -1; order: -1; }
+  .mx-row { grid-template-columns: minmax(0,1fr); gap: 6px; }
+}

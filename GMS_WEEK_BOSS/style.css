@@ -3688,3 +3688,4 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-line-swatch { width: 40px; height: 22px; border-radius: var(--radius-sm); box-shadow: inset 0 0 0 1px rgba(255,255,255,.35); }
 .mx-line-reset { padding: 5px 12px; font-size: .78rem; }
 #mxLineBox .mx-row + .mx-row { margin-top: 10px; }
+.mx-notice { margin-top: -10px; color: var(--accent); }

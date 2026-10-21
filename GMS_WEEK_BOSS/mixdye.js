@@ -13,19 +13,21 @@
 
 const MX_API = 'https://maplestory.io/api';
 const MX_SKIN = [2018, 12018];          // 뽀송 라벤더 피부
-const MX_STORE = 'gms_mixdye';
+// 기본 헤어·성형·옷이 바뀌어(2026-10-21) 저장 키를 새로 해서 모두 새 기본값으로 시작한다
+const MX_STORE = 'gms_mixdye_v3';
 const MX_COORDI_DATA = 'data_coordi.js?v=20261021a';
 const MX_SEX = { f: { name: '여자', digit: 1 }, m: { name: '남자', digit: 0 } };   // digit: 아이템 ID 천의 자리 성별 값
 
 // 기본 상하의 — 한벌옷을 입으면 빠지고, 벗으면 돌아온다. 캐시 아이템이 아니라 코디 목록에 없어 이름을 여기 둔다
 const MX_BASIC = {
   f: { top: [1041046, 'Pink Tanktop'], bottom: [1061039, 'Pink Cotton Boxers'] },
-  m: { top: [1040006, 'Undershirt'], bottom: [1060027, 'Brown Corporal Pants'] },
+  m: { top: [1042162, 'Blue-Striped Undershirt'], bottom: [1062112, 'Underpants'] },
 };
 
 const MX_PARTS = {
   hair: {
-    key: 'hair', name: '헤어', word: '색', def: { f: 67190, m: 30000 },
+    // 기본: 여자 Cutie Hair 주황색, 남자 Toben Hair 검은색
+    key: 'hair', name: '헤어', word: '색', def: { f: [31000, 2], m: [30000, 0] },
     idOf: (s, c) => s + c,
     // 게임 원문 색 이름(헤어 이름 앞말). 3번은 옛 헤어에 Blonde로 남아 있지만 지금 인게임 표기는 Yellow.
     // 칩 색은 실제 헤어보다 진하게 잡아 서로 구분되게 했다
@@ -37,7 +39,8 @@ const MX_PARTS = {
     ],
   },
   face: {
-    key: 'face', name: '성형', word: '렌즈', def: { f: 21078, m: 20000 },
+    // 기본: 여자 Defiant Face 자주색(Amethyst) 렌즈, 남자 Defiant Face 파란 렌즈
+    key: 'face', name: '성형', word: '렌즈', def: { f: [21000, 7], m: [20000, 1] },
     idOf: (s, c) => s + c * 100,
     // 렌즈 이름은 일회용 렌즈 아이템 5152100~5152108의 원문(One-Time Cosmetic Lens (Black) 등)
     colors: [
@@ -50,12 +53,13 @@ const MX_PARTS = {
   },
 };
 
-const _mxBlank = (p, g) => ({ id: p.def[g], base: 0, mix: p.key === 'face' ? -1 : 1, ratio: 50, mixed: false, query: '' });
+const _mxBlank = (p, g) => ({ id: p.def[g][0], base: p.def[g][1], mix: -1, ratio: 50 });
 const _mxChar = g => ({ hair: _mxBlank(MX_PARTS.hair, g), face: _mxBlank(MX_PARTS.face, g), worn: {} });
 let _mxState = {
   part: 'hair', view: 'stand1', g: 'f',
   chars: { f: _mxChar('f'), m: _mxChar('m') },
-  coordi: { slot: 'hat', other: false, query: {} },
+  coordi: { slot: 'hat', other: false },
+  q: '',
 };
 // 헤어·성형 상태는 지금 고른 성별의 것을 가리킨다
 Object.defineProperty(_mxState, 'hair', { get() { return this.chars[this.g].hair; } });
@@ -92,7 +96,7 @@ const _mxIsBasic = (slot, id) => { const b = MX_BASIC[_mxState.g][slot]; return 
 
 function _mxSave() {
   try {
-    const pick = v => ({ id: v.id, base: v.base, mix: v.mix, ratio: v.ratio, mixed: v.mixed });
+    const pick = v => ({ id: v.id, base: v.base, mix: v.mix, ratio: v.ratio });
     const chars = {};
     for (const g of Object.keys(MX_SEX)) { const c = _mxState.chars[g]; chars[g] = { hair: pick(c.hair), face: pick(c.face), worn: c.worn }; }
     localStorage.setItem(MX_STORE, JSON.stringify({
@@ -121,7 +125,6 @@ function _mxLoad() {
         if (ok(v.base)) st.base = v.base;
         if (ok(v.mix) || v.mix === -1) st.mix = v.mix;
         if (v.ratio >= 1 && v.ratio <= 99) st.ratio = v.ratio;
-        st.mixed = !!v.mixed;
       }
       // 코디 아이템 ID는 목록을 받은 뒤 _mxCoordiReady에서 다시 확인한다
       if (src.worn && typeof src.worn === 'object') {
@@ -318,17 +321,15 @@ function _mxBuildSlotList(slot) {
 function _mxCurrentListKey() {
   return _mxState.part === 'coordi' ? `coordi-${_mxState.coordi.slot}` : `${_mxState.part}-${_mxState.g}`;
 }
-function _mxQuery() {
-  return _mxState.part === 'coordi' ? (_mxState.coordi.query[_mxState.coordi.slot] || '') : _mxState[_mxState.part].query;
-}
+// 성별 미확인 헤어·성형은 항상 보이고, 코디만 반대 성별 아이템을 체크박스로 켠다
 function _mxShowHidden() {
-  return _mxState.part === 'coordi' ? _mxState.coordi.other : _mxState[_mxState.part].mixed;
+  return _mxState.part === 'coordi' ? _mxState.coordi.other : true;
 }
 
 function _mxFilter() {
   const L = _mxLists[_mxCurrentListKey()];
   if (!L) return;
-  const q = _mxQuery().trim().toLowerCase(), q2 = q.replace(/\s+/g, '');
+  const q = _mxState.q.trim().toLowerCase(), q2 = q.replace(/\s+/g, '');
   const showHidden = _mxShowHidden();
   let shown = 0;
   for (const it of L.items) {
@@ -422,8 +423,10 @@ async function _mxShowPart() {
   const key = _mxCurrentListKey();
   for (const [k, L] of Object.entries(_mxLists)) L.box.style.display = k === key ? '' : 'none';
 
+  // 탭·부위·성별을 바꾸면 검색어는 비운다(고른 아이템은 그대로)
+  _mxState.q = '';
   const q = document.getElementById('mxSearch');
-  q.value = _mxQuery();
+  q.value = '';
   if (coordi) {
     q.placeholder = `${_mxSlotName(_mxState.coordi.slot)} 이름 또는 ID 검색`;
     document.getElementById('mxMixed').checked = _mxState.coordi.other;
@@ -432,8 +435,6 @@ async function _mxShowPart() {
   } else {
     const p = MX_PARTS[part];
     q.placeholder = `${p.name} 이름 또는 ID 검색`;
-    document.getElementById('mxMixed').checked = _mxState[part].mixed;
-    document.getElementById('mxMixedLabel').textContent = `성별 미확인 ${p.name} ${p.mixedCount}종 포함`;
     document.getElementById('mxBaseLabel').textContent = `기준 ${p.word}`;
     document.getElementById('mxMixLabel').textContent = `믹스 ${p.word}`;
     document.getElementById('mxTitleBase').textContent = `기준 ${p.word} 원본`;
@@ -586,7 +587,6 @@ function initMixdye() {
     for (const g of Object.keys(MX_SEX)) p.byIdBy[g] = new Map(p.rowsBy[g].map(r => [r[0], r]));
     Object.defineProperty(p, 'rows', { get: () => p.rowsBy[_mxState.g] });
     Object.defineProperty(p, 'byId', { get: () => p.byIdBy[_mxState.g] });
-    Object.defineProperty(p, 'mixedCount', { get: () => p.rowsBy[_mxState.g].filter(r => r[4]).length });
   }
   _mxLoad();
   for (const g of Object.keys(MX_SEX)) {
@@ -595,7 +595,7 @@ function initMixdye() {
       if (!p.byIdBy[g].has(st.id)) st.id = p.rowsBy[g][0][0];
     }
   }
-  const cnt = (p, g) => p.rowsBy[g].filter(r => !r[4]).length.toLocaleString();
+  const cnt = (p, g) => p.rowsBy[g].length.toLocaleString();
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
@@ -620,7 +620,7 @@ function initMixdye() {
         <div class="mx-slots mx-only-coordi" id="mxSlots"></div>
         <input class="inp" id="mxSearch" type="search" autocomplete="off" />
         <div class="mx-filter">
-          <label class="mx-check"><input type="checkbox" id="mxMixed" /><span id="mxMixedLabel"></span></label>
+          <label class="mx-check mx-only-coordi"><input type="checkbox" id="mxMixed" /><span id="mxMixedLabel"></span></label>
           <span id="mxCount"></span>
         </div>
         <div class="mx-lists" id="mxLists"></div>
@@ -701,13 +701,11 @@ function initMixdye() {
     _mxShowPart();
   });
   document.getElementById('mxSearch').addEventListener('input', e => {
-    if (_mxState.part === 'coordi') _mxState.coordi.query[_mxState.coordi.slot] = e.target.value;
-    else _mxState[_mxState.part].query = e.target.value;
+    _mxState.q = e.target.value;
     _mxFilter();
   });
   document.getElementById('mxMixed').addEventListener('change', e => {
-    if (_mxState.part === 'coordi') _mxState.coordi.other = e.target.checked;
-    else _mxState[_mxState.part].mixed = e.target.checked;
+    _mxState.coordi.other = e.target.checked;
     _mxFilter();
     _mxSave();
   });

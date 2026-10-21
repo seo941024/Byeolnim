@@ -97,7 +97,7 @@ const NAV_LABELS = {
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
   liberation: '해방 계산기', addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
-  mixdye: '믹스염색 시뮬레이터',
+  mixdye: '코디 시뮬레이터',
   bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',
 };
@@ -1795,6 +1795,10 @@ const NOTICE_LOG = [
         desc: 'Crimson Fate Topcoat 착용, 자료 출처 표기, 메뉴 아이콘을 마네킹으로 변경.',
       },
       {
+        head: '믹스염색 시뮬레이터 이름 변경',
+        desc: '"코디 시뮬레이터"로 이름 변경. 코디 아이템 착용 기능은 준비 중.',
+      },
+      {
         head: 'PC 사이드바 자동 숨김',
         desc: '화면 왼쪽 끝에 마우스를 대면 사이드바 표시. 사이드바의 "사이드바 고정" 버튼으로 항상 펼쳐 두기 가능.',
       },
@@ -1946,7 +1950,7 @@ const NOTICE_LOG = [
 // 카드에 보여줄 최근 며칠치. 너무 길어지면 읽지 않으므로 잘라서 보여준다.
 const NOTICE_SHOW_DAYS = 3;
 const NOTICE = {
-  id: '2026-10-21-mixdye-d',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
+  id: '2026-10-21-coordi-a',   // 이 값이 바뀌어야 이미 확인한 사람에게도 다시 뜬다
   title: '업데이트 안내',
   days: NOTICE_LOG.slice(0, NOTICE_SHOW_DAYS),
 };

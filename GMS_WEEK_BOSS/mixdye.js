@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   믹스염색 시뮬레이터 — 여자 헤어·성형의 기준 색과 믹스 색을 고르고 비율을 조절하면
+   코디 시뮬레이터 — 여자 헤어·성형의 기준 색과 믹스 색을 고르고 비율을 조절하면
    한 캐릭터에 헤어 믹스와 렌즈 믹스를 같이 입혀 보여 준다.
 
    그림은 부품별로 따로 받는다(조합을 미리 다 그릴 수 없어서):
@@ -372,7 +372,7 @@ function initMixdye() {
   if (!MX_PARTS.face.byId.has(_mxState.face.id)) _mxState.face.id = D.faces[0][0];
 
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">믹스염색 시뮬레이터</h2></div>
+    <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
     <p class="dt-help">여자 캐릭터 헤어 ${MX_PARTS.hair.femaleCount.toLocaleString()}종·성형 ${MX_PARTS.face.femaleCount.toLocaleString()}종의 믹스 염색과 믹스 렌즈를 미리 봅니다. 기준 색 위에 믹스 색을 비율만큼 겹쳐 그리는 방식이라 실제 게임 화면과 조금 다를 수 있습니다.</p>
     <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터와 캐릭터 렌더링을 사용하고 착용 규칙을 참고했습니다. 게임 그림의 권리는 NEXON에 있습니다.</p>
 

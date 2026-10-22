@@ -10,7 +10,9 @@
    - Hobby 요금제의 Blob 업로드 한도가 월 2,000건이라 아이템 100개를 파일 하나로 묶는다(약 300개)
    - 묶음 하나를 다 받을 때마다 올리고 진행 기록(manifest)도 갱신한다. 시간이 다 되면 진행 중인 묶음은
      버리고 멈춘다. 다음 실행은 manifest를 읽어 남은 묶음부터 이어 받는다
-   - 서버 부담을 줄이려고 한 번에 하나씩, 요청 사이에 0.5~1초를 쉰다 */
+   - 한 번에 하나씩 받고, 요청마다 0.5~1초를 쉰다. 2026-10-22 동시 5개로 시험했을 때 2개부터
+     요청 오류가 이어져서 1개로 고정했다. CONCURRENCY=3처럼 주면 그 수까지 올렸다 내렸다 한다.
+     오류가 나면 시각·주소·오류 내용을 기록에 남긴다 */
 
 const fs = require('fs');
 const path = require('path');
@@ -31,6 +33,20 @@ const TIME_BUDGET_MS = Number(process.env.TIME_BUDGET_MIN || 340) * 60000;   // 
 const started = Date.now();
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+// 동시 요청 수: 서버가 힘들어하면 줄이고, 괜찮으면 다시 올린다
+const LADDER = [1, 2, 3, 5].filter(n => n <= Number(process.env.CONCURRENCY || 1));
+let level = LADDER.length - 1, okStreak = 0;
+const conc = () => LADDER[level];
+function onTrouble(url, e, attempt) {
+  okStreak = 0;
+  const t = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+  console.log(`[${t}] 요청 오류 ${attempt + 1}번째 · ${e.message} · ${url.replace(API, '')}`);
+  if (level > 0) { level--; console.log(`요청 오류 — 동시 ${conc()}개로 줄임`); }
+}
+function onOk() {
+  if (++okStreak >= 200 && level < LADDER.length - 1) { level++; okStreak = 0; console.log(`안정적 — 동시 ${conc()}개로 올림`); }
+}
 const jitter = () => 500 + Math.random() * 500;
 const timeLeft = () => TIME_BUDGET_MS - (Date.now() - started);
 
@@ -55,9 +71,14 @@ async function fetchRetry(url, as) {
     try {
       const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
       if (r.status === 404) return null;
-      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      if (!r.ok) {
+        const ra = r.headers.get('retry-after');
+        throw new Error(`HTTP ${r.status}${ra ? ` · 다시 시도 권장 ${ra}초 뒤` : ''}`);
+      }
+      onOk();
       return as === 'buf' ? Buffer.from(await r.arrayBuffer()) : await r.json();
     } catch (e) {
+      onTrouble(url, e.name === 'AbortError' ? new Error('90초 동안 응답 없음') : e, attempt);
       if (attempt >= RETRY_WAITS.length) throw e;
       await sleep(RETRY_WAITS[attempt] * 1000);
     } finally {
@@ -128,7 +149,7 @@ async function getItem(id) {
 /* ── 저장소: 실제는 Vercel Blob, --dry면 로컬 폴더 ── */
 function makeStore() {
   if (DRY) {
-    const root = path.join(__dirname, '..', '..', 'coordi_local');
+    const root = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
     fs.mkdirSync(root, { recursive: true });
     fs.writeFileSync(path.join(root, '.gitignore'), '*' + String.fromCharCode(10));
     return {
@@ -155,7 +176,10 @@ function makeStore() {
   const store = makeStore();
   const chunks = toChunks(await buildTargets());
   const manifest = (await store.getManifest()) || { version: VERSION, chunk: CHUNK, done: {}, missing: [] };
+  // 남자 헤어·성형은 처음 요청받는 아이템이 많아 서버 오류가 잦아서 맨 뒤에 받는다. 묶음 이름은 그대로
+  const LAST = ['face_m', 'hair_m'];
   let todo = chunks.filter(c => !manifest.done[c.key]);
+  todo = [...todo.filter(c => !LAST.includes(c.part)), ...todo.filter(c => LAST.includes(c.part))];
   console.log(`묶음 ${chunks.length}개 중 남은 ${todo.length}개${DRY ? ' (업로드 없이 시험)' : ''}`);
   if (LIMIT) todo = todo.slice(0, 1).map(c => ({ ...c, ids: c.ids.slice(0, LIMIT) }));
 
@@ -173,22 +197,31 @@ function makeStore() {
   }
 
   for (const c of todo) {
-    const items = [];
-    for (const id of c.ids) {
-      if (timeLeft() < 3 * 60000) {
-        await store.put('manifest.json', JSON.stringify(manifest));
-        console.log(`시간이 다 돼서 멈춤 · 완료 묶음 ${Object.keys(manifest.done).length}/${chunks.length} · 진행 중이던 ${c.key}는 다음에 처음부터`);
-        return;
+    // 일꾼 5명이 묶음 안의 아이템을 나눠 받는다. 동시 개수가 줄면 번호가 큰 일꾼부터 쉰다
+    const got = new Array(c.ids.length);
+    let next = 0, outOfTime = false;
+    const worker = async w => {
+      while (next < c.ids.length && !outOfTime) {
+        if (w >= conc()) { await sleep(5000); continue; }
+        if (timeLeft() < 3 * 60000) { outOfTime = true; break; }
+        const k = next++, id = c.ids[k];
+        try {
+          got[k] = await getItem(id);
+          if (!got[k]) manifest.missing.push(id);
+        } catch (e) {
+          console.log(`${id} 실패 (${e.message}) — 이번 묶음에서는 빼고 진행`);
+          manifest.missing.push(id);
+        }
+        await sleep(jitter());
       }
-      try {
-        const it = await getItem(id);
-        if (it) items.push(it); else manifest.missing.push(id);
-      } catch (e) {
-        console.log(`${id} 실패 (${e.message}) — 이번 묶음에서는 빼고 진행`);
-        manifest.missing.push(id);
-      }
-      await sleep(jitter());
+    };
+    await Promise.all(LADDER.slice(-1).flatMap(n => Array.from({ length: n }, (_, w) => worker(w))));
+    if (outOfTime) {
+      await store.put('manifest.json', JSON.stringify(manifest));
+      console.log(`시간이 다 돼서 멈춤 · 완료 묶음 ${Object.keys(manifest.done).length}/${chunks.length} · 진행 중이던 ${c.key}는 다음에 처음부터`);
+      return;
     }
+    const items = got.filter(Boolean);
     const body = JSON.stringify({ part: c.part, items });
     await store.put(`${c.key}.json`, body);
     if (!LIMIT) manifest.done[c.key] = { n: items.length, bytes: body.length };

@@ -254,6 +254,18 @@ http.createServer(async (req, res) => {
     return;
   }
 
+  // ── 코디 시뮬레이터 층 데이터: GMS_Calc/coordi_local/ (git 제외). 배포에서는 Vercel Blob의 같은 경로 ──
+  if (u.pathname.startsWith('/coordi/v270/')) {
+    const local = path.join(ROOT, '..', 'coordi_local');
+    const file = path.join(local, decodeURIComponent(u.pathname.slice('/coordi/v270/'.length)));
+    if (!file.startsWith(local + path.sep) || path.extname(file) !== '.json') { res.writeHead(404); return res.end('Not found'); }
+    return fs.readFile(file, (err, data) => {
+      if (err) { res.writeHead(404); res.end('Not found'); return; }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(data);
+    });
+  }
+
   // ── 정적 파일 ──
   let url = u.pathname === '/' ? '/index.html' : u.pathname;
   const filePath = path.join(ROOT, decodeURIComponent(url));

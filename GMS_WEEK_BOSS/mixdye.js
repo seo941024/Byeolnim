@@ -162,16 +162,24 @@ function _mxFixColors(p) {
 }
 
 /* ── 그림 ── */
+// 받은 층 데이터로 그리는 장면이면 주소 대신 "layer:동작:ID들" 열쇠를 쓴다(mixdye_layer.js)
+let _mxUseLayer = false;
 // hairId가 null이면 머리 없이 그린다(무광 구간에서 머리 뒤를 알아내는 용도)
 function _mxRenderUrl(hairId, faceId, view) {
   const skin = _mxSkin().id;
-  const ids = [skin - 10000, skin, faceId, ...(hairId ? [hairId] : []), ...Object.values(_mxEffectiveWorn())];
-  const list = JSON.stringify(ids.map(i => ({ itemId: i, version: _mxVer() })));
+  const items = [faceId, ...(hairId ? [hairId] : []), ...Object.values(_mxEffectiveWorn())];
+  if (_mxUseLayer) return `layer:${view}:${items.join(',')}`;
+  const list = JSON.stringify([skin - 10000, skin, ...items].map(i => ({ itemId: i, version: _mxVer() })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;
 }
 
 const _mxPix = new Map();
 function _mxLoadPix(url) {
+  if (!_mxPix.has(url) && url.startsWith('layer:')) {
+    const [, view, ids] = url.split(':');
+    _mxPix.set(url, _mxLayerCompose(view, ids ? ids.split(',').map(Number) : [])
+      .catch(e => { _mxPix.delete(url); throw e; }));
+  }
   if (!_mxPix.has(url)) {
     _mxPix.set(url, new Promise((resolve, reject) => {
       const img = new Image();
@@ -208,6 +216,7 @@ function _mxUrls() {
   return u;
 }
 function _mxSkinUrl(view) {
+  if (_mxUseLayer) return `layer:${view}:`;
   const head = _mxSkin().id;
   const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1&px=1`;
@@ -362,13 +371,24 @@ function _mxDrawCards() {
   _mxPaint('mxCvMix', _mxCompose(g, onHair ? mixOn : tH, onHair ? tF : mixOn), 2);
 }
 
+// 이번 장면에 들어가는 아이템 전부: 헤어·렌즈의 기준·믹스 색, 입은 코디
+function _mxSceneIds() {
+  const H = MX_PARTS.hair, F = MX_PARTS.face, hs = _mxState.hair, fs = _mxState.face;
+  const ids = [H.idOf(hs.id, hs.base), F.idOf(fs.id, fs.base), ...Object.values(_mxEffectiveWorn())];
+  if (_mxMixOn(H)) ids.push(H.idOf(hs.id, hs.mix));
+  if (_mxMixOn(F)) ids.push(F.idOf(fs.id, fs.mix));
+  return ids;
+}
+
 async function _mxDraw() {
   const my = ++_mxToken;
+  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('불러오는 중<span class="mx-status__sub">처음 보는 조합은 시간이 조금 걸립니다</span>'); }, 150);
+  _mxUseLayer = await _mxLayerUsable(_mxSceneIds(), _mxState.view);
+  if (my !== _mxToken) { clearTimeout(slow); return; }
   const u = _mxUrls();
   const key = JSON.stringify(u);
   // 비율만 바뀌었으면 받은 그림으로 다시 섞기만 한다
-  if (_mxCur && _mxCur.key === key) { _mxDrawCards(); return; }
-  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('불러오는 중<span class="mx-status__sub">처음 보는 조합은 시간이 조금 걸립니다</span>'); }, 150);
+  if (_mxCur && _mxCur.key === key) { clearTimeout(slow); _mxSetStatus(''); _mxDrawCards(); return; }
   try {
     const names = Object.keys(u);
     const imgs = await Promise.all(names.map(k => _mxLoadPix(u[k])));

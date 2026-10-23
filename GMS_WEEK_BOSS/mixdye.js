@@ -382,7 +382,7 @@ function _mxSceneIds() {
 
 async function _mxDraw() {
   const my = ++_mxToken;
-  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('불러오는 중<span class="mx-status__sub">처음 보는 조합은 시간이 조금 걸립니다</span>'); }, 150);
+  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('데이터를 불러오는 중입니다'); }, 150);
   _mxUseLayer = await _mxLayerUsable(_mxSceneIds(), _mxState.view);
   if (my !== _mxToken) { clearTimeout(slow); return; }
   const u = _mxUrls();

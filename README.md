@@ -4,17 +4,19 @@
 
 **[byeolnim.vercel.app](https://byeolnim.vercel.app)** · 설치 없이 브라우저에서 사용, 홈 화면에 앱으로 설치 가능
 
-![코디 시뮬레이터](docs/images/coordi.png)
+![별님앱 기본 페이지](docs/images/home.png)
 
 ---
 
 ## 화면
 
-| 보스 정보 | 스타포스 시뮬레이터 |
+| 코디 시뮬레이터 | 보스 정보 |
 |---|---|
-| ![보스 정보](docs/images/bosshp.png) | ![스타포스 시뮬레이터](docs/images/starforce.png) |
-| **서버 상태** | **코디 시뮬레이터** |
-| ![서버 상태](docs/images/serverstatus.png) | 위 첫 화면 · 헤어 믹스 염색 Violet 70 : Blue 30, 한벌옷·망토·눈장식 착용 |
+| ![코디 시뮬레이터](docs/images/coordi.png) | ![보스 정보](docs/images/bosshp.png) |
+
+| 스타포스 시뮬레이터 | 서버 상태 |
+|---|---|
+| ![스타포스 시뮬레이터](docs/images/starforce.png) | ![서버 상태](docs/images/serverstatus.png) |
 
 ---
 
@@ -55,7 +57,7 @@
 | 메뉴 | 내용 |
 |---|---|
 | 보스 정보 | 보스별 난이도·HP 카드 |
-| 서버 상태 | 넥슨 공식 서버 상태·점검 정보 |
+| 서버 상태 | 월드·채널 상태와 점검 정보 |
 | 커뮤니티 | 게시판, 댓글, 사진 첨부 |
 | 메이플 운빨 디펜스 | Night Troupe 치트시트 한국어판 |
 
@@ -85,10 +87,10 @@
 
 ### 1. 외부 데이터 수집 파이프라인
 
-공식 API가 없는 넥슨 공개 엔드포인트를 주기적으로 조회·적재하고, 조회 시점에 가공하는 ELT 구조.
+GMS용 넥슨 공식 API 부재. 넥슨 홈페이지 랭킹·서버 상태 화면이 쓰는 인증 없는 엔드포인트 `www.nexon.com/api/maplestory/no-auth/...`를 주기적으로 조회·적재하고, 조회 시점에 가공하는 ELT 구조.
 
 ```
-[Extract]   api/_lib.js가 넥슨 공개 엔드포인트 조회
+[Extract]   api/_lib.js가 넥슨 홈페이지 no-auth 엔드포인트 조회
      ↓
 [Load]      가공 없이 Redis에 시간순 스냅샷 적재 · 레코드당 최근 N개만 유지하는 롤링 버퍼
      ↓
@@ -241,7 +243,7 @@ node GMS_WEEK_BOSS/serve.js
 
 ## 데이터 출처
 
-- 넥슨 공개 API · 랭킹, 서버 상태, 점검 정보
+- 넥슨 홈페이지 no-auth 엔드포인트 · 랭킹, 서버 상태, 점검 정보
 - [maplestory.io](https://maplestory.io) · 아이템 데이터, 캐릭터 렌더, 게임 그림
 - [jaehoom.cloud](https://jaehoom.cloud) · 스타포스 확률·비용 계산 로직
 - [Night Troupe](https://nighttroupe.netlify.app) · 메이플 운빨 디펜스 치트시트 원본

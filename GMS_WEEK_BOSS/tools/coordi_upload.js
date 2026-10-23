@@ -2,7 +2,8 @@
 
      BLOB_READ_WRITE_TOKEN=... node tools/coordi_upload.js
 
-   - 올리는 것: 색인 index.json, 규칙 rules.json, 색인에 든 묶음 전부. 남자 헤어·성형은 색인에서 빠져 올리지 않는다
+   - 올리는 것: 색인 index.json, 규칙 rules.json, 피부별 몸·머리 skins/*.json, 색인에 든 묶음 전부.
+     남자 헤어·성형은 색인에서 빠져 올리지 않는다
    - Hobby 요금제 업로드 한도가 월 2,000건이라 이미 올린 파일은 기록(coordi_local/.uploaded.json)을 보고 건너뛴다.
      내용이 바뀐 파일만 다시 올린다
    - 다 올리면 사이트에 넣을 주소를 coordi_local/blob_base.txt에 남긴다 */
@@ -21,7 +22,8 @@ const DONE_FILE = path.join(ROOT, '.uploaded.json');
   const { put } = require('@vercel/blob');
 
   const index = buildIndex();
-  const names = ['index.json', 'rules.json', ...Object.keys(index).map(k => `${k}.json`)];
+  const skins = fs.readdirSync(path.join(ROOT, 'skins')).filter(f => f.endsWith('.json')).map(f => `skins/${f}`);
+  const names = ['index.json', 'rules.json', ...skins, ...Object.keys(index).map(k => `${k}.json`)];
   const done = fs.existsSync(DONE_FILE) ? JSON.parse(fs.readFileSync(DONE_FILE, 'utf8')) : {};
   const hash = buf => crypto.createHash('sha1').update(buf).digest('hex');
   const todo = names.filter(n => done[n] !== hash(fs.readFileSync(path.join(ROOT, n))));

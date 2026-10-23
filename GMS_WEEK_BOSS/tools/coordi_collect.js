@@ -24,7 +24,11 @@ const CHUNK = 100;
 const VIEWS = ['stand1', 'ladder'];
 const SKIN = [2018, 12018];
 const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
+// 실패해도 아이템을 건너뛰지 않고 받을 때까지 다시 요청한다. 다시 요청하기 전 쉬는 시간은 마지막 값을 계속 쓴다
 const RETRY_WAITS = [5, 15, 45, 120, 300];
+// 응답 대기. 90초였는데 2026-10-23 남자 성형에서 무응답이 이어져 지수 결정으로 첫 대기를 10초로 줄였다.
+// 처음 요청받는 아이템은 서버가 그림을 만드느라 10초 넘게 걸릴 수 있어(측정 최대 61초) 다시 요청할수록 길게 기다린다
+const RESPONSE_TIMEOUTS_SEC = [10, 10, 30, 60, 90];
 
 const args = process.argv.slice(2);
 const DRY = args.includes('--local') || args.includes('--dry');
@@ -65,9 +69,11 @@ const PARTS = [
 ];
 
 async function fetchRetry(url, as) {
+  const at = (list, k) => list[Math.min(k, list.length - 1)];
   for (let attempt = 0; ; attempt++) {
     const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 90000);
+    const wait = at(RESPONSE_TIMEOUTS_SEC, attempt);
+    const timer = setTimeout(() => ctrl.abort(), wait * 1000);
     try {
       const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: ctrl.signal });
       if (r.status === 404) return null;
@@ -78,9 +84,8 @@ async function fetchRetry(url, as) {
       onOk();
       return as === 'buf' ? Buffer.from(await r.arrayBuffer()) : await r.json();
     } catch (e) {
-      onTrouble(url, e.name === 'AbortError' ? new Error('90초 동안 응답 없음') : e, attempt);
-      if (attempt >= RETRY_WAITS.length) throw e;
-      await sleep(RETRY_WAITS[attempt] * 1000);
+      onTrouble(url, e.name === 'AbortError' ? new Error(`${wait}초 동안 응답 없음`) : e, attempt);
+      await sleep(at(RETRY_WAITS, attempt) * 1000);
     } finally {
       clearTimeout(timer);
     }
@@ -205,13 +210,14 @@ function makeStore() {
         if (w >= conc()) { await sleep(5000); continue; }
         if (timeLeft() < 3 * 60000) { outOfTime = true; break; }
         const k = next++, id = c.ids[k];
+        // 요청 실패는 fetchRetry가 받을 때까지 다시 시도한다. 그 밖의 오류는 아이템을 빼지 않고 수집을 멈춘다
         try {
           got[k] = await getItem(id);
-          if (!got[k]) manifest.missing.push(id);
         } catch (e) {
-          console.log(`${id} 실패 (${e.message}) — 이번 묶음에서는 빼고 진행`);
-          manifest.missing.push(id);
+          console.log(`${id} 처리 오류 (${e.message}) — 아이템을 빼지 않으려고 수집을 멈춤. ${c.key}는 다음에 처음부터`);
+          throw e;
         }
+        if (!got[k]) manifest.missing.push(id);   // 404: maplestory.io에 데이터가 없는 아이템
         await sleep(jitter());
       }
     };

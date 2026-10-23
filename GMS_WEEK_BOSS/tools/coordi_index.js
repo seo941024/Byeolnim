@@ -12,7 +12,8 @@ const fs = require('fs');
 const path = require('path');
 
 const ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
-const SKIP_PARTS = ['hair_m', 'face_m'];
+// skins: 피부별 몸·머리 그림이라 아이템 묶음이 아니다. 사이트가 피부 ID로 바로 받는다
+const SKIP_PARTS = ['hair_m', 'face_m', 'skins'];
 
 function buildIndex() {
   const index = {};

@@ -1,11 +1,13 @@
 /* 코디 시뮬레이터가 받은 층 데이터로 캐릭터를 조립할 때 필요한 규칙·몸 그림을 받는다. 설계는 GMS_Calc/COORDI_DESIGN.md.
 
-     node tools/coordi_rules.js        GMS_Calc/coordi_local/에 rules.json, basic/000.json 저장
+     node tools/coordi_rules.js        GMS_Calc/coordi_local/에 rules.json, skins/*.json, basic/000.json 저장
 
-   - rules.json: zmap(층 앞뒤 순서), smap(층마다 차지하는 슬롯), 몸 2018·머리 12018의 앞모습·뒷모습 첫 프레임 층
+   - rules.json: zmap(층 앞뒤 순서), smap(층마다 차지하는 슬롯)
+   - skins/{머리 ID}.json: 피부마다 몸(머리 ID - 10000)·머리의 앞모습·뒷모습 첫 프레임 층. 피부 목록은 data_mixdye.js
      smap과 몸·머리 층은 아이템 API에 없어서 maplestory.io의 WZ 경로(/api/wz/GMS/270/...)에서 노드를 하나씩 읽는다
    - basic/000.json: 기본 상하의 4종. 캐시 아이템이 아니라 coordi_collect.js 목록에 없어서 같은 형식으로 따로 받는다
-   - 요청은 한 번에 하나, 사이에 0.3초 쉰다. 받은 노드는 coordi_local/.wz_cache.json에 남겨 다시 돌릴 때 요청하지 않는다 */
+   - 요청은 한 번에 하나, 사이에 0.3초 쉰다. 받은 노드는 coordi_local/.wz_cache.json에 남겨 다시 돌릴 때 요청하지 않는다.
+     요청이 실패하면 아무것도 빼지 않고 받을 때까지 다시 요청한다 */
 
 const fs = require('fs');
 const path = require('path');
@@ -14,7 +16,6 @@ const API = 'https://maplestory.io/api';
 const VERSION = '270';
 const WZ = `${API}/wz/GMS/${VERSION}/`;
 const VIEWS = ['stand1', 'ladder'];
-const SKIN = [2018, 12018];
 // 귀 모양은 렌더 기본값(showEars 등 false)과 같이 사람 귀(humanEar)만 쓴다
 const SKIP_EARS = ['ear', 'lefEar', 'highlefEar'];
 const BASIC = [1041046, 1061039, 1042162, 1062112];
@@ -24,23 +25,27 @@ const ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'c
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const CACHE_FILE = path.join(ROOT, '.wz_cache.json');
 const cache = fs.existsSync(CACHE_FILE) ? JSON.parse(fs.readFileSync(CACHE_FILE, 'utf8')) : {};
+let unsaved = 0;
+const saveCache = () => { fs.writeFileSync(CACHE_FILE, JSON.stringify(cache)); unsaved = 0; };
 
 async function getJson(url) {
   for (let attempt = 0; ; attempt++) {
     try {
-      const r = await fetch(url, { headers: { 'User-Agent': UA } });
+      const r = await fetch(url, { headers: { 'User-Agent': UA }, signal: AbortSignal.timeout(90000) });
       if (r.status === 404) return null;
       if (r.ok) { await sleep(300); return r.json(); }
       throw new Error(`HTTP ${r.status}`);
     } catch (e) {
       console.log(`요청 오류 ${attempt + 1}번째 · ${e.message} · ${url.replace(API, '')}`);
-      if (attempt >= 5) throw e;
-      await sleep(5000 * (attempt + 1));
+      await sleep(Math.min(5000 * (attempt + 1), 60000));
     }
   }
 }
 async function wz(p) {
-  if (!(p in cache)) { cache[p] = await getJson(WZ + p); fs.writeFileSync(CACHE_FILE, JSON.stringify(cache)); }
+  if (!(p in cache)) {
+    cache[p] = await getJson(WZ + p);
+    if (++unsaved >= 25) saveCache();
+  }
   return cache[p];
 }
 
@@ -99,17 +104,28 @@ async function getItem(id) {
   const smap = {};
   for (const k of sm.children) smap[k] = (await wz(`Base/smap.img/${encodeURIComponent(k)}`)).value;
   const zmap = await getJson(`${API}/GMS/${VERSION}/zmap`);
-  const body = {};
-  for (const view of VIEWS) {
-    body[view] = [];
-    for (const id of SKIN) body[view].push(...await frameLayers(String(id).padStart(8, '0') + '.img', view));
+
+  const window = {};
+  new Function('window', fs.readFileSync(path.join(__dirname, '..', 'data_mixdye.js'), 'utf8'))(window);
+  fs.mkdirSync(path.join(ROOT, 'skins'), { recursive: true });
+  for (const [head, name] of window.MIXDYE_DATA.skins) {
+    const skin = [head - 10000, head], f = {};
+    for (const view of VIEWS) {
+      f[view] = [];
+      for (const id of skin) f[view].push(...await frameLayers(String(id).padStart(8, '0') + '.img', view));
+    }
+    fs.writeFileSync(path.join(ROOT, 'skins', `${head}.json`), JSON.stringify({ skin, f }));
+    console.log(`skins/${head}.json · ${name} · ${VIEWS.map(v => `${v} ${f[v].length}층`).join(', ')}`);
   }
-  fs.writeFileSync(path.join(ROOT, 'rules.json'), JSON.stringify({ version: VERSION, skin: SKIN, zmap, smap, body }));
-  console.log(`rules.json · smap ${Object.keys(smap).length}개 · 몸 층 ${VIEWS.map(v => `${v} ${body[v].length}`).join(', ')}`);
+  saveCache();
+  // body: 기본 피부 몸·머리. 피부별 파일 전에 배포된 사이트 코드가 Blob의 rules.json에서 이 값을 읽는다
+  const body = JSON.parse(fs.readFileSync(path.join(ROOT, 'skins', '12018.json'), 'utf8')).f;
+  fs.writeFileSync(path.join(ROOT, 'rules.json'), JSON.stringify({ version: VERSION, zmap, smap, body }));
+  console.log(`rules.json · smap ${Object.keys(smap).length}개`);
 
   const items = [];
   for (const id of BASIC) items.push(await getItem(id));
   fs.mkdirSync(path.join(ROOT, 'basic'), { recursive: true });
   fs.writeFileSync(path.join(ROOT, 'basic', '000.json'), JSON.stringify({ part: 'basic', items }));
   console.log(`basic/000.json · ${items.map(x => x.n).join(', ')}`);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => { saveCache(); console.error(e); process.exit(1); });

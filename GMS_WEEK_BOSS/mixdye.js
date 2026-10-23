@@ -162,13 +162,13 @@ function _mxFixColors(p) {
 }
 
 /* ── 그림 ── */
-// 받은 층 데이터로 그리는 장면이면 주소 대신 "layer:동작:ID들" 열쇠를 쓴다(mixdye_layer.js)
+// 받은 층 데이터로 그리는 장면이면 주소 대신 "layer:동작:피부:ID들" 열쇠를 쓴다(mixdye_layer.js)
 let _mxUseLayer = false;
 // hairId가 null이면 머리 없이 그린다(무광 구간에서 머리 뒤를 알아내는 용도)
 function _mxRenderUrl(hairId, faceId, view) {
   const skin = _mxSkin().id;
   const items = [faceId, ...(hairId ? [hairId] : []), ...Object.values(_mxEffectiveWorn())];
-  if (_mxUseLayer) return `layer:${view}:${items.join(',')}`;
+  if (_mxUseLayer) return `layer:${view}:${skin}:${items.join(',')}`;
   const list = JSON.stringify([skin - 10000, skin, ...items].map(i => ({ itemId: i, version: _mxVer() })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;
 }
@@ -176,8 +176,8 @@ function _mxRenderUrl(hairId, faceId, view) {
 const _mxPix = new Map();
 function _mxLoadPix(url) {
   if (!_mxPix.has(url) && url.startsWith('layer:')) {
-    const [, view, ids] = url.split(':');
-    _mxPix.set(url, _mxLayerCompose(view, ids ? ids.split(',').map(Number) : [])
+    const [, view, skin, ids] = url.split(':');
+    _mxPix.set(url, _mxLayerCompose(view, Number(skin), ids ? ids.split(',').map(Number) : [])
       .catch(e => { _mxPix.delete(url); throw e; }));
   }
   if (!_mxPix.has(url)) {
@@ -216,8 +216,8 @@ function _mxUrls() {
   return u;
 }
 function _mxSkinUrl(view) {
-  if (_mxUseLayer) return `layer:${view}:`;
   const head = _mxSkin().id;
+  if (_mxUseLayer) return `layer:${view}:${head}:`;
   const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
   return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1&px=1`;
 }

@@ -2,7 +2,7 @@
    코디 시뮬레이터 — 받은 층 데이터로 캐릭터 조립. 설계는 GMS_Calc/COORDI_DESIGN.md.
    mixdye.js가 maplestory.io 렌더 대신 이 조립 결과를 쓴다. 같은 96×96 크기·같은 자리라 섞는 방식은 그대로다.
 
-   데이터: tools/coordi_collect.js(아이템 층 묶음), tools/coordi_rules.js(rules.json, 기본 상하의),
+   데이터: tools/coordi_collect.js(아이템 층 묶음), tools/coordi_rules.js(rules.json, 피부별 몸·머리, 기본 상하의),
    tools/coordi_index.js(index.json). 로컬 서버는 GMS_Calc/coordi_local/을 coordi/v270/ 주소로 내보낸다.
 
    규칙은 maplestory.io 렌더와 픽셀 비교로 맞췄다(2026-10-23, 무작위 코디 14조합 앞뒤 + 개별 표본):
@@ -26,12 +26,13 @@ const MX_LAYER_LADDER_HIDE = ['face', 'accessoryEye', 'accessoryEyeBelowFace', '
 let _mxLayer = null;          // { rules, zi, where: 아이템 ID → 묶음 이름 }, 쓸 수 없으면 false
 let _mxLayerInitP = null;
 const _mxLayerChunks = new Map();   // 묶음 이름 → Promise<Map(ID → 아이템)>
+const _mxLayerSkins = new Map();    // 피부 머리 ID → Promise<{ skin, f: 동작별 몸·머리 층 }>
 const _mxLayerImgs = new WeakMap(); // 층 → Promise<Image>
 
 function _mxLayerInit() {
   if (!_mxLayerInitP && !MX_LAYER_BASE) { _mxLayer = false; _mxLayerInitP = Promise.resolve(); }
   if (!_mxLayerInitP) {
-    const get =name => fetch(MX_LAYER_BASE + name).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+    const get = name => fetch(MX_LAYER_BASE + name).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
     _mxLayerInitP = Promise.all([get('index.json'), get('rules.json')]).then(([index, rules]) => {
       const where = new Map();
       for (const [key, deltas] of Object.entries(index)) {
@@ -55,6 +56,15 @@ function _mxLayerChunk(key) {
   return _mxLayerChunks.get(key);
 }
 
+function _mxLayerSkin(head) {
+  if (!_mxLayerSkins.has(head)) {
+    _mxLayerSkins.set(head, fetch(`${MX_LAYER_BASE}skins/${head}.json`)
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .catch(e => { _mxLayerSkins.delete(head); throw e; }));
+  }
+  return _mxLayerSkins.get(head);
+}
+
 async function _mxLayerItem(id) {
   const key = _mxLayer && _mxLayer.where.get(id);
   if (!key) throw new Error(`층 데이터 없음 ${id}`);
@@ -73,14 +83,14 @@ const _mxLayerVisible = (it, view) => (it.f[view] || []).some(l => { const [w, h
 
 /* 이번 그림을 받은 데이터로 그릴 수 있는지. 하나라도 안 되면 그 장면은 전부 렌더로 그린다 —
    A·B·C 그림의 다른 픽셀을 섞는 방식이라 한 장면 안에서 그리는 방법이 섞이면 안 된다
-   - 남자 헤어는 아직 수집 중이라 렌더를 쓴다
-   - 몸 그림은 기본 피부(뽀송 라벤더)만 받았다 */
+   - 남자 캐릭터는 렌더를 쓴다
+   - 몸 그림은 data_mixdye.js 피부 목록의 피부마다 받았다(skins/{머리 ID}.json) */
 async function _mxLayerUsable(ids, view) {
-  if (_mxState.g === 'm' || _mxSkin().id !== MX_DEFAULT_SKIN) return false;
+  if (_mxState.g === 'm') return false;
   await _mxLayerInit();
   if (!_mxLayer || ids.some(id => !_mxLayer.where.has(id))) return false;
   try {
-    const items = await Promise.all(ids.map(_mxLayerItem));
+    const [items] = await Promise.all([Promise.all(ids.map(_mxLayerItem)), _mxLayerSkin(_mxSkin().id)]);
     return items.every(it => _mxLayerVisible(it, view));
   } catch (e) { return false; }
 }
@@ -97,14 +107,14 @@ function _mxLayerImg(layer) {
   return _mxLayerImgs.get(layer);
 }
 
-// ids: 얼굴, 헤어, 코디 순서(렌더 요청과 같은 순서). 결과는 렌더와 같은 96×96 ImageData
-async function _mxLayerCompose(view, ids) {
+// head: 피부 머리 ID, ids: 얼굴, 헤어, 코디 순서(렌더 요청과 같은 순서). 결과는 렌더와 같은 96×96 ImageData
+async function _mxLayerCompose(view, head, ids) {
   await _mxLayerInit();
   if (!_mxLayer) throw new Error('층 데이터 없음');
   const { rules, zi } = _mxLayer;
-  const items = await Promise.all(ids.map(_mxLayerItem));
+  const [items, skin] = await Promise.all([Promise.all(ids.map(_mxLayerItem)), _mxLayerSkin(head)]);
 
-  const layers = rules.body[view].map(l => ({ l, rank: -1, v: [] }));
+  const layers = skin.f[view].map(l => ({ l, rank: -1, v: [] }));
   items.forEach((it, rank) => {
     for (const l of it.f[view] || []) {
       if (view === 'ladder' && MX_LAYER_LADDER_HIDE.includes(l[0])) continue;

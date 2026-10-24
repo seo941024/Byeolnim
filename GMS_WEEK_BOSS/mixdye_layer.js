@@ -17,7 +17,8 @@
 // 로컬 서버는 coordi_local을 같은 경로로 내보낸다. 배포 사이트는 Vercel Blob 공개 주소 —
 // tools/coordi_upload.js가 올린 뒤 coordi_local/blob_base.txt에 남기는 값. 비어 있으면 렌더만 쓴다
 const MX_LAYER_BLOB = 'https://pnbtdlwh1exmuwbj.public.blob.vercel-storage.com/coordi/v270/';
-const MX_LAYER_BASE = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'coordi/v270/' : MX_LAYER_BLOB;
+// 시험 브랜치 coordi-static-test: 배포 사이트도 저장소에 넣은 정적 파일 GMS_WEEK_BOSS/coordi/v270/을 읽는다
+const MX_LAYER_BASE = 'coordi/v270/';
 // maplestory.io 96×96 렌더에서 몸 기준점(배꼽 기준 원점)이 놓이는 자리 — 렌더와 픽셀 비교로 확인
 const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };
 const MX_LAYER_SIZE = 96;

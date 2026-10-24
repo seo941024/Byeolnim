@@ -1,6 +1,6 @@
 /* ═══════════════════════════════════════════════
    코디 시뮬레이터 — 받은 층 데이터로 캐릭터 조립. 설계는 GMS_Calc/COORDI_DESIGN.md.
-   mixdye.js가 maplestory.io 렌더 대신 이 조립 결과를 쓴다. 같은 96×96 크기·같은 자리라 섞는 방식은 그대로다.
+   mixdye.js의 그림은 전부 이 조립 결과다. maplestory.io에 요청하지 않는다. 원래 쓰던 렌더와 같은 96×96 크기·같은 자리다.
 
    데이터: tools/coordi_collect.js(아이템 층 묶음), tools/coordi_rules.js(rules.json, 피부별 몸·머리, 기본 상하의),
    tools/coordi_index.js(index.json). tools/coordi_publish.js가 GMS_Calc/coordi_local/에서 이 저장소의
@@ -12,7 +12,7 @@
      같은 슬롯을 여러 아이템이 차지하면 목록에서 나중 아이템이 가진다(렌더도 요청 순서를 따른다)
    - 뒷모습에서는 얼굴과 일부 얼굴·눈 장식 층을 숨긴다(MX_LAYER_LADDER_HIDE)
    - 차이 나는 곳: 아이템 효과(날개·따라다니는 동물 등)는 수집하지 않아 그리지 못한다.
-     효과만 있는 아이템은 렌더를 쓴다(_mxLayerUsable)
+     효과만 있는 아이템과 층 데이터가 없는 아이템은 목록에서 "데이터 없음"으로 막는다(_mxAvail)
    ═══════════════════════════════════════════════════════════ */
 
 // 같은 사이트의 정적 파일. 2026-10-24 Vercel Blob에서 옮김 — 업로드 단계 없이 커밋만으로 배포되고,
@@ -71,28 +71,6 @@ async function _mxLayerItem(id) {
   const it = (await _mxLayerChunk(key)).get(id);
   if (!it) throw new Error(`층 데이터 없음 ${id}`);
   return it;
-}
-
-// PNG 머리말에서 크기만 읽는다. 효과만 있는 아이템은 1×1 빈 그림 층만 들고 있다
-const _mxLayerDim = b64 => {
-  const s = atob(b64.slice(0, 32));
-  const u = k => ((s.charCodeAt(k) << 24) | (s.charCodeAt(k + 1) << 16) | (s.charCodeAt(k + 2) << 8) | s.charCodeAt(k + 3)) >>> 0;
-  return [u(16), u(20)];
-};
-const _mxLayerVisible = (it, view) => (it.f[view] || []).some(l => { const [w, h] = _mxLayerDim(l[4]); return w * h > 1; });
-
-/* 이번 그림을 받은 데이터로 그릴 수 있는지. 하나라도 안 되면 그 장면은 전부 렌더로 그린다 —
-   A·B·C 그림의 다른 픽셀을 섞는 방식이라 한 장면 안에서 그리는 방법이 섞이면 안 된다
-   - 남자 캐릭터는 렌더를 쓴다
-   - 몸 그림은 data_mixdye.js 피부 목록의 피부마다 받았다(skins/{머리 ID}.json) */
-async function _mxLayerUsable(ids, view) {
-  if (_mxState.g === 'm') return false;
-  await _mxLayerInit();
-  if (!_mxLayer || ids.some(id => !_mxLayer.where.has(id))) return false;
-  try {
-    const [items] = await Promise.all([Promise.all(ids.map(_mxLayerItem)), _mxLayerSkin(_mxSkin().id)]);
-    return items.every(it => _mxLayerVisible(it, view));
-  } catch (e) { return false; }
 }
 
 function _mxLayerImg(layer) {
@@ -160,28 +138,33 @@ async function _mxLayerCompose(view, head, ids) {
 
 /* ── 목록 아이콘 ──
    tools/coordi_icons.js가 받은 층 데이터로 미리 그린 그림 묶음. 목록마다 44×44 칸을 20×20으로 모은 그림이고,
-   img의 object-position으로 한 칸만 보여 준다. 그림이 없는 아이템만 maplestory.io 아이콘을 쓴다 */
-let _mxIcons = null, _mxIconsP = null;   // { cell, grid, lists: 목록 이름 → { at: 줄 ID → 칸 번호, sheets } }, 쓸 수 없으면 false
+   img의 object-position으로 한 칸만 보여 준다. avail은 층 데이터가 있는 색·아이템 */
+let _mxIcons = null, _mxIconsP = null;   // { cell, grid, lists: 목록 이름 → { at: 줄 ID → 칸 번호, avail: 줄 ID → 색 비트, sheets } }, 못 받으면 false
 function _mxIconsLoad() {
   if (!_mxIconsP) {
     _mxIconsP = fetch(`${MX_LAYER_BASE}icons.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
       const lists = {};
       for (const [name, L] of Object.entries(d.lists)) {
-        const at = new Map(), empty = new Set(L.empty);
+        const at = new Map(), avail = new Map(), empty = new Set(L.empty);
         let id = 0;
-        L.ids.forEach((dlt, k) => { id += dlt; if (!empty.has(k)) at.set(id, k); });
-        lists[name] = { at, sheets: L.sheets };
+        L.ids.forEach((dlt, k) => { id += dlt; avail.set(id, L.avail[k]); if (!empty.has(k)) at.set(id, k); });
+        lists[name] = { at, avail, sheets: L.sheets };
       }
       _mxIcons = { cell: d.cell, grid: d.grid, lists };
     }).catch(() => { _mxIcons = false; });
   }
   return _mxIconsP;
 }
-// box: 보여 줄 크기. 목록 36, 선택 카드 44. 아이콘은 칸 가운데 36×36 안에 그려져 있다
-function _mxPutIcon(img, list, id, fallback, box) {
+// 층 데이터가 있는 색 비트. 헤어·성형은 색 순서, 코디·피부는 있으면 1. 목록 정보를 못 받았으면 전부 있다고 본다
+function _mxAvail(list, id) {
+  const L = _mxIcons && _mxIcons.lists[list];
+  return L ? L.avail.get(id) || 0 : -1;
+}
+// box: 보여 줄 크기. 목록 36, 선택 카드 44. 아이콘은 칸 가운데 36×36 안에 그려져 있다. 아이콘이 없으면 비워 둔다
+function _mxPutIcon(img, list, id, box) {
   const L = _mxIcons && _mxIcons.lists[list], k = L ? L.at.get(id) : undefined;
-  img.style.visibility = '';
-  if (k === undefined) { img.style.objectPosition = ''; img.src = fallback; return; }
+  img.style.visibility = k === undefined ? 'hidden' : '';
+  if (k === undefined) return;
   const { cell, grid } = _mxIcons, per = grid * grid, c = k % per, pad = (cell - box) / 2;
   img.style.objectPosition = `${-((c % grid) * cell + pad)}px ${-(Math.floor(c / grid) * cell + pad)}px`;
   img.src = `${MX_LAYER_BASE}icons/${L.sheets[Math.floor(k / per)]}`;

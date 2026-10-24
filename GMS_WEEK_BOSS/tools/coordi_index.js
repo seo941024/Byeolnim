@@ -3,8 +3,7 @@
      node tools/coordi_index.js        GMS_Calc/coordi_local/index.json 저장
 
    - 수집이 진행되면 다시 돌려서 새 묶음을 넣는다
-   - 남자 헤어·성형 묶음은 넣지 않는다. 남자 캐릭터는 maplestory.io 렌더로 그려서 쓰지 않고,
-     성별 미확인 헤어처럼 여자 묶음에도 있는 아이템이 남자 묶음을 가리키지 않게 한다
+   - 남자 헤어·성형 묶음도 넣는다. 성별 미확인 헤어처럼 양쪽 묶음에 있는 아이템은 나중 묶음을 가리킨다
    - 형식: { 묶음 이름: [첫 ID, 이어지는 ID와의 차이...] }. 차이로 적어 크기를 줄인다
    - coordi_publish.js가 buildIndex로 같은 색인을 만들어 사이트 폴더로 옮긴다 */
 
@@ -13,7 +12,7 @@ const path = require('path');
 
 const ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
 // skins: 피부별 몸·머리 그림이라 아이템 묶음이 아니다. 사이트가 피부 ID로 바로 받는다
-const SKIP_PARTS = ['hair_m', 'face_m', 'skins'];
+const SKIP_PARTS = ['skins'];
 
 function buildIndex() {
   const index = {};

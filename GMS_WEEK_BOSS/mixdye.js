@@ -2,16 +2,16 @@
    코디 시뮬레이터 — 캐릭터 성별을 고르고 헤어·성형의 믹스 염색·믹스 렌즈와 코디 아이템 착용을
    한 캐릭터에 같이 입혀 보여 준다. 탭: 헤어 | 성형 | 코디
 
-   그림은 maplestory.io 캐릭터 렌더로 받는다. 입고 있는 코디까지 전부 넣은 완성 그림 3장:
+   그림은 받아 둔 층 데이터로 조립한다(mixdye_layer.js). maplestory.io는 쓰지 않는다. 입고 있는 코디까지 전부 넣은 완성 그림 3장:
    - A: 기준 헤어 + 기준 렌즈, B: 믹스 헤어 + 기준 렌즈, C: 기준 헤어 + 믹스 렌즈
    - A와 B가 다른 픽셀이 헤어, A와 C가 다른 픽셀이 눈이라 그 픽셀만 비율만큼 섞는다
-   - 모자에 머리가 눌리는 것 같은 착용 규칙은 렌더가 처리한다
-   비율만 바꿀 때는 받은 그림으로 다시 섞기만 해서 요청이 없다.
+   - 모자에 머리가 눌리는 것 같은 착용 규칙은 조립 단계에서 처리한다
+   비율만 바꿀 때는 만든 그림으로 다시 섞기만 한다.
+   층 데이터가 없는 헤어·성형 색과 코디 아이템은 "데이터 없음"으로 표시하고 고를 수 없게 한다.
 
    성별마다 헤어·성형·코디 선택을 따로 기억한다(_mxState.chars.f / .m).
    ═══════════════════════════════════════════════════════════ */
 
-const MX_API = 'https://maplestory.io/api';
 const MX_DEFAULT_SKIN = 12018;          // 뽀송 라벤더 피부. 몸 ID는 머리 ID - 10000
 // 커스텀 뽀송 라벤더 컬러라인 피부: 게임에서 선 색을 색조·채도·명도로 바꿀 수 있는 유일한 피부.
 // 원본 그림의 선은 순수한 파란색(0,0,255)이고, 그 픽셀만 바꿔 그린다
@@ -78,7 +78,8 @@ let _mxLists = {};
 
 /* ── 작은 도우미 ── */
 const _mxHas = (r, c) => (r[3] >> c) & 1;
-const _mxColorsOf = (p, r) => p.colors.map((_, c) => c).filter(c => _mxHas(r, c));
+// 층 데이터가 있는 색만. 데이터 정보는 mixdye_layer.js _mxAvail
+const _mxColorsOf = (p, r) => p.colors.map((_, c) => c).filter(c => _mxHas(r, c) && (_mxAvail(`${p.key}-${_mxState.g}`, r[0]) >> c & 1));
 const _mxRow = p => p.byId.get(_mxState[p.key].id);
 const _mxSingle = (p, r) => _mxColorsOf(p, r).length < 2;
 // 믹스 색 -1은 믹스 안 함
@@ -86,8 +87,6 @@ const _mxMixOn = p => !_mxSingle(p, _mxRow(p)) && _mxState[p.key].mix >= 0;
 const _mxDot = c => `<span class="mx-dot" style="background:${c.sw}"></span>`;
 const _mxEsc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
 const _mxVer = () => window.MIXDYE_DATA.version;
-const _mxItemIcon = id => `${MX_API}/GMS/${_mxVer()}/item/${id}/icon`;
-const _mxIcon = (p, r) => _mxItemIcon(p.idOf(r[0], _mxColorsOf(p, r)[0]));
 const _mxCD = () => window.COORDI_DATA;
 const _mxSlotName = key => (_mxCD()?.parts.find(p => p.key === key) || {}).name || ({ top: '상의', bottom: '하의' }[key] || key);
 const _mxWorn = () => _mxState.chars[_mxState.g].worn;
@@ -162,42 +161,21 @@ function _mxFixColors(p) {
 }
 
 /* ── 그림 ── */
-// 받은 층 데이터로 그리는 장면이면 주소 대신 "layer:동작:피부:ID들" 열쇠를 쓴다(mixdye_layer.js)
-let _mxUseLayer = false;
+// 그림 하나를 "동작:피부:ID들" 열쇠로 부른다. 같은 열쇠는 한 번만 조립한다(mixdye_layer.js)
 // hairId가 null이면 머리 없이 그린다(무광 구간에서 머리 뒤를 알아내는 용도)
 function _mxRenderUrl(hairId, faceId, view) {
-  const skin = _mxSkin().id;
   const items = [faceId, ...(hairId ? [hairId] : []), ...Object.values(_mxEffectiveWorn())];
-  if (_mxUseLayer) return `layer:${view}:${skin}:${items.join(',')}`;
-  const list = JSON.stringify([skin - 10000, skin, ...items].map(i => ({ itemId: i, version: _mxVer() })));
-  return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`;
+  return `${view}:${_mxSkin().id}:${items.join(',')}`;
 }
 
 const _mxPix = new Map();
-function _mxLoadPix(url) {
-  if (!_mxPix.has(url) && url.startsWith('layer:')) {
-    const [, view, skin, ids] = url.split(':');
-    _mxPix.set(url, _mxLayerCompose(view, Number(skin), ids ? ids.split(',').map(Number) : [])
-      .catch(e => { _mxPix.delete(url); throw e; }));
+function _mxLoadPix(key) {
+  if (!_mxPix.has(key)) {
+    const [view, skin, ids] = key.split(':');
+    _mxPix.set(key, _mxLayerCompose(view, Number(skin), ids ? ids.split(',').map(Number) : [])
+      .catch(e => { _mxPix.delete(key); throw e; }));
   }
-  if (!_mxPix.has(url)) {
-    _mxPix.set(url, new Promise((resolve, reject) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.onload = () => {
-        try {
-          const c = document.createElement('canvas');
-          c.width = img.naturalWidth; c.height = img.naturalHeight;
-          const ctx = c.getContext('2d');
-          ctx.drawImage(img, 0, 0);
-          resolve(ctx.getImageData(0, 0, c.width, c.height));
-        } catch (e) { _mxPix.delete(url); reject(e); }
-      };
-      img.onerror = () => { _mxPix.delete(url); reject(new Error('load')); };
-      img.src = url;
-    }));
-  }
-  return _mxPix.get(url);
+  return _mxPix.get(key);
 }
 
 // 믹스를 안 하면 B·C가 A와 같은 주소라 요청도 한 번만 나간다
@@ -215,12 +193,7 @@ function _mxUrls() {
   if (_mxMatte() || _mxIsCustom(_mxSkin().id)) u.s = _mxSkinUrl(v);
   return u;
 }
-function _mxSkinUrl(view) {
-  const head = _mxSkin().id;
-  if (_mxUseLayer) return `layer:${view}:${head}:`;
-  const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
-  return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1&px=1`;
-}
+const _mxSkinUrl = view => `${view}:${_mxSkin().id}:`;
 const _mxMatte = () => _mxMixOn(MX_PARTS.hair) && MX_MATTE_BASE.includes(100 - _mxState.hair.ratio);
 
 function _mxCompose(g, tH, tF, matte) {
@@ -303,8 +276,8 @@ function _mxColorsOfSkin(id) {
   if (_mxIsLine(id)) return { has: (r, g, b) => b >= 200 && b - Math.max(r, g) >= 150, main: [0, 0, 255] };
   if (_mxSkinColors.has(id)) return _mxSkinColors.get(id);
   _mxSkinColors.set(id, null);
-  // 목록 아이콘으로 이미 받은 그림은 픽셀을 읽을 수 없어 주소를 달리해 따로 받는다
-  _mxLoadPix(`${_mxSkinPreview(id)}&px=1`).then(img => {
+  // 그 피부의 맨몸 그림에서 고른다
+  _mxLoadPix(`stand1:${id}:`).then(img => {
     const cnt = new Map(), d = img.data;
     for (let i = 0; i < d.length; i += 4) {
       if (d[i + 3] < 128) continue;
@@ -371,24 +344,13 @@ function _mxDrawCards() {
   _mxPaint('mxCvMix', _mxCompose(g, onHair ? mixOn : tH, onHair ? tF : mixOn), 2);
 }
 
-// 이번 장면에 들어가는 아이템 전부: 헤어·렌즈의 기준·믹스 색, 입은 코디
-function _mxSceneIds() {
-  const H = MX_PARTS.hair, F = MX_PARTS.face, hs = _mxState.hair, fs = _mxState.face;
-  const ids = [H.idOf(hs.id, hs.base), F.idOf(fs.id, fs.base), ...Object.values(_mxEffectiveWorn())];
-  if (_mxMixOn(H)) ids.push(H.idOf(hs.id, hs.mix));
-  if (_mxMixOn(F)) ids.push(F.idOf(fs.id, fs.mix));
-  return ids;
-}
-
 async function _mxDraw() {
   const my = ++_mxToken;
-  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('데이터를 불러오는 중입니다'); }, 150);
-  _mxUseLayer = await _mxLayerUsable(_mxSceneIds(), _mxState.view);
-  if (my !== _mxToken) { clearTimeout(slow); return; }
   const u = _mxUrls();
   const key = JSON.stringify(u);
-  // 비율만 바뀌었으면 받은 그림으로 다시 섞기만 한다
-  if (_mxCur && _mxCur.key === key) { clearTimeout(slow); _mxSetStatus(''); _mxDrawCards(); return; }
+  // 비율만 바뀌었으면 만든 그림으로 다시 섞기만 한다
+  if (_mxCur && _mxCur.key === key) { _mxDrawCards(); return; }
+  const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('데이터를 불러오는 중입니다'); }, 150);
   try {
     const names = Object.keys(u);
     const imgs = await Promise.all(names.map(k => _mxLoadPix(u[k])));
@@ -418,17 +380,18 @@ function _mxPrefetch() {
 }
 
 /* ── 목록 ── */
-// setIcon: 아이콘 img를 받아 그림을 넣는 함수(_mxPutIcon)
-function _mxMakeItem(setIcon, en, sub, onClick) {
+// setIcon: 아이콘 img를 받아 그림을 넣는 함수(_mxPutIcon). off: 층 데이터가 없어 고를 수 없는 줄
+function _mxMakeItem(setIcon, en, sub, onClick, off) {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = 'mx-item';
+  b.className = 'mx-item' + (off ? ' is-off' : '');
+  b.disabled = !!off;
   b.innerHTML = `<img class="mx-item__icon" loading="lazy" alt="" onerror="this.style.visibility='hidden'">
     <span class="mx-item__text"><span class="mx-item__en"></span><span class="mx-item__ko"></span></span>`;
   setIcon(b.querySelector('img'));
   b.querySelector('.mx-item__en').textContent = en;
-  b.querySelector('.mx-item__ko').textContent = sub;
-  b.addEventListener('click', onClick);
+  b.querySelector('.mx-item__ko').textContent = off ? [sub, '데이터 없음'].filter(Boolean).join(' · ') : sub;
+  if (!off) b.addEventListener('click', onClick);
   return b;
 }
 
@@ -452,7 +415,7 @@ function _mxBuildList(p) {
   const L = _mxListBox(key);
   for (const r of p.rows) {
     const sub = [r[2], `ID ${r[0]}`, r[4] ? '성별 미확인' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], _mxIcon(p, r), 36), r[1] || `ID ${r[0]}`, sub, () => _mxSelect(p, r[0]));
+    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], 36), r[1] || `ID ${r[0]}`, sub, () => _mxSelect(p, r[0]), !_mxColorsOf(p, r).length);
     L.box.appendChild(el);
     L.items.push({ el, r, id: r[0], hide: () => !!r[4], key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
@@ -466,18 +429,12 @@ function _mxBuildSkinList() {
   const L = _mxListBox('skin');
   for (const r of window.MIXDYE_DATA.skins || []) {
     const sub = [r[2], `ID ${r[0]}`, /^Custom /.test(r[1]) ? '색 조절 가능' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(img => { img.classList.add('mx-skin-icon'); _mxPutIcon(img, 'skin', r[0], _mxSkinPreview(r[0]), 36); },
-      r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); });
+    const el = _mxMakeItem(img => _mxPutIcon(img, 'skin', r[0], 36), r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); }, !_mxAvail('skin', r[0]));
     L.box.appendChild(el);
     L.items.push({ el, r, id: r[0], hide: () => false, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
   L.box.appendChild(L.empty);
   return L;
-}
-// 피부 아이템 아이콘은 귀 모양 조각이라 알아보기 어렵다. 그 피부로 그린 맨몸(96×96)을 받아 머리 부분만 보여 준다
-function _mxSkinPreview(head) {
-  const list = JSON.stringify([head - 10000, head].map(i => ({ itemId: i, version: _mxVer() })));
-  return `${MX_API}/character/${encodeURIComponent(list.slice(1, -1))}/stand1/0?resize=1&renderMode=1`;
 }
 const _mxSkinName = id => ((window.MIXDYE_DATA.skins || []).find(r => r[0] === id) || [0, `ID ${id}`])[1];
 
@@ -488,7 +445,7 @@ function _mxBuildSlotList(slot) {
   const L = _mxListBox(key);
   for (const r of _mxCD().items[slot] || []) {
     const sub = [r[2], `ID ${r[0]}`, r[3] === 0 ? '남자' : r[3] === 1 ? '여자' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], _mxItemIcon(r[0]), 36), r[1], sub, () => _mxToggleWear(slot, r[0]));
+    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], 36), r[1], sub, () => _mxToggleWear(slot, r[0]), !_mxAvail(key, r[0]));
     L.box.appendChild(el);
     // 지금 성별 전용이나 공용이 아니면 숨긴다
     L.items.push({ el, r, id: r[0], hide: () => r[3] !== 2 && r[3] !== MX_SEX[_mxState.g].digit, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
@@ -577,10 +534,26 @@ function _mxCoordiReady() {
     `<button type="button" class="mx-slot" data-slot="${p.key}">${p.name}</button>`).join('');
 }
 
+// 저장돼 있던 헤어·성형·코디 중 층 데이터가 없는 것은 기본값으로 되돌리거나 벗긴다
+function _mxDropMissing() {
+  const g0 = _mxState.g;
+  for (const g of Object.keys(MX_SEX)) {
+    _mxState.g = g;
+    for (const p of Object.values(MX_PARTS)) {
+      const r = _mxRow(p);
+      if (!r || !_mxColorsOf(p, r).length) Object.assign(_mxState[p.key], _mxBlank(p, g));
+    }
+    const w = _mxState.chars[g].worn;
+    for (const [slot, id] of Object.entries(w)) if (!_mxAvail(`coordi-${slot}`, id)) delete w[slot];
+    if (!_mxAvail('skin', _mxSkin().id)) _mxState.chars[g].skin = _mxSkinBlank();
+  }
+  _mxState.g = g0;
+}
+
 /* ── 탭·성별 전환 ── */
 async function _mxShowPart() {
-  // 목록 아이콘 그림 묶음 정보를 먼저 받는다. 못 받으면 maplestory.io 아이콘
-  if (_mxIcons === null) await _mxIconsLoad();
+  // 목록 아이콘과 데이터 있는 색·아이템 정보를 먼저 받는다. 저장돼 있던 선택 중 데이터 없는 것은 기본값으로
+  if (_mxIcons === null) { await _mxIconsLoad(); _mxDropMissing(); }
   const part = _mxState.part, coordi = part === 'coordi', skinTab = part === 'skin';
   const sec = document.getElementById('sec-mixdye');
   sec.querySelectorAll('.mx-tab').forEach(b => b.classList.toggle('active', b.dataset.mxpart === part));
@@ -680,7 +653,7 @@ function _mxRenderSkinCard() {
   const sk = _mxSkin(), line = _mxIsCustom(sk.id);
   const L = _mxLists.skin;
   if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === sk.id);
-  _mxPutIcon(document.getElementById('mxSelIcon'), 'skin', sk.id, _mxSkinPreview(sk.id), 44);
+  _mxPutIcon(document.getElementById('mxSelIcon'), 'skin', sk.id, 44);
   const r = (window.MIXDYE_DATA.skins || []).find(x => x[0] === sk.id) || [sk.id, '', ''];
   document.getElementById('mxSelName').textContent = r[1] || `ID ${sk.id}`;
   document.getElementById('mxSelSub').textContent = [r[2], `ID ${sk.id}`].filter(Boolean).join(' · ');
@@ -727,7 +700,7 @@ function _mxRenderCoordiCard() {
   if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === id);
   const icon = document.getElementById('mxSelIcon');
   icon.style.visibility = id ? '' : 'hidden';
-  if (id) _mxPutIcon(icon, `coordi-${slot}`, id, _mxItemIcon(id), 44);
+  if (id) _mxPutIcon(icon, `coordi-${slot}`, id, 44);
   const name = _mxSlotName(slot);
   document.getElementById('mxSelName').textContent = shown ? _mxWornName(slot, shown) : `${name} 없음`;
   document.getElementById('mxSelSub').textContent =
@@ -751,7 +724,7 @@ function _mxRender() {
 
     const L = _mxLists[`${p.key}-${_mxState.g}`];
     if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === st.id);
-    _mxPutIcon(document.getElementById('mxSelIcon'), `${p.key}-${_mxState.g}`, r[0], _mxIcon(p, r), 44);
+    _mxPutIcon(document.getElementById('mxSelIcon'), `${p.key}-${_mxState.g}`, r[0], 44);
     document.getElementById('mxSelName').textContent = r[1] || `ID ${r[0]}`;
     document.getElementById('mxSelSub').textContent = [r[2], `ID ${r[0]}`, `${p.word} ${_mxColorsOf(p, r).length}종`,
       single ? `${p.word}이 하나뿐이라 믹스 불가` : '', r[4] ? '성별 미확인' : ''].filter(Boolean).join(' · ');
@@ -759,12 +732,12 @@ function _mxRender() {
     document.querySelectorAll('#mxBaseChips .mx-chip').forEach(b => {
       const i = +b.dataset.i;
       b.classList.toggle('active', i === st.base);
-      b.disabled = !_mxHas(r, i);
+      b.disabled = !_mxColorsOf(p, r).includes(i);
     });
     document.querySelectorAll('#mxMixChips .mx-chip').forEach(b => {
       const i = +b.dataset.i;
       b.classList.toggle('active', i === -1 ? off : !off && i === st.mix);
-      b.disabled = i === -1 ? single : single || !_mxHas(r, i) || i === st.base;
+      b.disabled = i === -1 ? single : single || !_mxColorsOf(p, r).includes(i) || i === st.base;
     });
 
     const range = document.getElementById('mxRatio');
@@ -818,7 +791,7 @@ function initMixdye() {
     <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
     <p class="dt-help">캐릭터 성별을 고르고 헤어·성형의 믹스 염색과 믹스 렌즈를 미리 보거나, 코디 탭에서 모자·한벌옷 같은 캐시 아이템을 입혀 봅니다. 헤어는 여자 ${cnt(MX_PARTS.hair, 'f')}종·남자 ${cnt(MX_PARTS.hair, 'm')}종, 성형은 여자 ${cnt(MX_PARTS.face, 'f')}종·남자 ${cnt(MX_PARTS.face, 'm')}종입니다.</p>
     <p class="dt-help mx-notice">※ 믹스 염색·믹스 렌즈·피부 선 색은 실제 게임 계산이 아니라 비슷하게 만든 근사치입니다. 게임 화면과 색이 다를 수 있습니다.</p>
-    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터와 캐릭터 렌더링을 사용하고 착용 규칙을 참고했습니다. 게임 그림의 권리는 NEXON에 있습니다.</p>
+    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터를 미리 받아 두고 사이트에서 직접 조립합니다. 게임 그림의 권리는 NEXON에 있습니다.</p>
 
     <div class="mx-topbar">
       <div class="sf-tabs mx-sextabs">

@@ -3550,6 +3550,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-item { display: grid; grid-template-columns: 36px minmax(0,1fr); align-items: center; gap: 10px; width: 100%; padding: 6px 8px; border-radius: var(--radius); border: 1px solid transparent; text-align: left; }
 .mx-item:hover { background: var(--bg-hover); }
 .mx-item.active { background: var(--primary-l); border-color: var(--border-hl); }
+/* 층 데이터가 없어 고를 수 없는 줄 */
+.mx-item.is-off { opacity: .45; cursor: default; }
+.mx-item.is-off:hover { background: none; }
 .mx-item__icon { width: 36px; height: 36px; object-fit: none; }
 .mx-item__text { display: flex; flex-direction: column; min-width: 0; }
 .mx-item__en { font-size: .86rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

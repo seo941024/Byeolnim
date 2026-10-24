@@ -9,7 +9,9 @@
      36×36 안에 들어가게 줄인다. 게임 공식 아이콘이 아니라 아이템 그림 자체라 모양이 다르다
    - 피부 아이콘: 그 피부의 맨몸 96×96에서 머리 부분 44×44
    - 칸 44×44, 그림 한 장에 20×20칸. 그림 파일 이름에 내용 해시를 붙여 오래 캐시해도 바뀐 그림을 받는다
-   - 층 데이터가 없거나 그림이 1×1 빈 층뿐인 아이템은 empty에 적고, 사이트는 그 아이템만 maplestory.io 아이콘을 쓴다 */
+   - avail: 줄마다 그릴 수 있는 색 비트. 헤어·성형은 색 순서, 코디·피부는 1비트.
+     층 데이터가 없거나 그림이 1×1 빈 층뿐이면 0이고, 사이트는 그 색·아이템을 "데이터 없음"으로 막는다
+   - empty: 아이콘을 못 그린 줄 번호. avail이 0인 줄과 같다 */
 
 const fs = require('fs');
 const path = require('path');
@@ -128,8 +130,9 @@ async function skinIcon(head) {
   return sharp(raw, { raw: { width: 96, height: 96, channels: 4 } }).extract({ left: 26, top: 18, width: CELL, height: CELL }).raw().toBuffer();
 }
 
-// 목록마다 [이름, 줄 ID들, 줄마다 그림 후보 ID들]
-const colorIds = (r, n, step) => { const out = []; for (let c = 0; c < n; c++) if (r[3] >> c & 1) out.push(r[0] + c * step); return out; };
+const drawable = id => { const it = items.get(id); return !!(it && (it.f.stand1 || []).some(visible)); };
+// 목록마다 [이름, 줄 ID들, 줄마다 그림 후보 ID들]. 헤어·성형 후보는 색 번호 순서, 없는 색은 null
+const colorIds = (r, n, step) => { const out = []; for (let c = 0; c < n; c++) out.push(r[3] >> c & 1 ? r[0] + c * step : null); return out; };
 const LISTS = [
   ['hair-f', MIX.hairs, r => colorIds(r, 8, 1)],
   ['hair-m', MIX.hairsM || [], r => colorIds(r, 8, 1)],
@@ -145,10 +148,11 @@ const LISTS = [
   const out = { cell: CELL, fit: FIT, grid: GRID, lists: {} };
   for (const [name, ids, cand] of LISTS) {
     const empty = [], sheets = [];
+    const avail = cand ? cand.map(cs => cs.reduce((m, id, c) => id !== null && drawable(id) ? m | 1 << c : m, 0)) : ids.map(() => 1);
     for (let s = 0; s * PER < ids.length; s++) {
       const comp = [];
       for (let k = s * PER; k < Math.min(ids.length, (s + 1) * PER); k++) {
-        const cell = cand ? await itemIcon(cand[k]) : await skinIcon(ids[k]);
+        const cell = cand ? await itemIcon(cand[k].filter(id => id !== null)) : await skinIcon(ids[k]);
         if (!cell) { empty.push(k); continue; }
         const c = k - s * PER;
         comp.push({ input: cell, raw: { width: CELL, height: CELL, channels: 4 }, left: (c % GRID) * CELL, top: Math.floor(c / GRID) * CELL });
@@ -159,8 +163,8 @@ const LISTS = [
       fs.writeFileSync(path.join(DEST, 'icons', file), png);
       sheets.push(file);
     }
-    out.lists[name] = { ids: ids.map((id, k) => k ? id - ids[k - 1] : id), empty, sheets };
-    console.log(`${name} · 아이콘 ${ids.length - empty.length}/${ids.length} · 그림 ${sheets.length}장`);
+    out.lists[name] = { ids: ids.map((id, k) => k ? id - ids[k - 1] : id), avail, empty, sheets };
+    console.log(`${name} · 아이콘 ${ids.length - empty.length}/${ids.length} · 데이터 없는 줄 ${avail.filter(m => !m).length} · 그림 ${sheets.length}장`);
   }
   fs.writeFileSync(path.join(DEST, 'icons.json'), JSON.stringify(out));
   const size = fs.readdirSync(path.join(DEST, 'icons')).reduce((s, f) => s + fs.statSync(path.join(DEST, 'icons', f)).size, 0);

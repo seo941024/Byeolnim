@@ -157,3 +157,32 @@ async function _mxLayerCompose(view, head, ids) {
   placed.forEach((L, k) => ctx.drawImage(imgs[k], ox + L.x - L.l[1], oy + L.y - L.l[2]));
   return ctx.getImageData(0, 0, MX_LAYER_SIZE, MX_LAYER_SIZE);
 }
+
+/* ── 목록 아이콘 ──
+   tools/coordi_icons.js가 받은 층 데이터로 미리 그린 그림 묶음. 목록마다 44×44 칸을 20×20으로 모은 그림이고,
+   img의 object-position으로 한 칸만 보여 준다. 그림이 없는 아이템만 maplestory.io 아이콘을 쓴다 */
+let _mxIcons = null, _mxIconsP = null;   // { cell, grid, lists: 목록 이름 → { at: 줄 ID → 칸 번호, sheets } }, 쓸 수 없으면 false
+function _mxIconsLoad() {
+  if (!_mxIconsP) {
+    _mxIconsP = fetch(`${MX_LAYER_BASE}icons.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+      const lists = {};
+      for (const [name, L] of Object.entries(d.lists)) {
+        const at = new Map(), empty = new Set(L.empty);
+        let id = 0;
+        L.ids.forEach((dlt, k) => { id += dlt; if (!empty.has(k)) at.set(id, k); });
+        lists[name] = { at, sheets: L.sheets };
+      }
+      _mxIcons = { cell: d.cell, grid: d.grid, lists };
+    }).catch(() => { _mxIcons = false; });
+  }
+  return _mxIconsP;
+}
+// box: 보여 줄 크기. 목록 36, 선택 카드 44. 아이콘은 칸 가운데 36×36 안에 그려져 있다
+function _mxPutIcon(img, list, id, fallback, box) {
+  const L = _mxIcons && _mxIcons.lists[list], k = L ? L.at.get(id) : undefined;
+  img.style.visibility = '';
+  if (k === undefined) { img.style.objectPosition = ''; img.src = fallback; return; }
+  const { cell, grid } = _mxIcons, per = grid * grid, c = k % per, pad = (cell - box) / 2;
+  img.style.objectPosition = `${-((c % grid) * cell + pad)}px ${-(Math.floor(c / grid) * cell + pad)}px`;
+  img.src = `${MX_LAYER_BASE}icons/${L.sheets[Math.floor(k / per)]}`;
+}

@@ -418,13 +418,14 @@ function _mxPrefetch() {
 }
 
 /* ── 목록 ── */
-function _mxMakeItem(icon, en, sub, onClick) {
+// setIcon: 아이콘 img를 받아 그림을 넣는 함수(_mxPutIcon)
+function _mxMakeItem(setIcon, en, sub, onClick) {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'mx-item';
   b.innerHTML = `<img class="mx-item__icon" loading="lazy" alt="" onerror="this.style.visibility='hidden'">
     <span class="mx-item__text"><span class="mx-item__en"></span><span class="mx-item__ko"></span></span>`;
-  b.querySelector('img').src = icon;
+  setIcon(b.querySelector('img'));
   b.querySelector('.mx-item__en').textContent = en;
   b.querySelector('.mx-item__ko').textContent = sub;
   b.addEventListener('click', onClick);
@@ -451,7 +452,7 @@ function _mxBuildList(p) {
   const L = _mxListBox(key);
   for (const r of p.rows) {
     const sub = [r[2], `ID ${r[0]}`, r[4] ? '성별 미확인' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(_mxIcon(p, r), r[1] || `ID ${r[0]}`, sub, () => _mxSelect(p, r[0]));
+    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], _mxIcon(p, r), 36), r[1] || `ID ${r[0]}`, sub, () => _mxSelect(p, r[0]));
     L.box.appendChild(el);
     L.items.push({ el, r, id: r[0], hide: () => !!r[4], key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
@@ -465,8 +466,8 @@ function _mxBuildSkinList() {
   const L = _mxListBox('skin');
   for (const r of window.MIXDYE_DATA.skins || []) {
     const sub = [r[2], `ID ${r[0]}`, /^Custom /.test(r[1]) ? '색 조절 가능' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(_mxSkinPreview(r[0]), r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); });
-    el.querySelector('img').classList.add('mx-skin-icon');
+    const el = _mxMakeItem(img => { img.classList.add('mx-skin-icon'); _mxPutIcon(img, 'skin', r[0], _mxSkinPreview(r[0]), 36); },
+      r[1], sub, () => { _mxSkin().id = r[0]; _mxRender(); });
     L.box.appendChild(el);
     L.items.push({ el, r, id: r[0], hide: () => false, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
@@ -487,7 +488,7 @@ function _mxBuildSlotList(slot) {
   const L = _mxListBox(key);
   for (const r of _mxCD().items[slot] || []) {
     const sub = [r[2], `ID ${r[0]}`, r[3] === 0 ? '남자' : r[3] === 1 ? '여자' : ''].filter(Boolean).join(' · ');
-    const el = _mxMakeItem(_mxItemIcon(r[0]), r[1], sub, () => _mxToggleWear(slot, r[0]));
+    const el = _mxMakeItem(img => _mxPutIcon(img, key, r[0], _mxItemIcon(r[0]), 36), r[1], sub, () => _mxToggleWear(slot, r[0]));
     L.box.appendChild(el);
     // 지금 성별 전용이나 공용이 아니면 숨긴다
     L.items.push({ el, r, id: r[0], hide: () => r[3] !== 2 && r[3] !== MX_SEX[_mxState.g].digit, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
@@ -578,6 +579,8 @@ function _mxCoordiReady() {
 
 /* ── 탭·성별 전환 ── */
 async function _mxShowPart() {
+  // 목록 아이콘 그림 묶음 정보를 먼저 받는다. 못 받으면 maplestory.io 아이콘
+  if (_mxIcons === null) await _mxIconsLoad();
   const part = _mxState.part, coordi = part === 'coordi', skinTab = part === 'skin';
   const sec = document.getElementById('sec-mixdye');
   sec.querySelectorAll('.mx-tab').forEach(b => b.classList.toggle('active', b.dataset.mxpart === part));
@@ -677,9 +680,7 @@ function _mxRenderSkinCard() {
   const sk = _mxSkin(), line = _mxIsCustom(sk.id);
   const L = _mxLists.skin;
   if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === sk.id);
-  const icon = document.getElementById('mxSelIcon');
-  icon.style.visibility = '';
-  icon.src = _mxSkinPreview(sk.id);
+  _mxPutIcon(document.getElementById('mxSelIcon'), 'skin', sk.id, _mxSkinPreview(sk.id), 44);
   const r = (window.MIXDYE_DATA.skins || []).find(x => x[0] === sk.id) || [sk.id, '', ''];
   document.getElementById('mxSelName').textContent = r[1] || `ID ${sk.id}`;
   document.getElementById('mxSelSub').textContent = [r[2], `ID ${sk.id}`].filter(Boolean).join(' · ');
@@ -726,7 +727,7 @@ function _mxRenderCoordiCard() {
   if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === id);
   const icon = document.getElementById('mxSelIcon');
   icon.style.visibility = id ? '' : 'hidden';
-  if (id) icon.src = _mxItemIcon(id);
+  if (id) _mxPutIcon(icon, `coordi-${slot}`, id, _mxItemIcon(id), 44);
   const name = _mxSlotName(slot);
   document.getElementById('mxSelName').textContent = shown ? _mxWornName(slot, shown) : `${name} 없음`;
   document.getElementById('mxSelSub').textContent =
@@ -750,9 +751,7 @@ function _mxRender() {
 
     const L = _mxLists[`${p.key}-${_mxState.g}`];
     if (L) for (const it of L.items) it.el.classList.toggle('active', it.id === st.id);
-    const icon = document.getElementById('mxSelIcon');
-    icon.style.visibility = '';
-    icon.src = _mxIcon(p, r);
+    _mxPutIcon(document.getElementById('mxSelIcon'), `${p.key}-${_mxState.g}`, r[0], _mxIcon(p, r), 44);
     document.getElementById('mxSelName').textContent = r[1] || `ID ${r[0]}`;
     document.getElementById('mxSelSub').textContent = [r[2], `ID ${r[0]}`, `${p.word} ${_mxColorsOf(p, r).length}종`,
       single ? `${p.word}이 하나뿐이라 믹스 불가` : '', r[4] ? '성별 미확인' : ''].filter(Boolean).join(' · ');

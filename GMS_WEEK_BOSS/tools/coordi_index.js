@@ -6,7 +6,7 @@
    - 남자 헤어·성형 묶음은 넣지 않는다. 남자 캐릭터는 maplestory.io 렌더로 그려서 쓰지 않고,
      성별 미확인 헤어처럼 여자 묶음에도 있는 아이템이 남자 묶음을 가리키지 않게 한다
    - 형식: { 묶음 이름: [첫 ID, 이어지는 ID와의 차이...] }. 차이로 적어 크기를 줄인다
-   - coordi_upload.js가 buildIndex로 같은 색인을 만들어 올린다 */
+   - coordi_publish.js가 buildIndex로 같은 색인을 만들어 사이트 폴더로 옮긴다 */
 
 const fs = require('fs');
 const path = require('path');

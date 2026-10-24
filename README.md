@@ -76,7 +76,7 @@
 | 프론트엔드 | 바닐라 JavaScript, HTML, CSS · 번들러·프레임워크 미사용 |
 | 호스팅·서버 | Vercel 정적 호스팅, `api/*.js` 서버리스 함수 |
 | 데이터베이스 | Upstash Redis · 계정, 게시판, 경험치 스냅샷, 푸시 구독 |
-| 파일 저장소 | Vercel Blob · 커뮤니티 사진, 코디 시뮬레이터 층 데이터 |
+| 파일 저장소 | Vercel Blob · 커뮤니티 사진. 코디 시뮬레이터 층 데이터는 저장소 정적 파일 |
 | 예약 작업 | Vercel Cron 일 1회 수집, 외부 크론 서비스의 분 단위 푸시 발송 호출 |
 | 알림 | Web Push API, VAPID |
 | 앱 설치 | PWA manifest, 서비스 워커 |
@@ -126,7 +126,8 @@ async function pushSnapshot(redis, key, snap) {
 외부 렌더 서버에 의존하던 캐릭터 그림을, 수집한 게임 그림 층으로 브라우저에서 직접 조립하는 구조.
 
 - **문제**: maplestory.io 캐릭터 렌더는 처음 요청받는 조합에서 응답이 느리거나 실패. 서버 상태에 따라 수십 초 대기 발생.
-- **수집**: 헤어·성형·코디템마다 앞모습·뒷모습 첫 프레임의 층만 추출. 아이템 100개를 파일 하나로 묶어 Vercel Blob 업로드 횟수를 무료 한도 안으로 유지.
+- **수집**: 헤어·성형·코디템마다 앞모습·뒷모습 첫 프레임의 층만 추출. 아이템 100개를 파일 하나로 묶어 약 200MB, 480개 파일로 정리.
+- **배포**: 묶음 파일을 저장소에 커밋해 사이트와 같은 주소의 정적 파일로 제공. 처음엔 Vercel Blob에 올렸으나, 업로드 한도와 토큰 입력 단계가 없는 정적 파일로 전환. 묶음은 30일, 색인은 1시간 브라우저 캐시.
 - **조립 규칙**: 게임 데이터의 zmap으로 층 순서, smap과 아이템 슬롯으로 모자에 눌리는 머리 같은 가림 처리, 배꼽·목·이마 연결점으로 위치 계산.
 
 가림 처리 · `mixdye_layer.js`
@@ -234,7 +235,7 @@ node GMS_WEEK_BOSS/serve.js
 | 변수 | 용도 |
 |---|---|
 | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | Redis 연결 |
-| `BLOB_READ_WRITE_TOKEN` | Vercel Blob 업로드 |
+| `BLOB_READ_WRITE_TOKEN` | 커뮤니티 사진 Vercel Blob 업로드 |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` | 푸시 알림 |
 | `CRON_SECRET` | 예약 작업 호출 인증 |
 | `ADMIN_SECRET`, `ADMIN_IDS` | 관리자 기능 |

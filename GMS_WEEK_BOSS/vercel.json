@@ -4,5 +4,9 @@
   "outputDirectory": ".",
 "crons": [
     { "path": "/api/collect", "schedule": "0 0 * * *" }
+  ],
+  "headers": [
+    { "source": "/coordi/v270/:part/:file", "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000" }] },
+    { "source": "/coordi/v270/:file", "headers": [{ "key": "Cache-Control", "value": "public, max-age=3600" }] }
   ]
 }

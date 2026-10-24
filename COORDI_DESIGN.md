@@ -106,6 +106,10 @@ smap은 maplestory.io에서 받을 수 없었다. 공개 자료 두 곳의 슬�
 
 ## 4. 저장 — Vercel Blob
 
+> 2026-10-24 변경: 저장소 정적 파일로 옮겼다. 데이터는 `GMS_WEEK_BOSS/coordi/v270/`에 커밋하고, `tools/coordi_publish.js`가 `coordi_local/`에서 그 폴더로 옮긴다.
+> GitHub 연동 배포가 480개 파일 약 200MB를 17초 만에 배포하는 것을 미리보기 배포로 확인했다. 캐시는 `vercel.json`에서 묶음 30일, 색인·규칙 1시간.
+> 아래 Blob 설계는 기록으로 남겨 둔다.
+
 Hobby 요금제 한도: 용량 1GB, 업로드 등 Advanced Operations 월 2,000건, 읽기 Simple Operations 월 10,000건, 전송 월 10GB. 아이템마다 파일을 만들면 업로드가 수만 건이라 한도를 넘는다. 그래서 묶는다.
 
 - 저장소에는 커밋하지 않는다. 사이트는 Blob 공개 주소에서 바로 불러온다

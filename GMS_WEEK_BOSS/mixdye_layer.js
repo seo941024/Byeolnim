@@ -3,7 +3,8 @@
    mixdye.js가 maplestory.io 렌더 대신 이 조립 결과를 쓴다. 같은 96×96 크기·같은 자리라 섞는 방식은 그대로다.
 
    데이터: tools/coordi_collect.js(아이템 층 묶음), tools/coordi_rules.js(rules.json, 피부별 몸·머리, 기본 상하의),
-   tools/coordi_index.js(index.json). 로컬 서버는 GMS_Calc/coordi_local/을 coordi/v270/ 주소로 내보낸다.
+   tools/coordi_index.js(index.json). tools/coordi_publish.js가 GMS_Calc/coordi_local/에서 이 저장소의
+   coordi/v270/으로 옮겨 정적 파일로 배포한다.
 
    규칙은 maplestory.io 렌더와 픽셀 비교로 맞췄다(2026-10-23, 무작위 코디 14조합 앞뒤 + 개별 표본):
    - 층 앞뒤 순서는 zmap, 위치는 몸 배꼽에서 시작해 층마다 붙는 자리(navel·neck·brow·hand)를 따라 잇는다
@@ -14,10 +15,8 @@
      효과만 있는 아이템은 렌더를 쓴다(_mxLayerUsable)
    ═══════════════════════════════════════════════════════════ */
 
-// 로컬 서버는 coordi_local을 같은 경로로 내보낸다. 배포 사이트는 Vercel Blob 공개 주소 —
-// tools/coordi_upload.js가 올린 뒤 coordi_local/blob_base.txt에 남기는 값. 비어 있으면 렌더만 쓴다
-const MX_LAYER_BLOB = 'https://pnbtdlwh1exmuwbj.public.blob.vercel-storage.com/coordi/v270/';
-// 시험 브랜치 coordi-static-test: 배포 사이트도 저장소에 넣은 정적 파일 GMS_WEEK_BOSS/coordi/v270/을 읽는다
+// 같은 사이트의 정적 파일. 2026-10-24 Vercel Blob에서 옮김 — 업로드 단계 없이 커밋만으로 배포되고,
+// 캐시 기간은 vercel.json에서 정한다
 const MX_LAYER_BASE = 'coordi/v270/';
 // maplestory.io 96×96 렌더에서 몸 기준점(배꼽 기준 원점)이 놓이는 자리 — 렌더와 픽셀 비교로 확인
 const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };

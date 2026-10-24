@@ -4,6 +4,8 @@
      BLOB_READ_WRITE_TOKEN=... node tools/coordi_collect.js     실제 수집·업로드
      node tools/coordi_collect.js --local                        업로드 없이 GMS_Calc/coordi_local/에 저장(git 제외)
      node tools/coordi_collect.js --local --limit 3              위와 같되 첫 묶음 표본 3개만
+     node tools/coordi_collect.js --local --new                  coordi_local에 없는 새 아이템만 받아 새 묶음 번호로 붙인다
+                                                                 4주 캐시템 업데이트용. tools/coordi_update.js가 부른다
 
    - 아이템 데이터에는 모든 동작의 그림이 들어 있어 180~600KB나 된다. 앞모습(stand1)·뒷모습(ladder)
      첫 프레임의 층만 남겨 크기를 크게 줄인다
@@ -18,7 +20,8 @@ const fs = require('fs');
 const path = require('path');
 
 const API = 'https://maplestory.io/api';
-const VERSION = '270';
+// 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다
+const VERSION = process.env.GMS_VERSION || '270';
 const PREFIX = `coordi/v${VERSION}`;
 const CHUNK = 100;
 const VIEWS = ['stand1', 'ladder'];
@@ -32,6 +35,8 @@ const RESPONSE_TIMEOUTS_SEC = [10, 10, 30, 60, 90];
 
 const args = process.argv.slice(2);
 const DRY = args.includes('--local') || args.includes('--dry');
+const NEW = args.includes('--new');
+const LOCAL_ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
 const LIMIT = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : 0;
 const TIME_BUDGET_MS = Number(process.env.TIME_BUDGET_MIN || 340) * 60000;   // Actions 6시간 제한보다 여유 있게
 const started = Date.now();
@@ -112,8 +117,9 @@ async function buildTargets() {
   return targets;
 }
 
-// 부위별로 CHUNK개씩 묶는다. 목록이 같으면 묶음 이름도 같아서 다음 실행에서 이어 받을 수 있다
-function toChunks(targets) {
+// 부위별로 CHUNK개씩 묶는다. 목록이 같으면 묶음 이름도 같아서 다음 실행에서 이어 받을 수 있다.
+// start: 부위별 첫 묶음 번호. --new에서는 이미 있는 묶음 다음 번호부터
+function toChunks(targets, start = {}) {
   const byPart = new Map();
   for (const t of targets) {
     if (!byPart.has(t.part)) byPart.set(t.part, []);
@@ -122,7 +128,7 @@ function toChunks(targets) {
   const chunks = [];
   for (const [part, ids] of byPart) {
     for (let i = 0; i < ids.length; i += CHUNK) {
-      chunks.push({ key: `${part}/${String(i / CHUNK).padStart(3, '0')}`, part, ids: ids.slice(i, i + CHUNK) });
+      chunks.push({ key: `${part}/${String((start[part] || 0) + i / CHUNK).padStart(3, '0')}`, part, ids: ids.slice(i, i + CHUNK) });
     }
   }
   return chunks;
@@ -179,7 +185,24 @@ function makeStore() {
 
 (async () => {
   const store = makeStore();
-  const chunks = toChunks(await buildTargets());
+  let targets = await buildTargets(), start = {};
+  if (NEW) {
+    // 이미 받은 아이템은 빼고, 부위마다 마지막 묶음 다음 번호부터 새 묶음을 만든다
+    if (!DRY) throw new Error('--new는 --local과 같이 쓴다');
+    const have = new Set();
+    for (const part of fs.readdirSync(LOCAL_ROOT)) {
+      const dir = path.join(LOCAL_ROOT, part);
+      if (part === 'skins' || part === 'basic' || !fs.statSync(dir).isDirectory()) continue;
+      for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
+        start[part] = Math.max(start[part] || 0, Number(f.slice(0, -5)) + 1);
+        for (const it of JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).items) have.add(it.i);
+      }
+    }
+    const before = targets.length;
+    targets = targets.filter(t => !have.has(t.id));
+    console.log(`새 아이템 ${targets.length}개 · 이미 받은 ${before - targets.length}개는 건너뜀`);
+  }
+  const chunks = toChunks(targets, start);
   const manifest = (await store.getManifest()) || { version: VERSION, chunk: CHUNK, done: {}, missing: [] };
   // 남자 헤어·성형은 처음 요청받는 아이템이 많아 서버 오류가 잦아서 맨 뒤에 받는다. 묶음 이름은 그대로
   const LAST = ['face_m', 'hair_m'];
@@ -217,7 +240,7 @@ function makeStore() {
           console.log(`${id} 처리 오류 (${e.message}) — 아이템을 빼지 않으려고 수집을 멈춤. ${c.key}는 다음에 처음부터`);
           throw e;
         }
-        if (!got[k]) manifest.missing.push(id);   // 404: maplestory.io에 데이터가 없는 아이템
+        if (!got[k] && !manifest.missing.includes(id)) manifest.missing.push(id);   // 404: maplestory.io에 데이터가 없는 아이템
         await sleep(jitter());
       }
     };
@@ -228,6 +251,8 @@ function makeStore() {
       return;
     }
     const items = got.filter(Boolean);
+    // 전부 404면 빈 묶음 파일을 만들지 않는다. --new에서 다음에 다시 시도한다
+    if (!items.length) { await store.put('manifest.json', JSON.stringify(manifest)); console.log(`${c.key} · 받은 아이템 없음, 404 ${c.ids.length}개`); continue; }
     const body = JSON.stringify({ part: c.part, items });
     await store.put(`${c.key}.json`, body);
     if (!LIMIT) manifest.done[c.key] = { n: items.length, bytes: body.length };

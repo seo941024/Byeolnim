@@ -3581,7 +3581,13 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-tools { display: flex; flex-wrap: wrap; gap: 6px; }
 .mx-tools .sbtn { min-width: 40px; padding: 5px 11px; font-size: .78rem; }
 .mx-tools .sbtn:disabled { opacity: .4; cursor: default; }
-.mx-range { width: 100%; height: 26px; accent-color: var(--primary); }
+/* 슬라이더 왼쪽을 색으로 채우지 않는다. 채우면 채운 길이가 비율처럼 보여서 손잡이 위치로만 비율을 나타낸다 */
+.mx-range { width: 100%; height: 26px; -webkit-appearance: none; appearance: none; background: transparent; cursor: pointer; }
+.mx-range::-webkit-slider-runnable-track { height: 6px; border-radius: 3px; background: var(--border); }
+.mx-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 18px; height: 18px; margin-top: -6px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-card); }
+.mx-range::-moz-range-track { height: 6px; border-radius: 3px; background: var(--border); }
+.mx-range::-moz-range-progress { background: transparent; }
+.mx-range::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--primary); border: 2px solid var(--bg-card); }
 .mx-range:disabled { opacity: .4; }
 .mx-ends { display: flex; justify-content: space-between; gap: 8px; font-size: .76rem; color: var(--text-sub); }
 .mx-ends span { display: inline-flex; align-items: center; gap: 5px; }

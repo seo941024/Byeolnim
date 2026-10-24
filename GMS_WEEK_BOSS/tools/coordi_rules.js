@@ -1,6 +1,7 @@
 /* 코디 시뮬레이터가 받은 층 데이터로 캐릭터를 조립할 때 필요한 규칙·몸 그림을 받는다. 설계는 GMS_Calc/COORDI_DESIGN.md.
 
      node tools/coordi_rules.js        GMS_Calc/coordi_local/에 rules.json, skins/*.json, basic/000.json 저장
+     node tools/coordi_rules.js --all  이미 받은 피부도 다시 만든다. 없으면 새 피부만
 
    - rules.json: zmap(층 앞뒤 순서), smap(층마다 차지하는 슬롯)
    - skins/{머리 ID}.json: 피부마다 몸(머리 ID - 10000)·머리의 앞모습·뒷모습 첫 프레임 층. 피부 목록은 data_mixdye.js
@@ -13,7 +14,8 @@ const fs = require('fs');
 const path = require('path');
 
 const API = 'https://maplestory.io/api';
-const VERSION = '270';
+// 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다
+const VERSION = process.env.GMS_VERSION || '270';
 const WZ = `${API}/wz/GMS/${VERSION}/`;
 const VIEWS = ['stand1', 'ladder'];
 // 귀 모양은 렌더 기본값(showEars 등 false)과 같이 사람 귀(humanEar)만 쓴다
@@ -108,7 +110,9 @@ async function getItem(id) {
   const window = {};
   new Function('window', fs.readFileSync(path.join(__dirname, '..', 'data_mixdye.js'), 'utf8'))(window);
   fs.mkdirSync(path.join(ROOT, 'skins'), { recursive: true });
+  const ALL = process.argv.includes('--all');
   for (const [head, name] of window.MIXDYE_DATA.skins) {
+    if (!ALL && fs.existsSync(path.join(ROOT, 'skins', `${head}.json`))) continue;
     const skin = [head - 10000, head], f = {};
     for (const view of VIEWS) {
       f[view] = [];

@@ -12,7 +12,10 @@
 ═══════════════════════════════════════════════ */
 
 // 캐시 이름을 바꾸면 이전 캐시는 activate에서 전부 지워진다.
-const CACHE = 'mappu-v3';
+// 이 파일이 한 글자라도 바뀌어야 설치된 앱이 새 워커를 받아 한 번 새로고침하므로,
+// 설치한 앱에 꼭 바로 반영돼야 하는 배포라면 이 값을 올린다.
+// v4: 코디 층 데이터가 v3 캐시에 쌓이던 것을 비운다.
+const CACHE = 'mappu-v4';
 
 /* 오프라인일 때 최소한 화면은 뜨도록 미리 받아두는 것들.
    알림 아이콘도 넣는다 — 푸시로 워커가 막 깨어난 순간에는 네트워크가 아직
@@ -59,7 +62,8 @@ self.addEventListener('push', e => {
 });
 
 /* 알림을 누르면 이미 열려 있는 창을 앞으로 가져오고, 없으면 새로 연다.
-   무조건 새 창을 열면 탭이 계속 쌓인다. */
+   무조건 새 창을 열면 탭이 계속 쌓인다. 댓글 알림처럼 갈 곳(/?community=글id)이
+   있으면 열려 있던 창도 그 주소로 옮긴다 — 포커스만 주면 글이 열리지 않는다. */
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   const target = (e.notification.data && e.notification.data.url) || '/';
@@ -67,7 +71,11 @@ self.addEventListener('notificationclick', e => {
   e.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
       for (const c of list) {
-        if (c.url.includes(self.location.origin) && 'focus' in c) return c.focus();
+        if (c.url.includes(self.location.origin) && 'focus' in c) {
+          return c.focus()
+            .then(w => (target !== '/' && w && 'navigate' in w) ? w.navigate(target) : w)
+            .catch(() => self.clients.openWindow(target));
+        }
       }
       return self.clients.openWindow(target);
     })
@@ -90,6 +98,9 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return;
   // 서버 상태·랭킹 조회는 실시간 데이터 — 캐싱하면 안 된다
   if (url.pathname.startsWith('/api/')) return;
+  // 코디 층 데이터는 묶음만 수백 개라 여기 담으면 기기에 계속 쌓인다.
+  // vercel.json의 HTTP 캐시가 이미 맡고 있으므로 워커는 손대지 않는다.
+  if (url.pathname.startsWith('/coordi/')) return;
 
   if (isAsset(req, url)) {
     // cache-first: 있으면 즉시 주고, 없으면 받아서 저장

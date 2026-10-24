@@ -1,10 +1,10 @@
 /* data_mixdye.js를 만드는 스크립트.
 
-   새 헤어·성형이 추가되면(maplestory.io 데이터 버전이 오르면) VERSION을 바꾸고 다시 돌리면 된다:
+   보통은 tools/coordi_update.js가 최신 버전을 환경 변수로 넘겨 부른다. 직접 돌릴 수도 있다:
 
      node tools/gen_mixdye_data.js
 
-   maplestory.io의 GMS 아이템 목록에서 여자 헤어·성형만 추려 GMS_WEEK_BOSS/data_mixdye.js를 덮어쓴다.
+   maplestory.io의 GMS 아이템 목록에서 남녀 헤어·성형과 피부를 추려 GMS_WEEK_BOSS/data_mixdye.js를 덮어쓴다.
    한국 서버 이름은 같은 ID의 KMS 아이템 이름을 붙인 것이다(번역이 아니라 KMS 원문).
 
    성별 판정:

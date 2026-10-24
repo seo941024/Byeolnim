@@ -167,7 +167,7 @@ function initPolish() {
     if (!document.getElementById('sec-polish')?.classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay[style*="flex"]')) return;
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     e.preventDefault();
     if (e.code === 'KeyS') document.getElementById('polRollBtn')?.click();
     else if (e.code === 'KeyA') document.getElementById('polAutoBtn')?.click();

@@ -93,10 +93,11 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 const NAV_LABELS = {
   meundi: '메이플 운빨 디펜스', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
-  // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — 위 NAV 관련 주석 참고
-  // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — 아래 NAV 관련 주석 참고
-  liberation: '해방 계산기', addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
-  cube: '큐브 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
+  // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — index.html 사이드바의 NAV 관련 주석 참고
+  // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — index.html 사이드바의 NAV 관련 주석 참고
+  liberation: '해방 계산기', frontier: '미스틱 프론티어 계산기',
+  addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
+  cube: '큐브 시뮬레이터', familiar: '패밀리어 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
   mixdye: '코디 시뮬레이터',
   bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',
@@ -399,6 +400,9 @@ function renderBossTable() {
     cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">0개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">0개</span>`;
     tb.innerHTML = `<tr><td colspan="4" class="empty">왼쪽에서 캐릭터를 선택하세요.</td></tr>`;
     document.getElementById('weeklyTotal').textContent = '0 메소';
+    // 마지막 캐릭터를 지웠을 때 월 예상 수익에 지운 캐릭터 금액이 남지 않게 같이 비운다
+    const monthEl0 = document.getElementById('monthlyTotal');
+    if (monthEl0) { monthEl0.textContent = '0 메소'; monthEl0.style.color = ''; }
     if (weekRow) weekRow.style.display = 'none';
     initRentalSlots();
     return;
@@ -528,7 +532,9 @@ function renderBossTable() {
       if (!ch.checks) ch.checks = {};
       Object.keys(boss.diffs).forEach(d => { ch.checks[ck(bossId,d)] = { on:false, party: ch.checks[ck(bossId,d)]?.party ?? 1 }; });
       if (diff) {
-        if (state.chars.reduce((s,c)=>s+countCrystals(c),0) >= MAX_CRYSTALS) {
+        // 상단 막대(updateCrystalBar)와 같은 기준 — 결정석 포함을 끈 캐릭터의 검은 마법사는 빼고 센다
+        const sold = state.chars.reduce((s,c)=>s+countCrystals(c)-(c.bmCrystalIncluded === false ? countBossCrystals(c,'blackmage') : 0),0);
+        if (sold >= MAX_CRYSTALS) {
           showToast(`주간 결정석은 최대 ${MAX_CRYSTALS}개까지 판매 가능합니다.`);
           save(); renderBossTable(); renderCharList(); return;
         }
@@ -689,7 +695,6 @@ function openCharModal(idx = -1) {
   document.getElementById('modalCharTitle').textContent = idx >= 0 ? '캐릭터 수정' : '캐릭터 추가';
   document.getElementById('inpName').value  = idx >= 0 ? state.chars[idx].name  : '';
   document.getElementById('inpLevel').value = idx >= 0 ? state.chars[idx].level : '';
-  document.getElementById('inpJob').value = idx >= 0 ? charJobName(state.chars[idx]) : '';
   document.getElementById('inpWorld').value = idx >= 0 ? (state.chars[idx].fetched?.world || '') : '';
   document.getElementById('inpJobSearch').value = '';
   document.getElementById('lkName').value = idx >= 0 ? state.chars[idx].name : '';
@@ -1011,11 +1016,6 @@ function _resolveAsset(en, ...maps) {
   }
   return en.replace(/\s+/g, '');
 }
-function charJobIconSrc(ch) {
-  const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
-  const asset = _resolveAsset(en, JOB_ASSET_NAMES);
-  return asset ? `images/jobs/${asset}.webp` : '';
-}
 function charJobHeadSrc(ch) {
   const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
   // 헤드 파일명은 전신과 동일하게 통일됨 → 전신과 같은 매핑 사용
@@ -1042,7 +1042,7 @@ function recordSnapshot(d) {
   return h[key];
 }
 
-/* 히스토리 HTML (경험치 변화 + 코디 썸네일) */
+/* 히스토리 HTML (경험치 변화) */
 function renderHistHtml(d) {
   const arr = (loadHist()[histKeyOf(d)] || []).slice().reverse();   // 최신순
   if (arr.length <= 1) return '';
@@ -1054,7 +1054,8 @@ function renderHistHtml(d) {
       const diffExp = s.exp - prev.exp;
       const parts = [];
       if (diffLv) parts.push(`<span class="hist-up">▲${diffLv}레벨</span>`);
-      if (diffExp) parts.push(`<span class="${diffExp>0?'hist-up':'hist-dn'}">${diffExp>0?'+':''}${Number(diffExp).toLocaleString()} EXP</span>`);
+      // 랭킹 exp는 현재 레벨 안에서의 양이라, 레벨이 오른 날은 차이가 음수가 된다 — 그날은 레벨만 보인다
+      if (diffExp && !diffLv) parts.push(`<span class="${diffExp>0?'hist-up':'hist-dn'}">${diffExp>0?'+':''}${Number(diffExp).toLocaleString()} EXP</span>`);
       delta = parts.join(' ');
     }
     return `<div class="hist-row">
@@ -1063,8 +1064,6 @@ function renderHistHtml(d) {
       <span class="hist-delta">${delta || '<span class="hp-dim">기준</span>'}</span>
     </div>`;
   }).join('');
-  const codies = arr.filter(s => s.img).map(s =>
-    `<div class="hist-cody"><img src="${s.img}" onerror="this.style.display='none'" /><span>${s.date.slice(5)}</span></div>`).join('');
   return `
     <div class="hist-sec"><div class="hist-title">경험치 / 레벨 히스토리</div>${expRows}</div>
     `;
@@ -1085,7 +1084,6 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
     // 입력란 자동 채우기
     document.getElementById('inpName').value  = j.data.name;
     document.getElementById('inpLevel').value = j.data.level;
-    document.getElementById('inpJob').value = j.data.job || '';
     // 직업 자동 선택
     const ji = jobIdxFromName(j.data.job);
     if (ji >= 0) selectedJob = ji;
@@ -1112,7 +1110,7 @@ function renderJobGrid(filter) {
     if (q && !job.name.toLowerCase().includes(q)) return;
     const div = document.createElement('div');
     div.className = 'job-item' + (i === selectedJob ? ' sel' : '');
-    const iconSrc = charJobHeadSrc({ jobIdx:i, fetched:null }) || charJobIconSrc({ jobIdx:i, fetched:null });
+    const iconSrc = charJobHeadSrc({ jobIdx:i, fetched:null });
     div.innerHTML = `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="job-noimg" style="display:none">JOB</span><span>${job.name}</span>`;
     div.addEventListener('click', () => { selectedJob = i; renderJobGrid(filter); });
     grid.appendChild(div);
@@ -1167,6 +1165,9 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   save();
   document.getElementById('overlayChar').classList.remove('open');
   renderCharList(); renderBossTable(); renderCharInfo();
+  // 활성 캐릭터가 바뀌었으면 헥사도 그 캐릭터 수치로 다시 읽는다 — 안 그러면 화면에 남은
+  // 이전 캐릭터 값이 다음 입력 때 새 활성 캐릭터의 저장 키로 덮어써진다
+  if (typeof renderAllHexaLists === 'function') renderAllHexaLists();
   // 캘린더의 캐릭터 선택 목록에도 새 캐릭터가 바로 보이게 한다
   if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
   if (useFetched) syncServerHistThenRender(state.chars[state.activeChar]);
@@ -1184,7 +1185,9 @@ document.getElementById('charList').addEventListener('click', e => {
     state.chars.splice(i, 1);
     if (state.activeChar >= state.chars.length) state.activeChar = state.chars.length - 1;
     save(); document.getElementById('overlayConfirm').classList.remove('open');
-    renderCharList(); renderBossTable();
+    renderCharList(); renderBossTable(); renderCharInfo();
+    // 헥사도 새 활성 캐릭터 수치로 다시 읽는다(위 저장 버튼과 같은 이유)
+    if (typeof renderAllHexaLists === 'function') renderAllHexaLists();
     // 지운 캐릭터가 캘린더에 그대로 남지 않게 같이 다시 그린다
     if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
   };
@@ -1205,12 +1208,17 @@ document.querySelectorAll('.overlay:not(#overlayAuth):not(#overlayAdmin)').forEa
    파일 안에 표시를 넣어두는 이유: 아무 JSON이나 읽어서 통째로 state에 넣어버리면
    데이터가 깨진다. 우리가 만든 파일인지 먼저 확인하고 아니면 거부한다. */
 const BACKUP_MARK = '_byeolnim';
+/* 이 기기에만 의미가 있는 값이라 파일 백업·클라우드 저장에 넣지도, 되살리지도 않는다.
+   로그인 토큰이 파일에 들어가면 파일을 받은 사람이 그 계정으로 로그인되고,
+   알림 켜짐 표시는 구독이 없는 다른 기기에서 켜진 것처럼 보이게 된다. */
+const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed']);
 document.getElementById('btnExport').addEventListener('click', () => {
   const extra = {};
   // 모든 localStorage 키 백업 (캐릭터별 헥사 hx_*_<id> 등 포함)
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
     if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
+    if (BACKUP_SKIP_KEYS.has(k)) continue;
     extra[k] = localStorage.getItem(k);
   }
   const bundle = { [BACKUP_MARK]: 1, state, extra };
@@ -1242,7 +1250,7 @@ document.getElementById('fileImport').addEventListener('change', e => {
       state = st;
       save();
       Object.entries(ex || {}).forEach(([k, v]) => {
-        if (typeof v === 'string') localStorage.setItem(k, v);
+        if (typeof v === 'string' && !BACKUP_SKIP_KEYS.has(k)) localStorage.setItem(k, v);
       });
       showToast('불러오기 완료! 새로고침합니다…');
       setTimeout(() => location.reload(), 600);
@@ -1445,8 +1453,8 @@ function renderCharInfo() {
     const region = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
-    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 카드 이미지 저장(html2canvas)이
-    // 캔버스에 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
+    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 카드 이미지 저장이 캔버스에
+    // 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
     // 모습은 완전히 동일(프록시가 원본 그대로 스트리밍).
     const portrait = f?.img
       ? `<img src="${proxiedImgSrc(f.img)}" crossorigin="anonymous" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('cg-portrait--no')" />`
@@ -1592,7 +1600,6 @@ const overlaySettings = document.getElementById('overlaySettings');
 document.getElementById('sbBtnSettings').addEventListener('click', () => overlaySettings.classList.add('open'));
 document.getElementById('headerBtnSettings').addEventListener('click', () => overlaySettings.classList.add('open'));
 document.getElementById('settingsClose').addEventListener('click', () => overlaySettings.classList.remove('open'));
-overlaySettings.addEventListener('click', e => { if (e.target === overlaySettings) overlaySettings.classList.remove('open'); });
 
 /* ── 관리자 — 전체 알림 발송 ──
    비밀번호를 앱 안에서 대조하지 않는다. 클라이언트 코드는 누구나 열어볼 수 있어
@@ -1750,6 +1757,10 @@ document.getElementById('btnResetAll').addEventListener('click', () => {
   document.getElementById('overlayConfirm').classList.add('open');
   document.getElementById('confirmOk').onclick = () => {
     Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+    // 헥사는 캐릭터별 키(hx_skill_<id> 등), 코디 시뮬레이터는 자기 키에 따로 저장한다
+    const hxPrefixes = [STORAGE_KEYS.hexaSkill, STORAGE_KEYS.hexaMastery, STORAGE_KEYS.hexaBoost, STORAGE_KEYS.hexaCommon].map(b => b + '_');
+    Object.keys(localStorage).filter(k => hxPrefixes.some(p => k.startsWith(p))).forEach(k => localStorage.removeItem(k));
+    if (typeof MX_STORE !== 'undefined') localStorage.removeItem(MX_STORE);
     location.reload();
   };
 });

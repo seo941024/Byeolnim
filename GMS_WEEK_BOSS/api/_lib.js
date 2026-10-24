@@ -62,10 +62,13 @@ function todayStr() {
   return `${d.getUTCFullYear()}-${p(d.getUTCMonth()+1)}-${p(d.getUTCDate())}`;
 }
 
-/* Redis 클라이언트 (환경변수 없으면 null) */
+/* Redis 클라이언트 (환경변수 없으면 null)
+   Redis.fromEnv()는 주소가 없어도 경고만 찍고 객체를 만들어서, 그대로 두면
+   요청마다 연결 재시도로 몇 초를 끈 뒤 실패한다. 그래서 주소부터 직접 본다. */
 let _redis = null;
 function getRedis() {
-  if (_redis !== null) return _redis;
+  if (_redis !== null) return _redis || null;
+  if (!process.env.UPSTASH_REDIS_REST_URL && !process.env.KV_REST_API_URL) { _redis = false; return null; }
   try {
     const { Redis } = require('@upstash/redis');
     _redis = Redis.fromEnv();

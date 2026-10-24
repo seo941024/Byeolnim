@@ -779,8 +779,7 @@ function _hrStartAuto() {
   }, 0);
 }
 
-/* 로그 줄의 등급 글자도 패널과 같은 색을 쓰도록, 등급 → 색을 한 곳에서 관리 */
-const _GRADE_COLOR = { RARE:'#6699ff', EPIC:'#b978ff', UNIQUE:'#ffcc00', LEGENDARY:'#ccff00' };
+/* 등급 아이콘 파일. 등급 색은 CSS의 data-grade가 맡는다 */
 const _GRADE_ICON  = { RARE:'rare', EPIC:'epic', UNIQUE:'unique', LEGENDARY:'legendary' };
 function _gradeIconSrc(g) { return `images/icons/${_GRADE_ICON[g] || 'rare'}.png`; }
 
@@ -849,7 +848,8 @@ async function initCube() {
   // 오타 하나로 값이 터지므로 입력 확정 시 1~250으로 잘라준다.
   document.getElementById('cubeLevel')?.addEventListener('change',e=>{
     const v=Math.max(1,Math.min(250,parseInt(e.target.value)||200));
-    e.target.value=v; _refreshAllRows(); _hrRender();
+    // 레벨 구간이 바뀌면 옵션 최댓값도 바뀌므로 직작 목표 수치를 다시 맞춘다(등급 변경과 같은 처리)
+    e.target.value=v; _refreshAllRows(); _hrRecomputeGoalValues(); _hrRender();
   });
   document.getElementById('cubeAddSetBtn')?.addEventListener('click',_addSet);
 
@@ -864,8 +864,7 @@ async function initCube() {
   _hrBuildPresets();
   _refreshAllRows();
 
-  // 시작 등급을 바꾸면 진행 상황을 초기화한다
-  // 시작 등급이 바뀌면 목표 칸 옵션 목록도 그 등급 기준으로 다시 채워야 한다
+  // 시작 등급을 바꾸면 진행 상황을 초기화하고, 목표 수치를 그 등급의 최댓값으로 다시 맞춘다
   document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); _refreshAllRows(); _hrRecomputeGoalValues(); });
   document.getElementById('hrRollBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrRoll(); });
   document.getElementById('hrAutoBtn')?.addEventListener('click',_hrStartAuto);
@@ -882,7 +881,7 @@ async function initCube() {
     if (document.getElementById('cubeTabHandroll')?.style.display === 'none') return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay[style*="flex"]')) return;  // 모달 떠 있으면 무시
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;  // 모달 떠 있으면 무시
     e.preventDefault();
     if (e.code === 'KeyS') { _hrStopAuto(); _hrRoll(); }
     else if (e.code === 'KeyR') { document.getElementById('hrResetBtn')?.click(); }

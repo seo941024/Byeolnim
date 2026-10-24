@@ -45,7 +45,7 @@ let _frTeam = [0, 1, 2].map(() => ({
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
 
 /* 타입 아이콘 — maplehub.app에서 실제로 존재하는 걸 확인한 9장만 받아왔다.
-   속성 아이콘은 그 사이트 경로가 전부 SPA 오류 페이지를 200으로 돌려주는 가짜였어서 없다. */
+   속성 아이콘은 아래 FR_ELEMENT_ICON_KEY에서 따로 다룬다. */
 /* src=""는 브라우저가 "빈 문자열 = 지금 문서 자체"로 해석해서 페이지를 이미지로 다시 불러오려는
    경우가 있다(엔진에 따라 다름). 그래서 아이콘 없을 땐 빈 문자열 대신 1x1 투명 GIF를 넣는다. */
 const FR_BLANK_ICON = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7';
@@ -442,7 +442,7 @@ const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], 
 
 /* 한 등급에 옵션이 366개까지 있는데, 대부분은 조건은 같고 수치만 다른 것들이다.
    그걸 한 줄로 쭉 늘어놓으면 못 고르니 조건별로 묶어서 "조건 고르고 → 수치 고르기"
-   두 단계로 나눈다(366개 → 조건 59개, 조건당 수치 최대 12개).
+   두 단계로 나눈다(옵션 수백 개 → 조건 수십 개, 조건당 수치 최대 12개).
 
    묶는 기준은 cond다. 사람이 정한 게 아니라 데이터에서 나온 거라 새 옵션이 들어와도
    알아서 묶인다. 조건 문구는 같은 묶음 label들의 공통 앞부분을 잘라서 쓴다 —
@@ -795,7 +795,8 @@ function _frRenderTeam() {
       e.stopPropagation();
       const menu = btn.nextElementSibling;
       const willOpen = menu.hidden;
-      box.querySelectorAll('.fr-dd__menu').forEach(m => { m.hidden = true; });
+      // 보너스 주사위 메뉴도 같은 섹션에 있으므로 섹션 전체에서 닫는다
+      document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
       menu.hidden = !willOpen;
     });
   });
@@ -804,7 +805,7 @@ function _frRenderTeam() {
       const i = +btn.dataset.el;
       _frTeam[i].element = btn.dataset.val;
       _frRenderTeam();
-      _frRenderTeamBadges();
+      _frCalcAndRender();   // 속성은 같은/다른 속성 조건에 걸리므로 점수를 다시 낸다
     });
   });
   box.querySelectorAll('.fr-dd__item[data-ty]').forEach(btn => {
@@ -812,7 +813,7 @@ function _frRenderTeam() {
       const i = +btn.dataset.ty;
       _frTeam[i].type = btn.dataset.val;
       _frRenderTeam();
-      _frRenderTeamBadges();
+      _frCalcAndRender();   // 타입도 조건에 걸리므로 점수를 다시 낸다
     });
   });
   _frTeam.forEach((f, i) => {

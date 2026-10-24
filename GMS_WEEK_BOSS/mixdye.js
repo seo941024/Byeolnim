@@ -26,7 +26,7 @@ const MX_MATTE_BASE = [77, 84, 89];
 const MX_MATTE_ALPHA = 238 / 255;
 const MX_SEX = { f: { name: '여자', digit: 1 }, m: { name: '남자', digit: 0 } };   // digit: 아이템 ID 천의 자리 성별 값
 
-// 기본 상하의 — 한벌옷을 입으면 빠지고, 벗으면 돌아온다. 캐시 아이템이 아니라 코디 목록에 없어 이름을 여기 둔다
+// 기본 상하의 — 한벌옷을 입으면 빠지고, 벗으면 돌아온다. 여자 기본 옷은 캐시 아이템이 아니라 코디 목록에 없어 이름을 여기 둔다
 const MX_BASIC = {
   f: { top: [1041046, 'Pink Tanktop'], bottom: [1061039, 'Pink Cotton Boxers'] },
   m: { top: [1042162, 'Blue-Striped Undershirt'], bottom: [1062112, 'Underpants'] },
@@ -86,7 +86,6 @@ const _mxSingle = (p, r) => _mxColorsOf(p, r).length < 2;
 const _mxMixOn = p => !_mxSingle(p, _mxRow(p)) && _mxState[p.key].mix >= 0;
 const _mxDot = c => `<span class="mx-dot" style="background:${c.sw}"></span>`;
 const _mxEsc = s => String(s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
-const _mxVer = () => window.MIXDYE_DATA.version;
 const _mxCD = () => window.COORDI_DATA;
 const _mxSlotName = key => (_mxCD()?.parts.find(p => p.key === key) || {}).name || ({ top: '상의', bottom: '하의' }[key] || key);
 const _mxWorn = () => _mxState.chars[_mxState.g].worn;
@@ -349,7 +348,8 @@ async function _mxDraw() {
   const u = _mxUrls();
   const key = JSON.stringify(u);
   // 비율만 바뀌었으면 만든 그림으로 다시 섞기만 한다
-  if (_mxCur && _mxCur.key === key) { _mxDrawCards(); return; }
+  // 앞서 걸어 둔 요청이 끝나지 않은 채 되돌아온 경우에도 로딩·오류 안내는 지운다
+  if (_mxCur && _mxCur.key === key) { _mxSetStatus(''); _mxDrawCards(); return; }
   const slow = setTimeout(() => { if (my === _mxToken) _mxSetStatus('데이터를 불러오는 중입니다'); }, 150);
   try {
     const names = Object.keys(u);
@@ -482,7 +482,8 @@ function _mxFilter() {
 function _mxScrollToSelected() {
   const L = _mxLists[_mxCurrentListKey()];
   if (!L) return;
-  const id = _mxState.part === 'coordi' ? _mxWorn()[_mxState.coordi.slot] : _mxState[_mxState.part].id;
+  const id = _mxState.part === 'coordi' ? _mxWorn()[_mxState.coordi.slot]
+    : _mxState.part === 'skin' ? _mxSkin().id : _mxState[_mxState.part].id;
   const it = L.items.find(x => x.id === id);
   L.box.scrollTop = it && it.el.style.display !== 'none' ? it.el.offsetTop - L.box.clientHeight / 2 : 0;
 }

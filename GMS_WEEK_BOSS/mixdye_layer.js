@@ -25,14 +25,13 @@ const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };
 const MX_LAYER_SIZE = 96;
 const MX_LAYER_LADDER_HIDE = ['face', 'accessoryEye', 'accessoryEyeBelowFace', 'accessoryFaceBelowFace'];
 
-let _mxLayer = null;          // { rules, zi, where: 아이템 ID → 묶음 이름 }, 쓸 수 없으면 false
+let _mxLayer = null;          // { rules, zi, where: 아이템 ID → 묶음 이름 }, 받기 전에는 null
 let _mxLayerInitP = null;
 const _mxLayerChunks = new Map();   // 묶음 이름 → Promise<Map(ID → 아이템)>
 const _mxLayerSkins = new Map();    // 피부 머리 ID → Promise<{ skin, f: 동작별 몸·머리 층 }>
 const _mxLayerImgs = new WeakMap(); // 층 → Promise<Image>
 
 function _mxLayerInit() {
-  if (!_mxLayerInitP && !MX_LAYER_BASE) { _mxLayer = false; _mxLayerInitP = Promise.resolve(); }
   if (!_mxLayerInitP) {
     const get = name => fetch(MX_LAYER_BASE + name).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
     _mxLayerInitP = Promise.all([get(`index.json?v=${MX_LAYER_DATA_VER}`), get(`rules.json?v=${MX_LAYER_DATA_VER}`)]).then(([index, rules]) => {
@@ -43,7 +42,8 @@ function _mxLayerInit() {
       }
       const zi = new Map(rules.zmap.map((z, i) => [z, i]));
       _mxLayer = { rules, zi, where };
-    }).catch(() => { _mxLayer = false; });
+    // 실패하면 기억해 두지 않는다 — 다음 그림을 그릴 때 다시 받는다
+    }).catch(e => { _mxLayerInitP = null; throw e; });
   }
   return _mxLayerInitP;
 }

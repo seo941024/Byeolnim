@@ -1,16 +1,10 @@
 /* ═══════════════════════════════════════════════
    해방 계산기 — 제네시스 (어둠의 흔적)
 ═══════════════════════════════════════════════ */
-function nextThursday(from) {
-  const d = new Date(from || new Date());
-  const diff = (4 - d.getDay() + 7) % 7 || 7;
-  d.setDate(d.getDate() + diff);
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function todayStr() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
+// todayStr()는 app.js에 있다.
+/* 'YYYY-MM-DD'를 그 날짜의 로컬 자정으로 읽는다. new Date('YYYY-MM-DD')는 UTC 자정으로
+   읽혀서, 아래의 getDay()·setDate() 로컬 계산과 섞이면 미국 시간대에서 하루가 밀린다. */
+function libLocalDate(str) { return new Date((str || todayStr()) + 'T00:00:00'); }
 
 /* 데스티니·아스트라 데이터는 난이도 키를 한글로 들고 있는데, 화면 표기는
    제네시스(DIFF_META)와 똑같이 영문으로 맞춘다. 키까지 바꾸면 이미 저장된
@@ -85,7 +79,7 @@ function calcResult() {
     targetDateStr = '이미 달성!';
   } else if (fullWeekly > 0 || fullMonthly > 0) {
     // 시작일에서 첫 목요일 리셋 찾기
-    const startD = new Date(genState.startDate || todayStr());
+    const startD = libLocalDate(genState.startDate);
     const daysToFirstReset = (4 - startD.getDay() + 7) % 7 || 7;
 
     /* ★ 예전에는 월간(검은 마법사)을 fullMonthly/4로 주당 환산하고, 리셋 횟수도
@@ -409,7 +403,7 @@ function libTargetDate(remaining, thisWeekly, fullWeekly, startDateStr) {
   if (remaining <= 0) return { weeksStr: '이미 달성!', dateStr: '이미 달성!' };
   if (fullWeekly <= 0) return { weeksStr: '—', dateStr: '—' };
 
-  const startD = new Date(startDateStr || todayStr());
+  const startD = libLocalDate(startDateStr);
   const daysToReset = (4 - startD.getDay() + 7) % 7 || 7;
 
   const resets = Math.max(0, Math.ceil((remaining - thisWeekly) / fullWeekly));
@@ -734,7 +728,7 @@ function calcAstraResult() {
   const perDay   = area.frag;
   const heldFrag = Math.max(0, astraState.heldFrag);
   const heldTrace= Math.max(0, astraState.heldTrace);
-  const startD   = new Date(astraState.startDate || todayStr());
+  const startD   = libLocalDate(astraState.startDate);
   const today    = new Date(); today.setHours(0,0,0,0);
 
   // 지금 낀 보조무기 다음 단계부터가 남은 퀘스트다
@@ -773,12 +767,14 @@ function calcAstraResult() {
     }
 
     const daysLeft = doneDate ? Math.round((doneDate - today) / 86400000) : null;
+    // 날짜가 오늘이어도 이번 주 보스를 더 잡아야 채워지는 경우는 데스티니처럼 "이번 주 달성"으로 적는다
+    const already = cumFrag <= heldFrag && traceRemain <= 0;
     quests.push({
       name: q.name, frag: q.frag, trace: q.trace, cumFrag, cumTrace,
       dateStr: doneDate
         ? `${doneDate.getFullYear()}년 ${String(doneDate.getMonth()+1).padStart(2,'0')}월 ${String(doneDate.getDate()).padStart(2,'0')}일`
         : '—',
-      weeksStr: daysLeft === null ? '—' : (daysLeft <= 0 ? '이미 달성!' : `${(daysLeft/7).toFixed(1)}주 · ${daysLeft}일`),
+      weeksStr: daysLeft === null ? '—' : already ? '이미 달성!' : (daysLeft <= 0 ? '이번 주 달성' : `${(daysLeft/7).toFixed(1)}주 · ${daysLeft}일`),
     });
   }
 

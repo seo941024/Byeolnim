@@ -21,8 +21,12 @@ module.exports = async function handler(req, res) {
   try {
     const r = await fetch(u.toString(), { headers: { 'User-Agent': 'Mozilla/5.0' } });
     if (!r.ok) { res.status(502).json({ ok:false, error:'upstream fetch failed' }); return; }
+    // 우리 출처로 내보내는 응답이라 그림이 아니면 넘기지 않는다(넥슨 쪽 HTML이 여기서 실행되지 않게)
+    const ct = r.headers.get('content-type') || 'image/png';
+    if (!/^image\//i.test(ct)) { res.status(415).json({ ok:false, error:'not an image' }); return; }
     const buf = Buffer.from(await r.arrayBuffer());
-    res.setHeader('Content-Type', r.headers.get('content-type') || 'image/png');
+    res.setHeader('Content-Type', ct);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Cache-Control', 'public, max-age=86400');
     res.status(200).send(buf);
   } catch (e) {

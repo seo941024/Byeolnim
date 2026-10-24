@@ -2,7 +2,7 @@
    GMS_Calc/코디데이터_업데이트.cmd를 더블클릭하면 이 스크립트가 실행된다.
 
      node tools/coordi_update.js            maplestory.io에 새 GMS 버전이 있을 때만 진행
-     node tools/coordi_update.js --force    버전이 같아도 진행. 새 아이템이 없으면 바뀌는 것도 없다
+     node tools/coordi_update.js --force    버전이 같아도 진행. 바뀐 데이터가 없으면 커밋하지 않는다
 
    순서
    1. maplestory.io의 GMS·KMS 최신 버전 확인. 그림까지 준비된 정수 버전만 본다. 205.2.0 같은 버전은 뺀다
@@ -12,7 +12,9 @@
    5. 색인 만들고 사이트 폴더로 복사, 목록 아이콘 다시 그리기
    6. 사이트가 새 파일을 받도록 캐시 버전 올리기
    7. 커밋·푸시. Vercel이 자동으로 배포한다
-   중간에 실패하면 거기서 멈추고 커밋하지 않는다. 다시 실행하면 수집은 받은 데까지 이어서 한다 */
+   중간에 실패하면 거기서 멈추고 커밋하지 않는다. 다시 실행하면 수집은 받은 데까지 이어서 한다.
+   7단계는 mixdye.js·mixdye_layer.js·index.html을 통째로 커밋하므로, 그 파일에 커밋 안 한
+   수정이 있으면 처음부터 멈춘다(작업 중인 수정이 데이터 커밋에 섞여 바로 배포되지 않게) */
 
 const fs = require('fs');
 const path = require('path');
@@ -67,6 +69,8 @@ async function latestVersions() {
     console.log('\nmaplestory.io에 아직 새 GMS 버전이 없습니다. 하루 이틀 뒤 다시 실행해 주세요.');
     return;
   }
+  const dirty = git('status', '--porcelain', '--', 'GMS_WEEK_BOSS/mixdye.js', 'GMS_WEEK_BOSS/mixdye_layer.js', 'GMS_WEEK_BOSS/index.html');
+  if (dirty) throw new Error(`아래 파일에 커밋 안 한 수정이 있어 멈춥니다. 먼저 커밋하거나 되돌려 주세요\n${dirty}`);
   const env = { GMS_VERSION: gms, KMS_VERSION: kms };
 
   step(2, `헤어·성형·코디 목록 새로 만들기 · GMS v${gms}`);
@@ -82,6 +86,12 @@ async function latestVersions() {
   step(5, '색인·복사·목록 아이콘');
   run(['tools/coordi_publish.js']);
   run(['tools/coordi_icons.js']);
+
+  // 데이터가 그대로면 버전만 올린 커밋으로 모두가 색인·아이콘을 다시 받게 되므로 여기서 끝낸다
+  if (!git('status', '--porcelain', '--', 'GMS_WEEK_BOSS/data_mixdye.js', 'GMS_WEEK_BOSS/data_coordi.js', 'GMS_WEEK_BOSS/coordi/v270')) {
+    console.log('\n바뀐 데이터가 없어 커밋하지 않습니다.');
+    return;
+  }
 
   step(6, '캐시 버전 올리기');
   const d = new Date(), pad = n => String(n).padStart(2, '0');

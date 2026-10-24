@@ -63,7 +63,8 @@ function _soulAmpStep() {
   _soulState.mesoSpent += info.meso;
   _soulState.etherSpent[target]++;
 
-  const forced = _soulState.gauge >= 1;
+  // 2단계는 3.03%씩 33번 쌓으면 99.99%라 1에 못 미친다 — 완충 횟수 33회와 맞도록 오차를 둔다
+  const forced = _soulState.gauge >= 0.999;
   const chanceNow = _soulAmpChanceNow(info);
   const ok = forced || Math.random() < chanceNow;
   _soulState.log.unshift({ n: _soulState.tries, target, ok, forced, chance: chanceNow });
@@ -495,7 +496,7 @@ function initSoul() {
     if (!document.getElementById('sec-soul')?.classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay[style*="flex"]')) return;
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     e.preventDefault();
     const isAmp = document.getElementById('soulTabAmp').style.display !== 'none';
     if (e.code === 'KeyS') document.getElementById(isAmp ? 'soulAmpRollBtn' : 'soulResetBtn')?.click();

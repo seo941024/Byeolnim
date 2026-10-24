@@ -156,7 +156,6 @@ function getDestStar(star) {
   return 20;
 }
 
-/* ── 몬테카를로 시뮬레이션 (1회) ── */
 /* 기댓값 정확해 — 시뮬레이션 없이 마르코프 연쇄를 직접 푼다.
    sfRunOnce와 완전히 동일한 모델이어야 한다: 실패=유지, 파괴=getDestStar로 복귀.
 
@@ -218,6 +217,7 @@ function sfExpectedExact(cfg) {
   return { cost: B[s0][0], destroys: B[s0][1], attempts: B[s0][2] };
 }
 
+/* ── 몬테카를로 시뮬레이션 (1회) ── */
 function sfRunOnce(cfg) {
   let star = cfg.current;
   let totalCost = 0;

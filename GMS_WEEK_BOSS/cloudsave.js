@@ -4,7 +4,7 @@
    파일로 주고받던 백업을 서버에 올려두고 아이디로 꺼내 쓰게 한다.
    올리는 내용은 기존 "내보내기" 번들과 완전히 같다(state + localStorage 전체).
 
-   토큰은 localStorage에 둔다. 30일 뒤 서버에서 자동 만료된다.
+   토큰은 localStorage에 둔다. 6개월 뒤 서버에서 자동 만료된다.
 ═══════════════════════════════════════════════ */
 
 const CS_TOKEN_KEY = 'gms_cloud_token';
@@ -26,15 +26,24 @@ function csEsc(s) {
 
 function csToken() { return localStorage.getItem(CS_TOKEN_KEY) || ''; }
 
+/* 네트워크가 끊겨도 throw하지 않고 실패 응답으로 돌려준다. 호출하는 쪽이 _csBusy를
+   켠 채 기다리므로, 여기서 예외가 나가면 새로고침 전까지 모든 버튼이 막힌다.
+   status는 csRefresh가 "토큰 만료(401)"와 "일시적인 서버 오류"를 가리는 데 쓴다. */
 async function csApi(action, extra) {
-  const r = await fetch('/api/auth', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.assign({ action, token: csToken() }, extra || {})),
-  });
+  let r;
+  try {
+    r = await fetch('/api/auth', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action, token: csToken() }, extra || {})),
+    });
+  } catch {
+    return { ok: false, status: 0, error: '서버에 연결하지 못했습니다' };
+  }
   let j = null;
   try { j = await r.json(); } catch { j = null; }
-  if (!j) return { ok: false, error: '서버 응답을 읽지 못했습니다' };
+  if (!j) return { ok: false, status: r.status, error: '서버 응답을 읽지 못했습니다' };
+  j.status = r.status;
   return j;
 }
 
@@ -44,7 +53,7 @@ function csCollectBundle() {
   for (let i = 0; i < localStorage.length; i++) {
     const k = localStorage.key(i);
     if (k === STORAGE_KEYS.boss) continue;   // state로 따로 담는다
-    if (k === CS_TOKEN_KEY || k === CS_ID_KEY) continue;  // 로그인 정보는 올리지 않는다
+    if (BACKUP_SKIP_KEYS.has(k)) continue;   // 로그인 정보·기기 전용 값은 올리지 않는다
     extra[k] = localStorage.getItem(k);
   }
   return { [BACKUP_MARK]: 1, state, extra };
@@ -55,7 +64,7 @@ function csApplyBundle(bundle) {
   if (!bundle) return false;
   if (bundle.state) { state = bundle.state; save(); }
   Object.entries(bundle.extra || {}).forEach(([k, v]) => {
-    if (typeof v === 'string') localStorage.setItem(k, v);
+    if (typeof v === 'string' && !BACKUP_SKIP_KEYS.has(k)) localStorage.setItem(k, v);
   });
   return true;
 }
@@ -217,6 +226,8 @@ async function csLogout() {
   _csAdmin = false;
   _csRepChar = null;
   _csPwOpen = false;
+  // 이 기기의 푸시 구독을 토큰 없이 다시 올려 계정 연결을 끊는다(댓글 알림이 더 오지 않게)
+  if (typeof bpSync === 'function') bpSync().catch(() => {});
   showToast('로그아웃되었습니다.');
   csRender(null);
 }
@@ -385,7 +396,8 @@ async function csRefresh() {
   if (!csToken()) { _csUser = null; csRender(null); return; }
   const j = await csApi('me');
   if (!j.ok) {
-    // 토큰이 만료됐으면 조용히 로그아웃 상태로
+    // 서버가 잠깐 안 될 때는 토큰을 그대로 두고, 만료(401)일 때만 조용히 로그아웃 상태로
+    if (j.status !== 401) { csRender(null); return; }
     localStorage.removeItem(CS_TOKEN_KEY);
     localStorage.removeItem(CS_ID_KEY);
     _csUser = null;

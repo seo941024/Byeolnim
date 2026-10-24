@@ -167,7 +167,6 @@ function _flameScoreRenderResult(results, N, target) {
 
     const mean     = Math.round(1 / p);
     const medianPct = Math.round((1 - Math.pow(1 - p, mean)) * 100 * 100) / 100;
-    const pctCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
     const uid = `fsp_${key}`;
 
     return `
@@ -239,10 +238,8 @@ function flameGetGoals() {
 
 function flameRefreshOptionSelects() {
   const isWeapon  = _flameGetIsWeapon();
-  const isBoss    = _flameGetIsBoss();
   const display   = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
   const { prob }  = FLAME_TYPES[_flameGetFlameKey()];
-  const gradeOffset = isBoss ? 2 : 0; // 보스=3추~7추, 비보스=1추~5추
 
   // 다른 셀렉트에서 선택된 옵션 수집 (중복 비활성화용)
   const getOtherSelected = (me) => {
@@ -362,14 +359,14 @@ function _isGoalPossible(flameKey, goals) {
   const { prob } = FLAME_TYPES[flameKey];
   return goals.every(g => {
     if (!g.opt || g.opt === 'none') return true;
-    const minOldTier = 6 - g.minTier; // minTier 1(7추)→oldT5, 5(3추)→oldT1
+    const minOldTier = 6 - g.minTier; // minTier 1(1추)→oldT5, 5(5추)→oldT1
     // 해당 tier 이상의 확률 합이 0이면 불가능
     const possible = prob.slice(minOldTier - 1).some(p => p > 0);
     return possible;
   });
 }
 
-/* 무기는 STR/DEX/INT/LUK 추옵 값이 무기 종류마다 달라서, 종류를 안 고르면
+/* 무기는 공격력·마력 추옵 값이 무기 종류마다 달라서, 종류를 안 고르면
    계산 자체가 성립하지 않는다. 못 돌리게 막고 이유를 알려준다. */
 function _flameWeaponSubtypeMissing() {
   return _flameGetIsWeapon() && !_flameGetWeaponSubtype();
@@ -439,11 +436,6 @@ function flameSimulate() {
 /* 불꽃을 번갈아 쓸 수 있으므로 사용 개수는 종류별로 따로 센다 */
 let _flameHand = { count: {}, log: [] };
 
-/* 네 줄 중 가장 높은 티어. 별 표시에 쓴다. */
-function _flameTopTier(lines) {
-  return lines.reduce((m, l) => Math.max(m, l.tier), 0);
-}
-
 /* 티어(내부값 1~5, 5가 가장 좋음)를 화면 표기인 "n추"로 바꾼다.
    가장 좋은 등급이 1추다 — 옵션 시뮬레이터의 '티어별 스탯 참조' 표와 같은 기준이라
    보스 장비 여부와 무관하게 항상 1추~5추로 적는다. */
@@ -472,7 +464,7 @@ function _flameRollOnce(silent) {
   const score = flameRollScore(lines);
 
   _flameHand.count[flame] = (_flameHand.count[flame] || 0) + 1;
-  _flameHand.log.unshift({ lines, score, tier: _flameTopTier(lines) });
+  _flameHand.log.unshift({ lines, score });
   if (_flameHand.log.length > 100) _flameHand.log.pop();
 
   if (!silent) _flameRenderHand();
@@ -491,7 +483,7 @@ function _flameHandGoalsMet(lines) {
   const goals = flameGetGoals().filter(g => g.opt && g.opt !== 'none');
   if (!goals.length) return false;
   return goals.every(g => {
-    const th = 6 - g.minTier; // minTier 1(5추)→th1, 5(1추)→th5, _flameExactProb과 동일
+    const th = 6 - g.minTier; // minTier 1(1추)→th5, 5(5추)→th1, _flameExactProb과 동일
     const line = lines.find(l => l.opt === g.opt);
     return !!line && line.tier >= th;
   });
@@ -623,8 +615,8 @@ function initAddOption() {
           </div>
         </div>
 
-        <!-- 무기일 때만 나온다. STR/DEX/INT/LUK(순수 스탯) 추가옵션 값은 레벨이
-             아니라 무기 자체의 기본 공격력에 비례해서, 무기 종류마다 다르다. -->
+        <!-- 무기일 때만 나온다. 공격력·마력 추가옵션 값은 레벨이 아니라
+             무기 자체의 기본 공격력에 비례해서, 무기 종류마다 다르다. -->
         <div id="flameWeaponSubtypeWrap" style="display:none">
           <label class="field__label">무기 종류</label>
           <select class="sel" id="flameWeaponSubtype" style="margin-top:6px;width:100%">
@@ -725,8 +717,8 @@ function initAddOption() {
 
         <div class="card" id="flameHandResultCard" style="display:none">
           <div class="card__title">결과</div>
-          <!-- 네 줄이 뜨는 판. 테두리는 가장 높은 티어를 따라간다 -->
-          <div class="pot-panel flame-panel" id="flameHandPanel" data-tier="0">
+          <!-- 네 줄이 뜨는 판 -->
+          <div class="pot-panel flame-panel" id="flameHandPanel">
             <div class="pot-panel__head">
               <span class="flame-panel__score" id="flameHandScore"></span>
             </div>
@@ -849,6 +841,11 @@ function initAddOption() {
       document.getElementById('flameSimResultCard').style.display   = isSim  ? '' : 'none';
       document.getElementById('flameScoreResultCard').style.display = which === 'score' ? '' : 'none';
       document.getElementById('flameHandResultCard').style.display  = isHand ? '' : 'none';
+      // 추옵 계산기는 항상 방어구로 계산하므로, 앞에서 무기를 골랐어도 무기 칸과 레벨 잠금을 풀어둔다
+      if (which === 'score') {
+        document.getElementById('flameWeaponSubtypeWrap').style.display = 'none';
+        document.getElementById('flameLevel').disabled = false;
+      } else syncWeaponSubtypeVisibility();
       if (isHand) _flameRenderHand();
       else _flameAutoCalc(); // 탭 전환 시 해당 탭 결과 자동 표시
     });

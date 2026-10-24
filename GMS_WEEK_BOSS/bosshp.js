@@ -280,8 +280,7 @@ function renderBossHPTable() {
     const key = Object.keys(seen).find(k => norm(k) === norm(bd.name));
     if (key) { seen[key].img = bd.img; seen[key].monthly = !!bd.monthly; }
   });
-  // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지.
-  // 벨로나는 정적 컷이 따로 없어서 gif를 그대로 카드 이미지로 쓴다(이름 글씨 없는 원본).
+  // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지(BOSS_IMG_EXTRA).
   Object.entries(BOSS_IMG_EXTRA).forEach(([n, src]) => {
     if (seen[n] && !seen[n].img) seen[n].img = src;
   });
@@ -337,8 +336,8 @@ function renderBossHPTable() {
     const isOn = busChecked.has(boss.name);
 
     // 클릭 가능 여부는 "지금 고른 난이도"가 아니라 "이 보스가 어느 난이도에서든 드랍이
-    // 있는지"로 판단한다. 예전엔 선택 난이도로만 봐서, 스우처럼 노말엔 드랍이 없고
-    // 하드/익스트림에만 있는 보스가 기본 난이도에선 아예 안 눌리는 것처럼 보였다.
+    // 있는지"로 판단한다. 예전엔 선택 난이도로만 봐서, 기본 난이도엔 드랍이 없고
+    // 윗 난이도에만 있는 보스가 아예 안 눌리는 것처럼 보였다.
     const hasDrops = _bhpBossHasAnyDrops(boss.name);
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">

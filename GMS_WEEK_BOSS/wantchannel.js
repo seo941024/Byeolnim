@@ -118,7 +118,11 @@ function _wcOpenModal(item) {
 
 async function _wcFetchRecommend(item) {
   try {
-    const r = await fetch(`/api/server-status?region=na`);
+    // 넥슨 서버 상태는 지역별로 따로 내려오므로 EU 캐릭터는 EU 목록에서 찾는다.
+    // 서버만 직접 고른 캐릭터는 region이 없어 서버 이름으로 가린다.
+    const f = state.chars[state.activeChar]?.fetched;
+    const region = f?.region === 'EU' || /^(Luna|Solis)$/.test(f?.world || '') ? 'eu' : 'na';
+    const r = await fetch(`/api/server-status?region=${region}`);
     const j = await r.json();
     if (!j.ok) throw new Error(j.error || '조회 실패');
     const wid = _wcCurrentWorldID();

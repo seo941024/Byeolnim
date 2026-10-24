@@ -64,11 +64,14 @@ module.exports = async function handler(req, res) {
 
     const due = [];
     const keep = [];
+    let late = 0;
     for (const it of rec.items) {
       if (it.at > now) { keep.push(it); continue; }          // 아직 멀었다
       if (now - it.at <= graceMs) { due.push(it); continue; } // 보낼 때가 됐다
-      dropped++;                                             // 너무 늦어 버린다
+      late++;                                                // 너무 늦어 버린다
     }
+    dropped += late;
+    let gone = false;   // 만료돼서 지운 구독은 아래에서 다시 저장하면 안 된다
 
     for (const it of due) {
       try {
@@ -88,8 +91,13 @@ module.exports = async function handler(req, res) {
         // 404/410 = 구독이 만료됐거나 사용자가 알림을 끈 것 → 더 보낼 이유가 없다
         const code = e && e.statusCode;
         if (code === 404 || code === 410) {
-          try { await redis.srem('push:subs', id); await redis.del('push:sub:' + id); pruned++; }
-          catch { /* 지우는 것도 실패하면 다음 tick에서 다시 시도된다 */ }
+          gone = true;
+          try {
+            await redis.srem('push:subs', id);
+            if (rec.userId) await redis.srem('push:user:' + rec.userId, id);
+            await redis.del('push:sub:' + id);
+            pruned++;
+          } catch { /* 지우는 것도 실패하면 다음 tick에서 다시 시도된다 */ }
           break;
         }
       }
@@ -98,7 +106,7 @@ module.exports = async function handler(req, res) {
     // 보낸 것과 너무 늦은 것을 빼고 남은 것만 저장한다.
     // 이 저장이 실패해도(예: 쓰기 권한 문제) 이번 구독자 처리만 실패로 남기고
     // 나머지 구독자들은 계속 처리한다 — 여기서 죽으면 이후 구독자 전원이 못 받는다.
-    if (due.length || dropped) {
+    if (!gone && (due.length || late)) {
       try {
         await redis.set('push:sub:' + id, JSON.stringify({ ...rec, items: keep }));
       } catch (e) {

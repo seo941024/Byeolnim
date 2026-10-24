@@ -43,12 +43,14 @@ async function getJson(url) {
     }
   }
 }
+// 캐시 키에 버전을 붙인다 — 경로만 쓰면 GMS 버전이 올라가도 옛 버전 노드(smap 등)를 계속 쓴다
 async function wz(p) {
-  if (!(p in cache)) {
-    cache[p] = await getJson(WZ + p);
+  const k = `${VERSION}/${p}`;
+  if (!(k in cache)) {
+    cache[k] = await getJson(WZ + p);
     if (++unsaved >= 25) saveCache();
   }
-  return cache[p];
+  return cache[k];
 }
 
 /* 층: [z 이름, 기준점 x, y, 붙는 자리 {이름: [x, y]}, PNG base64] — coordi_collect.js의 아이템 층과 같은 형식.
@@ -122,9 +124,8 @@ async function getItem(id) {
     console.log(`skins/${head}.json · ${name} · ${VIEWS.map(v => `${v} ${f[v].length}층`).join(', ')}`);
   }
   saveCache();
-  // body: 기본 피부 몸·머리. 피부별 파일 전에 배포된 사이트 코드가 Blob의 rules.json에서 이 값을 읽는다
-  const body = JSON.parse(fs.readFileSync(path.join(ROOT, 'skins', '12018.json'), 'utf8')).f;
-  fs.writeFileSync(path.join(ROOT, 'rules.json'), JSON.stringify({ version: VERSION, zmap, smap, body }));
+  // 사이트(mixdye_layer.js)는 zmap·smap만 읽는다. 피부 몸·머리는 skins/*.json에서 받는다
+  fs.writeFileSync(path.join(ROOT, 'rules.json'), JSON.stringify({ version: VERSION, zmap, smap }));
   console.log(`rules.json · smap ${Object.keys(smap).length}개`);
 
   const items = [];

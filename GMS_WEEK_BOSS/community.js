@@ -13,7 +13,7 @@
 ═══════════════════════════════════════════════ */
 
 const CM_IMAGES_MAX = 10;
-const CM_IMG_MAX_BYTES = 5 * 1024 * 1024;
+const CM_IMG_MAX_BYTES = 3 * 1024 * 1024;   // api/community.js의 UPLOAD_MAX_BYTES와 같게
 
 let _cmView = 'list';
 let _cmPostId = null;
@@ -52,11 +52,17 @@ function cmCanEdit(authorId) {
 }
 
 async function cmApi(action, extra) {
-  const r = await fetch('/api/community', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(Object.assign({ action, token: cmToken() }, extra || {})),
-  });
+  // 네트워크가 끊겨도 throw하지 않는다 — 호출하는 쪽이 _cmBusy를 켠 채 기다린다
+  let r;
+  try {
+    r = await fetch('/api/community', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(Object.assign({ action, token: cmToken() }, extra || {})),
+    });
+  } catch {
+    return { ok: false, error: '서버에 연결하지 못했습니다' };
+  }
   let j = null;
   try { j = await r.json(); } catch { j = null; }
   return j || { ok: false, error: '서버 응답을 읽지 못했습니다' };
@@ -245,7 +251,7 @@ function cmRenderWrite(sec) {
         <div id="cmEditor" class="cm-editor"></div>
       </div>
       <div class="field mt8">
-        <label class="field__label">사진 (본문에 삽입 · 최대 ${CM_IMAGES_MAX}장, 1장당 5MB)</label>
+        <label class="field__label">사진 (본문에 삽입 · 최대 ${CM_IMAGES_MAX}장, 1장당 3MB)</label>
         <input type="file" id="cmFile" accept="image/png,image/jpeg,image/gif,image/webp" multiple style="display:none" />
         <button class="sbtn sbtn--ghost" id="cmPickBtn">사진 삽입</button>
         <span class="cm-upstate" id="cmUpState"></span>
@@ -305,7 +311,7 @@ async function cmUploadFiles(fileList) {
   let pos = _cmEditor.getSelection(true)?.index ?? _cmEditor.getLength();
   for (let i = 0; i < targets.length; i++) {
     const f = targets[i];
-    if (f.size > CM_IMG_MAX_BYTES) { showToast(`${f.name}은(는) 5MB가 넘어 건너뜁니다.`); continue; }
+    if (f.size > CM_IMG_MAX_BYTES) { showToast(`${f.name}은(는) 3MB가 넘어 건너뜁니다.`); continue; }
     st.textContent = `올리는 중... (${i + 1}/${targets.length})`;
     try {
       const dataUrl = await new Promise((resolve, reject) => {

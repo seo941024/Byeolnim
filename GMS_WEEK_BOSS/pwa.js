@@ -258,7 +258,8 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!btn) return;
   btn.addEventListener('click', () => {
     document.getElementById('overlaySettings')?.classList.remove('open');
-    if (pwaIsInstalled()) { alert('이미 홈 화면에 설치되어 있어요.'); return; }
+    // pwaShowBanner는 설치 기록이 있으면 조용히 돌아가므로, 같은 기준으로 먼저 알려준다
+    if (pwaAlreadyInstalled()) { alert('이미 홈 화면에 설치되어 있어요.'); return; }
     if (pwaDeferredPrompt) { pwaShowBanner('android', true); return; }
     if (pwaIsInAppBrowser()) { pwaShowBanner(pwaIsAndroid() ? 'android-inapp' : 'ios-inapp', true); return; }
     pwaShowBanner(pwaIsIOS() ? 'ios' : 'unsupported', true);

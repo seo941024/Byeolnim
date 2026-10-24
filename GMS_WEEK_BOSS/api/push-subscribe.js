@@ -11,8 +11,9 @@
 
    저장 구조
      push:subs            (set)  구독 id 목록
-     push:sub:<id>        (json) { sub, items: [{ id, at, title, body }], updated }
-       at    = 알림을 띄울 시각(epoch ms). 클라이언트가 보스시각-30분으로 계산해 보낸다.
+     push:sub:<id>        (json) { sub, origin, items: [{ id, at, title, body }], userId, updated }
+       at    = 알림을 띄울 시각(epoch ms). 클라이언트가 보스시각에서 BP_NOTIFY_BEFORE_MIN을 빼서 보낸다.
+     push:user:<uid>      (set)  로그인한 계정에 연결된 구독 id 목록(커뮤니티 알림용)
    ============================================= */
 const { getRedis } = require('./_lib');
 
@@ -97,7 +98,8 @@ module.exports = async function handler(req, res) {
        있다. 예전 주소로 설치한 사람도 같은 VAPID 키면 알림을 받으므로, 전체 발송
        때 지금 주소에서 구독한 사람만 골라내려면 이 값이 필요하다.
        endpoint(fcm.googleapis.com/...)로는 출처를 알 수 없다. */
-    const userId = uid || (oldRec && oldRec.userId) || null;
+    // 토큰이 없거나 만료됐으면 로그아웃한 기기라 계정 연결을 끊는다
+    const userId = uid || null;
     if (oldRec && oldRec.userId && oldRec.userId !== userId) await redis.srem('push:user:' + oldRec.userId, id);
     await redis.set('push:sub:' + id, JSON.stringify({
       sub: body.subscription,

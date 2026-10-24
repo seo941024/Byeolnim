@@ -6,7 +6,7 @@
 
    저장 구조 (Upstash Redis)
      auth:user:<id>    (json) { id, salt, hash, created, nickname }   ← 비밀번호 원문은 절대 저장 안 함
-     auth:tok:<token>  (str)  id                            ← 세션, 30일 후 자동 만료
+     auth:tok:<token>  (str)  id                            ← 세션, 6개월 후 자동 만료
      auth:data:<id>    (json) 사용자가 저장한 앱 데이터
      auth:fail:<id>    (int)  로그인 연속 실패 횟수, 10분 후 자동 소멸
 

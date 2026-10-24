@@ -6,10 +6,11 @@
    로그인 없이도 된다.
 
    저장 구조 (Upstash Redis)
-     community:post:<id>      (json) { id, authorId, authorNick, title, body,
-                                        images:[url,...], createdAt, commentCount }
+     community:post:<id>      (json) { id, authorId, authorNick, authorRepChar, title, body,
+                                        images:[], createdAt, editedAt, commentCount }
+                                        사진은 body 안의 <img>로 들어가고 images는 빈 배열로 둔다
      community:posts          (zset) score=createdAt, member=id  ← 최신순 목록용
-     community:comments:<pid> (json) [{ id, authorId, authorNick, body, createdAt }, ...]
+     community:comments:<pid> (json) [{ id, parentId, authorId, authorNick, authorRepChar, body, createdAt }, ...]
 
    닉네임은 글 작성 시점 값을 그대로 박아 둔다(스냅샷). 나중에 닉네임을 바꿔도
    이미 쓴 글에는 소급 반영되지 않는다 — 매번 사용자 레코드를 다시 조회하지
@@ -29,7 +30,9 @@ const COMMENTS_MAX_PER_POST = 500; // 도배 방지용 상한
 
 // 사진 업로드용 — 원래 api/community-upload.js였는데, Vercel Hobby 플랜의
 // 서버리스 함수 12개 제한에 걸려서 이 파일의 action으로 합쳤다.
-const UPLOAD_MAX_BYTES = 5 * 1024 * 1024; // 원본 파일 기준 5MB
+// 원본 파일 기준 3MB. base64로 약 1.37배 커져도 Vercel 요청 본문 한도 4.5MB 안에 들어야
+// 함수까지 도달한다. 넘으면 Vercel이 JSON이 아닌 413을 먼저 돌려준다.
+const UPLOAD_MAX_BYTES = 3 * 1024 * 1024;
 const UPLOAD_ALLOWED = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
 
 function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
@@ -150,7 +153,7 @@ module.exports = async function handler(req, res) {
 
       let buf;
       try { buf = Buffer.from(m[2], 'base64'); } catch { return bad(res, 400, '이미지 데이터가 손상되었습니다'); }
-      if (buf.length > UPLOAD_MAX_BYTES) return bad(res, 400, '사진 1장은 5MB 이내여야 합니다');
+      if (buf.length > UPLOAD_MAX_BYTES) return bad(res, 400, '사진 1장은 3MB 이내여야 합니다');
 
       try {
         const { put } = require('@vercel/blob');

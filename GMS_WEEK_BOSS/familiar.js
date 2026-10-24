@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════
    패밀리어 — 옵션 재설정 시뮬레이터
 
-   지금은 유니크만 연다. 에픽·레어는 아랫줄이 각각 레어·커먼 풀에서 나오는데
-   그 풀의 확률 자료가 없어서, 없는 값을 지어내느니 잠가둔다.
-   (레어 확률표는 확보되는 대로 data_familiar.js에 추가하면 열 수 있다.)
+   레어·에픽·유니크를 연다. 레어·커먼 풀은 확률이 추정치라
+   (data_familiar.js의 FAM_ESTIMATED_RANKS) 그 풀이 쓰이는 판에는 화면에 표기한다.
 
    유니크 카드가 옵션 두 줄을 얻는 방식은 공식 문서 기준:
      1번째 줄 = 현재 등급(유니크) 풀
@@ -17,9 +16,6 @@ const FAM_CARD_IMG = 'images/icons/Use_Mystical_Familiar_Card.png';
 
 /* 등급 아이콘 — 큐브 시뮬레이터와 같은 파일을 쓴다 */
 function _famIconSrc(g) { return `images/icons/${(g||'rare').toLowerCase()}.png`; }
-
-/* 지금 열려 있는 등급. 나중에 에픽까지 열면 선택형으로 바꾼다. */
-const FAM_OPEN_RANKS = ['UNIQUE'];
 
 let _famState = { rank: 'UNIQUE', cards: 0, lines: [], log: [] };
 
@@ -40,8 +36,7 @@ function _famPick(pool) {
 }
 
 /* 두 줄을 굴린다. 반환: [{opt, grade}, {opt, grade}]
-   레어는 아랫줄이 커먼 풀에서 나오는데 커먼 확률 자료가 없다. 없는 풀을
-   지어내는 대신 두 줄 모두 레어에서 뽑는다(화면에 그 사실을 적어둔다). */
+   아래 등급 풀 자료가 없으면 지어내는 대신 두 줄 모두 현재 등급에서 뽑는다. */
 function _famRoll(rank) {
   const D = _famData();
   const lower = _famLower(rank);
@@ -90,7 +85,8 @@ function _famHasGoals() { return _famGetGoals().length > 0; }
 function _famGoalsMet(lines) {
   const goals = _famGetGoals();
   if (!goals.length) return false;
-  const pool = lines.map(l => l.opt.key);
+  // 등급마다 수치가 다른 옵션이 같은 key를 쓰기도 해서(IGN20 등) 문구(en)로 가린다
+  const pool = lines.map(l => l.opt.en);
   for (const g of goals) {
     const i = pool.indexOf(g);
     if (i < 0) return false;
@@ -146,9 +142,9 @@ function _famBuildGoalOpts() {
   const rank = _famState.rank, lower = _famLower(rank);
   const seen = new Set();
   const groups = [rank, lower].filter(g => D.LINES[g]).map(g => {
-    const items = D.LINES[g].filter(o => o.pct > 0 && !seen.has(o.key) && seen.add(o.key));
+    const items = D.LINES[g].filter(o => o.pct > 0 && !seen.has(o.en) && seen.add(o.en));
     return `<optgroup label="${D.RANK_LABEL[g]}">` +
-      items.map(o => `<option value="${o.key}">${o.en}</option>`).join('') + '</optgroup>';
+      items.map(o => `<option value="${o.en}">${o.en}</option>`).join('') + '</optgroup>';
   }).join('');
   return '<option value="">-</option>' + groups;
 }
@@ -468,7 +464,7 @@ function initFamiliar() {
     if (!document.getElementById('sec-familiar').classList.contains('active')) return;
     const tag = document.activeElement ? document.activeElement.tagName : '';
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay[style*="flex"]')) return;
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     e.preventDefault();
     const isRankup = document.getElementById('famTabRankup').style.display !== 'none';
     if (e.code === 'KeyS') {

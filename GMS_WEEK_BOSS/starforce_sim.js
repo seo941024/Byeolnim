@@ -11,7 +11,7 @@ function sfBuildStageGrid() {
   const rows = [];
   for (let s = 15; s <= 21; s++) {
     const curStage = _sfStages[s] || 1;
-    const maxStage = (s <= 17) ? 4 : 4;
+    const maxStage = 4;
 
     const opts = [];
     for (let st = 1; st <= maxStage; st++) {
@@ -45,6 +45,8 @@ function sfBuildStageGrid() {
     sel.addEventListener('change', () => {
       _sfStages[+sel.dataset.star] = +sel.value;
       sfBuildStageGrid();
+      sfRenderResult();     // 별 판의 파괴 확률도 바뀐 단계로
+      _sfRecalcExpected();  // 기댓값·분포도 바뀐 단계로
     });
   });
 }
@@ -130,8 +132,6 @@ function sfEnhanceOnce(forAuto) {
     if (nextStar >= 23) _sfState.pop = nextStar - 1;
     result = { type: 'success', from: star, to: nextStar, cost };
   } else if (r < p.succ + p.fail) {
-    nextStar = star > 0 ? star - 1 : star;
-    if (star <= 14 || star === 0) nextStar = star; // 0~14성은 유지
     // 실제론 연속실패 시 강제하락 있지만 jaehoom 로직은 단순 유지
     nextStar = star; // 실패 = 유지
     result = { type: 'fail', from: star, to: star, cost };
@@ -181,9 +181,9 @@ function sfRenderResult() {
   el.innerHTML = stats + (logHtml ? `<div class="sf-log">${logHtml}</div>` : '');
 }
 
-/* 별 판 — 목표 성수만큼 별칸을 만들고 현재 성수까지 채운다.
+/* 별 판 — 장비 레벨의 상한만큼 별칸을 만들고 현재 성수까지 채운다.
    그 아래에 "현재 ▶▶▶ 다음"과 이번 시도의 성공·실패·파괴 확률을 보여준다.
-   스타캐치/파괴방지는 좌측 설정에서 이미 고르므로 여기선 결과만 반영한다. */
+   파괴 단계는 좌측 설정에서 이미 고르므로 여기선 결과만 반영한다. */
 function sfRenderStarPanel(to, done) {
   const grid = document.getElementById('sfStarGrid');
   if (!grid) return;
@@ -246,6 +246,7 @@ function initStarforce() {
   // 초기 별 위치를 sfFrom 값으로 세팅
   _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
   sfBuildStageGrid();
+  sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());   // 처음 열었을 때도 별 판을 그려둔다
 
   // 토글 그룹 처리. .sf-toggle-group도 추옵 시뮬레이터가 같이 쓰므로 섹션 안으로 한정한다
   // (안 그러면 추옵에서 장비 종류를 바꿀 때 스타포스 재계산이 딸려 돌아간다)
@@ -261,16 +262,10 @@ function initStarforce() {
     });
   });
 
-  // sfFrom 바뀌면 현재 별 리셋
-  document.getElementById('sfFrom')?.addEventListener('change', () => {
-    _sfState.star = _sfGetFrom();
-    sfRenderResult();
-    _sfRecalcExpected();
-  });
   // 레벨·목표 성 변경 시에도 기댓값 자동 재계산.
   // change만 걸면 입력을 확정할 때까지 화면이 안 바뀌어서, 한 자씩 고쳐도
   // 반응이 없다가 한 번에 튀는 것처럼 보인다. input도 같이 듣되 재계산이
-  // 2만 회 몬테카를로라 매 타건마다 돌리면 멈추므로 디바운스를 건다.
+  // 5천 회 몬테카를로라 매 타건마다 돌리면 멈추므로 디바운스를 건다.
   let _sfInputTimer = null;
   const _sfRecalcDebounced = () => {
     clearTimeout(_sfInputTimer);
@@ -280,8 +275,14 @@ function initStarforce() {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('input', _sfRecalcDebounced);
-    // 값을 확정할 때 빈 칸·모순까지 포함해 전부 정리한다
-    el.addEventListener('change', () => { _sfClampInputs(); sfRenderResult(); _sfRecalcExpected(); });
+    // 값을 확정할 때 빈 칸·모순까지 포함해 전부 정리한다.
+    // sfFrom은 정리한 값으로 현재 별을 다시 맞춘다(정리 전에 읽으면 잘리기 전 값이 남는다)
+    el.addEventListener('change', () => {
+      _sfClampInputs();
+      if (id === 'sfFrom') _sfState.star = _sfGetFrom();
+      sfRenderResult();
+      _sfRecalcExpected();
+    });
     // 타이핑 도중 상한 클램프는 sfTo·sfFrom(별 개수)에만 건다 — sfLevel(장비
     // 레벨)까지 걸려 있으면 레벨 값 자체가 별 상한(20대)으로 잘려버린다.
     if (id !== 'sfLevel') el.addEventListener('input', () => { _sfClampMaxWhileTyping(el); sfRenderResult(); });
@@ -303,7 +304,7 @@ function initStarforce() {
     if (document.getElementById('sfRightSimulate')?.style.display === 'none') return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay[style*="flex"]')) return;
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     e.preventDefault();
     if (e.code === 'KeyS') { sfStopAuto(); sfEnhanceOnce(); }
     else if (e.code === 'KeyR') { document.getElementById('sfBtnReset')?.click(); }
@@ -326,6 +327,7 @@ function initStarforce() {
   document.getElementById('sfBtnReset')?.addEventListener('click', () => {
     sfStopAuto();
     _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
+    sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());
     document.getElementById('sfResult').innerHTML = '<p class="empty">강화 버튼을 눌러주세요.</p>';
     document.getElementById('sfSpentWrap').style.display = 'none';
   });
@@ -502,7 +504,8 @@ function _sfEnsureChartLib() {
   if (!_sfChartLibLoading) {
     _sfChartLibLoading = new Promise(resolve => {
       const s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+      // 버전을 고정한다 — 주소에 버전이 없으면 새 메이저가 나올 때 그래프가 말없이 깨질 수 있다
+      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js';
       s.onload = () => resolve(true);
       // 못 받아도 계산 자체는 되니 그래프만 포기한다 — 숫자는 그대로 보여준다
       s.onerror = () => resolve(false);

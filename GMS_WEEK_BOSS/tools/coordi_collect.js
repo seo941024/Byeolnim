@@ -1,16 +1,18 @@
-/* 코디 시뮬레이터용 아이템 층 데이터를 maplestory.io에서 받아 Vercel Blob에 올리는 스크립트.
-   GitHub Actions(.github/workflows/coordi-collect.yml)가 6시간마다 돌린다. 설계는 GMS_Calc/COORDI_DESIGN.md.
+/* 코디 시뮬레이터용 아이템 층 데이터를 maplestory.io에서 받는 스크립트. 설계는 GMS_Calc/COORDI_DESIGN.md.
+   지금은 PC에서 --local로 GMS_Calc/coordi_local/에 받고, tools/coordi_publish.js가 사이트 폴더
+   coordi/v270/으로 옮긴다. 사이트는 Vercel Blob을 읽지 않는다.
 
-     BLOB_READ_WRITE_TOKEN=... node tools/coordi_collect.js     실제 수집·업로드
-     node tools/coordi_collect.js --local                        업로드 없이 GMS_Calc/coordi_local/에 저장(git 제외)
+     node tools/coordi_collect.js --local                        GMS_Calc/coordi_local/에 저장(git 제외)
      node tools/coordi_collect.js --local --limit 3              위와 같되 첫 묶음 표본 3개만
      node tools/coordi_collect.js --local --new                  coordi_local에 없는 새 아이템만 받아 새 묶음 번호로 붙인다
                                                                  4주 캐시템 업데이트용. tools/coordi_update.js가 부른다
+     BLOB_READ_WRITE_TOKEN=... node tools/coordi_collect.js     Vercel Blob에 올린다. 수동 실행용
+                                                                 .github/workflows/coordi-collect.yml만 이 경로를 쓴다
 
    - 아이템 데이터에는 모든 동작의 그림이 들어 있어 180~600KB나 된다. 앞모습(stand1)·뒷모습(ladder)
      첫 프레임의 층만 남겨 크기를 크게 줄인다
-   - Hobby 요금제의 Blob 업로드 한도가 월 2,000건이라 아이템 100개를 파일 하나로 묶는다(약 300개)
-   - 묶음 하나를 다 받을 때마다 올리고 진행 기록(manifest)도 갱신한다. 시간이 다 되면 진행 중인 묶음은
+   - 아이템 100개를 파일 하나로 묶는다. Blob 시절 Hobby 요금제 업로드 한도 월 2,000건 때문에 정한 크기
+   - 묶음 하나를 다 받을 때마다 저장하고 진행 기록(manifest)도 갱신한다. 시간이 다 되면 진행 중인 묶음은
      버리고 멈춘다. 다음 실행은 manifest를 읽어 남은 묶음부터 이어 받는다
    - 한 번에 하나씩 받고, 요청마다 0.5~1초를 쉰다. 2026-10-22 동시 5개로 시험했을 때 2개부터
      요청 오류가 이어져서 1개로 고정했다. CONCURRENCY=3처럼 주면 그 수까지 올렸다 내렸다 한다.
@@ -25,7 +27,6 @@ const VERSION = process.env.GMS_VERSION || '270';
 const PREFIX = `coordi/v${VERSION}`;
 const CHUNK = 100;
 const VIEWS = ['stand1', 'ladder'];
-const SKIN = [2018, 12018];
 const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
 // 실패해도 아이템을 건너뛰지 않고 받을 때까지 다시 요청한다. 다시 요청하기 전 쉬는 시간은 마지막 값을 계속 쓴다
 const RETRY_WAITS = [5, 15, 45, 120, 300];
@@ -157,7 +158,7 @@ async function getItem(id) {
   return out;
 }
 
-/* ── 저장소: 실제는 Vercel Blob, --dry면 로컬 폴더 ── */
+/* ── 저장소: --local·--dry면 로컬 폴더, 아니면 Vercel Blob ── */
 function makeStore() {
   if (DRY) {
     const root = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
@@ -208,21 +209,8 @@ function makeStore() {
   const LAST = ['face_m', 'hair_m'];
   let todo = chunks.filter(c => !manifest.done[c.key]);
   todo = [...todo.filter(c => !LAST.includes(c.part)), ...todo.filter(c => LAST.includes(c.part))];
-  console.log(`묶음 ${chunks.length}개 중 남은 ${todo.length}개${DRY ? ' (업로드 없이 시험)' : ''}`);
+  console.log(`묶음 ${chunks.length}개 중 남은 ${todo.length}개${DRY ? ' · 로컬 저장' : ''}`);
   if (LIMIT) todo = todo.slice(0, 1).map(c => ({ ...c, ids: c.ids.slice(0, LIMIT) }));
-
-  // 첫 실행에는 기본 몸 그림(96×96)도 올린다 — 헤어·얼굴·모자 층은 이 그림 위 이마 기준점에 붙는다
-  if (!manifest.base) {
-    const base = {};
-    for (const view of VIEWS) {
-      const list = JSON.stringify(SKIN.map(id => ({ itemId: id, version: VERSION })));
-      const buf = await fetchRetry(`${API}/character/${encodeURIComponent(list.slice(1, -1))}/${view}/0?resize=1&renderMode=1`, 'buf');
-      base[view] = buf.toString('base64');
-      await sleep(jitter());
-    }
-    await store.put('base.json', JSON.stringify({ skin: SKIN, brow: { stand1: [46, 36] }, base }));
-    manifest.base = true;
-  }
 
   for (const c of todo) {
     // 일꾼 5명이 묶음 안의 아이템을 나눠 받는다. 동시 개수가 줄면 번호가 큰 일꾼부터 쉰다

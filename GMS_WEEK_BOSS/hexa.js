@@ -1,11 +1,7 @@
-/* =============================================
-   calculators.js — HEXA / 해방 / 스타포스 / 보스HP / 포스
-   ============================================= */
-
 /* ═══════════════════════════════════════════════
-   HEXA 계산기 — 노드 구조 재편
-   Skill Node (×2, max30) / Mastery (×4, max10) /
-   Boost (×4, max10) / Common: Sol Janus·Sol Hecate (×2, max30)
+   HEXA 계산기
+   Skill Node (×3) / Mastery (×4) / Boost (×4) / Common: Sol Janus·Sol Hecate + 직업별 공용.
+   코어 개수는 직업마다 다르고(data_hexa.js), 모든 노드의 최대 레벨은 30.
 ═══════════════════════════════════════════════ */
 // 헥사 강화 수치는 캐릭터별로 저장 → 저장 키에 활성 캐릭터 id를 붙인다.
 function _hxCharId() {
@@ -105,12 +101,11 @@ function renderAllHexaLists() {
   syncNodes(hxBoost,   jd.boost,   STORAGE_KEYS.hexaBoost);
   syncNodes(hxCommon,  jd.common,  STORAGE_KEYS.hexaCommon);
 
-  // 공용 코어 아이콘 — 3번째부터는 직업 폴더 이미지 13번 사용
-  const commonIcoFull = [
-    'images/skill/Common/sol_janus.png',
-    'images/skill/Common/sol_hecate.png',
-    ...jd.common.slice(2).map((_, i) => ico(15 + i)),
-  ];
+  // 공용 코어 아이콘 — 솔 야누스·헤카테는 공용 그림, 나머지는 직업 폴더 15번부터.
+  // 자리로 정하면 솔 야누스가 없는 직업(데몬 어벤져)에서 아이콘이 한 칸씩 밀린다.
+  const SOL_ICON = { '솔 야누스': 'images/skill/Common/sol_janus.png', '솔 헤카테': 'images/skill/Common/sol_hecate.png' };
+  let jobCommonIdx = 0;
+  const commonIcoFull = jd.common.map(n => SOL_ICON[n] || ico(15 + jobCommonIdx++));
 
   renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   [ico(1), ico(2), ico(3)]);
   renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, [ico(5), ico(6), ico(7), ico(8)]);
@@ -137,15 +132,14 @@ function _hxCompute() {
     });
   }
 
-  // 노드1 = 오리진(4,400조각/145SE), 노드2 = 어센트 이후는 공용 코어와 동일(6,268/208)
   // 노드1 = 오리진(첫 레벨 무료), 노드2 = 어센트(스킬 코어), 노드3 = 3rd 스킬 코어
   // skillCost:'common' 직업(시아 아스텔)은 오리진 외 스킬 코어도 공용 비용 사용
   const skillIsCommon = _hxJobData?.skillCost === 'common';
   const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS
                          : skillIsCommon ? HEXA_COMMON_COSTS
                          : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
-  // 공용 1·2 = 솔 야누스/헤카테, 3번째부터 = 직업별 공용(프리드의 가호 등)
-  const commonTable = i => i < 2 ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
+  // 솔 야누스/헤카테는 공용 비용, 나머지 = 직업별 공용(프리드의 가호 등). 이름으로 가린다(데몬 어벤져는 야누스가 없다)
+  const commonTable = i => /^솔 (야누스|헤카테)$/.test(hxCommon[i]?.name || '') ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
   addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
   addNodes(hxBoost,   HEXA_BOOST_COSTS);
@@ -215,6 +209,7 @@ renderAllHexaLists();
   if (!seInp) return;
   seInp.addEventListener('change', () => {
     seInp.value = Math.max(0, Math.min(20, parseInt(seInp.value) || 0));
+    _hxCompute();   // 위의 자동 재계산이 자르기 전 값으로 먼저 돌았으므로 자른 값으로 다시
   });
 })();
 

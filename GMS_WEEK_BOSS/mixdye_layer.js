@@ -18,6 +18,8 @@
 // 같은 사이트의 정적 파일. 2026-10-24 Vercel Blob에서 옮김 — 업로드 단계 없이 커밋만으로 배포되고,
 // 캐시 기간은 vercel.json에서 정한다
 const MX_LAYER_BASE = 'coordi/v270/';
+// 색인·규칙·아이콘 정보는 1시간 캐시라, 데이터를 다시 올리면 이 값을 바꿔 바로 새 파일을 받게 한다
+const MX_LAYER_DATA_VER = '20261024a';
 // maplestory.io 96×96 렌더에서 몸 기준점(배꼽 기준 원점)이 놓이는 자리 — 렌더와 픽셀 비교로 확인
 const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };
 const MX_LAYER_SIZE = 96;
@@ -33,7 +35,7 @@ function _mxLayerInit() {
   if (!_mxLayerInitP && !MX_LAYER_BASE) { _mxLayer = false; _mxLayerInitP = Promise.resolve(); }
   if (!_mxLayerInitP) {
     const get = name => fetch(MX_LAYER_BASE + name).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-    _mxLayerInitP = Promise.all([get('index.json'), get('rules.json')]).then(([index, rules]) => {
+    _mxLayerInitP = Promise.all([get(`index.json?v=${MX_LAYER_DATA_VER}`), get(`rules.json?v=${MX_LAYER_DATA_VER}`)]).then(([index, rules]) => {
       const where = new Map();
       for (const [key, deltas] of Object.entries(index)) {
         let id = 0;
@@ -142,7 +144,7 @@ async function _mxLayerCompose(view, head, ids) {
 let _mxIcons = null, _mxIconsP = null;   // { cell, grid, lists: 목록 이름 → { at: 줄 ID → 칸 번호, avail: 줄 ID → 색 비트, sheets } }, 못 받으면 false
 function _mxIconsLoad() {
   if (!_mxIconsP) {
-    _mxIconsP = fetch(`${MX_LAYER_BASE}icons.json`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+    _mxIconsP = fetch(`${MX_LAYER_BASE}icons.json?v=${MX_LAYER_DATA_VER}`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
       const lists = {};
       for (const [name, L] of Object.entries(d.lists)) {
         const at = new Map(), avail = new Map(), empty = new Set(L.empty);

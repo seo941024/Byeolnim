@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261027m" />
+  <link rel="stylesheet" href="style.css?v=20261027q" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_title.woff" as="font" type="font/woff" crossorigin />
@@ -40,11 +40,9 @@
 <!-- ═══════════ HEADER ═══════════ -->
 <header class="header">
   <button class="hamburger" id="btnHamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
-  <div class="header__logo" id="headerLogo" style="cursor:pointer">
+  <div class="header__logo" id="headerLogo" style="cursor:var(--cur-pointer)">
     <span class="header__title"><span class="header__title-kr">별님앱</span><small class="header__title-en">byeolnim.app</small></span>
   </div>
-  <!-- 홈이 아닐 때만 보인다. 보이고 숨기는 곳은 app.js navigateTo -->
-  <button class="hbtn header__home" id="headerHome" type="button" hidden>‹ 홈</button>
   <div class="header__center">
     <span class="theme-toggle-wrap">
       <span class="theme-toggle__label" id="themeLabel">다크 모드</span>
@@ -876,7 +874,7 @@
 <script src="data_liberation.js?v=20261027f"></script>
 <script src="starforce.js?v=20261027b"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261027k"></script>
+<script src="app.js?v=20261027q"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261027b"></script>
 <script src="character.js?v=20261027f"></script>
@@ -887,7 +885,7 @@
 <script src="liberation.js?v=20261027f"></script>
 <script src="starforce_sim.js?v=20261027b"></script>
 <script src="cube.js?v=20261027f"></script><script src="familiar.js?v=20261027b"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261027b"></script><script src="mixdye_layer.js?v=20261027b"></script><script src="mixdye.js?v=20261027b"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261027b"></script><script src="meundi.js?v=20261027b"></script>
-<script src="addoption.js?v=20261027b"></script><script src="bosshp.js?v=20261027b"></script>
+<script src="addoption.js?v=20261027n"></script><script src="bosshp.js?v=20261027b"></script>
 <script src="serverstatus.js?v=20261027b"></script><script src="vendor/quill/quill.min.js?v=1.3.7"></script><script src="community.js?v=20261027j"></script>
 <script src="dailytasks.js?v=20261027b"></script>
 <script src="wantchannel.js?v=20261027b"></script>

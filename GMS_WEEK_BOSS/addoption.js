@@ -596,7 +596,7 @@ function initAddOption() {
             <input class="inp" id="flameLevel" type="number" value="200" min="100" max="250" step="10" />
           </div>
           <div class="field" style="justify-content:flex-end;padding-top:22px">
-            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.85rem;color:var(--text-sub)">
+            <label style="display:flex;align-items:center;gap:8px;cursor:var(--cur-pointer);font-size:.85rem;color:var(--text-sub)">
               <input type="checkbox" id="flameBoss" checked />
               보스 장비
             </label>

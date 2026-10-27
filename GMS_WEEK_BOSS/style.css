@@ -2147,13 +2147,13 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .toast {
   position: fixed; left: 50%; bottom: 32px;
   transform: translateX(-50%) translateY(24px);
-  background: var(--grad); color: var(--on-grad);
+  /* 버튼과 같은 한 색. 그라데이션은 쓰지 않는다 */
+  background: var(--btn); color: var(--on-btn); border: 1px solid var(--btn-border);
   padding: 12px 24px; border-radius: 12px;
   box-shadow: var(--shadow-lg);
   font-size: .88rem; font-weight: 700;
   z-index: 2000; opacity: 0; pointer-events: none;
   transition: opacity .25s, transform .25s;
-  border: 1px solid rgba(var(--hue-l),.3);
 }
 .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 

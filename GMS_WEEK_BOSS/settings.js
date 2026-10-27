@@ -21,7 +21,9 @@ const BACKUP_MARK = '_byeolnim';
 /* 이 기기에만 의미가 있는 값이라 파일 백업·클라우드 저장에 넣지도, 되살리지도 않는다.
    로그인 토큰이 파일에 들어가면 파일을 받은 사람이 그 계정으로 로그인되고,
    알림 켜짐 표시는 구독이 없는 다른 기기에서 켜진 것처럼 보이게 된다. */
-const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed']);
+// ciImgHash는 코디 컬렉션에서 같은 그림인지 비교하려고 만든 캐시라 언제든 다시 만든다.
+// 캐릭터 그림 주소를 키로 500개까지 쌓여 서버 저장 크기만 키우므로 백업에서 뺀다
+const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed', 'ciImgHash']);
 
 /* 지금 브라우저에 있는 모든 데이터를 한 덩어리로. 파일 백업과 서버 저장이 같은 모양을 쓴다. */
 function backupBundle() {

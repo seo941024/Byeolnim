@@ -49,6 +49,7 @@ maplestory.io 저장소 crrio/maplestory.io는 라이선스 표기가 없다. �
 1. 몸통의 navel·neck, 머리의 brow 같은 연결점을 기준으로 각 층의 위치를 계산한다. 층마다 "어느 연결점에 붙는지"와 "자기 그림의 기준점"이 있어 이 둘을 맞추면 된다
 2. 층 이름의 앞뒤 순서는 zmap을 따른다. GET /api/GMS/270/zmap으로 받아지는 것을 확인했다
 3. 가림: 모자가 차지한 슬롯 vslots에 걸리는 헤어 층은 숨긴다. 예를 들어 H5를 차지하는 모자를 쓰면 그 슬롯에 해당하는 머리 층이 사라져 머리가 눌린 것처럼 보인다. 층 이름별 필요 슬롯 표 smap은 이번에 응답이 없어서 다른 경로로 구해야 한다 — 위험 요소 1
+4. 얼굴 지우기: 일부 얼굴장식·눈장식·모자는 게임 원본 info에 invisibleFace 값이 있어, 입으면 성형 얼굴 층을 그리지 않고 아이템 그림만 얼굴에 보인다. 2026-10-28 확인. 이 값은 vslots에도, maplestory.io 아이템 정보 GET /api/GMS/270/item/ID에도 없다. 원본 경로 GET /api/wz/GMS/270/Character/Accessory/0ID.img/info, 모자는 Character/Cap/에서만 보인다. tools/coordi_invisible_face.js가 하나씩 읽어 coordi/invisible_face_v270.json에 모으고, mixdye_layer.js가 이 목록의 아이템을 입으면 face 층을 뺀다
 
 ### 시제품 결과 — 2026-10-21
 

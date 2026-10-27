@@ -11,6 +11,8 @@
    - 가림: 층의 smap 슬롯 중 자기 아이템이 차지한 슬롯을 다른 아이템이 가져가면 그 층을 숨긴다.
      같은 슬롯을 여러 아이템이 차지하면 목록에서 나중 아이템이 가진다(렌더도 요청 순서를 따른다)
    - 뒷모습에서는 얼굴과 일부 얼굴·눈 장식 층을 숨긴다(MX_LAYER_LADDER_HIDE)
+   - 얼굴을 지우는 얼굴장식·눈장식·모자를 입으면 성형 얼굴 층을 그리지 않는다. 게임 원본 info의 invisibleFace이고,
+     maplestory.io 아이템 정보에는 빠져 있어 tools/coordi_invisible_face.js가 따로 모은다(MX_INVISIBLE_FACE)
    - 차이 나는 곳: 아이템 효과(날개·따라다니는 동물 등)는 수집하지 않아 그리지 못한다.
      효과만 있는 아이템과 층 데이터가 없는 아이템은 목록에서 "데이터 없음"으로 막는다(_mxAvail)
    ═══════════════════════════════════════════════════════════ */
@@ -24,6 +26,9 @@ const MX_LAYER_DATA_VER = '20261024a';
 const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };
 const MX_LAYER_SIZE = 96;
 const MX_LAYER_LADDER_HIDE = ['face', 'accessoryEye', 'accessoryEyeBelowFace', 'accessoryFaceBelowFace'];
+// 얼굴을 지우는 아이템 ID 목록. coordi/v270/ 밖에 두는 파일이라 MX_LAYER_BASE를 쓰지 않는다.
+// 못 받으면 빈 목록으로 보고 예전처럼 얼굴을 그린다
+const MX_INVISIBLE_FACE = 'coordi/invisible_face_v270.json';
 
 let _mxLayerInitP = null;           // Promise<{ rules, zi, where: 아이템 ID → 묶음 이름 }>
 const _mxLayerChunks = new Map();   // 묶음 이름 → Promise<Map(ID → 아이템)>
@@ -41,13 +46,14 @@ function _mxOnce(map, key, make) {
 function _mxLayerInit() {
   // 실패하면 기억해 두지 않는다 — 다음 그림을 그릴 때 다시 받는다
   if (!_mxLayerInitP) {
-    _mxLayerInitP = Promise.all([_mxLayerJson(`index.json?v=${MX_LAYER_DATA_VER}`), _mxLayerJson(`rules.json?v=${MX_LAYER_DATA_VER}`)]).then(([index, rules]) => {
+    const hideFace = fetch(MX_INVISIBLE_FACE).then(r => r.ok ? r.json() : { ids: [] }).catch(() => ({ ids: [] }));
+    _mxLayerInitP = Promise.all([_mxLayerJson(`index.json?v=${MX_LAYER_DATA_VER}`), _mxLayerJson(`rules.json?v=${MX_LAYER_DATA_VER}`), hideFace]).then(([index, rules, hf]) => {
       const where = new Map();
       for (const [key, deltas] of Object.entries(index)) {
         let id = 0;
         for (const d of deltas) { id += d; where.set(id, key); }
       }
-      return { rules, zi: new Map(rules.zmap.map((z, i) => [z, i])), where };
+      return { rules, zi: new Map(rules.zmap.map((z, i) => [z, i])), where, hideFace: new Set(hf.ids) };
     }).catch(e => { _mxLayerInitP = null; throw e; });
   }
   return _mxLayerInitP;
@@ -82,13 +88,16 @@ function _mxLayerImg(layer) {
 
 // head: 피부 머리 ID, ids: 얼굴, 헤어, 코디 순서(렌더 요청과 같은 순서). 결과는 렌더와 같은 96×96 ImageData
 async function _mxLayerCompose(view, head, ids) {
-  const { rules, zi, where } = await _mxLayerInit();
+  const { rules, zi, where, hideFace } = await _mxLayerInit();
   const [items, skin] = await Promise.all([Promise.all(ids.map(id => _mxLayerItem(where, id))), _mxLayerSkin(head)]);
 
+  // 얼굴을 지우는 아이템을 입었으면 성형의 얼굴 층을 뺀다. 눈썹 붙는 자리는 머리 층이 주므로 장식 위치는 그대로다
+  const noFace = items.some(it => hideFace.has(it.i));
   const layers = skin.f[view].map(l => ({ l, rank: -1, v: [] }));
   items.forEach((it, rank) => {
     for (const l of it.f[view] || []) {
       if (view === 'ladder' && MX_LAYER_LADDER_HIDE.includes(l[0])) continue;
+      if (noFace && l[0] === 'face' && !hideFace.has(it.i)) continue;
       layers.push({ l, rank, v: it.v });
     }
   });

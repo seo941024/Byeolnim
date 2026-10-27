@@ -307,10 +307,11 @@ textarea, [contenteditable="true"] { cursor: text; }
   box-shadow: 0 1px 0 rgba(var(--star),.06), 0 4px 32px rgba(0,0,0,.7), 0 0 60px rgba(86,48,115,.15);
 }
 .header__logo { display: flex; align-items: center; gap: 8px; }
+/* 로고 글자색은 다크·라이트 모두 이 밝은 노랑→연보라 그대로다. 테마 채도를 조절해도 따라 바뀌지 않게 값으로 박아 둔다 */
 .header__title {
   display: flex; flex-direction: column; gap: 1px; line-height: 1.15;
   font-size: 1rem; font-weight: 800; letter-spacing: .5px;
-  background: linear-gradient(90deg, rgb(var(--star)) 0%, #cac0f2 100%);
+  background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -319,15 +320,11 @@ textarea, [contenteditable="true"] { cursor: text; }
    그 자리에 다시 긴 글자를 얹지 않도록 여기선 숨긴다. */
 .header__title-en {
   font-size: .62rem; font-weight: 700; opacity: .75; letter-spacing: .2px;
-  background: linear-gradient(90deg, rgb(var(--star)) 0%, #cac0f2 100%);
+  background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .header__title-kr { font-size: 1.14em; font-weight: 900; letter-spacing: 1px; }
-/* 흰 바탕에서는 밝은 금·연보라가 바래 보여 같은 계열의 진한 색으로 */
-:root[data-theme="light"] .header__title, :root[data-theme="light"] .header__title-en {
-  background-image: linear-gradient(90deg, #b07d0c 0%, #7c4fd6 100%);
-}
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
 /* 테마 토글 — 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */

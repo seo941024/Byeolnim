@@ -19,7 +19,7 @@ const HOME_FEATURES = [
 ];
 const HOME_AUTO_MS = 4500;
 
-/* 별·님·앱 스티커 글자와 반짝이. 글꼴은 메이플스토리 Bold에서 이 세 글자만 뽑은 font/maple_title.woff.
+/* 별·님·앱 스티커 글자와 반짝이. 글꼴은 메이플스토리 Bold에서 이 세 글자와 아래 소개 문구 글자만 뽑은 font/maple_home.woff.
    글자마다 금색 바깥 테두리, 굵은 흰 테두리, 채움을 같은 자리에 세 번 겹쳐 그린다.
    SVG라 테두리 모서리를 둥글게 줄 수 있다. vb는 글꼴 크기 100에서 그 글자 윤곽에 테두리 15만큼을 더한
    가로 범위이고, 세로는 세 글자가 같은 줄에 서도록 모두 -90.6부터 122.4로 맞췄다.
@@ -28,6 +28,13 @@ const HOME_TITLE_CHARS = [
   { ch: '별', vb: '-10.7 -90.6 107.8 122.4' },
   { ch: '님', vb: '-10 -90.6 105.6 122.4' },
   { ch: '앱', vb: '-12.6 -90.6 117.7 122.4' },
+];
+/* 별님앱 아래 두 줄 소개 문구. 제목과 같은 스티커 글자를 낱말 단위로 묶어 낱말마다 따로 띄운다.
+   vb는 글꼴 크기 100에서 낱말 윤곽에 테두리 20만큼을 더한 가로 범위이고,
+   세로는 여섯 낱말이 같은 줄에 서도록 모두 -99.2부터 141.1로 맞췄다 */
+const HOME_TAGLINE = [
+  [{ w: '글로벌', vb: '-17 -99.2 278.7 141.1' }, { w: '메이플', vb: '-16.6 -99.2 292.1 141.1' }, { w: '스토리', vb: '-20 -99.2 278.7 141.1' }],
+  [{ w: '종합', vb: '-17 -99.2 206.7 141.1' }, { w: '유틸', vb: '-14.8 -99.2 195.9 141.1' }, { w: '사이트', vb: '-18.6 -99.2 290 141.1' }],
 ];
 /* 머리 영역 좌우에 떠다니는 메이플 아이콘 스티커. 흰·노랑 테두리는 그림 파일에 미리 그려 두었다.
    앞의 셋은 왼쪽, 뒤의 셋은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호 */
@@ -61,6 +68,14 @@ function _homeTitleHtml() {
       ${_homeSticker(cls => `<path class="${cls}" d="${HOME_TITLE_SPARK}"/>`, '-80 -80 160 160', 'home-title__spark')}
       ${_homeSticker(cls => `<path class="${cls}" d="${HOME_TITLE_SPARK}"/>`, '-115 -115 230 230', 'home-title__spark home-title__mini')}
     </h1>`;
+}
+
+// 채움 그라데이션은 제목 것을 줄마다 첫째·둘째·셋째 낱말에 나눠 쓴다. style.css .home-tagline__line
+function _homeTaglineHtml() {
+  let n = 0;
+  return `<p class="home-tagline" aria-label="글로벌 메이플스토리 종합 유틸 사이트">${HOME_TAGLINE.map(line =>
+    `<span class="home-tagline__line">${line.map(({ w, vb }) =>
+      _homeSticker(cls => `<text class="${cls}">${w}</text>`, vb, `home-tagline__w home-tagline__w--${++n}`)).join('')}</span>`).join('')}</p>`;
 }
 
 let _homeIdx = 0, _homeTimer = null, _homeHold = false;
@@ -102,7 +117,7 @@ function renderHome() {
       <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
         `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
-      <p class="home-tagline">글로벌 메이플스토리<br>종합 유틸 사이트</p>
+      ${_homeTaglineHtml()}
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
 

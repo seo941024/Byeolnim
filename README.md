@@ -209,6 +209,7 @@ GMS_Calc/
 │  ├─ app.js               상태 저장, 메뉴 이동, 보스 수익 계산
 │  ├─ character.js         캐릭터 추가·조회, 캐릭터 목록 화면, 카드 그림 저장
 │  ├─ settings.js          설정, 백업, 테마·글꼴, 관리자 알림
+│  ├─ home.js              첫 화면 · 머리 영역, 주요 기능 슬라이드, 전체 메뉴
 │  ├─ *.js                 메뉴별 기능 · cube.js, mixdye.js, starforce.js 등
 │  ├─ data_*.js            메뉴별 데이터
 │  ├─ api/                 서버리스 함수

@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261027b" />
+  <link rel="stylesheet" href="style.css?v=20261027c" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
 
@@ -29,7 +29,7 @@
   <div class="boot__stage">
     <span class="boot__ring"></span>
     <span class="boot__spark boot__spark--1">✦</span><span class="boot__spark boot__spark--2">✦</span><span class="boot__spark boot__spark--3">✦</span>
-    <img class="boot__art" src="images/pwa/icon-192.png" alt="" width="112" height="112">
+    <img class="boot__art" src="images/logo/head_smile.png" alt="" width="124" height="108">
   </div>
   <div class="boot__name">별님앱</div>
   <div class="boot__txt">불러오는 중<span class="boot__dots"><i></i><i></i><i></i></span></div>
@@ -39,6 +39,7 @@
 <header class="header">
   <button class="hamburger" id="btnHamburger" aria-label="메뉴"><span></span><span></span><span></span></button>
   <div class="header__logo" id="headerLogo" style="cursor:pointer">
+    <span class="header__face" aria-hidden="true"><img class="header__face-img" src="images/logo/head_normal.png" alt="" width="62" height="54"><img class="header__face-img header__face-img--smile" src="images/logo/head_smile.png" alt="" width="62" height="54"></span>
     <span class="header__title"><span class="header__title-kr">별님앱</span><small class="header__title-en">byeolnim.app</small></span>
   </div>
   <div class="header__center">
@@ -101,13 +102,16 @@
 
     <!-- 네비게이션 -->
     <nav class="sb-nav">
+      <button class="sb-nav__item active" data-sec="home">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/logo/head_smile.png" alt="" onerror="this.style.display='none'"></span><span>홈</span>
+      </button>
       <button class="sb-nav__item" data-sec="meundi">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meet-and-greet-assigned-seating-ticket.png" alt="" onerror="this.style.display='none'"></span><span>메이플 운빨 디펜스</span>
       </button>
       <button class="sb-nav__item" data-sec="wantchannel">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Quick_Move_-_Auction_House.png?v=20261027a" alt="" onerror="this.style.display='none'"></span><span>오늘의 채널 추천</span>
       </button>
-      <button class="sb-nav__item active" data-sec="charinfo">
+      <button class="sb-nav__item" data-sec="charinfo">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'"></span><span>캐릭터 목록</span>
       </button>
       <button class="sb-nav__item" data-sec="mcalendar">
@@ -185,7 +189,10 @@
   <main class="content">
 
     <!-- ══════ 캐릭터 정보 ══════ -->
-    <section class="sec active" id="sec-charinfo">
+    <!-- ══════ 홈 ══════ (home.js가 채운다) -->
+    <section class="sec active" id="sec-home"></section>
+
+    <section class="sec" id="sec-charinfo">
       <div id="charInfoBody"></div>
     </section>
 
@@ -866,7 +873,7 @@
 <script src="data_liberation.js?v=20260826b"></script>
 <script src="starforce.js?v=20261027b"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261027b"></script>
+<script src="app.js?v=20261027c"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261027b"></script>
 <script src="character.js?v=20261027b"></script>
@@ -889,6 +896,8 @@
 <script src="pwa.js?v=20261027b"></script>
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->
 <script src="cloudsave.js?v=20261027b"></script>
+<!-- 첫 화면 — 사이드바 메뉴를 읽어 전체 메뉴 바둑판을 만들므로 맨 뒤에 둔다 -->
+<script src="home.js?v=20261027c"></script>
 
 <!-- 첫 로딩 화면 걷기 — 위 스크립트가 모두 돈 뒤다. 글꼴을 기다리되 1.5초를 넘기지 않는다.
      앞쪽 스크립트에서 오류가 나도 이 블록은 따로 돌아서 화면이 가린 채로 남지 않는다 -->

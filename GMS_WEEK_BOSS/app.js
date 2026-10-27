@@ -84,7 +84,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
 const NAV_LABELS = {
-  meundi: '메이플 운빨 디펜스', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  home: '홈', meundi: '메이플 운빨 디펜스', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — index.html 사이드바의 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — index.html 사이드바의 NAV 관련 주석 참고
@@ -123,6 +123,16 @@ function navigateTo(sec) {
   if (sec === 'frontier' && typeof initFrontier === 'function') initFrontier();
   if (sec === 'meundi' && typeof initMeundi === 'function') initMeundi();
   if (sec === 'hexa')      renderAllHexaLists();
+  // 들어올 때 제목·카드가 차례로 떠오르게 0.9초만 표시를 붙인다(style.css .sec--enter).
+  // 그려진 뒤에 붙여야 방금 그린 카드도 같이 움직이고, 떼고 나면 결과를 다시 그려도 움직이지 않는다
+  const secEl = document.getElementById('sec-' + sec);
+  if (secEl) {
+    secEl.classList.remove('sec--enter');
+    void secEl.offsetWidth;   // 같은 메뉴를 다시 눌러도 처음부터 다시 움직이게
+    secEl.classList.add('sec--enter');
+    clearTimeout(secEl._enterTimer);
+    secEl._enterTimer = setTimeout(() => secEl.classList.remove('sec--enter'), 900);
+  }
 }
 document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
   btn.addEventListener('click', () => { navigateTo(btn.dataset.sec); closeSidebar(); });
@@ -130,7 +140,7 @@ document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
 document.querySelectorAll('.sb-group__head').forEach(head => {
   head.addEventListener('click', () => head.closest('.sb-group').classList.toggle('open'));
 });
-document.getElementById('headerLogo').addEventListener('click', () => navigateTo('charinfo'));
+document.getElementById('headerLogo').addEventListener('click', () => navigateTo('home'));
 
 /* ── 사이드바 ──
    모바일(≤768px): 햄버거로 여닫는 드로어(sidebar-open).
@@ -819,28 +829,28 @@ const NOTICE_LOG = [
       },
     ],
   },
-  /* 장비 교체 비교 공지 — 사용자 요청으로 기능 자체를 내려서 같이 주석 처리
-  {
-    date: '2026. 09. 16.',
-    items: [
-      {
-        head: '장비 교체 비교 계산기가 생겼습니다',
-        desc: '지금 낀 장비와 바꾸려는 장비의 스탯을 각각 넣으면 데미지가 몇 % 늘거나 주는지 계산해드립니다.',
-      },
-    ],
-  },
-  */
-  /* 하이퍼스탯 최적화 공지 — 데이터 검증 전까지 내림
-  {
-    date: '2026. 09. 01.',
-    items: [
-      {
-        head: '하이퍼스탯 최적화 계산기가 생겼습니다',
-        desc: '남은 하이퍼스탯 포인트를 어느 스탯에 쓰는 게 가장 이득인지 계산해 추천해드립니다.',
-      },
-    ],
-  },
-  */
+  /* 장비 교체 비교 공지 — 사용자 요청으로 기능 자체를 내려서 같이 주석 처리
+  {
+    date: '2026. 09. 16.',
+    items: [
+      {
+        head: '장비 교체 비교 계산기가 생겼습니다',
+        desc: '지금 낀 장비와 바꾸려는 장비의 스탯을 각각 넣으면 데미지가 몇 % 늘거나 주는지 계산해드립니다.',
+      },
+    ],
+  },
+  */
+  /* 하이퍼스탯 최적화 공지 — 데이터 검증 전까지 내림
+  {
+    date: '2026. 09. 01.',
+    items: [
+      {
+        head: '하이퍼스탯 최적화 계산기가 생겼습니다',
+        desc: '남은 하이퍼스탯 포인트를 어느 스탯에 쓰는 게 가장 이득인지 계산해 추천해드립니다.',
+      },
+    ],
+  },
+  */
   {
     date: '2026. 09. 01.',
     items: [

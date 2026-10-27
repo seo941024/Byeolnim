@@ -18,11 +18,12 @@
   정리 전후 모든 요소의 계산된 스타일이 같음을 PC·폰 × 다크·라이트로 비교 확인.
 
 **홈 화면과 로고 (2026-10-27 추가)**
-- 첫 화면이 캐릭터 목록 대신 홈(`home.js`, `#sec-home`). 모눈종이 머리 영역에 떠다니는 별·님·앱 스티커 글자와 그 아래 내 캐릭터,
+- 첫 화면이 캐릭터 목록 대신 홈(`home.js`, `#sec-home`). 머리 영역에 떠다니는 별·님·앱 스티커 글자, 머리 영역 밖 바로 아래에 따로 선 내 캐릭터,
   가운데 카드가 앞으로 나오는 추천 기능 슬라이드(`HOME_FEATURES`, 설명은 합니다체 문장), 사이드바를 읽어 만드는 전체 기능.
   로고 캐릭터 얼굴은 만들어 두고 `hidden`으로 꺼 둠(지수 요청).
 - **캐릭터 영역**: 사이드바 맨 위 `.sb-char-area`, 곧 명찰·결정석·주간/월간 수익은 어느 메뉴에서나 그대로 있다.
-  `index.html`의 `<body class="char-home">`이면 home.js `mountHomeCharArea`가 이 영역을 복사해 홈 머리 영역에도 둔다.
+  `index.html`의 `<body class="char-home">`이면 home.js `mountHomeCharArea`가 이 영역을 복사해 홈 머리 영역 바로 아래에도 둔다.
+  모눈 무늬 배경은 맨 뒷배경 body와 로딩 화면 .boot에만 쓴다. 머리 영역·카드 그림 칸·슬라이드 그림 칸에는 넣지 않는다.
   복사본의 id 앞에는 `h_`가 붙고, app.js `renderCharList`·`updateCrystalBar`가 `charAreaEls(id)`로 두 곳에 함께 적는다.
   홈 쪽 목록은 홈 카드 모양으로 그린다. 추가 버튼은 원본 버튼을 대신 누르고, 수정·삭제는 character.js `onCharListClick`을 같이 쓴다.
   사이드바 캐릭터 영역에 id 있는 요소를 새로 넣으면 `updateCrystalBar`처럼 `charAreaEls`로 두 곳을 같이 갱신할 것.

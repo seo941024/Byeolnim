@@ -2758,18 +2758,17 @@ body::before {
 }
 
 /* ── 홈 (home.js) ──
-   뮤즈대시 첫 화면 구성: 모눈종이 머리 영역에 떠다니는 별·님·앱 스티커 글자와 내 캐릭터, 아래로 내려가라는 화살표,
-   가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다 */
+   뮤즈대시 첫 화면 구성: 머리 영역에 떠다니는 별·님·앱 스티커 글자와 아래로 내려가라는 화살표,
+   그 아래 따로 선 내 캐릭터 칸, 가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다.
+   모눈 무늬는 맨 뒷배경 body와 로딩 화면에만 쓴다 */
 #sec-home { gap: 30px; }
+/* 높이는 제목만큼만 잡는다. 남는 높이를 두고 가운데로 모으면 제목이 내려가서 윗변 기준으로 자리를 잡는 스티커와 어긋난다 */
 .home-hero {
   position: relative; overflow: hidden; isolation: isolate;
-  min-height: clamp(360px, 52vh, 560px);
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   padding: 44px 24px 76px; border-radius: 14px; text-align: center;
   border: 1px solid rgba(var(--hue-l),.3);
   background:
-    linear-gradient(rgba(var(--hue-l),.11) 1px, transparent 1px) 0 0 / 36px 36px,
-    linear-gradient(90deg, rgba(var(--hue-l),.11) 1px, transparent 1px) 0 0 / 36px 36px,
     radial-gradient(70% 60% at 50% 36%, rgba(var(--hue),.45), transparent 70%),
     radial-gradient(40% 40% at 88% 88%, rgba(var(--star),.18), transparent 70%),
     radial-gradient(36% 36% at 8% 90%, rgba(var(--hue-d),.35), transparent 70%),
@@ -2779,8 +2778,6 @@ body::before {
 :root[data-theme="light"] .home-hero {
   border-color: rgba(214,160,20,.35);
   background:
-    linear-gradient(rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 36px 36px,
-    linear-gradient(90deg, rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 36px 36px,
     radial-gradient(70% 60% at 50% 36%, rgba(var(--star),.30), transparent 70%),
     radial-gradient(40% 40% at 88% 88%, rgba(170,140,255,.22), transparent 70%),
     radial-gradient(36% 36% at 8% 90%, rgba(255,170,200,.22), transparent 70%),
@@ -2808,7 +2805,7 @@ body::before {
 .home-deco__s--4 { right: 6%;  --cy: .21;  rotate: 14deg; }
 .home-deco__s--5 { right: 17%; --cy: .34;  rotate: -9deg; }
 .home-deco__s--6 { right: 8%;  --cy: 1.08; rotate: 6deg; }
-.home-hero .home-title, .home-hero .home-mine { position: relative; z-index: 1; }
+.home-hero .home-title { position: relative; z-index: 1; }
 @media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
 /* 폰은 자리가 좁아 크기만 줄인다. 가운데 자리는 그대로라 위아래로 움직이지 않는다 */
 @media (max-width: 600px) { .home-deco { --ds: .55; } }
@@ -2894,9 +2891,9 @@ body::before {
 :root[data-theme="light"] .home-h { background-image: linear-gradient(90deg, #241a35 0%, #5b3fb0 65%, #a8740a 100%); }
 :root[data-theme="light"] .home-h::after { color: #c9971a; -webkit-text-fill-color: #c9971a; }
 
-/* 내 캐릭터 — 머리 영역의 별님앱 글자 아래. 사이드바에서 복사해 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
+/* 내 캐릭터 — 머리 영역 밖, 바로 아래에 따로 선다. 사이드바에서 복사해 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
    [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익 | 월간 수익] */
-.home-mine { width: min(1120px, 100%); text-align: left; }
+.home-mine { text-align: left; }
 .home-mine .sb-char-area {
   display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: stretch;
   padding: 16px 18px 18px; border: 1px solid rgba(var(--hue),.22); border-radius: 12px;
@@ -2938,10 +2935,7 @@ body::before {
 .hc { display: grid; grid-template-columns: 132px minmax(0, 1fr); height: 100%; }
 .hc__pic {
   border-right: 1px solid rgba(var(--star),.22);
-  background:
-    linear-gradient(rgba(var(--hue-l),.10) 1px, transparent 1px) 0 0 / 18px 18px,
-    linear-gradient(90deg, rgba(var(--hue-l),.10) 1px, transparent 1px) 0 0 / 18px 18px,
-    radial-gradient(circle at 50% 60%, rgba(var(--hue),.45), transparent 70%);
+  background: radial-gradient(circle at 50% 60%, rgba(var(--hue),.45), transparent 70%);
 }
 .hc__body { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 12px 14px 10px; }
 .hc__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
@@ -2958,19 +2952,15 @@ body::before {
 .hc__exp-track { position: relative; flex: 1; height: 8px; border-radius: 4px; overflow: hidden; background: rgba(var(--hue-l),.16); }
 .hc__exp-track i { position: absolute; inset: 0 auto 0 0; border-radius: inherit; background: linear-gradient(90deg, rgb(var(--hue)), rgb(var(--star))); }
 .hc__exp-val { font-size: .72rem; font-weight: 800; color: var(--accent); font-variant-numeric: tabular-nums; }
-.hc__stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
-.hc__stat { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 6px 9px; border-radius: 6px; background: rgba(var(--hue),.12); border: 1px solid rgba(var(--hue-l),.16); }
-.hc__stat span { font-size: .68rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hc__stat b { font-size: .9rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* 랭킹·주간 수익 — 캐릭터 목록 카드처럼 왼쪽 이름, 오른쪽 값을 한 줄씩. 줄 사이에 가는 선 */
+.hc__stats { display: flex; flex-direction: column; border-top: 1px solid var(--border); }
+.hc__stat { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; padding: 5px 0; border-bottom: 1px solid var(--border); }
+.hc__stat:last-child { border-bottom: none; padding-bottom: 0; }
+.hc__stat span { min-width: 0; font-size: .76rem; font-weight: 600; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hc__stat b { flex-shrink: 0; font-size: .92rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .char-weekly.is-neg { color: var(--danger); }
 
-:root[data-theme="light"] .hc__pic {
-  background:
-    linear-gradient(rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 18px 18px,
-    linear-gradient(90deg, rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 18px 18px,
-    radial-gradient(circle at 50% 60%, rgba(var(--star),.35), transparent 70%);
-}
-:root[data-theme="light"] .hc__stat { background: rgba(214,160,20,.07); border-color: rgba(184,134,11,.2); }
+:root[data-theme="light"] .hc__pic { background: radial-gradient(circle at 50% 60%, rgba(var(--star),.35), transparent 70%); }
 
 /* 추천 기능 슬라이드 — 가운데 카드는 앞으로, 양옆은 작고 흐리게 뒤로(뮤즈대시 카드 슬라이드) */
 .home-car { position: relative; height: 344px; overflow: hidden; touch-action: pan-y; border-radius: 12px; }
@@ -2993,15 +2983,11 @@ body::before {
 .home-slide__pic {
   position: relative; display: grid; place-items: center; overflow: hidden;
   background:
-    linear-gradient(rgba(var(--hue-l),.10) 1px, transparent 1px) 0 0 / 24px 24px,
-    linear-gradient(90deg, rgba(var(--hue-l),.10) 1px, transparent 1px) 0 0 / 24px 24px,
     radial-gradient(circle at 50% 45%, rgba(var(--hue),.5), transparent 70%),
     linear-gradient(160deg, #24173f, #120b22);
 }
 :root[data-theme="light"] .home-slide__pic {
   background:
-    linear-gradient(rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 24px 24px,
-    linear-gradient(90deg, rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 24px 24px,
     radial-gradient(circle at 50% 45%, rgba(var(--star),.35), transparent 70%),
     linear-gradient(160deg, #fff6dc, #efe6ff);
 }
@@ -3053,15 +3039,13 @@ body::before {
 .home-tile__name { font-size: .82rem; font-weight: 800; text-align: center; color: var(--text); }
 
 @media (max-width: 768px) {
-  .home-hero { min-height: 0; padding: 32px 12px 68px; border-radius: 12px; }
+  .home-hero { padding: 32px 12px 68px; border-radius: 12px; }
   .home-hero__char { width: 186px; height: 162px; }   /* 원본의 3배 */
   .home-car { height: 424px; }
   .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
   .home-mine :is(.char-list, .sb-income-label, .crystal-bar, .sb-weekmeso:nth-child(5), .sb-weekmeso:nth-child(6)) { grid-column: 1; grid-row: auto; }
   .hc { grid-template-columns: 104px minmax(0, 1fr); }
-  /* 폰은 칸이 좁아 랭킹 숫자가 칸 밖으로 나가던 것을 글자를 줄여 맞춘다 */
-  .hc__stat { padding: 5px 7px; }
-  .hc__stat b { font-size: .8rem; }
+  .hc__stat b { font-size: .86rem; }
   .home-slide { width: 84%; grid-template-columns: 1fr; grid-template-rows: 170px 1fr; }
   .home-slide.is-prev { transform: translateX(-128%) scale(.82); }
   .home-slide.is-next { transform: translateX(28%) scale(.82); }

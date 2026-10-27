@@ -102,9 +102,10 @@ function renderHome() {
       <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
         `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
-      <div class="home-mine" id="homeMine"></div>
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
+
+    <div class="home-mine" id="homeMine"></div>
 
     <div class="home-block" id="homeFeatures">
       <h2 class="home-h">추천 기능</h2>
@@ -169,7 +170,7 @@ function renderHome() {
   }, HOME_AUTO_MS);
 }
 
-/* body.char-home이면 사이드바의 캐릭터 영역을 복사해 홈 머리 영역에도 둔다. 사이드바에도 그대로 남는다.
+/* body.char-home이면 사이드바의 캐릭터 영역을 복사해 홈 머리 영역 바로 아래에도 둔다. 사이드바에도 그대로 남는다.
    복사본의 id 앞에는 h_를 붙여 겹치지 않게 하고, 값은 app.js renderCharList·updateCrystalBar가 두 곳에 함께 적는다.
    추가 버튼은 사이드바 원본 버튼을 대신 누르고, 수정·삭제는 character.js onCharListClick을 그대로 쓴다.
    body에서 char-home을 빼면 복사하지 않고 내 캐릭터 칸은 숨는다 */

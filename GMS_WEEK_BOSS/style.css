@@ -2556,8 +2556,6 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   font-size: .82rem; font-weight: 700; color: var(--text);
 }
 .fr-badge--empty { background: var(--bg2); border-color: var(--border); color: var(--text-sub); font-weight: 500; }
-.fr-line { display: flex; gap: 6px; align-items: flex-end; }
-.fr-line .fr-bonus__lbl { flex: 1.1; font-size: .74rem; color: var(--text-dim); align-self: center; }
 
 /* 덱 저장 — 캐릭터당 3칸. 캐릭터별이라는 게 한눈에 보이게 얼굴을 같이 띄운다. */
 .fr-decks { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -2602,9 +2600,6 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 @media (max-width: 640px) {
   .fr-bonus .fr-bonus__lbl { width: 62px; }
 }
-.fr-line__field { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-.fr-line__field-lbl { font-size: .66rem; color: var(--text-dim); }
-.fr-line__field input { width: 100%; min-width: 0; }
 #frBonusDice { display: flex; flex-direction: column; gap: 6px; }
 
 /* ── 움직임 효과 ──

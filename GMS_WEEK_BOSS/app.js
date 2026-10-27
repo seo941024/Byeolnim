@@ -322,9 +322,8 @@ function updateCrystalBar() {
     el.style.display = doneCount ? '' : 'none';
   });
   charAreaEls('totalMonthMeso').forEach(el => { el.textContent = fmtMeso(monthTotal); el.style.color = monthTotal < 0 ? 'var(--danger)' : ''; });
-  const elHW = document.getElementById('hcWeekly');
   const act = state.chars[state.activeChar];
-  if (elHW && act) elHW.outerHTML = hcWeeklyHtml(act);
+  if (act) document.querySelectorAll('.char-weekly').forEach(el => { el.outerHTML = charWeeklyHtml(act); });
 }
 
 /* ── 캐릭터 목록 렌더 (active 1개만) ── 사이드바 목록과, 있으면 홈에 복사한 목록(#h_charList)에 함께 그린다 */
@@ -356,13 +355,22 @@ function renderCharListInto(ul) {
     const world = ch.fetched?.world || '';
     const sIcon = world ? serverIconSrc(world) : '';
     const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
+    const headSrc = charJobHeadSrc(ch);
+    const rank = ch.fetched?.rank;
     li.innerHTML = `
     <div class="char-card__inner">
       <div class="char-card__txt">
-        <div class="char-card__name">${escHtml(ch.name)}</div>
+        <div class="char-card__top">
+          <div class="char-card__name">${escHtml(ch.name)}</div>
+          ${headSrc ? `<img class="char-card__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
+        </div>
         <div class="char-card__lv">Lv.${ch.level}</div>
         ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(world)}</span></div>` : ''}
         ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
+        <div class="char-card__stats">
+          ${rank ? `<div class="char-card__stat"><span>${escHtml(charRegion(ch))} 랭킹</span><b>#${rank.toLocaleString()}</b></div>` : ''}
+          <div class="char-card__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
+        </div>
         ${charCardBtnsHtml(i)}
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
@@ -408,17 +416,18 @@ function charHomeCardHtml(ch, i, portrait) {
         ${pct == null ? '' : `<div class="hc__exp"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"><i style="width:${pct.toFixed(2)}%"></i></span><span class="hc__exp-val">${pct.toFixed(3)}%</span></div>`}
         <div class="hc__stats">
           ${f?.rank ? `<div class="hc__stat"><span>${escHtml(region)} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : ''}
-          <div class="hc__stat"><span>주간 수익</span>${hcWeeklyHtml(ch)}</div>
+          <div class="hc__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
         </div>
         ${charCardBtnsHtml(i)}
       </div>
     </div>`;
 }
 
-/* 보스를 체크할 때마다 카드 전체를 다시 그리지 않도록 주간 수익만 따로 만든다(updateCrystalBar가 갈아 끼운다) */
-function hcWeeklyHtml(ch) {
+/* 사이드바·홈 카드의 주간 수익. 보스를 체크할 때마다 카드 전체를 다시 그리지 않도록 이것만 따로 만들고,
+   updateCrystalBar가 .char-weekly를 모두 갈아 끼운다 */
+function charWeeklyHtml(ch) {
   const weekly = charWeeklyMeso(ch) - rentalWeeklyCost(ch);
-  return `<b id="hcWeekly"${weekly < 0 ? ' class="hc__neg"' : ''} title="${fmtMeso(weekly)}">${ch.weekDone ? '<i class="ci-income-done">완료 · </i>' : ''}${fmtMesoCompact(weekly)}</b>`;
+  return `<b class="char-weekly${weekly < 0 ? ' is-neg' : ''}" title="${fmtMeso(weekly)}">${ch.weekDone ? '<i class="ci-income-done">완료 · </i>' : ''}${fmtMesoCompact(weekly)}</b>`;
 }
 
 function selectChar(i) {

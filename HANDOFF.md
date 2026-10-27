@@ -33,7 +33,7 @@
   가로 그라데이션을 세 글자에 나눠 이어 칠한다. 글꼴은 메이플스토리 Bold에서 별·님·앱만 뽑은 `font/maple_title.woff` 2KB.
   제목 글자를 바꾸면 fontTools로 다시 뽑고 home.js의 글자별 viewBox도 다시 잰다. 앱 오른쪽 아래에 같은 테두리의 ✦ 반짝이.
 - `char-home`이면 내 캐릭터는 홈 카드로 그린다: app.js `charHomeCardHtml`. 캐릭터 목록 카드와 같은 정보에 경험치 막대를 더함.
-  주간 수익만 `hcWeeklyHtml`로 따로 만들어 `updateCrystalBar`가 갈아 끼운다.
+  사이드바 카드도 직업 아이콘·랭킹·주간 수익을 보인다. 주간 수익은 두 카드 모두 `charWeeklyHtml`로 따로 만들어 `updateCrystalBar`가 `.char-weekly`를 갈아 끼운다.
 - 메뉴 이동은 브라우저 기록에 남는다: `navigateTo`가 `history.pushState({ sec })`, `popstate`에서 그 메뉴로 돌아간다. 주소는 바꾸지 않는다.
   헤더 로고 옆 홈 버튼은 만들었다가 로고와 기능이 같아 지웠다. 로고를 누르면 홈.
 - 헤더 좌측 얼굴은 지움. 머리 그림 `images/logo/head_normal.png`·`head_smile.png`는 남겨 두고, 로딩 화면은 웃는 얼굴 2배를 쓴다.

@@ -29,6 +29,10 @@ const HOME_TITLE_CHARS = [
   { ch: '님', vb: '-10 -90.6 105.6 122.4' },
   { ch: '앱', vb: '-12.6 -90.6 117.7 122.4' },
 ];
+/* 머리 영역 좌우에 떠다니는 메이플 아이콘 스티커. 흰·노랑 테두리는 그림 파일에 미리 그려 두었다.
+   앞의 셋은 왼쪽, 뒤의 셋은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호 */
+const HOME_DECO = ['cube', 'crystal', 'coin', 'hammer', 'card', 'soul'];
+
 /* 홈 머리 영역에 반짝이는 ✦와 같은 네 갈래 별 */
 const HOME_TITLE_SPARK = 'M0-50Q9-9 50 0Q9 9 0 50Q-9 9-50 0Q-9-9 0-50Z';
 
@@ -95,6 +99,8 @@ function renderHome() {
         <img class="home-hero__face" src="images/logo/head_normal.png" alt="" width="248" height="216">
         <img class="home-hero__face home-hero__face--smile" src="images/logo/head_smile.png" alt="" width="248" height="216">
       </div>
+      <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
+        `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
       <div class="home-mine" id="homeMine"></div>
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="주요 기능으로 내려가기"><span></span></button>

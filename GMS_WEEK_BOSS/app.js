@@ -358,7 +358,8 @@ function renderCharListInto(ul) {
     const headSrc = charJobHeadSrc(ch);
     const rank = ch.fetched?.rank;
     const region = charRegion(ch);
-    // 캐릭터 목록 카드와 같은 배치 — 이름 아래 직업, 레벨 옆 서버. 수정·삭제는 레벨·서버 줄 오른쪽 빈자리에 둔다
+    // 캐릭터 목록 카드와 같은 배치 — 이름 아래 직업, 레벨 옆 서버, 그 아래 경험치.
+    // 수정·삭제는 오른쪽 캐릭터 그림의 위쪽 오른편, 캐릭터 머리 위 빈 배경에 얹는다
     li.innerHTML = `
     <div class="char-card__inner">
       <div class="char-card__txt">
@@ -372,14 +373,14 @@ function renderCharListInto(ul) {
         <div class="char-card__meta">
           <span class="char-card__lv">Lv.${ch.level}</span>
           ${world ? `<span class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
-          ${charCardBtnsHtml(i)}
         </div>
+        ${charExpHtml(ch)}
         <div class="char-card__stats">
           ${rank ? `<div class="char-card__stat"><span>${escHtml(region)} 랭킹</span><b>#${rank.toLocaleString()}</b></div>` : ''}
           <div class="char-card__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
         </div>
       </div>
-      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
+      <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}${charCardBtnsHtml(i)}</div>
     </div>`;
   }
   li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
@@ -393,8 +394,16 @@ function charCardBtnsHtml(i) {
         </div>`;
 }
 
-/* 홈의 내 캐릭터 카드. 캐릭터 목록 카드(renderCharInfo)와 같은 정보에 경험치 막대를 더했다.
-   경험치 표(data_exp.js)가 없는 레벨은 막대를 그리지 않는다 */
+/* 사이드바·홈 카드의 경험치 막대. 경험치 표 data_exp.js가 없는 레벨은 그리지 않는다 */
+function charExpHtml(ch) {
+  const f = ch.fetched;
+  const pct = f ? expPercent(f.level || ch.level, Number(f.exp)) : null;
+  if (pct == null) return '';
+  return `<div class="hc__exp"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"><i style="width:${pct.toFixed(2)}%"></i></span><span class="hc__exp-val">${pct.toFixed(3)}%</span></div>`;
+}
+
+/* 홈의 내 캐릭터 카드. 캐릭터 목록 카드와 같은 정보에 경험치 막대를 더했다.
+   수정·삭제는 왼쪽 캐릭터 그림의 위쪽 왼편, 캐릭터 머리 위 빈 배경에 얹는다 */
 function charHomeCardHtml(ch, i, portrait) {
   const f = ch.fetched;
   const jn = charJobName(ch);
@@ -403,10 +412,9 @@ function charHomeCardHtml(ch, i, portrait) {
   const sIcon = world ? serverIconSrc(world) : '';
   const headSrc = charJobHeadSrc(ch);
   const lv = f?.level || ch.level;
-  const pct = f ? expPercent(lv, Number(f.exp)) : null;
   return `
     <div class="hc">
-      <div class="char-card__portrait hc__pic${f?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
+      <div class="char-card__portrait hc__pic${f?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}${charCardBtnsHtml(i)}</div>
       <div class="hc__body">
         <div class="hc__top">
           <div class="hc__id">
@@ -419,12 +427,11 @@ function charHomeCardHtml(ch, i, portrait) {
           <span class="hc__lv">Lv.${lv}</span>
           ${world ? `<span class="hc__server">${sIcon ? `<img src="${sIcon}" alt="" onerror="this.style.display='none'" />` : ''}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
         </div>
-        ${pct == null ? '' : `<div class="hc__exp"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"><i style="width:${pct.toFixed(2)}%"></i></span><span class="hc__exp-val">${pct.toFixed(3)}%</span></div>`}
+        ${charExpHtml(ch)}
         <div class="hc__stats">
           ${f?.rank ? `<div class="hc__stat"><span>${escHtml(region)} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : ''}
           <div class="hc__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
         </div>
-        ${charCardBtnsHtml(i)}
       </div>
     </div>`;
 }

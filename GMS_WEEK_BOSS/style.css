@@ -549,11 +549,19 @@ textarea, [contenteditable="true"] { cursor: text; }
 /* 이름 줄 오른쪽 직업 아이콘, 아래쪽 랭킹·주간 수익 — 캐릭터 목록 카드와 같은 정보 */
 .char-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; min-width: 0; }
 .char-card__id { min-width: 0; }
-/* 레벨·서버 한 줄, 오른쪽 끝에 수정·삭제 */
+/* 레벨·서버 한 줄 */
 .char-card__meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 3px; }
 .char-card__meta .char-card__world-line { min-width: 0; overflow: hidden; white-space: nowrap; }
-.char-card__meta .char-card__btns { flex-shrink: 0; margin: 0 0 0 auto; padding: 0; gap: 4px; }
-.char-card__meta .ccbtn { padding: 2px 7px; }
+.char-card__txt .hc__exp { margin-top: 4px; }
+/* 수정·삭제 — 캐릭터 그림 위쪽 빈 배경에 얹는다. 사이드바 카드는 그림이 오른쪽이라 오른편, 홈 카드는 왼편.
+   그림 위에서도 읽히게 반투명 어두운 바탕에 흰 글자로, 라이트 테마 규칙보다 뒤에서 한 단계 높여 덮는다 */
+.char-card__portrait .char-card__btns { position: absolute; top: 6px; right: 6px; z-index: 2; margin: 0; padding: 0; gap: 4px; }
+.hc__pic .char-card__btns { right: auto; left: 6px; }
+.char-card .char-card__portrait .ccbtn { padding: 2px 8px; box-shadow: 0 1px 4px rgba(0,0,0,.3); }
+.char-card .char-card__portrait .ccbtn--edit { background: rgba(14,10,28,.66); color: #fff; }
+.char-card .char-card__portrait .ccbtn--del  { background: rgba(208,34,54,.86); color: #fff; }
+.char-card .char-card__portrait .ccbtn--edit:hover { background: var(--primary); color: #000; }
+.char-card .char-card__portrait .ccbtn--del:hover  { background: var(--danger); color: #fff; }
 .char-card__jobicon { flex-shrink: 0; width: 28px; height: 28px; object-fit: contain; margin: -3px -2px -4px 0; }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .char-card__stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .68rem; }
@@ -1440,7 +1448,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
    (캐릭터 카드 .cg-grid에서 이미 쓰던 것과 같은 패턴). */
 .bhp-grid {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(max(190px, calc((100% - 48px) / 5)), 1fr));
-  gap: 12px; max-width: none;
+  grid-auto-rows: 1fr; gap: 12px; max-width: none;
 }
 .bhp-card {
   background: var(--panel-veil);
@@ -2125,7 +2133,8 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-income-done { font-style: normal; color: var(--text-dim); font-weight: 700; }
 
 /* 좌측 카드 하단 — 랭킹(있으면) + 이번 주 예상 수익 */
-.ci-card__ranks { margin-top: 0; padding: 5px 11px 7px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
+/* 위 선과 같이 글자 칸 안쪽에만 선을 긋도록 좌우는 padding 대신 margin으로 띄운다 */
+.ci-card__ranks { margin: 0 11px; padding: 5px 0 7px; border-top: 1px solid var(--border); align-self: end; min-width: 0; }
 .ci-card__ranks .ci-rank-row { padding: 2px 0; font-size: clamp(.62rem, .46rem + .9cqw, .95rem); }
 
 /* ── TOAST ── */
@@ -2913,7 +2922,7 @@ body::before {
 .hc__stat span { font-size: .68rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hc__stat b { font-size: 1rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .char-weekly.is-neg { color: var(--danger); }
-.hc .char-card__btns { margin-top: auto; padding-top: 2px; }
+
 :root[data-theme="light"] .hc__pic {
   background:
     linear-gradient(rgba(184,134,11,.10) 1px, transparent 1px) 0 0 / 18px 18px,
@@ -2986,7 +2995,8 @@ body::before {
 .home-car__dot.active { width: 26px; background: rgb(var(--star)); }
 
 /* 전체 메뉴 바둑판 */
-.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+/* 카드 묶음은 모든 줄을 가장 높은 줄에 맞춘다. 이름이 두 줄로 내려가도 카드 높이는 그대로다 */
+.home-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
 .home-tile {
   display: flex; flex-direction: column; align-items: center; gap: 10px;
   padding: 18px 10px 16px; border-radius: 10px;
@@ -3326,7 +3336,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;
 }
 /* 2열 고정 — NA 6개 월드 기준 3행 2열 */
-.ss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
 .ss-card {
   background: var(--panel-veil); border: 1px solid var(--border);
   border-radius: var(--radius); padding: 14px 16px;

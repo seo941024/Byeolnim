@@ -273,10 +273,10 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
    - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다.
    - 크롬은 32px보다 큰 커서를 그림 전체가 화면 안에 들어올 때만 그리고, 화면 오른쪽·아래 끝에서는 기본 커서로 바꾼다.
-     그래서 지수가 고친 cursor.png를 32px 안으로 줄인 cursor_small.png 한 장만 쓴다. cursor.png를 고치면 이것도 다시 줄여 만든다 */
+     32px로 줄여 보니 너무 작아서, 끝에서는 기본 마우스로 바뀌는 것을 받아들이고 큰 그림을 쓴다. 뮤즈대시 64px 커서도 같다 */
 :root {
-  --cur-default: url('images/icons/cursor_small.png?v=20261028a') 0 0, default;
-  --cur-pointer: url('images/icons/cursor_small.png?v=20261028a') 0 0, pointer;
+  --cur-default: url('images/icons/cursor.png?v=20261027e') 1 1, default;
+  --cur-pointer: url('images/icons/cursor.png?v=20261027e') 1 1, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }
@@ -2788,29 +2788,30 @@ body::before {
   box-shadow: 0 18px 50px rgba(150,110,20,.14), inset 0 1px 0 #fff;
 }
 .home-hero__spark { position: absolute; color: rgb(var(--star)); line-height: 1; text-shadow: 0 0 12px rgba(var(--star),.8); }
-/* 머리 영역 좌우 메이플 아이콘 스티커 — 제목 줄 높이 안에 둬서 아래 캐릭터 칸을 가리지 않는다.
-   숨기지 않고, 화면이 좁아질수록 크기·높이가 vw를 따라 줄고 좌우 %자리라 안쪽으로 모인다. 조금 겹치는 것은 괜찮다는 지수 의견.
-   높이는 1280px 화면 기준 자리를 넘지 않게 clamp로 묶었다. 제목·캐릭터 칸이 스티커보다 위에 그려진다 */
-.home-deco { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
-.home-deco__s { position: absolute; width: auto; height: clamp(40px, 6.2vw, 92px); filter: drop-shadow(0 6px 10px rgba(0,0,0,.18)); }
-.home-deco__s--1 { left: 6%;  top: clamp(6px, 2vw, 26px);      rotate: -12deg; }
-.home-deco__s--2 { left: 19%; top: clamp(40px, 7.2vw, 92px);   rotate: 9deg; }
-.home-deco__s--3 { left: 8%;  top: clamp(56px, 10.8vw, 138px); rotate: -4deg; }
-.home-deco__s--4 { right: 6%;  top: clamp(6px, 1.9vw, 24px);    rotate: 14deg; }
-.home-deco__s--5 { right: 17%; top: clamp(14px, 3.1vw, 40px);   rotate: -9deg; }
-.home-deco__s--6 { right: 8%;  top: clamp(52px, 10.3vw, 132px); rotate: 6deg; }
-.home-hero .home-title, .home-hero .home-mine { position: relative; z-index: 1; }
-/* 폰은 제목 좌우에 자리가 없어 머리 영역 위쪽 여백을 조금 늘리고, 스티커를 제목 위 띠와 양 끝에 둔다 */
-@media (max-width: 600px) {
-  .home-hero.home-hero { padding-top: 58px; }   /* 아래 768px 규칙의 padding 묶음보다 뒤에 있지 않아 한 단계 높여 덮는다 */
-  .home-deco__s { height: 38px; }
-  .home-deco__s--1 { left: 4%;  top: 10px; }
-  .home-deco__s--2 { left: 28%; top: 6px; }
-  .home-deco__s--3 { left: 2%;  top: 62px; }
-  .home-deco__s--4 { right: 4%;  top: 8px; }
-  .home-deco__s--5 { right: 27%; top: 12px; }
-  .home-deco__s--6 { right: 3%;  top: 60px; }
+/* 머리 영역 좌우 메이플 아이콘 스티커 — 숨기지 않고, 화면이 좁아지면 좌우 %자리라 안쪽으로 모인다. 조금 겹치는 것은 괜찮다는 지수 의견.
+   위아래 자리와 크기는 제목 글자 높이 --st-h에 맞춰 계산해서, 좁아져도 제목 옆 같은 높이에 머문다.
+   --cy는 제목 윗변에서 스티커 가운데까지의 거리를 제목 높이 몇 배로 적은 것. 제목·캐릭터 칸이 스티커보다 위에 그려진다 */
+.home-deco {
+  --st-h: clamp(78px, 12vw, 124px);   /* 제목 .home-title과 같은 값 */
+  --hero-pt: 44px;                     /* .home-hero 위쪽 여백, 곧 제목 윗변 */
+  --ds: .74;                           /* 스티커 높이 = 제목 높이 × --ds */
+  position: absolute; inset: 0; pointer-events: none; z-index: 0;
 }
+.home-deco__s {
+  position: absolute; width: auto; height: calc(var(--st-h) * var(--ds));
+  top: calc(var(--hero-pt) + var(--st-h) * var(--cy) - var(--st-h) * var(--ds) / 2);
+  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
+}
+.home-deco__s--1 { left: 6%;   --cy: .23;  rotate: -12deg; }
+.home-deco__s--2 { left: 19%;  --cy: .76;  rotate: 9deg; }
+.home-deco__s--3 { left: 8%;   --cy: 1.13; rotate: -4deg; }
+.home-deco__s--4 { right: 6%;  --cy: .21;  rotate: 14deg; }
+.home-deco__s--5 { right: 17%; --cy: .34;  rotate: -9deg; }
+.home-deco__s--6 { right: 8%;  --cy: 1.08; rotate: 6deg; }
+.home-hero .home-title, .home-hero .home-mine { position: relative; z-index: 1; }
+@media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
+/* 폰은 자리가 좁아 크기만 줄인다. 가운데 자리는 그대로라 위아래로 움직이지 않는다 */
+@media (max-width: 600px) { .home-deco { --ds: .55; } }
 .home-hero__spark--1 { top: 18%; right: 14%; font-size: 22px; }
 .home-hero__spark--2 { bottom: 24%; left: 12%; font-size: 16px; color: #e4dcff; text-shadow: 0 0 12px rgba(214,200,255,.9); }
 .home-hero__spark--3 { top: 30%; left: 20%; font-size: 12px; }

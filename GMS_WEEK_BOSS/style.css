@@ -173,12 +173,13 @@
   --hue-l: 214,168,44;
   --hue-d: 138,99,9;
   --on-grad: #ffffff;
-  /* 골드 그라데이션 버튼이 황토색처럼 칙칙하다는 의견으로, 라이트 버튼은 보라 한 색으로 바꿨다 */
-  --btn:        #7c4fd6;
-  --btn-hover:  #6b3fc4;
-  --on-btn:     #ffffff;
+  /* 라이트의 아이덴티티는 노랑이다. 골드 그라데이션이 황토색처럼 칙칙하다는 의견으로,
+     그라데이션을 빼고 밝은 노랑 한 색에 검은 글자로 칠한다. 갈색 기운이 도는 골드는 쓰지 않는다 */
+  --btn:        rgb(var(--star));
+  --btn-hover:  #efba2c;
+  --on-btn:     var(--text);
   --btn-border: transparent;
-  --btn-shadow: 0 2px 6px rgba(124,79,214,.25);
+  --btn-shadow: 0 2px 6px rgba(214,160,20,.22);
   --lookup-bg: #ffffff;
   --gt-rare: #2f5fd0; --gt-epic: #7c34d6; --gt-unique: #8a6b00; --gt-legendary: #566f00;
 }
@@ -262,14 +263,14 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
    - 기본 커서는 body에 한 번만 걸고 아래 요소들이 물려받는다. 예전처럼 body *로 모든 요소에 하나하나 걸지 않는다.
    - 누를 수 있는 곳은 시스템 손가락 대신 var(--cur-pointer)를 쓴다. 지금은 기본과 같은 그림이고,
      손가락용 그림이 생기면 이 변수만 바꾸면 된다. 새 CSS도 손가락 커서는 이 변수로 쓴다.
-   - 그림은 corsor.gif 첫 프레임을 뮤즈대시처럼 PNG를 담은 .ico로 만든 것. 원본은 화살표가 왼쪽·위 끝에 붙어
+   - 그림은 images/icons/cursor.png, corsor.gif 첫 프레임으로 만든 것. 원본은 화살표가 왼쪽·위 끝에 붙어
      흰 테두리가 잘려 있어서 한 칸 넓혀 그 자리만 흰색으로 채우고, 39×37을 도트 그대로 2배 한 78×74다.
      핫스팟 1 1은 왼쪽 위 화살표 끝이다. 예전 cursor32.png는 원본을 32×30으로 줄여 그림이 뭉개졌었다.
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
    - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다. */
 :root {
-  --cur-default: url('images/icons/cursor.ico?v=20261027b') 1 1, default;
-  --cur-pointer: url('images/icons/cursor.ico?v=20261027b') 1 1, pointer;
+  --cur-default: url('images/icons/cursor.png?v=20261027c') 1 1, default;
+  --cur-pointer: url('images/icons/cursor.png?v=20261027c') 1 1, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }
@@ -933,9 +934,9 @@ tr.done .boss-thumb img { filter: none; }
   border-color: var(--border);
 }
 .sbtn--ghost:hover { background: rgba(255,255,255,.12); color: var(--text); }
-/* 라이트의 보조 버튼은 아이보리 바탕·골드 테두리 대신 흰 바탕에 옅은 회색 테두리 */
-:root[data-theme="light"] .sbtn--ghost { background: #fff; border-color: rgba(20,18,28,.16); color: var(--text); }
-:root[data-theme="light"] .sbtn--ghost:hover { background: rgba(124,79,214,.07); border-color: rgba(124,79,214,.45); }
+/* 라이트의 보조 버튼은 흰 바탕에 밝은 노랑 테두리. 황토색 골드 테두리는 쓰지 않는다 */
+:root[data-theme="light"] .sbtn--ghost { background: #fff; border-color: rgba(var(--star),.75); color: var(--text); }
+:root[data-theme="light"] .sbtn--ghost:hover { background: rgba(var(--star),.14); border-color: rgb(var(--star)); }
 .sbtn--danger { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(240,80,96,.3); }
 .sbtn--danger:hover { filter: brightness(1.1); }
 .w100 { width: 100%; justify-content: center; }

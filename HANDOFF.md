@@ -1047,7 +1047,7 @@ PWA를 "Chrome에서 삭제"로 지우면 그 사이트의 localStorage까지 �
   누를 수 있는 요소만 `.pointercursor`로 손가락 변수를 쓴다. 그림은 PNG를 담은 64x64 .ico 두 장.
 - 별님앱: `--cur-default`·`--cur-pointer`. body에만 기본 커서를 걸고, CSS의 `cursor: pointer`·`default`는 모두 이 변수로 바꿨다.
   새 CSS도 손가락 커서는 `var(--cur-pointer)`로 쓸 것. 손가락용 그림이 없어 지금은 두 변수가 같은 그림이다.
-- 그림 `images/icons/cursor.ico`: `corsor.gif` 첫 프레임, PNG를 담은 .ico. 원본은 화살표가 왼쪽·위 끝에 붙어 흰 테두리가 잘려 있어
+- 그림 `images/icons/cursor.png`: `corsor.gif` 첫 프레임. 처음엔 뮤즈대시처럼 .ico로 만들었다가 지수가 직접 고치기 쉽게 png로 바꿨다. 원본은 화살표가 왼쪽·위 끝에 붙어 흰 테두리가 잘려 있어
   한 칸 넓혀 그 자리만 흰색 `#fefefe`로 채운 39x37을 도트 그대로 2배 한 78x74. 핫스팟 `1 1`은 화살표 끝.
   예전 `cursor32.png`는 원본을 32x30으로 줄여 뭉개졌던 그림이라 더는 쓰지 않는다. 지수 요청으로 2배.
 - 예전 메모의 "크롬은 32px을 넘는 커서를 통째로 무시한다"는 맞지 않는다 — 뮤즈대시 64x64가 크롬에서 보인다.

@@ -79,15 +79,16 @@ function _wcEnsureOverlay() {
   return overlay;
 }
 
-function _wcModalBodyHtml(item, state) {
-  if (state === 'loading') return '<p class="dt-help" style="margin:0">서버 상태 확인 중...</p>';
-  if (state === 'error') return '<p class="lk-err">서버 상태를 불러오지 못했어요. 잠시 후 다시 시도하세요.</p>';
+// res: 'loading' | 'error' | { channel }
+function _wcModalBodyHtml(item, res) {
+  if (res === 'loading') return '<p class="dt-help" style="margin:0">서버 상태 확인 중...</p>';
+  if (res === 'error') return '<p class="lk-err">서버 상태를 불러오지 못했어요. 잠시 후 다시 시도하세요.</p>';
   return `
     <div class="wc-result">
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
         <div class="wc-result__item">${item.name}</div>
-        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${_wcCurrentWorld()} - ${state.channel}채널</span></div>
+        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${_wcCurrentWorld()} - ${res.channel}채널</span></div>
       </div>
     </div>`;
 }
@@ -113,7 +114,7 @@ function _wcOpenModal(item) {
   };
   render(_wcModalBodyHtml(item, 'loading'));
   overlay.classList.add('open');
-  _wcFetchRecommend(item).then(state => render(_wcModalBodyHtml(item, state)));
+  _wcFetchRecommend(item).then(res => render(_wcModalBodyHtml(item, res)));
 }
 
 async function _wcFetchRecommend(item) {

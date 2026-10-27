@@ -56,9 +56,8 @@ http.createServer(async (req, res) => {
   const api = /^\/api\/([a-z-]+)$/.exec(u.pathname);
   if (api && fs.existsSync(path.join(ROOT, 'api', api[1] + '.js'))) {
     res.setHeader('Access-Control-Allow-Origin', '*');
-    // 사진 업로드(action:'upload')도 community 안 action으로 들어와서(Vercel Hobby
-    // 플랜의 서버리스 함수 12개 제한 때문에 합침) 8MB로 넉넉히 잡는다
-    // (base64는 원본 3MB보다 약 1.37배 커진다).
+    // 사진 업로드는 community의 action:'upload'로 들어온다. base64는 원본 3MB보다
+    // 약 1.37배 커지므로 8MB로 넉넉히 잡는다.
     const body = req.method === 'GET' || req.method === 'HEAD' ? null
       : await readJsonBody(req, api[1] === 'community' ? 8 * 1024 * 1024 : 1024 * 1024);
     try {
@@ -72,9 +71,8 @@ http.createServer(async (req, res) => {
 
   // ── 정적 파일 ──
   // %2f·%5c는 URL 정규화를 지난 뒤에야 /·\로 풀리므로, 풀고 나서 ROOT 밖이면 막는다
-  let url = u.pathname === '/' ? '/index.html' : u.pathname;
   let rel;
-  try { rel = decodeURIComponent(url); } catch { res.writeHead(400); res.end('Bad request'); return; }
+  try { rel = decodeURIComponent(u.pathname === '/' ? '/index.html' : u.pathname); } catch { res.writeHead(400); res.end('Bad request'); return; }
   const filePath = path.join(ROOT, rel);
   if (!filePath.startsWith(ROOT + path.sep)) { res.writeHead(403); res.end('Forbidden'); return; }
   const ext  = path.extname(filePath);

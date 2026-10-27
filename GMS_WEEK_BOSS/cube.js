@@ -4,33 +4,15 @@
 
 /* cube_table.js는 1.1MB짜리 데이터 파일이라, 큐브 탭을 한 번도 안 여는
    사람까지 접속할 때마다 무조건 받게 하면 첫 로딩만 그만큼 느려진다.
-   그래서 index.html엔 <script>로 안 넣어두고, 큐브 탭을 처음 열 때만
-   여기서 동적으로 붙인다. 이미 받아놨거나 받는 중이면 새로 안 받는다. */
-let _cubeTableLoading = null;
-let _cubeInited = false;
-
-function ensureCubeReady(cb) {
-  if (window.CUBE_TABLE) {
-    if (!_cubeInited) { _cubeInited = true; initCube(); }
-    cb && cb();
-    return;
-  }
-  if (!_cubeTableLoading) {
-    _cubeTableLoading = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'cube_table.js?v=20260819b';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('cube_table.js 로드 실패'));
-      document.body.appendChild(s);
-    });
-  }
-  _cubeTableLoading.then(() => {
-    if (!_cubeInited) { _cubeInited = true; initCube(); }
-    cb && cb();
-  }).catch(() => {
-    alert('큐브 데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해주세요.');
-  });
-}
+   그래서 index.html엔 <script>로 안 넣어두고, 큐브 탭을 처음 열 때만 받는다.
+   app.js가 이름으로 부르므로 ensureCubeReady는 함수 선언으로 남겨둔다. */
+const _cubeEnsure = lazySection({
+  isReady: () => !!window.CUBE_TABLE,
+  src: 'cube_table.js?v=20260819b',
+  init: initCube,
+  onFail: () => alert('큐브 데이터를 불러오지 못했습니다. 인터넷 연결을 확인하고 새로고침해주세요.'),
+});
+function ensureCubeReady(cb) { _cubeEnsure(cb); }
 
 const CUBE_MESO  = { red: 12_000_000, black: 22_000_000 };
 const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 제외)","포스실드, 소울링","방패","모자","상의","한벌옷","하의","신발","장갑","망토","벨트","어깨장식","얼굴장식","눈장식","귀고리","반지","펜던트","기계심장"];
@@ -71,6 +53,8 @@ function _dataKey()    { return _CUBE_KEY[_activeType()]||'RED'; }
 function _cubeLv()     { return parseInt(document.getElementById('cubeLevel')?.value||0); }
 function _cubePart()   { return document.getElementById('cubePart')?.value||''; }
 function _cubeGrade()  { return document.getElementById('cubeGrade')?.value||'LEGENDARY'; }
+/* 한 단계 아래 등급(이탈 풀). 레어면 null */
+function _lowerGrade(g){ const gi=_GRADE_ORDER.indexOf(g); return gi>0?_GRADE_ORDER[gi-1]:null; }
 
 // ── 파싱 ─────────────────────────────────────
 // pct:    "공격력 : +12%"             → type='pct',  cat='공격력 %', base='공격력', valNum=12
@@ -80,10 +64,10 @@ function _cubeGrade()  { return document.getElementById('cubeGrade')?.value||'LE
 
 function _parse(name) {
   let m = /^(.+?) : \+(\d+\.?\d*)(%?)$/.exec(name);
-  if (m) { const p=!!m[3]; return {cat:m[1]+(p?' %':''), base:m[1], valNum:+m[2], pct:p, type:p?'pct':'flat', full:name}; }
+  if (m) { const p=!!m[3]; return {cat:m[1]+(p?' %':''), base:m[1], valNum:+m[2], type:p?'pct':'flat'}; }
   m = /^(.+?) : (.+)$/.exec(name);
-  if (m) return {cat:m[1], base:m[1], valShort:m[2].replace(/\(.*\)/g,'').trim(), type:'colon', full:name};
-  return {cat:name, base:name, type:'unique', full:name};
+  if (m) return {cat:m[1], base:m[1], valShort:m[2].replace(/\(.*\)/g,'').trim(), type:'colon'};
+  return {cat:name, base:name, type:'unique'};
 }
 
 function _extractNum(s) { const m=/(\d+\.?\d*)/.exec(s||''); return m?+m[1]:0; }
@@ -165,8 +149,7 @@ function _buildLeftOpts(dk, part, lv, grade) {
     } else {
       if (!seenUniq.has(o.name)) {
         seenUniq.add(o.name);
-        const disp=o.name.replace(/<([^>]+)>/g,'$1').replace('스킬 사용 가능','스킬').trim();
-        html.push(`<option value="${o.name}" data-type="unique">${disp}</option>`);
+        html.push(`<option value="${o.name}" data-type="unique">${_uniqueLabel(o.name)}</option>`);
       }
     }
   }
@@ -207,18 +190,26 @@ function _makeRow() {
   return row;
 }
 
+/* 목표 세트 한 칸 — 제목·삭제 버튼과 목표 세 줄 */
+function _makeSet(cls, title) {
+  const set=document.createElement('div');
+  set.className=cls;
+  set.innerHTML=`
+    <div class="cube-set__head">
+      <span class="cube-set__title">${title}</span>
+      <button class="cube-set__del" title="삭제">✕</button>
+    </div>
+    <div class="cube-set__rows"></div>`;
+  const rowsEl=set.querySelector('.cube-set__rows');
+  for(let i=0;i<3;i++) rowsEl.appendChild(_makeRow());
+  return set;
+}
+
 /* 직접 큐브 까기 목표 세트. 옵션 시뮬레이터처럼 세트마다 세 줄이고, 세트가 여럿이면
    그중 하나라도 만족하면 멈춘다. */
 function _addHrSet() {
   const container=document.getElementById('hrGoalRows');
-  const set=document.createElement('div');
-  set.className='hr-set';
-  set.innerHTML=`
-    <div class="cube-set__head">
-      <span class="cube-set__title"></span>
-      <button class="cube-set__del" title="삭제">✕</button>
-    </div>
-    <div class="cube-set__rows"></div>`;
+  const set=_makeSet('hr-set', '');
   set.querySelector('.cube-set__del').addEventListener('click',e=>{
     e.stopPropagation();
     const wasActive=set.classList.contains('hr-set--active');
@@ -226,8 +217,6 @@ function _addHrSet() {
     if (wasActive) _hrSelectSet(document.querySelector('#hrGoalRows .hr-set'));
   });
   set.addEventListener('click',()=>_hrSelectSet(set));
-  const rowsEl=set.querySelector('.cube-set__rows');
-  for(let i=0;i<3;i++) rowsEl.appendChild(_makeRow());
   container.appendChild(set);
   _renumberHrSets();
   _refreshAllRows();
@@ -252,20 +241,10 @@ function _renumberHrSets() {
 
 function _addSet() {
   const container=document.getElementById('cubeSetContainer');
-  const idx=container.children.length+1;
-  const set=document.createElement('div');
-  set.className='cube-set';
-  set.innerHTML=`
-    <div class="cube-set__head">
-      <span class="cube-set__title">세트 ${idx}</span>
-      <button class="cube-set__del" title="삭제">✕</button>
-    </div>
-    <div class="cube-set__rows"></div>`;
+  const set=_makeSet('cube-set', `세트 ${container.children.length+1}`);
   set.querySelector('.cube-set__del').addEventListener('click',()=>{
     set.remove(); _renumberSets();
   });
-  const rowsEl=set.querySelector('.cube-set__rows');
-  for(let i=0;i<3;i++) rowsEl.appendChild(_makeRow());
   container.appendChild(set);
   _refreshAllRows();
 }
@@ -325,14 +304,62 @@ function _hrMaybeAutoGrade(cat, type) {
 }
 
 // ── 등급 드롭다운 ────────────────────────────
-function _populateGrade() {
-  const sel=document.getElementById('cubeGrade'); if(!sel) return;
+/* 옵션 시뮬레이터(cubeGrade)는 레전드리부터, 직접 큐브 까기 시작 등급(hrGrade)은 레어부터 적는다.
+   직접 큐브 까기도 레전드리를 고를 수 있다 — 등급업은 없지만 옵션 재설정은 계속 돌리기 때문. */
+function _fillGradeSel(id, desc) {
+  const sel=document.getElementById(id); if(!sel) return;
   const t=window.CUBE_TABLE; if(!t) return;
   const dk=_dataKey();
   const grades=_GRADE_ORDER.filter(g=>t.optionGrade[dk]?.[g]);
   const prev=sel.value;
-  sel.innerHTML=grades.slice().reverse().map(g=>`<option value="${g}">${_GRADE_KR[g]}</option>`).join('');
+  sel.innerHTML=(desc?grades.slice().reverse():grades).map(g=>`<option value="${g}">${_GRADE_KR[g]}</option>`).join('');
   if(grades.includes(prev)) sel.value=prev;
+}
+function _populateGrades() {
+  _fillGradeSel('cubeGrade', true);
+  _fillGradeSel('hrGrade', false);
+}
+
+// ── 목표 판정 ────────────────────────────────
+/* 옵션 시뮬레이터와 직접 큐브 까기가 같은 판정을 쓴다.
+   목표 세트들을 읽어 [{uniques, byCat}, ...] 로 정리한다. 비어 있는 세트는 뺀다.
+   같은 카테고리를 여러 줄 지정하면(예: STR% 12/9/9) 그 줄 수만큼 서로 다른
+   라인에서 각각 떠야 통과. 한 줄만 지정하면 세 줄 합산으로 판정한다.
+   그래야 "공격력 33"(합쳐서 33 이상)과 "공격력 3줄"(각각 한 줄씩)을 같은 칸으로 쓸 수 있다. */
+function _readGoalSets(setSel) {
+  const out = [];
+  document.querySelectorAll(setSel).forEach(set => {
+    const uniques = [], byCat = {};
+    set.querySelectorAll('.cube-goal-row').forEach(row => {
+      const catSel = row.querySelector('.cube-opt-cat');
+      const sel = catSel.selectedOptions[0];
+      if (!sel || !catSel.value || sel.dataset.type === 'none') return;  // 빈 값 줄은 목표에서 제외
+      if (sel.dataset.type === 'unique') { uniques.push(catSel.value); return; }
+      const v = parseFloat(row.querySelector('.cube-opt-inp').value);
+      if (!isNaN(v) && v > 0) (byCat[catSel.value] = byCat[catSel.value] || []).push(v);
+    });
+    // 큰 목표부터 큰 값에 맞춰야 그리디 매칭이 옳게 된다
+    Object.values(byCat).forEach(a => a.sort((x, y) => y - x));
+    if (uniques.length || Object.keys(byCat).length) out.push({ uniques, byCat: Object.entries(byCat) });
+  });
+  return out;
+}
+
+/* 세 줄 옵션 이름이 세트 g를 만족하는지. contrib(name) → {카테고리: 값} */
+function _setMet(g, names, contrib) {
+  for (const u of g.uniques) if (!names.includes(u)) return false;
+  for (const [cat, targets] of g.byCat) {
+    if (targets.length === 1) {
+      let total = 0;
+      for (const n of names) total += contrib(n)[cat] || 0;
+      if (total < targets[0]) return false;
+    } else {
+      const vals = names.map(n => contrib(n)[cat] || 0).sort((a, b) => b - a);
+      if (targets.length > vals.length) return false;
+      for (let i = 0; i < targets.length; i++) if (vals[i] < targets[i]) return false;
+    }
+  }
+  return true;
 }
 
 // ── 확률 계산 (열거법) ───────────────────────
@@ -343,8 +370,7 @@ function _computeAllSets() {
   const dk=_dataKey(), part=_cubePart(), lv=_cubeLv(), grade=_cubeGrade();
   const t=window.CUBE_TABLE; if(!t) return 0;
   const og=t.optionGrade[dk]?.[grade]; if(!og) return 0;
-  const gi=_GRADE_ORDER.indexOf(grade);
-  const lower=gi>0?_GRADE_ORDER[gi-1]:null;
+  const lower=_lowerGrade(grade);
 
   const curOpts=_rawOpts(dk,part,lv,grade);
   const lowOpts=lower?_rawOpts(dk,part,lv,lower):[];
@@ -360,59 +386,12 @@ function _computeAllSets() {
     return allNames.map(name=>cp*(curMap[name]||0)+lp*(lowMap[name]||0));
   });
 
-  // UI에서 세트 파싱
-  const sets=[];
-  document.querySelectorAll('.cube-set').forEach(setEl=>{
-    const goals=[];
-    setEl.querySelectorAll('.cube-goal-row').forEach(row=>{
-      const catSel=row.querySelector('.cube-opt-cat');
-      const inp   =row.querySelector('.cube-opt-inp');
-      const sel   =catSel.selectedOptions[0];
-      if(!sel) return;
-      const type=sel.dataset.type||'';
-      if(type==='none' || !catSel.value) return;  // 빈 값 줄은 목표에서 제외
-      if(type==='unique') {
-        goals.push({isUnique:true, kmsName:catSel.value});
-      } else {
-        const target=parseFloat(inp.value);
-        if(!isNaN(target)&&target>0) goals.push({isUnique:false, cat:catSel.value, target});
-      }
-    });
-    if(goals.length) sets.push(goals);
-  });
-  if(!sets.length) return 0;
+  const preparedSets=_readGoalSets('.cube-set');
+  if(!preparedSets.length) return 0;
 
   // 옵션명 → 기여값 캐시 (아래 3중 루프 안에서 매번 파싱하지 않도록)
   const contribCache=Object.fromEntries(allNames.map(nm=>[nm,_statContrib(nm)]));
-
-  // 세트를 미리 가공: unique 목록 + 카테고리별 목표치 배열
-  // 같은 카테고리를 여러 줄 지정하면(예: STR% 12/9/9) 그 줄 수만큼 서로 다른
-  // 라인에서 각각 떠야 통과. 한 줄만 지정하면 기존처럼 합산으로 판정한다.
-  const preparedSets=sets.map(set=>{
-    const uniques=set.filter(g=>g.isUnique).map(g=>g.kmsName);
-    const byCat={};
-    set.filter(g=>!g.isUnique).forEach(g=>{ (byCat[g.cat]=byCat[g.cat]||[]).push(g.target); });
-    // 큰 목표부터 큰 라인에 배정해야 그리디 매칭이 최적이 된다
-    Object.values(byCat).forEach(arr=>arr.sort((a,b)=>b-a));
-    return { uniques, byCat:Object.entries(byCat) };
-  });
-
-  // 세트 만족 체크
-  function checkSet(ps, opts) {
-    for(const u of ps.uniques) if(!opts.includes(u)) return false;
-    for(const [cat,targets] of ps.byCat) {
-      if(targets.length===1) {
-        let total=0;
-        for(const o of opts) total+=contribCache[o][cat]||0;
-        if(total<targets[0]) return false;
-      } else {
-        const vals=opts.map(o=>contribCache[o][cat]||0).sort((a,b)=>b-a);
-        if(targets.length>vals.length) return false;
-        for(let i=0;i<targets.length;i++) if(vals[i]<targets[i]) return false;
-      }
-    }
-    return true;
-  }
+  const contrib=nm=>contribCache[nm];
 
   const n=allNames.length;
   let totalP=0;
@@ -424,7 +403,7 @@ function _computeAllSets() {
       for(let k=0;k<n;k++){
         const p3=lineProbs[2][k]; if(!p3) continue;
         const combo=[allNames[i],allNames[j],allNames[k]];
-        if(preparedSets.some(ps=>checkSet(ps,combo))){
+        if(preparedSets.some(ps=>_setMet(ps,combo,contrib))){
           const cp=p1*p2*p3;
           totalP+=cp;
           combos.push({lines:combo, p:cp});
@@ -445,6 +424,11 @@ function _shortName(name) {
   if(p.type==='pct')    return `${p.base} : +${p.valNum+adj}%`;
   if(p.type==='flat')   return `${p.base} : +${p.valNum+adj}`;
   if(p.type==='colon')  return `${p.cat} ${p.valShort}`;
+  return _uniqueLabel(name);
+}
+
+// "<쓸만한 블레스> 스킬 사용 가능" → "쓸만한 블레스 스킬"
+function _uniqueLabel(name) {
   return name.replace(/<([^>]+)>/g,'$1').replace('스킬 사용 가능','스킬').trim();
 }
 
@@ -457,7 +441,7 @@ function _renderResult(totalP, combos) {
   const statsHtml=`
     <div class="sf-res-item"><span class="sf-res-label">1회 시행 목표 달성 확률</span><span class="sf-res-val big">${(totalP*100).toFixed(7)}%</span></div>
     <div class="sf-res-item"><span class="sf-res-label">평균 큐브 수</span><span class="sf-res-val">${Math.ceil(ec).toLocaleString()} 회</span></div>
-    ${meso!=null?`<div class="sf-res-item"><span class="sf-res-label">평균 메소</span><span class="sf-res-val">${fmtMeso(Math.round(ec*meso))}</span></div>`:''}
+    <div class="sf-res-item"><span class="sf-res-label">평균 메소</span><span class="sf-res-val">${fmtMeso(Math.round(ec*meso))}</span></div>
     <div class="sf-res-item"><span class="sf-res-label">10% 확률 이내</span><span class="sf-res-val">${Math.ceil(ec*0.105).toLocaleString()} 회</span></div>
     <div class="sf-res-item"><span class="sf-res-label">90% 확률 이내</span><span class="sf-res-val" style="color:var(--danger)">${Math.ceil(ec*2.303).toLocaleString()} 회</span></div>`;
 
@@ -514,8 +498,7 @@ function _hrRollLines(grade) {
   const t = window.CUBE_TABLE; if (!t) return [];
   const og = t.optionGrade[dk]?.[grade]; if (!og) return [];
 
-  const gi = _GRADE_ORDER.indexOf(grade);
-  const lower = gi > 0 ? _GRADE_ORDER[gi - 1] : null;
+  const lower = _lowerGrade(grade);
   const pools = {
     [grade]: _rawOpts(dk, part, lv, grade),
     ...(lower ? { [lower]: _rawOpts(dk, part, lv, lower) } : {}),
@@ -548,11 +531,6 @@ function _hrRollLines(grade) {
   return lines;
 }
 
-/* ── 목표 옵션 ──
-   판정 규칙은 옵션 시뮬레이터(_computeAllSets)와 똑같이 맞춘다.
-   같은 항목을 한 줄만 적으면 세 줄 합산, 여러 줄에 적으면 그 줄 수만큼 따로 떠야 한다.
-   그래야 "공격력 33"(합쳐서 33 이상)과 "공격력 3줄"(각각 한 줄씩)을 같은 칸으로 쓸 수 있다. */
-
 /* 해당 카테고리가 특정 등급에서 가질 수 있는 실제 최댓값(GMS 보정 포함).
    레벨에 따라 표가 구간별로 다르고(160제부터 +1) 160제 미만엔 못 미치므로,
    프리셋 숫자를 고정해두지 않고 지금 부위·레벨 기준으로 그때그때 계산한다. */
@@ -577,11 +555,19 @@ function _hrLineGrade(ln, grade) {
   const og = t.optionGrade[dk]?.[grade];
   const info = og?.find(o => o.line === ln);
   if (!info) return grade;
-  const gi = _GRADE_ORDER.indexOf(grade);
-  const lower = gi > 0 ? _GRADE_ORDER[gi - 1] : null;
+  const lower = _lowerGrade(grade);
   const cp = info.currentGradeProb ?? 1;
   const lp = lower ? (info.lowerGradeProb ?? 0) : 0;
   return (lower && lp > cp) ? lower : grade;
+}
+
+/* ln번째 줄 목표 수치 = 그 줄이 실제로 뽑히는 등급 기준 최댓값.
+   이탈한 등급에 그 옵션 자체가 없는 경우가 있다(예: 크리티컬 데미지%는
+   레전드리 전용이라 유니크엔 없음) — 그럴 땐 이탈해도 뜰 수가 없으니
+   시작 등급 값으로 되돌아간다. 그래야 "이 줄은 목표에서 제외"로
+   잘못 비워지지 않는다. */
+function _hrLineMax(cat, ln, grade) {
+  return _hrMaxStatValue(cat, _hrLineGrade(ln, grade)) ?? _hrMaxStatValue(cat, grade);
 }
 
 /* 시작 등급을 바꿔도 목표 칸의 카테고리 선택은 그대로 남아있는데(등급과 무관하게
@@ -595,8 +581,7 @@ function _hrRecomputeGoalValues() {
       const cat = row.querySelector('.cube-opt-cat');
       const inp = row.querySelector('.cube-opt-inp');
       if (!cat?.value || cat.selectedOptions[0]?.dataset.type === 'unique') return;
-      const g = _hrLineGrade(i + 1, grade);
-      const v = _hrMaxStatValue(cat.value, g) ?? _hrMaxStatValue(cat.value, grade);
+      const v = _hrLineMax(cat.value, i + 1, grade);
       if (v != null) inp.value = v;
     });
   });
@@ -644,15 +629,7 @@ function _hrApplyPreset(preset) {
   // (1번째 줄은 시작 등급 그대로, 2·3번째 줄은 이탈이 더 흔해 대개 한 단계 아래 최댓값)
   const startGrade = _hrGrade();
   const rows = preset.perLineMax
-    ? Array.from({ length: preset.lines }, (_, i) => {
-        const g = _hrLineGrade(i + 1, startGrade);
-        // 이탈한 등급에 그 옵션 자체가 없는 경우가 있다(예: 크리티컬 데미지%는
-        // 레전드리 전용이라 유니크엔 없음) — 그럴 땐 이탈해도 뜰 수가 없으니
-        // 시작 등급 값으로 되돌아간다. 그래야 "이 줄은 목표에서 제외"로
-        // 잘못 비워지지 않는다.
-        const v = _hrMaxStatValue(preset.cat, g) ?? _hrMaxStatValue(preset.cat, startGrade);
-        return [preset.cat, v];
-      })
+    ? Array.from({ length: preset.lines }, (_, i) => [preset.cat, _hrLineMax(preset.cat, i + 1, startGrade)])
     : preset.rows;
 
   const rowEls = [...(_hrActiveSet()?.querySelectorAll('.cube-goal-row') || [])];
@@ -669,50 +646,14 @@ function _hrApplyPreset(preset) {
   });
 }
 
-/* 목표 세트들을 읽어 [{uniques, byCat}, ...] 로 정리한다(_computeAllSets의 preparedSets와 동일).
-   비어 있는 세트는 뺀다. */
 function _hrGetGoals() {
-  const out = [];
-  document.querySelectorAll('#hrGoalRows .hr-set').forEach(set => {
-    const uniques = [], byCat = {};
-    set.querySelectorAll('.cube-goal-row').forEach(row => {
-      const catSel = row.querySelector('.cube-opt-cat');
-      const sel = catSel.selectedOptions[0];
-      if (!sel || !catSel.value || sel.dataset.type === 'none') return;
-      if (sel.dataset.type === 'unique') { uniques.push(catSel.value); return; }
-      const v = parseFloat(row.querySelector('.cube-opt-inp').value);
-      if (!isNaN(v) && v > 0) (byCat[catSel.value] = byCat[catSel.value] || []).push(v);
-    });
-    // 큰 목표부터 큰 값에 맞춰야 그리디 매칭이 옳게 된다
-    Object.values(byCat).forEach(a => a.sort((x, y) => y - x));
-    if (uniques.length || Object.keys(byCat).length) out.push({ uniques, byCat: Object.entries(byCat) });
-  });
-  return out;
-}
-
-function _hrHasGoals() {
-  return _hrGetGoals().length > 0;
-}
-
-function _hrSetMet(g, lines) {
-  const names = lines.map(l => l.name);
-  for (const u of g.uniques) if (!names.includes(u)) return false;
-  for (const [cat, targets] of g.byCat) {
-    const vals = names.map(n => _statContrib(n)[cat] || 0);
-    if (targets.length === 1) {
-      if (vals.reduce((a, b) => a + b, 0) < targets[0]) return false;
-    } else {
-      const sorted = vals.slice().sort((a, b) => b - a);
-      if (targets.length > sorted.length) return false;
-      for (let i = 0; i < targets.length; i++) if (sorted[i] < targets[i]) return false;
-    }
-  }
-  return true;
+  return _readGoalSets('#hrGoalRows .hr-set');
 }
 
 /* 지금 뜬 세 줄이 세트 중 하나라도 만족하는지 */
 function _hrGoalsMet(lines) {
-  return _hrGetGoals().some(g => _hrSetMet(g, lines));
+  const names = lines.map(l => l.name);
+  return _hrGetGoals().some(g => _setMet(g, names, _statContrib));
 }
 
 /* silent=true면 화면을 갱신하지 않는다 — 자동 돌리기에서 매 회 다시 그리면 느려서,
@@ -744,40 +685,27 @@ function _hrRoll(silent) {
    한 번에 다 돌리면 화면이 멈추므로 묶음으로 나눠 돌리고, 묶음 사이에 브라우저가
    숨 쉴 틈을 준다(중지 버튼도 그래야 눌린다). 목표를 못 만나도 무한정 돌지 않게
    상한을 둔다 — 확률이 아주 낮은 목표를 걸어두면 영영 안 끝나기 때문. */
-let _hrAutoTimer = null;
 const HR_AUTO_BATCH = 300;
 const HR_AUTO_MAX   = 300000;
 let _hrAutoDone = 0;
 
-function _hrStopAuto(msg) {
-  if (_hrAutoTimer) { clearInterval(_hrAutoTimer); _hrAutoTimer = null; }
-  const btn = document.getElementById('hrAutoBtn');
-  if (btn) { btn.textContent = '목표까지 자동 [A]'; btn.classList.remove('sbtn--danger'); }
-  _hrRender();
-  if (msg) alert(msg);
-}
-
-function _hrStartAuto() {
-  if (_hrAutoTimer) { _hrStopAuto(); return; }
-  if (!_hrHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
-
-  const btn = document.getElementById('hrAutoBtn');
-  if (btn) { btn.textContent = '■ 중지 [A]'; btn.classList.add('sbtn--danger'); }
-  _hrAutoDone = 0;
-
-  _hrAutoTimer = setInterval(() => {
-    for (let i = 0; i < HR_AUTO_BATCH; i++) {
-      const lines = _hrRoll(true);
-      _hrAutoDone++;
-      if (_hrGoalsMet(lines)) { _hrStopAuto(); return; }
-      if (_hrAutoDone >= HR_AUTO_MAX) {
-        _hrStopAuto(`${HR_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`);
-        return;
-      }
-    }
-    _hrRender();   // 묶음이 끝날 때만 그린다
-  }, 0);
-}
+const _hrAuto = createAutoRunner({
+  btnId: 'hrAutoBtn', idleLabel: '목표까지 자동 [A]', runLabel: '■ 중지 [A]', runClass: 'sbtn--danger',
+  batch: HR_AUTO_BATCH,
+  canStart: () => {
+    if (!_hrGetGoals().length) { alert('목표 옵션을 먼저 정해주세요.'); return false; }
+  },
+  onStart: () => { _hrAutoDone = 0; },
+  tick: () => {
+    const lines = _hrRoll(true);
+    _hrAutoDone++;
+    if (_hrGoalsMet(lines)) return 'done';
+    if (_hrAutoDone >= HR_AUTO_MAX) return 'max';
+  },
+  maxMsg: () => `${HR_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`,
+  render: _hrRender,
+});
+function _hrStopAuto() { _hrAuto.stop(); }
 
 /* 등급 아이콘 파일. 등급 색은 CSS의 data-grade가 맡는다 */
 const _GRADE_ICON  = { RARE:'rare', EPIC:'epic', UNIQUE:'unique', LEGENDARY:'legendary' };
@@ -819,17 +747,6 @@ function _hrReset() {
   _hrRender();
 }
 
-/* 레전드리도 고를 수 있다 — 등급업은 없지만 옵션 재설정은 계속 돌리기 때문. */
-function _hrPopulateGrade() {
-  const sel = document.getElementById('hrGrade'); if (!sel) return;
-  const t = window.CUBE_TABLE; if (!t) return;
-  const dk = _dataKey();
-  const grades = _GRADE_ORDER.filter(g => t.optionGrade[dk]?.[g]);
-  const prev = sel.value;
-  sel.innerHTML = grades.map(g => `<option value="${g}">${_GRADE_KR[g]}</option>`).join('');
-  if (grades.includes(prev)) sel.value = prev;
-}
-
 // ── 초기화 ──────────────────────────────────
 async function initCube() {
   const partSel=document.getElementById('cubePart');
@@ -837,9 +754,9 @@ async function initCube() {
   // 화면에 보이는 글자만 괄호 없는 표기로 바꾼다.
   if(partSel) partSel.innerHTML=CUBE_PARTS.map(p=>`<option value="${p}">${_partLabel(p)}</option>`).join('');
 
-  document.querySelectorAll('.cube-type-btn').forEach(btn=>btn.addEventListener('click',()=>{
-    document.querySelectorAll('.cube-type-btn').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active'); _populateGrade(); _hrPopulateGrade(); _refreshAllRows();
+  const typeBtns=document.querySelectorAll('.cube-type-btn');
+  typeBtns.forEach(btn=>btn.addEventListener('click',()=>{
+    setActive(typeBtns, btn); _populateGrades(); _refreshAllRows();
   }));
 
   ['cubePart','cubeGrade'].forEach(id=>document.getElementById(id)?.addEventListener('change',_refreshAllRows));
@@ -853,46 +770,34 @@ async function initCube() {
   });
   document.getElementById('cubeAddSetBtn')?.addEventListener('click',_addSet);
 
-  _populateGrade();
-  _hrPopulateGrade();
+  _populateGrades();
   _addSet(); // 기본 세트 1개
 
-  // 직접 큐브 까기 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_refreshAllRows가 채워준다)
-  const goalBox = document.getElementById('hrGoalRows');
-  if (goalBox) _addHrSet();
+  // 직접 큐브 까기 — 목표 칸 3줄과 프리셋 버튼을 만들어둔다(_addHrSet 안의 _refreshAllRows가 채워준다)
+  if (document.getElementById('hrGoalRows')) _addHrSet();
   document.getElementById('hrAddSetBtn')?.addEventListener('click',_addHrSet);
   _hrBuildPresets();
-  _refreshAllRows();
 
   // 시작 등급을 바꾸면 진행 상황을 초기화하고, 목표 수치를 그 등급의 최댓값으로 다시 맞춘다
   document.getElementById('hrGrade')?.addEventListener('change',()=>{ _hrStopAuto(); _hrReset(); _refreshAllRows(); _hrRecomputeGoalValues(); });
   document.getElementById('hrRollBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrRoll(); });
-  document.getElementById('hrAutoBtn')?.addEventListener('click',_hrStartAuto);
+  document.getElementById('hrAutoBtn')?.addEventListener('click',_hrAuto.start);
   document.getElementById('hrResetBtn')?.addEventListener('click',()=>{ _hrStopAuto(); _hrReset(); });
   _hrReset();
 
-  /* S=까기, R=초기화, A=자동. 큐브 탭의 직접 큐브 까기가 열려 있을 때만
-     동작하고, 입력칸/셀렉트에 포커스가 있으면(값을 고치는 중이면) 가로채지
-     않는다. 기본 동작(스크롤·버튼 재클릭)도 막는다. */
-  document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    const sec = document.getElementById('sec-cube');
-    if (!sec?.classList.contains('active')) return;
-    if (document.getElementById('cubeTabHandroll')?.style.display === 'none') return;
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;  // 모달 떠 있으면 무시
-    e.preventDefault();
-    if (e.code === 'KeyS') { _hrStopAuto(); _hrRoll(); }
-    else if (e.code === 'KeyR') { document.getElementById('hrResetBtn')?.click(); }
-    else if (e.code === 'KeyA') { document.getElementById('hrAutoBtn')?.click(); }
+  /* S=까기, R=초기화, A=자동. 큐브 탭의 직접 큐브 까기가 열려 있을 때만 */
+  bindSimKeys('sec-cube', key => {
+    if (document.getElementById('cubeTabHandroll')?.style.display === 'none') return false;
+    if (key === 's') { _hrStopAuto(); _hrRoll(); }
+    else if (key === 'r') document.getElementById('hrResetBtn')?.click();
+    else document.getElementById('hrAutoBtn')?.click();
   });
 
   // 탭 전환
-  document.querySelectorAll('#sec-cube .sf-tab').forEach(tab=>{
+  const tabs=document.querySelectorAll('#sec-cube .sf-tab');
+  tabs.forEach(tab=>{
     tab.addEventListener('click',()=>{
-      document.querySelectorAll('#sec-cube .sf-tab').forEach(t=>t.classList.remove('active'));
-      tab.classList.add('active');
+      setActive(tabs, tab);
       const isSim = tab.dataset.cubetab === 'sim';
       document.getElementById('cubeTabSim').style.display            = isSim ? '' : 'none';
       document.getElementById('cubeTabHandroll').style.display       = isSim ? 'none' : '';

@@ -6,23 +6,15 @@
       넥슨 공개 API가 해당 타입에 대해 ranks를 항상 빈 배열로 반환하고
       (totalCount만 채워짐) 프론트에서도 그 값을 쓰지 않아 전량 제거했다.
    ============================================= */
-const { histKey, todayStr, getRedis, pushSnapshot, lookupCharacter } = require('./_lib');
+const { histKey, getRedis, pushSnapshot, lookupCharacter, snapshotOf, bad, hasSecret } = require('./_lib');
 
 module.exports = async function handler(req, res) {
+  // Vercel Cron은 Authorization 헤더로만 보낸다
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers['authorization'] || '';
-    if (auth !== `Bearer ${secret}`) {
-      res.status(401).json({ ok: false, error: 'unauthorized' });
-      return;
-    }
-  }
+  if (secret && !hasSecret(req, secret)) return bad(res, 401, 'unauthorized');
 
   const redis = getRedis();
-  if (!redis) {
-    res.status(500).json({ ok: false, error: 'Redis 미설정' });
-    return;
-  }
+  if (!redis) return bad(res, 500, 'Redis 미설정');
 
   // ── 추적 캐릭터 스냅샷 ──
   let tracked = [];
@@ -41,11 +33,7 @@ module.exports = async function handler(req, res) {
     try {
       const info = await lookupCharacter(name, reboot, region);
       if (info) {
-        await pushSnapshot(redis, histKey(info.name, region, reboot), {
-          date: todayStr(), ts: Date.now(), level: info.level,
-          exp: Number(info.exp) || 0, img: info.img || '', job: info.job || '',
-          rank: info.rank || 0, world: info.world || '',
-        });
+        await pushSnapshot(redis, histKey(info.name, region, reboot), snapshotOf(info));
         ok++;
       } else {
         fail++;

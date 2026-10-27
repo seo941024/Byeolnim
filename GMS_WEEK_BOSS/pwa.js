@@ -80,7 +80,7 @@ function pwaOpenInChrome() {
 
 /* 설치 배너와 알림 배너를 함께 담는 통(#topBanners, index.html에서 header 바로
    아래·.app 바깥에 이미 있다 — 사이드바까지 포함한 전체 폭을 쓰기 위해서다).
-   이 통 하나만 sticky로 헤더 밑에 붙여서(style.css 참고), 안의 배너들은 그냥
+   이 통 하나만 fixed로 헤더 밑에 붙여서(style.css 참고), 안의 배너들은 그냥
    순서대로 쌓이게 한다 — 그래야 배너 두 개가 동시에 떠도 서로 안 겹친다. */
 function pwaEnsureTopBanners() {
   return document.getElementById('topBanners') || document.body;
@@ -97,15 +97,11 @@ function pwaEnsureBanner() {
   return el;
 }
 
+/* 닫기 — 지금 화면에서만 치운다. 다음에 들어오면 다시 뜬다.
+   한 번 닫았다고 영영 숨기면 나중에 설치하고 싶어졌을 때 방법이 없어진다. */
 function pwaHide() {
   const el = document.getElementById('pwaInstall');
   if (el) el.classList.remove('open');
-}
-
-/* 닫기 — 지금 화면에서만 치운다. 다음에 들어오면 다시 뜬다.
-   한 번 닫았다고 영영 숨기면 나중에 설치하고 싶어졌을 때 방법이 없어진다. */
-function pwaDismiss() {
-  pwaHide();
 }
 
 /* 일주일간 보지 않기 — 이걸 눌렀을 때만 기간을 두고 숨긴다 */
@@ -177,20 +173,10 @@ function pwaShowBanner(mode, force) {
   el.classList.remove('opening'); void el.offsetWidth; el.classList.add('opening');
   el.addEventListener('animationend', () => el.classList.remove('opening'), { once: true });
 
-  const close = document.getElementById('pwaClose');
-  if (close) close.addEventListener('click', pwaDismiss);
+  [['pwaClose', pwaHide], ['pwaSnooze', pwaSnooze], ['pwaChrome', pwaOpenInChrome], ['pwaSafari', pwaOpenInSafari]]
+    .forEach(([id, fn]) => document.getElementById(id)?.addEventListener('click', fn));
 
-  const snooze = document.getElementById('pwaSnooze');
-  if (snooze) snooze.addEventListener('click', pwaSnooze);
-
-  const chrome = document.getElementById('pwaChrome');
-  if (chrome) chrome.addEventListener('click', pwaOpenInChrome);
-
-  const safari = document.getElementById('pwaSafari');
-  if (safari) safari.addEventListener('click', pwaOpenInSafari);
-
-  const go = document.getElementById('pwaGo');
-  if (go) go.addEventListener('click', async () => {
+  document.getElementById('pwaGo')?.addEventListener('click', async () => {
     // 설치 이벤트를 이미 써버렸거나 못 받은 경우. 아무 반응이 없으면 사용자가
     // 뭘 잘못했나 싶으므로, 브라우저 메뉴로 설치하는 방법을 대신 안내한다.
     if (!pwaDeferredPrompt) return pwaShowBanner('unsupported', true);
@@ -228,24 +214,25 @@ window.addEventListener('appinstalled', () => {
   pwaHide();
 });
 
+/* 지금 환경에 맞는 안내 종류 */
+function pwaMode() {
+  if (pwaDeferredPrompt) return 'android';
+  if (pwaIsInAppBrowser()) return pwaIsAndroid() ? 'android-inapp' : 'ios-inapp';
+  return pwaIsIOS() ? 'ios' : 'unsupported';
+}
+
 /* 어떤 안내를 띄울지 스스로 판단한다.
    beforeinstallprompt를 주는 환경(크롬/엣지)은 그 이벤트가 오면 위에서 처리하고,
    여기서는 "이벤트가 영영 오지 않는 환경"만 챙긴다:
      - 아이폰            : 이벤트 자체가 없는 브라우저
      - 앱내 브라우저     : WebView라 설치 불가 → 진짜 브라우저로 열라고 안내
      - 그 외 미지원      : 브라우저 메뉴로 직접 추가하도록 안내
-   페이지가 뜨자마자 가리면 거슬려서 잠깐 뒤에 올린다. */
+   페이지가 뜨자마자 가리면 거슬려서 잠깐 뒤에 올린다. 크롬이면 그사이
+   beforeinstallprompt가 올 수 있고, 그래도 없으면 수동 안내를 띄운다. */
 function pwaDecideBanner() {
   if (pwaIsInstalled()) return;
   if (pwaDeferredPrompt) return;            // 설치 버튼을 줄 수 있는 환경 — 이미 배너가 떠 있다
-
-  if (pwaIsInAppBrowser()) {
-    pwaShowBanner(pwaIsAndroid() ? 'android-inapp' : 'ios-inapp');
-    return;
-  }
-  if (pwaIsIOS()) { pwaShowBanner('ios'); return; }
-  // 크롬이면 곧 beforeinstallprompt가 올 수 있으니 조금 더 기다렸다가 그래도 없으면 수동 안내
-  pwaShowBanner('unsupported');
+  pwaShowBanner(pwaMode());
 }
 
 window.addEventListener('load', () => {
@@ -260,8 +247,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('overlaySettings')?.classList.remove('open');
     // pwaShowBanner는 설치 기록이 있으면 조용히 돌아가므로, 같은 기준으로 먼저 알려준다
     if (pwaAlreadyInstalled()) { alert('이미 홈 화면에 설치되어 있어요.'); return; }
-    if (pwaDeferredPrompt) { pwaShowBanner('android', true); return; }
-    if (pwaIsInAppBrowser()) { pwaShowBanner(pwaIsAndroid() ? 'android-inapp' : 'ios-inapp', true); return; }
-    pwaShowBanner(pwaIsIOS() ? 'ios' : 'unsupported', true);
+    pwaShowBanner(pwaMode(), true);
   });
 });

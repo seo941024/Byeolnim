@@ -6,23 +6,20 @@
 function sfBuildStageGrid() {
   const grid = document.getElementById('sfStageGrid');
   if (!grid) return;
-  const shining = _sfGetEvent() === 'shining';
+  const cfg = _sfReadCfg();
 
   const rows = [];
   for (let s = 15; s <= 21; s++) {
     const curStage = _sfStages[s] || 1;
-    const maxStage = 4;
 
     const opts = [];
-    for (let st = 1; st <= maxStage; st++) {
+    for (let st = 1; st <= 4; st++) {
       const isProt = s <= 17 && st === 4;
       const label  = isProt ? '파괴방지' : `${st}단계`;
       opts.push(`<option value="${st}" ${curStage===st?'selected':''}>${label}</option>`);
     }
 
-    const p = (s <= 17 && curStage === 4)
-      ? getSfProb(s, shining, true, 1)
-      : getSfProb(s, shining, false, curStage);
+    const { p } = sfStepInfo(cfg, s);
 
     const succPct = (p.succ * 100).toFixed(2);
     const failPct = (p.fail * 100).toFixed(2);
@@ -54,7 +51,6 @@ function sfBuildStageGrid() {
 /* 상태 */
 let _sfState = { star: 0, cost: 0, attempts: 0, destroys: 0, log: [] };
 let _sfStages = { 15:1, 16:1, 17:1, 18:1, 19:1, 20:1, 21:1 };
-let _sfAutoTimer = null;
 
 function _sfGetEvent()    { return document.querySelector('#sfEventGroup .sf-toggle.active')?.dataset.val || 'none'; }
 function _sfGetMvp()      { return parseFloat(document.querySelector('#sfMvpGroup .sf-toggle.active')?.dataset.val || '0'); }
@@ -100,13 +96,13 @@ function _sfClampInputs() {
   if (_sfState.star > cap) _sfState.star = cap;
 }
 
-function _sfGetCfg() {
-  const star = _sfState.star;
-  const btn  = _sfStages[star] || 1;
-  const isShining   = _sfGetEvent() === 'shining';
-  const isProtected = (star >= 15 && star <= 17) && btn === 4;
-  const stage       = isProtected ? 1 : btn;
-  return { level: _sfGetLevel(), mvpDiscount: _sfGetMvp(), isShining, isProtected, stage };
+/* 지금 화면 설정. stages는 복사본이라 그 뒤에 단계를 바꿔도 이 cfg는 그대로다 */
+function _sfReadCfg() {
+  return {
+    level: _sfGetLevel(), current: _sfGetFrom(), target: _sfGetTo(),
+    mvpDiscount: _sfGetMvp(), isShining: _sfGetEvent() === 'shining',
+    stages: { ..._sfStages }
+  };
 }
 
 /* forAuto=true 면 목표 성수에서 멈춘다(자동 강화용). 직접 누를 때는 목표를 보지 않고
@@ -114,15 +110,13 @@ function _sfGetCfg() {
    값이지, 손으로 더 못 올리게 막는 값이 아니다. */
 function sfEnhanceOnce(forAuto) {
   const limit = forAuto ? _sfGetTo() : sfMaxStar(_sfGetLevel());
-  if (_sfState.star >= limit) { if (forAuto) sfStopAuto(); return false; }
+  if (_sfState.star >= limit) return false;
 
   const star = _sfState.star;
-  const cfg  = _sfGetCfg();
-  const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount, cfg.isShining, cfg.isProtected, cfg.stage, 0);
+  const { cost, p } = sfStepInfo(_sfReadCfg(), star);
   _sfState.cost += cost;
   _sfState.attempts++;
 
-  const p = getSfProb(star, cfg.isShining, cfg.isProtected, cfg.stage);
   const r = Math.random();
 
   let result, nextStar;
@@ -171,7 +165,7 @@ function sfRenderResult() {
     <div class="sf-res-item"><span class="sf-res-label">파괴 횟수</span><span class="sf-res-val" style="color:${_sfState.destroys>0?'var(--danger)':'var(--text)'}">${_sfState.destroys} 회</span></div>
     ${done ? '<div class="sf-res-item" style="color:var(--success);font-weight:700;text-align:center;padding:10px 0">목표 달성!</div>' : ''}`;
 
-  const logHtml = _sfState.log.slice(0, 100).map(l => {
+  const logHtml = _sfState.log.map(l => {
     const cls  = l.type === 'success' ? 'log-success' : l.type === 'destroy' ? 'log-destroy' : 'log-fail';
     const icon = l.type === 'success' ? '✦' : l.type === 'destroy' ? '💥' : '✕';
     const desc = l.type === 'success' ? `${l.from}★ → ${l.to}★ 성공` : l.type === 'destroy' ? `${l.from}★ 파괴 → ${l.to}★` : `${l.from}★ 실패`;
@@ -220,9 +214,7 @@ function sfRenderStarPanel(to, done) {
     return;
   }
   const doneRow = done ? '<div class="sfstar-rates__row sfstar-rates__row--done">목표 달성!</div>' : '';
-  const cfg = _sfGetCfg();
-  const p   = getSfProb(star, cfg.isShining, cfg.isProtected, cfg.stage);
-  const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount, cfg.isShining, cfg.isProtected, cfg.stage, 0);
+  const { cost, p } = sfStepInfo(_sfReadCfg(), star);
   const pct = v => (v * 100).toFixed(2) + '%';
   rates.innerHTML = `
     ${doneRow}
@@ -232,10 +224,18 @@ function sfRenderStarPanel(to, done) {
     <div class="sfstar-rates__row"><span>사용 재화</span><span>${fmtMeso(cost)}</span></div>`;
 }
 
-function sfStopAuto() {
-  if (_sfAutoTimer) { clearInterval(_sfAutoTimer); _sfAutoTimer = null; }
-  const btn = document.getElementById('sfBtnAuto');
-  if (btn) { btn.textContent = '자동 강화 [A]'; btn.classList.remove('sbtn--danger'); btn.classList.add('sbtn--primary'); }
+/* 자동 강화 — 80ms마다 한 번씩 누른다. 화면은 sfEnhanceOnce가 매번 그린다 */
+const _sfAuto = createAutoRunner({
+  btnId: 'sfBtnAuto', idleLabel: '자동 강화 [A]', runLabel: '■ 중지 [A]',
+  runClass: 'sbtn--danger', idleClass: 'sbtn--primary', batch: 1, delay: 80,
+  tick: () => { if (!sfEnhanceOnce(true)) return 'done'; },   // 자동은 목표 성수에서 멈춘다
+});
+function sfStopAuto() { _sfAuto.stop(); }
+
+/* 별 위치를 sfFrom 값으로 되돌리고 별 판을 다시 그린다 */
+function _sfResetState() {
+  _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
+  sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());
 }
 
 function initStarforce() {
@@ -243,18 +243,16 @@ function initStarforce() {
 
   // 시작부터 입력칸의 max가 레벨 상한을 따르도록 한 번 맞춰둔다
   _sfClampInputs();
-  // 초기 별 위치를 sfFrom 값으로 세팅
-  _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
   sfBuildStageGrid();
-  sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());   // 처음 열었을 때도 별 판을 그려둔다
+  _sfResetState();   // 처음 열었을 때도 별 판을 그려둔다
 
   // 토글 그룹 처리. .sf-toggle-group도 추옵 시뮬레이터가 같이 쓰므로 섹션 안으로 한정한다
   // (안 그러면 추옵에서 장비 종류를 바꿀 때 스타포스 재계산이 딸려 돌아간다)
   document.querySelectorAll('#sec-starforce .sf-toggle-group').forEach(grp => {
-    grp.querySelectorAll('.sf-toggle').forEach(btn => {
+    const btns = grp.querySelectorAll('.sf-toggle');
+    btns.forEach(btn => {
       btn.addEventListener('click', () => {
-        grp.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
+        setActive(btns, btn);
         sfBuildStageGrid(); // 샤이닝 상태 바뀌면 파괴율 다시 계산
         sfRenderResult();   // 별 판의 확률·비용 표시도 같이 갱신
         _sfRecalcExpected();
@@ -274,7 +272,13 @@ function initStarforce() {
   ['sfLevel', 'sfTo', 'sfFrom'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
-    el.addEventListener('input', _sfRecalcDebounced);
+    // 타이핑 도중 상한 클램프는 sfTo·sfFrom(별 개수)에만 건다 — sfLevel(장비
+    // 레벨)까지 걸려 있으면 레벨 값 자체가 별 상한(20대)으로 잘려버린다.
+    el.addEventListener('input', () => {
+      _sfRecalcDebounced();
+      if (id !== 'sfLevel') _sfClampMaxWhileTyping(el);
+      sfRenderResult();
+    });
     // 값을 확정할 때 빈 칸·모순까지 포함해 전부 정리한다.
     // sfFrom은 정리한 값으로 현재 별을 다시 맞춘다(정리 전에 읽으면 잘리기 전 값이 남는다)
     el.addEventListener('change', () => {
@@ -283,10 +287,6 @@ function initStarforce() {
       sfRenderResult();
       _sfRecalcExpected();
     });
-    // 타이핑 도중 상한 클램프는 sfTo·sfFrom(별 개수)에만 건다 — sfLevel(장비
-    // 레벨)까지 걸려 있으면 레벨 값 자체가 별 상한(20대)으로 잘려버린다.
-    if (id !== 'sfLevel') el.addEventListener('input', () => { _sfClampMaxWhileTyping(el); sfRenderResult(); });
-    else el.addEventListener('input', () => { sfRenderResult(); });
   });
 
   // 강화 1회
@@ -295,39 +295,20 @@ function initStarforce() {
     sfEnhanceOnce();
   });
 
-  /* S=강화, R=초기화, A=자동. 스타포스 탭의 직접 강화하기가 열려 있을 때만
-     동작하고, 입력칸/셀렉트에 포커스가 있으면 가로채지 않는다. */
-  document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    const sec = document.getElementById('sec-starforce');
-    if (!sec?.classList.contains('active')) return;
-    if (document.getElementById('sfRightSimulate')?.style.display === 'none') return;
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
-    e.preventDefault();
-    if (e.code === 'KeyS') { sfStopAuto(); sfEnhanceOnce(); }
-    else if (e.code === 'KeyR') { document.getElementById('sfBtnReset')?.click(); }
-    else if (e.code === 'KeyA') { document.getElementById('sfBtnAuto')?.click(); }
+  /* S=강화, R=초기화, A=자동. 스타포스 탭의 직접 강화하기가 열려 있을 때만 */
+  bindSimKeys('sec-starforce', key => {
+    if (document.getElementById('sfRightSimulate')?.style.display === 'none') return false;
+    if (key === 's') { sfStopAuto(); sfEnhanceOnce(); }
+    else if (key === 'r') document.getElementById('sfBtnReset')?.click();
+    else document.getElementById('sfBtnAuto')?.click();
   });
 
-  // 자동 강화
-  document.getElementById('sfBtnAuto')?.addEventListener('click', () => {
-    if (_sfAutoTimer) { sfStopAuto(); return; }
-    const btn = document.getElementById('sfBtnAuto');
-    btn.textContent = '■ 중지 [A]';
-    btn.classList.remove('sbtn--primary'); btn.classList.add('sbtn--danger');
-    _sfAutoTimer = setInterval(() => {
-      const cont = sfEnhanceOnce(true);   // 자동은 목표 성수에서 멈춘다
-      if (!cont) sfStopAuto();
-    }, 80);
-  });
+  document.getElementById('sfBtnAuto')?.addEventListener('click', _sfAuto.start);
 
   // 초기화
   document.getElementById('sfBtnReset')?.addEventListener('click', () => {
     sfStopAuto();
-    _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
-    sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());
+    _sfResetState();
     document.getElementById('sfResult').innerHTML = '<p class="empty">강화 버튼을 눌러주세요.</p>';
     document.getElementById('sfSpentWrap').style.display = 'none';
   });
@@ -335,62 +316,46 @@ function initStarforce() {
   // 기댓값 보기
   document.getElementById('sfBtnExpected')?.addEventListener('click', () => sfShowExpected(true));
 
-  /* 양방향 메소 ↔ 상위% 이벤트 (한 번만 등록).
+  /* 값 ↔ 상위% 양방향 입력. 메소·파괴 횟수 두 쌍에 한 번씩만 등록한다.
      ★ ensureFresh가 내부적으로 sfShowExpected를 다시 부르면 그 끝에서 이
      두 입력칸을 "평균"값으로 덮어쓴다. 그래서 사용자가 막 타이핑한 값을
      먼저 변수에 담아두고, ensureFresh 이후에 그 값 기준으로 다시 계산해
      최종적으로 필드에 써넣는다 — 안 그러면 "70"을 쳤는데 화면이 평균값으로
-     바뀌어버린다. */
-  document.getElementById('sfInputMeso').addEventListener('input', () => {
-    const el = document.getElementById('sfInputMeso');
-    const val = parseInt(el.value, 10);
-    if (!val || val <= 0) return;
-    if (!_sfEnsureFreshSamples()) return;
-    const pct = _sfPctFromMeso(val);
-    document.getElementById('sfInputPct').value = pct.toFixed(3);
-    el.value = val;
-    _sfShowResult(pct, val);
-  });
-  document.getElementById('sfInputPct').addEventListener('input', () => {
-    const el = document.getElementById('sfInputPct');
-    const pct = parseFloat(el.value);
-    if (isNaN(pct) || pct < 0 || pct > 100) return;
-    if (!_sfEnsureFreshSamples()) return;
-    const meso = _sfMesoFromPct(pct);
-    document.getElementById('sfInputMeso').value = meso;
-    el.value = pct;
-    _sfShowResult(pct, meso);
-  });
-  document.getElementById('sfInputDestroyCount').addEventListener('input', () => {
-    const el = document.getElementById('sfInputDestroyCount');
-    const val = parseInt(el.value, 10);
-    if (isNaN(val) || val < 0) return;
-    if (!_sfEnsureFreshSamples()) return;
-    const pct = _sfDestroyPctFromCount(val);
-    document.getElementById('sfInputDestroyPct').value = pct.toFixed(3);
-    el.value = val;
-    _sfShowDestroyResult(pct, val);
-  });
-  document.getElementById('sfInputDestroyPct').addEventListener('input', () => {
-    const el = document.getElementById('sfInputDestroyPct');
-    const pct = parseFloat(el.value);
-    if (isNaN(pct) || pct < 0 || pct > 100) return;
-    if (!_sfEnsureFreshSamples()) return;
-    const count = _sfDestroyCountFromPct(pct);
-    document.getElementById('sfInputDestroyCount').value = count;
-    el.value = pct;
-    _sfShowDestroyResult(pct, count);
-  });
+     바뀌어버린다. samples는 ensureFresh 뒤에 읽어야 새 배열을 본다. */
+  const bindLuckPair = (valId, pctId, samples, valOk, show) => {
+    const valEl = document.getElementById(valId);
+    const pctEl = document.getElementById(pctId);
+    valEl.addEventListener('input', () => {
+      const val = parseInt(valEl.value, 10);
+      if (!valOk(val)) return;
+      if (!_sfEnsureFreshSamples()) return;
+      const pct = _sfPctOf(samples(), val);
+      pctEl.value = pct.toFixed(3);
+      valEl.value = val;
+      show(pct, val);
+    });
+    pctEl.addEventListener('input', () => {
+      const pct = parseFloat(pctEl.value);
+      if (isNaN(pct) || pct < 0 || pct > 100) return;
+      if (!_sfEnsureFreshSamples()) return;
+      const val = _sfValAtPct(samples(), pct);
+      valEl.value = val;
+      pctEl.value = pct;
+      show(pct, val);
+    });
+  };
+  bindLuckPair('sfInputMeso', 'sfInputPct', () => _sfLastCosts, v => v > 0, _sfShowResult);
+  bindLuckPair('sfInputDestroyCount', 'sfInputDestroyPct', () => _sfLastDestroys, v => v >= 0, _sfShowDestroyResult);
 
   /* 탭 스위칭.
      ★ .sf-tab 클래스는 추옵·큐브 시뮬레이터도 같이 쓴다. 예전엔 document 전체에서
        찾아서, 스타포스 탭을 누르면 다른 섹션 탭의 active까지 벗겨졌고
        _sfRecalcExpected는 엉뚱하게 추옵 탭을 보고 그냥 빠져나갔다(그래서 기댓값
        그래프가 안 그려졌다). 반드시 스타포스 섹션 안에서만 찾는다. */
-  document.querySelectorAll('#sec-starforce .sf-tab').forEach(tab => {
+  const tabs = document.querySelectorAll('#sec-starforce .sf-tab');
+  tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('#sec-starforce .sf-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      setActive(tabs, tab);
       const mode = tab.dataset.sftab;
       document.getElementById('sfRightExpected').style.display  = mode === 'expected'  ? '' : 'none';
       document.getElementById('sfRightSimulate').style.display  = mode === 'simulate'  ? '' : 'none';
@@ -415,10 +380,7 @@ function _sfRecalcExpected() {
    샘플을 그대로 조회했었다 — sfShowExpected가 다시 안 불리면 배열이 안 바뀌기
    때문이다(레벨 입력 디바운스 도중, 또는 성수 입력 후 그 즉시 상위% 칸을 만졌을 때
    등). 그래서 "26성으로 바꿔서 봤더니 예전 20성 근처 값이 나온다" 같은 제보가 있었다.
-   조회 직전에 이 서명을 항상 대조해 다르면 먼저 새로 계산한다. */
-function _sfCfgSignature() {
-  return [_sfGetLevel(), _sfGetFrom(), _sfGetTo(), _sfGetMvp(), _sfGetEvent(), JSON.stringify(_sfStages)].join('|');
-}
+   조회 직전에 이 서명을 항상 대조해 다르면 먼저 새로 계산한다. 서명은 _sfReadCfg를 그대로 문자열로 만든 것. */
 let _sfLastCostsSig = null;
 
 /* 상위%/메소 조회 직전에 반드시 부른다. 서명이 지금 화면 설정과 다르면(또는
@@ -426,7 +388,7 @@ let _sfLastCostsSig = null;
    그대로라 빠르다. 이후로는 _sfLastCosts를 안심하고 조회해도 된다. */
 function _sfEnsureFreshSamples() {
   if (_sfGetFrom() >= _sfGetTo()) return false;
-  if (_sfLastCostsSig !== _sfCfgSignature()) sfShowExpected(false);
+  if (_sfLastCostsSig !== JSON.stringify(_sfReadCfg())) sfShowExpected(false);
   return _sfLastCosts.length > 0;
 }
 
@@ -434,110 +396,117 @@ let _sfChart        = null;
 let _sfDestroyChart = null;
 let _sfLastCosts    = [];
 let _sfLastDestroys = [];
+const _SF_BINS = 40;   // 메소 히스토그램 구간 수, p99까지
 
 function _sfHighlightBar(val) {
   if (!_sfChart) return;
   const p99 = _sfLastCosts[Math.floor(_sfLastCosts.length * 0.99)] || 1;
-  const BINS = 40;
-  const colors = Array(BINS).fill('rgba(139,92,246,0.45)');
-  const binIdx = Math.floor(val / (p99 / BINS));
-  if (binIdx >= 0 && binIdx < BINS) colors[binIdx] = 'rgba(246,199,68,0.9)';
+  const colors = Array(_SF_BINS).fill('rgba(139,92,246,0.45)');
+  const binIdx = Math.floor(val / (p99 / _SF_BINS));
+  if (binIdx >= 0 && binIdx < _SF_BINS) colors[binIdx] = 'rgba(246,199,68,0.9)';
   _sfChart.data.datasets[0].backgroundColor = colors;
   _sfChart.update('none');
 }
 
-function _sfDestroyPctFromCount(count) {
-  const N = _sfLastDestroys.length;
+/* 정렬된 표본 arr에서 v 미만인 비율(%) */
+function _sfPctOf(arr, v) {
+  const N = arr.length;
   let lo = 0, hi = N;
-  while (lo < hi) { const m = (lo+hi)>>1; if (_sfLastDestroys[m] < count) lo=m+1; else hi=m; }
+  while (lo < hi) { const m = (lo+hi)>>1; if (arr[m] < v) lo=m+1; else hi=m; }
   return lo / N * 100;
 }
 
-function _sfDestroyCountFromPct(pct) {
-  const N = _sfLastDestroys.length;
+/* 정렬된 표본 arr에서 상위 pct% 자리의 값 */
+function _sfValAtPct(arr, pct) {
+  const N = arr.length;
   const idx = Math.min(N - 1, Math.max(0, Math.round(pct / 100 * N)));
-  return _sfLastDestroys[idx];
+  return arr[idx];
+}
+
+function _sfShowLuck(resId, luckPct, valText) {
+  const resEl = document.getElementById(resId);
+  if (!resEl) return;
+  const cls = luckPct <= 25 ? 'lucky' : luckPct >= 75 ? 'unlucky' : '';
+  resEl.innerHTML = `<div class="sf-my-result">
+    <span class="sf-my-result__tag ${cls}">상위 ${luckPct.toFixed(3)}%</span>
+    <span class="sf-my-result__sep"> = </span>
+    <span class="sf-my-result__meso">${valText}</span>
+  </div>`;
 }
 
 function _sfShowDestroyResult(luckPct, count) {
-  const resEl = document.getElementById('sfDestroyResult');
-  if (!resEl) return;
-  const cls = luckPct <= 25 ? 'lucky' : luckPct >= 75 ? 'unlucky' : '';
-  resEl.innerHTML = `<div class="sf-my-result">
-    <span class="sf-my-result__tag ${cls}">상위 ${luckPct.toFixed(3)}%</span>
-    <span class="sf-my-result__sep"> = </span>
-    <span class="sf-my-result__meso">${count}개</span>
-  </div>`;
-}
-
-function _sfPctFromMeso(val) {
-  const N = _sfLastCosts.length;
-  let lo = 0, hi = N;
-  while (lo < hi) { const m = (lo+hi)>>1; if (_sfLastCosts[m] < val) lo=m+1; else hi=m; }
-  return lo / N * 100;
-}
-
-function _sfMesoFromPct(pct) {
-  const N = _sfLastCosts.length;
-  const idx = Math.min(N - 1, Math.max(0, Math.round(pct / 100 * N)));
-  return _sfLastCosts[idx];
+  _sfShowLuck('sfDestroyResult', luckPct, `${count}개`);
 }
 
 function _sfShowResult(luckPct, mesoVal) {
-  const resEl = document.getElementById('sfMyMesoResult');
-  if (!resEl) return;
-  const cls = luckPct <= 25 ? 'lucky' : luckPct >= 75 ? 'unlucky' : '';
-  resEl.innerHTML = `<div class="sf-my-result">
-    <span class="sf-my-result__tag ${cls}">상위 ${luckPct.toFixed(3)}%</span>
-    <span class="sf-my-result__sep"> = </span>
-    <span class="sf-my-result__meso">${fmtMeso(mesoVal)}</span>
-  </div>`;
+  _sfShowLuck('sfMyMesoResult', luckPct, fmtMeso(mesoVal));
   _sfHighlightBar(mesoVal);
 }
 
 /* Chart.js는 스타포스 기댓값 탭의 그래프에서만 쓴다. 그런데 CDN에서 받는
    200KB짜리라, 그래프를 한 번도 안 보는 사람까지 접속할 때마다 받게 하면
-   첫 로딩만 느려진다. 그래서 처음 그릴 때만 받아온다. */
-let _sfChartLibLoading = null;
+   첫 로딩만 느려진다. 그래서 처음 그릴 때만 받아온다.
+   못 받아도 계산 자체는 되니 그래프만 포기한다(false) — 숫자는 그대로 보여준다. */
 function _sfEnsureChartLib() {
   if (typeof Chart !== 'undefined') return Promise.resolve(true);
-  if (!_sfChartLibLoading) {
-    _sfChartLibLoading = new Promise(resolve => {
-      const s = document.createElement('script');
-      // 버전을 고정한다 — 주소에 버전이 없으면 새 메이저가 나올 때 그래프가 말없이 깨질 수 있다
-      s.src = 'https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js';
-      s.onload = () => resolve(true);
-      // 못 받아도 계산 자체는 되니 그래프만 포기한다 — 숫자는 그대로 보여준다
-      s.onerror = () => resolve(false);
-      document.body.appendChild(s);
-    });
-  }
-  return _sfChartLibLoading;
+  // 버전을 고정한다 — 주소에 버전이 없으면 새 메이저가 나올 때 그래프가 말없이 깨질 수 있다
+  return loadScriptOnce('https://cdn.jsdelivr.net/npm/chart.js@4.6.1/dist/chart.umd.min.js').then(() => true, () => false);
+}
+
+/* 히스토그램 막대 그래프. 메소·파괴 두 그래프는 색·툴팁 제목·x축 눈금만 다르다 */
+function _sfBarChart(canvasId, { labels, data, bg, border, title, N, xTicks }) {
+  return new Chart(document.getElementById(canvasId), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: '빈도',
+        data,
+        backgroundColor: bg,
+        borderColor: border,
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            title,
+            label: item  => `${item.raw.toLocaleString()}회 · ${(item.raw/N*100).toFixed(1)}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: 'rgba(200,190,240,.6)', ...xTicks },
+          grid: { color: 'rgba(255,255,255,.05)' }
+        },
+        y: {
+          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
+          grid: { color: 'rgba(255,255,255,.08)' }
+        }
+      }
+    }
+  });
 }
 
 function sfShowExpected(scrollToResult) {
-  const from = _sfGetFrom();
-  const to   = _sfGetTo();
-  if (from >= to) { alert('목표 성이 현재 성보다 높아야 합니다.'); return; }
-
-  const cfg = {
-    level: _sfGetLevel(), current: from, target: to,
-    mvpDiscount: _sfGetMvp(), isShining: _sfGetEvent() === 'shining',
-    stages: { ..._sfStages }
-  };
+  const cfg = _sfReadCfg();
+  if (cfg.current >= cfg.target) { alert('목표 성이 현재 성보다 높아야 합니다.'); return; }
 
   // 평균은 정확해로 따로 구하므로 시뮬레이션은 분포(히스토그램·상위%) 전용이다.
-  // 2만 회는 한 번에 약 650ms를 동기로 잡아먹어서 타이핑 중에 그만큼 멈춘다.
+  // 2만 회는 동기로 돌아서(성수별 비용·확률을 미리 구하기 전 실측 약 650ms) 타이핑 중에 그만큼 멈춘다.
   // 버튼을 직접 눌렀을 때만 2만 회, 입력 중 자동 재계산은 5천 회로 돌린다.
   // 40구간 히스토그램에는 5천 표본이면 충분하고, 평균값은 어느 쪽이든 동일하다.
   const N = scrollToResult ? 20_000 : 5_000;
   const costs = [], destroyArr = [];
-  let totalDestroy = 0;
   for (let i = 0; i < N; i++) {
     const r = sfRunOnce(cfg);
     costs.push(r.cost);
     destroyArr.push(r.destroys);
-    totalDestroy += r.destroys;
   }
   costs.sort((a, b) => a - b);
   destroyArr.sort((a, b) => a - b);
@@ -545,130 +514,62 @@ function sfShowExpected(scrollToResult) {
   _sfLastDestroys = destroyArr;
   // 방금 이 샘플을 만든 그 cfg로 서명을 남긴다(호출부에 따라 그 사이 입력이
   // 또 바뀔 수 있으니 지금 다시 읽지 않고, 이 함수 시작에서 캡처한 값을 그대로 쓴다)
-  _sfLastCostsSig = [cfg.level, cfg.current, cfg.target, cfg.mvpDiscount, cfg.isShining ? 'shining' : 'none', JSON.stringify(cfg.stages)].join('|');
+  _sfLastCostsSig = JSON.stringify(cfg);
 
   // 평균은 시뮬레이션 대신 마르코프 연쇄 정확해를 쓴다. 표본평균은 2만 회로도
   // 실행마다 2% 남짓 흔들려서 1레벨 차이(약 1%)보다 오차가 커, 값이 안정적으로
   // 보이지 않았다. 분포·상위%·히스토그램은 표본이 있어야 하므로 그대로 시뮬 사용.
   const exact = sfExpectedExact(cfg);
-  const mean = exact.cost;
   const p99  = costs[Math.floor(N * 0.99)];
-  const avgDestroy = exact.destroys;
 
   /* 히스토그램 버킷 40개, p99 범위 */
-  const BINS = 40;
-  const step = p99 / BINS;
-  const buckets = Array(BINS).fill(0);
-  costs.forEach(c => { const idx = Math.floor(c / step); if (idx < BINS) buckets[idx]++; });
+  const step = p99 / _SF_BINS;
+  const buckets = Array(_SF_BINS).fill(0);
+  costs.forEach(c => { const idx = Math.floor(c / step); if (idx < _SF_BINS) buckets[idx]++; });
   const labels = buckets.map((_, i) => fmtMeso(Math.round(step * (i + 0.5))));
-
 
   // 그래프는 Chart.js를 받아온 뒤에 그린다. 숫자(기댓값·상위%)는 라이브러리와
   // 무관하므로 아래에서 그대로 먼저 채워진다.
   const drawCharts = () => {
-  const canvas = document.getElementById('sfChart');
-  if (_sfChart) { _sfChart.destroy(); _sfChart = null; }
-  _sfChart = new Chart(canvas, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: '빈도',
-        data: buckets,
-        backgroundColor: 'rgba(139,92,246,0.55)',
-        borderColor: 'rgba(167,139,250,0.8)',
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items => `소모 메소 ≈ ${labels[items[0].dataIndex]}`,
-            label: item  => `${item.raw.toLocaleString()}회 · ${(item.raw/N*100).toFixed(1)}%`
-          }
-        }
+    if (_sfChart) _sfChart.destroy();
+    _sfChart = _sfBarChart('sfChart', {
+      labels, data: buckets, N,
+      bg: 'rgba(139,92,246,0.55)', border: 'rgba(167,139,250,0.8)',
+      title: items => `소모 메소 ≈ ${labels[items[0].dataIndex]}`,
+      /* labels[]는 fmtMeso로 "32억 2,009만 1,896 메소"처럼 길게 적혀 있다(툴팁용).
+         그걸 축에 그대로 찍으면 회전시켜도 옆 라벨과 겹쳐 글자가 뭉개진다
+         (실제로 그렇게 보인다는 제보 있었음). 축에는 억/조 단위로 짧게 줄인
+         문자열을 따로 그린다 — 데이터·툴팁은 그대로 두고 표시만 바꾼다. */
+      xTicks: {
+        maxRotation: 45, font: { size: 9 }, maxTicksLimit: 8,
+        callback: (_, idx) => fmtMesoCompact(step * (idx + 0.5)),
       },
-      scales: {
-        x: {
-          /* labels[]는 fmtMeso로 "32억 2,009만 1,896 메소"처럼 길게 적혀 있다(툴팁용).
-             그걸 축에 그대로 찍으면 회전시켜도 옆 라벨과 겹쳐 글자가 뭉개진다
-             (실제로 그렇게 보인다는 제보 있었음). 축에는 억/조 단위로 짧게 줄인
-             문자열을 따로 그린다 — 데이터·툴팁은 그대로 두고 표시만 바꾼다. */
-          ticks: {
-            color: 'rgba(200,190,240,.6)', maxRotation: 45, font: { size: 9 }, maxTicksLimit: 8,
-            callback: (_, idx) => fmtMesoCompact(step * (idx + 0.5)),
-          },
-          grid: { color: 'rgba(255,255,255,.05)' }
-        },
-        y: {
-          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
-          grid: { color: 'rgba(255,255,255,.08)' }
-        }
-      }
-    }
-  });
+    });
 
-  /* 파괴 횟수 분포 차트 */
-  const maxDest = Math.max(...destroyArr);
-  const destBuckets = Array(maxDest + 1).fill(0);
-  destroyArr.forEach(d => destBuckets[d]++);
-  const destLabels = destBuckets.map((_, i) => `${i}개`);
-  const destCanvas = document.getElementById('sfDestroyChart');
-  if (_sfDestroyChart) { _sfDestroyChart.destroy(); _sfDestroyChart = null; }
-  _sfDestroyChart = new Chart(destCanvas, {
-    type: 'bar',
-    data: {
-      labels: destLabels,
-      datasets: [{
-        label: '빈도',
-        data: destBuckets,
-        backgroundColor: 'rgba(246,99,99,0.55)',
-        borderColor: 'rgba(246,139,139,0.8)',
-        borderWidth: 1,
-        borderRadius: 3,
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          callbacks: {
-            title: items => `파괴 ${items[0].label}`,
-            label: item  => `${item.raw.toLocaleString()}회 · ${(item.raw/N*100).toFixed(1)}%`
-          }
-        }
-      },
-      scales: {
-        x: {
-          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
-          grid: { color: 'rgba(255,255,255,.05)' }
-        },
-        y: {
-          ticks: { color: 'rgba(200,190,240,.6)', font: { size: 10 } },
-          grid: { color: 'rgba(255,255,255,.08)' }
-        }
-      }
-    }
-  });
-
+    /* 파괴 횟수 분포 차트 */
+    const maxDest = Math.max(...destroyArr);
+    const destBuckets = Array(maxDest + 1).fill(0);
+    destroyArr.forEach(d => destBuckets[d]++);
+    if (_sfDestroyChart) _sfDestroyChart.destroy();
+    _sfDestroyChart = _sfBarChart('sfDestroyChart', {
+      labels: destBuckets.map((_, i) => `${i}개`), data: destBuckets, N,
+      bg: 'rgba(246,99,99,0.55)', border: 'rgba(246,139,139,0.8)',
+      title: items => `파괴 ${items[0].label}`,
+      xTicks: { font: { size: 10 } },
+    });
   };
   _sfEnsureChartLib().then(ok => { if (ok) drawCharts(); });
 
   /* 메소 bidir 평균 세팅 */
-  const avgCost = Math.round(mean);
-  const avgPct  = _sfPctFromMeso(avgCost);
+  const avgCost = Math.round(exact.cost);
+  const avgPct  = _sfPctOf(costs, avgCost);
   document.getElementById('sfInputMeso').value = avgCost;
   document.getElementById('sfInputPct').value  = avgPct.toFixed(3);
   _sfShowResult(avgPct, avgCost);
 
   /* 파괴 bidir 평균 세팅 */
-  const avgDest    = Math.round(avgDestroy);
-  const avgDestPct = _sfDestroyPctFromCount(avgDest);
+  const avgDest    = Math.round(exact.destroys);
+  const avgDestPct = _sfPctOf(destroyArr, avgDest);
   document.getElementById('sfInputDestroyCount').value = avgDest;
   document.getElementById('sfInputDestroyPct').value   = avgDestPct.toFixed(3);
   _sfShowDestroyResult(avgDestPct, avgDest);

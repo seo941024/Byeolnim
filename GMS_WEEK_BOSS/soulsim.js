@@ -26,13 +26,14 @@
 function _soulData() { return window.SOUL_DATA; }
 function _soulIconSrc(g) { return `images/icons/${(g || 'rare').toLowerCase()}.png`; }
 
-let _soulState = {
+const _soulAmpFresh = () => ({
   stage: 0,       // 0~4, 0=미증폭
   gauge: 0,       // 0~1, 다음 증폭 시도의 게이지
   tries: 0, mesoSpent: 0,
   etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 },
   log: [],        // 증폭 기록
-};
+});
+let _soulState = _soulAmpFresh();
 
 // 잠재 탭 전용 상태 — 증폭 탭(_soulState)과 완전히 별개다.
 // gradeStreak: 지금 등급에서 등급업 없이 재설정한 횟수(천장 판정용).
@@ -55,7 +56,7 @@ function _soulAmpChanceNow(info) {
 /* ── 증폭 ── */
 function _soulAmpStep() {
   const D = _soulData();
-  if (_soulState.stage >= 4) return false;
+  if (_soulState.stage >= 4) return;
   const target = _soulState.stage + 1;
   const info = D.STAGE_INFO[target];
 
@@ -76,72 +77,52 @@ function _soulAmpStep() {
   } else {
     _soulState.gauge = Math.min(1, _soulState.gauge + info.gaugeStep);
   }
-  return ok;
 }
 
 function _soulAmpRollOnce() { _soulAmpStep(); _soulRenderAmp(); }
 
 function _soulAmpReset() {
-  _soulStopAmpAuto();
-  _soulState = { stage: 0, gauge: 0, tries: 0, mesoSpent: 0, etherSpent: { 1: 0, 2: 0, 3: 0, 4: 0 }, log: [] };
+  _soulAmpAuto.stop();
+  _soulState = _soulAmpFresh();
   _soulRenderAmp();
 }
 
+/* 목표 단계는 자동을 시작할 때 읽어 둔다 — 도는 중에 드롭다운을 바꿔도 그대로 */
 const SOUL_AMP_AUTO_MAX = 200000;
-let _soulAmpAutoTimer = null;
-function _soulStopAmpAuto(msg) {
-  if (_soulAmpAutoTimer) { clearTimeout(_soulAmpAutoTimer); _soulAmpAutoTimer = null; }
-  const b = document.getElementById('soulAmpAutoBtn');
-  if (b) b.textContent = '목표 단계까지 자동 [A]';
-  if (msg) alert(msg);
-}
-function _soulStartAmpAuto() {
-  if (_soulAmpAutoTimer) { _soulStopAmpAuto(); return; }
-  const goal = Number(document.getElementById('soulAmpGoal')?.value || 4);
-  if (_soulState.stage >= goal) { alert('이미 목표 단계 이상입니다.'); return; }
-  const b = document.getElementById('soulAmpAutoBtn');
-  if (b) b.textContent = '중지 [A]';
-  const step = () => {
-    for (let i = 0; i < 500; i++) {
-      _soulAmpStep();
-      if (_soulState.stage >= goal) { _soulStopAmpAuto(); _soulRenderAmp(); return; }
-      if (_soulState.tries >= SOUL_AMP_AUTO_MAX) {
-        _soulStopAmpAuto(`${SOUL_AMP_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 단계에 닿지 못해 멈췄습니다.`);
-        _soulRenderAmp(); return;
-      }
-    }
-    _soulRenderAmp();
-    _soulAmpAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
+let _soulAmpGoal = 4;
+const _soulAmpAuto = createAutoRunner({
+  btnId: 'soulAmpAutoBtn', idleLabel: '목표 단계까지 자동 [A]', runLabel: '중지 [A]', batch: 500,
+  canStart: () => {
+    _soulAmpGoal = Number(document.getElementById('soulAmpGoal')?.value || 4);
+    if (_soulState.stage >= _soulAmpGoal) { alert('이미 목표 단계 이상입니다.'); return false; }
+  },
+  tick: () => {
+    _soulAmpStep();
+    if (_soulState.stage >= _soulAmpGoal) return 'done';
+    if (_soulState.tries >= SOUL_AMP_AUTO_MAX) return 'max';
+  },
+  maxMsg: () => `${SOUL_AMP_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 단계에 닿지 못해 멈췄습니다.`,
+  render: _soulRenderAmp,
+});
 
 /* ── 잠재: 등급/단계 직접 선택 ── */
-/* 목표 칸에 채워둔 수치도 등급·단계가 바뀌면 그 기준으로 다시 계산한다
-   (큐브 직작 목표 수치 버그 수정과 같은 이유 — 1번 칸은 그 등급 자체 값,
-   나머지 채워진 칸은 한 단계 아래 등급 값으로, 프리셋 계산과 동일한 규칙). */
+/* 수치를 적을 수 있는 목표 칸을 지금 등급·단계 기준 실제 값으로 채운다. 1번째 줄은 잠재 자체
+   등급 값, 2·3번째 줄은 한 단계 아래 등급 값(이탈은 드물어서 기본값으로는 안 씀 — 레어처럼
+   아래 등급이 없으면 자체 등급 값으로 대체). 등급·단계가 바뀌면 채워둔 수치도 다시 계산한다
+   (큐브 직작 목표 수치 버그 수정과 같은 이유). 수치 칸은 numeric 옵션을 골랐을 때만 열려 있다. */
 function _soulRecomputeGoalValues() {
   const D = _soulData();
   const grade = _soulPotState.grade, stage = _soulPotState.stage;
   const idx = D.GRADES.indexOf(grade);
-  const below = idx > 0 ? D.GRADES[idx - 1] : null;
+  const below = idx > 0 ? D.GRADES[idx - 1] : grade;
   for (let i = 1; i <= 3; i++) {
-    const sel = document.getElementById(`soulResetGoal${i}`);
-    const opt = D.OPTIONS.find(o => o.key === sel?.value);
     const inp = document.getElementById(`soulResetGoalVal${i}`);
-    if (!opt?.numeric || !inp || inp.disabled) continue;
-    inp.value = soulTierValue(i === 1 ? grade : (below || grade), stage);
+    if (!inp.disabled) inp.value = soulTierValue(i === 1 ? grade : below, stage);
   }
 }
-function _soulPotSetGrade(grade) {
-  _soulPotState.grade = grade;
-  _soulPotState.gradeStreak = 0;
-  _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
-  _soulRenderPotential();
-  _soulRecomputeGoalValues();
-}
-function _soulPotSetStage(stage) {
-  _soulPotState.stage = stage;
+/* 등급·단계를 직접 고르면 그 기준으로 3줄을 다시 뽑는다. 등급을 바꾸면 천장 횟수도 처음부터 */
+function _soulPotSet(patch) {
+  Object.assign(_soulPotState, patch);
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
   _soulRenderPotential();
   _soulRecomputeGoalValues();
@@ -149,7 +130,7 @@ function _soulPotSetStage(stage) {
 /* 큐브 직작의 _hrReset과 동일 — 지금 골라둔 등급·단계는 그대로 두고
    재설정 진행 상황(횟수·메소·기록·천장)만 초기화한다. */
 function _soulPotFullReset() {
-  _soulStopResetAuto();
+  _soulResetAuto.stop();
   const grade = _soulPotState.grade, stage = _soulPotState.stage;
   _soulPotState = { grade, stage, lines: soulRollLines(grade, stage), gradeStreak: 0 };
   _sgState = { rsTries: 0, rsMesoSpent: 0, log: [] };
@@ -179,33 +160,22 @@ function _soulResetStep() {
   _soulPotState.lines = soulRollLines(_soulPotState.grade, _soulPotState.stage);
   _sgState.log.unshift({ n: _sgState.rsTries, lines: _soulPotState.lines, grade: _soulPotState.grade, upgraded });
   if (_sgState.log.length > 200) _sgState.log.length = 200;
-  return true;
 }
 function _soulResetOnce() { _soulResetStep(); _soulRenderPotential(); }
 
 /* 자주 쓰는 프리셋(큐브 직작의 "공격력 3줄"류와 같은 방식) — 3칸 전부 같은
-   옵션으로 채우고, 수치는 지금 등급·단계 기준 실제 값으로 채운다. 1번째 줄은
-   잠재 자체 등급 값, 2·3번째 줄은 한 단계 아래 등급 값(이탈은 드물어서
-   기본값으로는 안 씀 — 레어처럼 아래 등급이 없으면 자체 등급 값으로 대체). */
+   옵션으로 채우고, 수치는 _soulRecomputeGoalValues가 지금 등급·단계 기준 실제 값으로 채운다. */
 const SOUL_PRESETS = [
   { label: '공격력 3줄', key: 'atkPct' },
   { label: '마력 3줄',   key: 'matkPct' },
 ];
 function _soulApplyPreset(key) {
-  const D = _soulData();
-  const grade = _soulPotState.grade, stage = _soulPotState.stage;
-  const idx = D.GRADES.indexOf(grade);
-  const below = idx > 0 ? D.GRADES[idx - 1] : null;
-  const v1 = soulTierValue(grade, stage);
-  const v2 = below ? soulTierValue(below, stage) : v1;
-  const vals = [v1, v2, v2];
   for (let i = 1; i <= 3; i++) {
     const sel = document.getElementById(`soulResetGoal${i}`);
     sel.value = key;
     sel.dispatchEvent(new Event('change'));
-    const inp = document.getElementById(`soulResetGoalVal${i}`);
-    if (!inp.disabled) inp.value = vals[i - 1];
   }
+  _soulRecomputeGoalValues();
 }
 
 /* 목표 옵션 3칸 — 큐브 직작과 똑같은 판정: 같은 키를 한 칸에만 적으면 세 줄
@@ -222,7 +192,6 @@ function _soulGetGoals() {
   Object.values(byKey).forEach(a => a.sort((x, y) => y - x));
   return Object.entries(byKey);
 }
-function _soulGetGoalKeys() { return _soulGetGoals().map(([k]) => k); }
 function _soulGoalsMet(lines) {
   const goals = _soulGetGoals();
   if (!goals.length) return false;
@@ -243,49 +212,34 @@ function _soulGoalsMet(lines) {
 }
 
 const SOUL_RESET_AUTO_MAX = 200000;
-let _soulResetAutoTimer = null;
-function _soulStopResetAuto(msg) {
-  if (_soulResetAutoTimer) { clearTimeout(_soulResetAutoTimer); _soulResetAutoTimer = null; }
-  const b = document.getElementById('soulResetAutoBtn');
-  if (b) b.textContent = '목표 옵션까지 자동 [A]';
-  if (msg) alert(msg);
-}
-function _soulStartResetAuto() {
-  if (_soulResetAutoTimer) { _soulStopResetAuto(); return; }
-  if (!_soulGetGoalKeys().length) { alert('목표 옵션을 먼저 골라주세요.'); return; }
-  const b = document.getElementById('soulResetAutoBtn');
-  if (b) b.textContent = '중지 [A]';
-  const step = () => {
-    for (let i = 0; i < 2000; i++) {
-      _soulResetStep();
-      if (_soulGoalsMet(_soulPotState.lines)) { _soulStopResetAuto(); _soulRenderPotential(); return; }
-      if (_sgState.rsTries >= SOUL_RESET_AUTO_MAX) {
-        _soulStopResetAuto(`${SOUL_RESET_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 옵션이 나오지 않아 멈췄습니다.`);
-        _soulRenderPotential(); return;
-      }
-    }
-    _soulRenderPotential();
-    _soulResetAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
+const _soulResetAuto = createAutoRunner({
+  btnId: 'soulResetAutoBtn', idleLabel: '목표 옵션까지 자동 [A]', runLabel: '중지 [A]', batch: 2000,
+  canStart: () => {
+    if (!_soulGetGoals().length) { alert('목표 옵션을 먼저 골라주세요.'); return false; }
+  },
+  tick: () => {
+    _soulResetStep();
+    if (_soulGoalsMet(_soulPotState.lines)) return 'done';
+    if (_sgState.rsTries >= SOUL_RESET_AUTO_MAX) return 'max';
+  },
+  maxMsg: () => `${SOUL_RESET_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표 옵션이 나오지 않아 멈췄습니다.`,
+  render: _soulRenderPotential,
+});
 
 /* ── 렌더: 증폭 탭 ── */
 function _soulRenderAmp() {
-  const D = _soulData(); if (!D) return;
+  const D = _soulData();
   const stage = _soulState.stage;
   const target = Math.min(stage + 1, 4);
   const info = D.STAGE_INFO[target];
   const done = stage >= 4;
+  const gauge = Math.round(_soulState.gauge * 100) + '%';
 
   document.getElementById('soulAmpStageNow').textContent = stage === 0 ? '미증폭' : `${stage}단계`;
-  const lbl = document.getElementById('soulAmpTargetLbl');
-  if (lbl) lbl.textContent = done ? '—' : `${target}단계`;
-  const chanceNow = done ? 0 : _soulAmpChanceNow(info);
-  document.getElementById('soulAmpChance').textContent = done ? '—' : (Math.round(chanceNow * 1000) / 10) + '%';
-  document.getElementById('soulAmpGaugeTxt').textContent = done ? '—' : Math.round(_soulState.gauge * 100) + '%';
-  const gaugeFill = document.getElementById('soulAmpGaugeFill');
-  if (gaugeFill) gaugeFill.style.width = done ? '0%' : Math.round(_soulState.gauge * 100) + '%';
+  document.getElementById('soulAmpTargetLbl').textContent = done ? '—' : `${target}단계`;
+  document.getElementById('soulAmpChance').textContent = done ? '—' : (Math.round(_soulAmpChanceNow(info) * 1000) / 10) + '%';
+  document.getElementById('soulAmpGaugeTxt').textContent = done ? '—' : gauge;
+  document.getElementById('soulAmpGaugeFill').style.width = done ? '0%' : gauge;
   document.getElementById('soulAmpMeso').textContent = done ? '—' : fmtMeso(info.meso);
 
   document.getElementById('soulAmpTries').textContent = _soulState.tries.toLocaleString();
@@ -310,25 +264,21 @@ function _soulRenderAmp() {
 
 /* ── 렌더: 잠재 탭 (큐브 직작과 같은 좌 설정 / 우 결과 배치) ── */
 function _soulRenderPotential() {
-  const D = _soulData(); if (!D) return;
-  const panel = document.getElementById('soulPotPanel');
+  const D = _soulData();
   const grade = _soulPotState.grade;
 
-  panel.dataset.grade = grade;
+  document.getElementById('soulPotPanel').dataset.grade = grade;
   document.getElementById('soulPotIcon').src = _soulIconSrc(grade);
 
   const gradeSel = document.getElementById('soulPotGrade');
-  if (gradeSel && gradeSel.value !== grade) gradeSel.value = grade;
-  const stageSel = document.getElementById('soulPotStage');
-  if (stageSel) stageSel.innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotState.stage ? ' selected' : ''}>${s}단계</option>`).join('');
+  if (gradeSel.value !== grade) gradeSel.value = grade;
+  document.getElementById('soulPotStage').innerHTML = D.STAGES.map(s => `<option value="${s}"${s === _soulPotState.stage ? ' selected' : ''}>${s}단계</option>`).join('');
 
   document.getElementById('soulResetCost').textContent = fmtMeso(D.RESET_MESO[grade]);
   const gu = D.GRADEUP[grade];
   const streakEl = document.getElementById('soulGuStreak');
-  if (streakEl) {
-    streakEl.closest('.sf-res-item').style.display = gu ? '' : 'none';
-    if (gu) streakEl.textContent = `${_soulPotState.gradeStreak} / ${gu.ceil}`;
-  }
+  streakEl.closest('.sf-res-item').style.display = gu ? '' : 'none';
+  if (gu) streakEl.textContent = `${_soulPotState.gradeStreak} / ${gu.ceil}`;
 
   document.getElementById('soulPotLines').innerHTML = _soulPotState.lines
     .map(l => `<div class="pot-line" data-grade="${l.grade}">${l.value != null ? `${l.label.replace(/\s*%$/, '')} : +${l.value}%` : l.label}</div>`).join('');
@@ -343,9 +293,8 @@ function _soulRenderPotential() {
     </div>`).join('');
 }
 
-function _soulBuildGoalOpts(selected) {
-  const D = _soulData();
-  return '<option value="">-</option>' + D.OPTIONS.map(o => `<option value="${o.key}"${o.key === selected ? ' selected' : ''}>${o.label}</option>`).join('');
+function _soulBuildGoalOpts() {
+  return '<option value="">-</option>' + _soulData().OPTIONS.map(o => `<option value="${o.key}">${o.label}</option>`).join('');
 }
 function _soulBuildGradeOpts() {
   const D = _soulData();
@@ -452,25 +401,25 @@ function initSoul() {
     </div>`;
 
   // 탭 전환
-  sec.querySelectorAll('.sf-tab[data-soultab]').forEach(tab => {
+  const tabs = sec.querySelectorAll('.sf-tab[data-soultab]');
+  tabs.forEach(tab => {
     tab.addEventListener('click', () => {
-      sec.querySelectorAll('.sf-tab[data-soultab]').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      setActive(tabs, tab);
       const t = tab.dataset.soultab;
       document.getElementById('soulTabAmp').style.display = t === 'amp' ? '' : 'none';
       document.getElementById('soulTabPotential').style.display = t === 'potential' ? '' : 'none';
-      _soulStopAmpAuto(); _soulStopResetAuto();
+      _soulAmpAuto.stop(); _soulResetAuto.stop();
     });
   });
 
-  document.getElementById('soulAmpRollBtn').addEventListener('click', () => { _soulStopAmpAuto(); _soulAmpRollOnce(); });
-  document.getElementById('soulAmpAutoBtn').addEventListener('click', _soulStartAmpAuto);
+  document.getElementById('soulAmpRollBtn').addEventListener('click', () => { _soulAmpAuto.stop(); _soulAmpRollOnce(); });
+  document.getElementById('soulAmpAutoBtn').addEventListener('click', _soulAmpAuto.start);
   document.getElementById('soulAmpResetBtn').addEventListener('click', _soulAmpReset);
 
-  document.getElementById('soulPotGrade').addEventListener('change', e => { _soulStopResetAuto(); _soulPotSetGrade(e.target.value); });
-  document.getElementById('soulPotStage').addEventListener('change', e => { _soulStopResetAuto(); _soulPotSetStage(Number(e.target.value) || 1); });
-  document.getElementById('soulResetBtn').addEventListener('click', () => { _soulStopResetAuto(); _soulResetOnce(); });
-  document.getElementById('soulResetAutoBtn').addEventListener('click', _soulStartResetAuto);
+  document.getElementById('soulPotGrade').addEventListener('change', e => { _soulResetAuto.stop(); _soulPotSet({ grade: e.target.value, gradeStreak: 0 }); });
+  document.getElementById('soulPotStage').addEventListener('change', e => { _soulResetAuto.stop(); _soulPotSet({ stage: Number(e.target.value) || 1 }); });
+  document.getElementById('soulResetBtn').addEventListener('click', () => { _soulResetAuto.stop(); _soulResetOnce(); });
+  document.getElementById('soulResetAutoBtn').addEventListener('click', _soulResetAuto.start);
   document.getElementById('soulGuResetBtn').addEventListener('click', _soulPotFullReset);
 
   // 목표 옵션 칸: 수치 데이터가 있는 옵션(numeric)을 고를 때만 수치 입력을 열어준다
@@ -484,51 +433,28 @@ function initSoul() {
     });
   }
 
-  document.getElementById('soulPresets').innerHTML = SOUL_PRESETS
+  const presets = document.getElementById('soulPresets');
+  presets.innerHTML = SOUL_PRESETS
     .map((p, i) => `<button class="sbtn sbtn--ghost hr-preset__btn" data-preset="${i}">${p.label}</button>`).join('');
-  document.getElementById('soulPresets').querySelectorAll('[data-preset]').forEach(btn => {
+  presets.querySelectorAll('[data-preset]').forEach(btn => {
     btn.addEventListener('click', () => _soulApplyPreset(SOUL_PRESETS[+btn.dataset.preset].key));
   });
 
-  /* S=주 동작, A=자동, R=초기화 — 열린 탭 기준 */
-  document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    if (!document.getElementById('sec-soul')?.classList.contains('active')) return;
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
-    e.preventDefault();
+  /* S=주 동작, A=자동, R=초기화 — 열린 탭 기준. 버튼을 누르는 방식이라 꺼진 버튼은 단축키도 안 듣는다 */
+  bindSimKeys('sec-soul', key => {
     const isAmp = document.getElementById('soulTabAmp').style.display !== 'none';
-    if (e.code === 'KeyS') document.getElementById(isAmp ? 'soulAmpRollBtn' : 'soulResetBtn')?.click();
-    else if (e.code === 'KeyA') document.getElementById(isAmp ? 'soulAmpAutoBtn' : 'soulResetAutoBtn')?.click();
-    else if (e.code === 'KeyR') document.getElementById(isAmp ? 'soulAmpResetBtn' : 'soulGuResetBtn')?.click();
+    const ids = isAmp
+      ? { s: 'soulAmpRollBtn', a: 'soulAmpAutoBtn', r: 'soulAmpResetBtn' }
+      : { s: 'soulResetBtn', a: 'soulResetAutoBtn', r: 'soulGuResetBtn' };
+    document.getElementById(ids[key]).click();
   });
 
   _soulRenderAmp();
   _soulRenderPotential();
 }
 
-/* 데이터는 이 탭을 처음 열 때만 받는다(큐브·패밀리어와 같은 방식) */
-let _soulLoading = null, _soulInited = false;
-function ensureSoulReady(cb) {
-  if (window.SOUL_DATA) {
-    if (!_soulInited) { _soulInited = true; initSoul(); }
-    cb && cb(); return;
-  }
-  if (!_soulLoading) {
-    _soulLoading = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'data_soul.js?v=20260927a';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('data_soul.js 로드 실패'));
-      document.body.appendChild(s);
-    });
-  }
-  _soulLoading.then(() => {
-    if (!_soulInited) { _soulInited = true; initSoul(); }
-    cb && cb();
-  }).catch(() => {
-    const sec = document.getElementById('sec-soul');
-    if (sec) sec.innerHTML = '<div class="soon-box"><div class="soon-box__title">데이터를 불러오지 못했습니다</div><div class="soon-box__desc">새로고침해주세요.</div></div>';
-  });
-}
+/* 데이터는 이 탭을 처음 열 때만 받는다 */
+const _soulEnsure = lazySection({
+  isReady: () => !!window.SOUL_DATA, src: 'data_soul.js?v=20260927a', init: initSoul, secId: 'sec-soul',
+});
+function ensureSoulReady(cb) { _soulEnsure(cb); }

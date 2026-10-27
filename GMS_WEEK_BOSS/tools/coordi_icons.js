@@ -17,16 +17,15 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const sharp = require('sharp');
-const { ROOT } = require('./coordi_index');
+const { ROOT, loadSiteData } = require('./coordi_index');
 
 const DEST = path.join(__dirname, '..', 'coordi', 'v270');
 const CELL = 44, FIT = 36, GRID = 20, PER = GRID * GRID;
 const ORIGIN = [54, 88];        // mixdye_layer.js MX_LAYER_ORIGIN.stand1
 const BASE_SKIN = 12018;
 
-const load = file => { const window = {}; new Function('window', fs.readFileSync(path.join(__dirname, '..', file), 'utf8'))(window); return window; };
-const MIX = load('data_mixdye.js').MIXDYE_DATA;
-const COORDI = load('data_coordi.js').COORDI_DATA;
+const MIX = loadSiteData('data_mixdye.js').MIXDYE_DATA;
+const COORDI = loadSiteData('data_coordi.js').COORDI_DATA;
 const rules = JSON.parse(fs.readFileSync(path.join(ROOT, 'rules.json'), 'utf8'));
 const zi = new Map(rules.zmap.map((z, i) => [z, i]));
 const skinOf = head => JSON.parse(fs.readFileSync(path.join(ROOT, 'skins', `${head}.json`), 'utf8'));

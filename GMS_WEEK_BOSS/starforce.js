@@ -94,37 +94,21 @@ function sfStageRow(star, stage) {
 }
 
 function calcSfBaseCost(level, star) {
-  const L = level, S = star;
-  const d = SF_COST_D[S];
-  let raw;
-  if (S <= 9) {
-    raw = 1000 + Math.pow(L, 3) * (S + 1) / d;
-  } else {
-    raw = 1000 + Math.pow(L, 3) * Math.pow(S + 1, 2.7) / d;
-  }
-  return Math.round(raw / 100) * 100;
+  const mul = star <= 9 ? star + 1 : Math.pow(star + 1, 2.7);
+  return Math.round((1000 + Math.pow(level, 3) * mul / SF_COST_D[star]) / 100) * 100;
 }
 
-/* mesoDiscount: 0.30 = 30% 할인 이벤트 (MVP·샤이닝과 별개로 추가 적용) */
-function calcSfCost(level, star, mvpDiscount, isShining, isProtected, stage, mesoDiscount) {
+function calcSfCost(level, star, mvpDiscount, isShining, isProtected, stage) {
   const base = Math.round(calcSfBaseCost(level, star) * sfStageMul(star, stage || 1) / 100) * 100;
   const mvp  = mvpDiscount > 0 && star < 17;
-  const md   = (mesoDiscount > 0) ? (1 - mesoDiscount) : 1;
 
-  if (isProtected) {
-    /* 파괴방지: 할인된 강화비 + 기본비×2 (기본비 부분엔 할인 없음) */
-    let normalCost;
-    if (isShining && mvp)      normalCost = Math.round(base * (1 - mvpDiscount) * 0.7 * md / 100) * 100;
-    else if (isShining)        normalCost = Math.round(base * 0.7 * md / 100) * 100;
-    else if (mvp)              normalCost = Math.round(base * (1 - mvpDiscount) * md / 100) * 100;
-    else                       normalCost = Math.round(base * md / 100) * 100;
-    return normalCost + base * 2;
-  } else {
-    if (isShining && mvp)      return Math.round(base * (1 - mvpDiscount) * 0.7 * md / 100) * 100;
-    else if (isShining)        return Math.round(base * 0.7 * md / 100) * 100;
-    else if (mvp)              return Math.round(base * (1 - mvpDiscount) * md / 100) * 100;
-    else                       return Math.round(base * md / 100) * 100;
-  }
+  let cost;
+  if (isShining && mvp)      cost = Math.round(base * (1 - mvpDiscount) * 0.7 / 100) * 100;
+  else if (isShining)        cost = Math.round(base * 0.7 / 100) * 100;
+  else if (mvp)              cost = Math.round(base * (1 - mvpDiscount) / 100) * 100;
+  else                       cost = Math.round(base / 100) * 100;
+  /* 파괴방지: 할인된 강화비 + 기본비×2 (기본비 부분엔 할인 없음) */
+  return isProtected ? cost + base * 2 : cost;
 }
 
 function getSfProb(star, isShining, isProtected, stage) {
@@ -145,6 +129,19 @@ function getSfProb(star, isShining, isProtected, stage) {
     destPct = 0;
   }
   return { succ: succPct / 100, fail: failPct / 100, dest: destPct / 100 };
+}
+
+/* s성에서 한 번 누를 때의 비용·확률. 단계 버튼은 cfg.stages[s], 없으면 1.
+   15~17성 4번 버튼 = 기존 파괴방지: stage1 확률에 파괴→실패 전환.
+   기댓값 정확해·몬테카를로·직접 강화가 모두 이 함수를 써야 같은 모델이 된다. */
+function sfStepInfo(cfg, s) {
+  const btn = (cfg.stages && cfg.stages[s]) || 1;
+  const isProtected = (s >= 15 && s <= 17) && btn === 4;
+  const stage = isProtected ? 1 : btn;
+  return {
+    cost: calcSfCost(cfg.level, s, cfg.mvpDiscount || 0, cfg.isShining, isProtected, stage),
+    p:    getSfProb(s, cfg.isShining, isProtected, stage),
+  };
 }
 
 function getDestStar(star) {
@@ -177,12 +174,7 @@ function sfExpectedExact(cfg) {
   const B = Array.from({ length: n }, () => new Float64Array(3)); // 비용 / 파괴 / 시행
 
   for (let s = 0; s < n; s++) {
-    const btn = (cfg.stages && cfg.stages[s]) || 1;
-    const isProtected = (s >= 15 && s <= 17) && btn === 4;
-    const stage = isProtected ? 1 : btn;
-
-    const c = calcSfCost(cfg.level, s, cfg.mvpDiscount || 0, cfg.isShining, isProtected, stage, 0);
-    const p = getSfProb(s, cfg.isShining, isProtected, stage);
+    const { cost: c, p } = sfStepInfo(cfg, s);
 
     A[s][s] += 1 - p.fail;
     if (s + 1 < to) A[s][s + 1] -= p.succ;      // s+1 === to 이면 E=0이라 항이 사라짐
@@ -222,18 +214,12 @@ function sfRunOnce(cfg) {
   let star = cfg.current;
   let totalCost = 0;
   let destroys = 0;
+  const steps = [];   // 성수별 비용·확률은 한 판 안에서 바뀌지 않으므로 처음 갈 때 한 번만 구한다
 
   while (star < cfg.target) {
-    const btn = (cfg.stages && cfg.stages[star]) || 1;
-
-    /* 15~17성 4번 버튼 = 기존 파괴방지: stage1 확률에 파괴→실패 전환 */
-    const isProtected = (star >= 15 && star <= 17) && btn === 4;
-    const stage = isProtected ? 1 : btn;
-
-    const cost = calcSfCost(cfg.level, star, cfg.mvpDiscount || 0, cfg.isShining, isProtected, stage, 0);
+    const { cost, p } = steps[star] || (steps[star] = sfStepInfo(cfg, star));
     totalCost += cost;
 
-    const p = getSfProb(star, cfg.isShining, isProtected, stage);
     const r = Math.random();
 
     if (r < p.succ) {

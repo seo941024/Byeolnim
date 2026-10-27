@@ -15,7 +15,7 @@
        at    = 알림을 띄울 시각(epoch ms). 클라이언트가 보스시각에서 BP_NOTIFY_BEFORE_MIN을 빼서 보낸다.
      push:user:<uid>      (set)  로그인한 계정에 연결된 구독 id 목록(커뮤니티 알림용)
    ============================================= */
-const { getRedis } = require('./_lib');
+const { getRedis, bad, parseBody, getJson, uidOf, removeSub } = require('./_lib');
 
 // 구독 URL로 안정적인 짧은 id를 만든다(같은 기기면 항상 같은 id → 중복 구독 방지)
 function subId(endpoint) {
@@ -25,57 +25,36 @@ function subId(endpoint) {
 }
 
 module.exports = async function handler(req, res) {
-  /* GET /api/push-subscribe?key=1 — VAPID 공개키 조회.
-     원래 api/push-key.js였는데, Vercel Hobby 플랜의 서버리스 함수 12개 제한에
-     걸려서(커뮤니티 기능 추가로 초과) 여기 GET 라우트로 합쳤다. 로직은 그대로,
-     자리만 옮겼다 — 클라이언트도 이 주소로 같이 바꿔야 한다(bosspush.js). */
+  /* GET /api/push-subscribe?key=1 — bosspush.js가 VAPID 공개키를 받아 간다.
+     Vercel Hobby 플랜의 서버리스 함수 12개 제한 때문에 따로 두지 않고 여기 GET으로 받는다. */
   if (req.method === 'GET') {
     const key = process.env.VAPID_PUBLIC_KEY;
-    if (!key) { res.status(500).json({ ok: false, error: 'VAPID 키 미설정' }); return; }
+    if (!key) return bad(res, 500, 'VAPID 키 미설정');
     res.status(200).json({ ok: true, key });
     return;
   }
 
-  if (req.method !== 'POST') {
-    res.status(405).json({ ok: false, error: 'POST만 허용' });
-    return;
-  }
+  if (req.method !== 'POST') return bad(res, 405, 'POST만 허용');
 
   const redis = getRedis();
-  if (!redis) {
-    res.status(500).json({ ok: false, error: 'Redis 미설정' });
-    return;
-  }
+  if (!redis) return bad(res, 500, 'Redis 미설정');
 
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { body = null; }
-  }
-  if (!body || !body.subscription || !body.subscription.endpoint) {
-    res.status(400).json({ ok: false, error: 'subscription 없음' });
-    return;
-  }
+  const body = parseBody(req);
+  if (!body || !body.subscription || !body.subscription.endpoint) return bad(res, 400, 'subscription 없음');
 
   const id = subId(body.subscription.endpoint);
 
-  // 여기서부터는 전부 Redis 쓰기다. 지금까지 배포한 read 경로(push-key, push-tick의
-  // smembers)는 성공했지만 write는 한 번도 실제로 통과한 적이 없어서, try/catch 없이
-  // 두면 여기서 나는 오류가 함수를 통째로 죽인다(FUNCTION_INVOCATION_FAILED로 관찰됨).
-  // 진짜 원인(예: Upstash 토큰이 읽기 전용으로 발급됨)을 특정하려면 오류를 그대로
-  // 삼키지 말고 클라이언트에 보여줘야 하므로 감싸서 처리한다.
+  // Redis 쓰기 오류가 함수를 통째로 죽여 FUNCTION_INVOCATION_FAILED만 보이던 적이 있다.
+  // Upstash 토큰이 읽기 전용으로 발급된 경우처럼 진짜 원인을 알 수 있게 오류를 detail로 돌려준다.
   try {
-    const rawOld = await redis.get('push:sub:' + id);
-    const oldRec = rawOld ? (typeof rawOld === 'string' ? JSON.parse(rawOld) : rawOld) : null;
+    const oldRec = await getJson(redis, 'push:sub:' + id);
     // 로그인한 상태에서 동기화하면 이 기기를 계정에 연결한다. 커뮤니티 알림은
     // 계정 소유자에게만 보내야 하므로, 브라우저가 보낸 id를 그대로 믿지 않는다.
-    const token = String(body.token || '');
-    const uid = token ? await redis.get('auth:tok:' + token) : null;
+    const uid = await uidOf(redis, String(body.token || ''));
 
     // 알림 끄기
     if (body.unsubscribe) {
-      await redis.srem('push:subs', id);
-      if (oldRec && oldRec.userId) await redis.srem('push:user:' + oldRec.userId, id);
-      await redis.del('push:sub:' + id);
+      await removeSub(redis, id, oldRec && oldRec.userId);
       res.status(200).json({ ok: true, removed: true });
       return;
     }
@@ -93,16 +72,16 @@ module.exports = async function handler(req, res) {
         body: String(it.body || '').slice(0, 120),
       }));
 
-    /* 어느 주소에서 구독했는지 함께 남긴다.
-       푸시 구독은 기기의 서비스워커에 묶여 있어 사이트 주소가 바뀌거나 죽어도 살아
-       있다. 예전 주소로 설치한 사람도 같은 VAPID 키면 알림을 받으므로, 전체 발송
-       때 지금 주소에서 구독한 사람만 골라내려면 이 값이 필요하다.
-       endpoint(fcm.googleapis.com/...)로는 출처를 알 수 없다. */
     // 토큰이 없거나 만료됐으면 로그아웃한 기기라 계정 연결을 끊는다
     const userId = uid || null;
     if (oldRec && oldRec.userId && oldRec.userId !== userId) await redis.srem('push:user:' + oldRec.userId, id);
     await redis.set('push:sub:' + id, JSON.stringify({
       sub: body.subscription,
+      /* 어느 주소에서 구독했는지 함께 남긴다.
+         푸시 구독은 기기의 서비스워커에 묶여 있어 사이트 주소가 바뀌거나 죽어도 살아
+         있다. 예전 주소로 설치한 사람도 같은 VAPID 키면 알림을 받으므로, 전체 발송
+         때 지금 주소에서 구독한 사람만 골라내려면 이 값이 필요하다.
+         endpoint(fcm.googleapis.com/...)로는 출처를 알 수 없다. */
       origin: req.headers.origin || '',
       items,
       userId,
@@ -113,6 +92,6 @@ module.exports = async function handler(req, res) {
 
     res.status(200).json({ ok: true, id, count: items.length });
   } catch (e) {
-    res.status(500).json({ ok: false, error: 'redis 쓰기 실패', detail: String(e && e.message || e) });
+    bad(res, 500, 'redis 쓰기 실패', { detail: String(e && e.message || e) });
   }
 };

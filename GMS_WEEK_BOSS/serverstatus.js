@@ -4,23 +4,19 @@
 let _ssRegion = 'na';
 let _ssLoading = false;
 
-async function _ssFetch() {
+// 받아오지 못한 쪽은 null — 상태가 없으면 _ssRender가 에러를 띄운다
+async function renderServerStatus() {
   _ssLoading = true;
   const sec = document.getElementById('sec-serverstatus');
   if (sec && !sec.querySelector('.ss-grid')) _ssRenderShell(sec, true);
 
-  let statusData = null, maintData = null;
-  try {
-    const [sr, mr] = await Promise.all([
-      fetch(`/api/server-status?region=${_ssRegion}`).then(r => r.json()).catch(() => null),
-      fetch('/api/maintenance').then(r => r.json()).catch(() => null),
-    ]);
-    if (sr && sr.ok) statusData = sr;
-    if (mr && mr.ok) maintData = mr;
-  } catch { /* 무시 — 아래에서 에러 표시 */ }
+  const [sr, mr] = await Promise.all([
+    fetch(`/api/server-status?region=${_ssRegion}`).then(r => r.json()).catch(() => null),
+    fetch('/api/maintenance').then(r => r.json()).catch(() => null),
+  ]);
 
   _ssLoading = false;
-  _ssRender(statusData, maintData);
+  _ssRender(sr && sr.ok ? sr : null, mr && mr.ok ? mr : null);
 }
 
 function _ssRenderShell(sec, loading) {
@@ -34,12 +30,13 @@ function _ssRenderShell(sec, loading) {
     </div>
     <div id="ssBody">${loading ? '<p style="color:var(--text-sub);font-size:.85rem">불러오는 중…</p>' : ''}</div>
   `;
-  sec.querySelectorAll('[data-ssregion]').forEach(btn => {
+  const btns = sec.querySelectorAll('[data-ssregion]');
+  btns.forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.ssregion === _ssRegion) return;
       _ssRegion = btn.dataset.ssregion;
-      sec.querySelectorAll('[data-ssregion]').forEach(b => b.classList.toggle('active', b.dataset.ssregion === _ssRegion));
-      _ssFetch();
+      setActive(btns, btn);
+      renderServerStatus();
     });
   });
 }
@@ -89,10 +86,11 @@ function _ssRender(statusData, maintData) {
     const channelGrid = (w.channelList || []).map(c =>
       `<span class="ss-chan ${c.up ? 'ss-chan--up' : 'ss-chan--down'}" title="${c.n}번 채널 ${c.up ? '정상' : '점검'}">${c.n}</span>`
     ).join('');
+    const icon = iconOf(w.world);
     return `
       <div class="ss-card ${statusCls}">
         <div class="ss-card__head">
-          <span class="ss-card__name">${(src => src ? `<img class="ss-card__icon" src="${src}" alt="" onerror="this.style.display='none'">` : '')(iconOf(w.world))}<span class="icon-lbl">${w.world}</span></span>
+          <span class="ss-card__name">${icon ? `<img class="ss-card__icon" src="${icon}" alt="" onerror="this.style.display='none'">` : ''}<span class="icon-lbl">${w.world}</span></span>
           <span class="ss-card__badge">${statusLabel}</span>
         </div>
         <div class="ss-card__row"><span>채널</span><b>${w.channels.online} / ${w.channels.total}</b></div>
@@ -107,9 +105,5 @@ function _ssRender(statusData, maintData) {
     <div class="ss-grid">${cards || '<p style="color:var(--text-sub);font-size:.85rem">표시할 서버 정보가 없습니다.</p>'}</div>
     <button class="sbtn sbtn--ghost mt16" id="ssRefreshBtn">새로고침</button>
   `;
-  document.getElementById('ssRefreshBtn')?.addEventListener('click', () => { if (!_ssLoading) _ssFetch(); });
-}
-
-function renderServerStatus() {
-  _ssFetch();
+  document.getElementById('ssRefreshBtn')?.addEventListener('click', () => { if (!_ssLoading) renderServerStatus(); });
 }

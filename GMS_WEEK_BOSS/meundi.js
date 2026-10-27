@@ -80,9 +80,12 @@ let _muTab = 'sheet';
 
 const _muUpCost = lv => MU_UP_BASE * lv + MU_UP_STEP * lv * (lv - 1) / 2;
 
+/* 조합끼리 비교할 때는 앞의 rep:와 끝의 *를 뗀다 */
+const _muKey = code => code.replace(/^rep:/, '').replace('*', '');
+
 /* 레벨 합계를 쓰고 남은 게이지로 뽑을 수 있는 최대 횟수. 레벨이 "?"면 계산할 수 없어 null. */
 function _muLastRoll(code) {
-  const lvs = code.split('!')[0].replace('*', '').split(' ').map(t => parseInt(t.slice(1), 10));
+  const lvs = _muKey(code).split(' ').map(t => parseInt(t.slice(1), 10));
   if (lvs.some(Number.isNaN)) return null;
   const spend = lvs.reduce((s, lv) => s + _muUpCost(lv), 0);
   return Math.floor((MU_GAUGE_CAP - spend) / MU_ROLL_COST);
@@ -91,8 +94,6 @@ function _muLastRoll(code) {
 /* 확정 행에 제보를 뽑기 횟수별로 합친다. 없는 횟수는 행을 새로 만들고 웨이브는 MU_LEVELS 표를 따른다.
    처음 세 번이 기본이라 3회 미만이 나오면 불가능한 조합으로 보고 뺀다. 같은 조합이 이미 그 행에 있으면 넣지 않는다.
    레벨 미기록은 맨 아래 제보 행에 둔다. 제보 카드는 앞에 rep:를 붙여 구분한다. */
-const _muKey = code => code.split('!')[0].replace('*', '');
-
 function _muMerge(base, reported, needS) {
   const rows = base.map(r => ({ ...r, squads: [...r.squads] }));
   const unknown = [];
@@ -107,18 +108,18 @@ function _muMerge(base, reported, needS) {
       rows.push(row);
       rows.sort((a, b) => a.roll - b.roll);
     }
-    if (row.squads.some(s => _muKey(s.replace(/^rep:/, '')) === _muKey(code))) return;
+    if (row.squads.some(s => _muKey(s) === _muKey(code))) return;
     row.squads.push('rep:' + code);
   });
   /* 널널컷 제거: 같은 슬롯에 같은 랭크이면서 레벨이 모두 같거나 낮은 다른 카드가 있으면 그 카드가 더 최소컷이라 뺀다.
-     랭크가 다른 조합끼리는 우열을 가리지 않는다. */
-  const parse = c => { const t = _muKey(c.replace(/^rep:/, '')).split(' '); return { ranks: t.map(x => x[0]).join(''), lvs: t.map(x => parseInt(x.slice(1), 10)) }; };
+     랭크가 다른 조합끼리는 우열을 가리지 않는다. 한 슬롯이라도 더 낮아야 하므로 자기 자신과는 걸리지 않는다. */
+  const parse = c => { const t = _muKey(c).split(' '); return { ranks: t.map(x => x[0]).join(''), lvs: t.map(x => parseInt(x.slice(1), 10)) }; };
   const all = rows.flatMap(r => r.squads).map(parse);
   rows.forEach(r => {
     r.squads = r.squads.filter(s => {
       if (!s.startsWith('rep:')) return true;
       const me = parse(s);
-      return !all.some(o => o !== me && o.ranks === me.ranks && o.lvs.every((l, i) => l <= me.lvs[i]) && o.lvs.some((l, i) => l < me.lvs[i]));
+      return !all.some(o => o.ranks === me.ranks && o.lvs.every((l, i) => l <= me.lvs[i]) && o.lvs.some((l, i) => l < me.lvs[i]));
     });
   });
   const kept = rows.filter(r => r.squads.length);
@@ -129,16 +130,15 @@ function _muMerge(base, reported, needS) {
 function _muSquadHtml(code) {
   const rep = code.startsWith('rep:');
   if (rep) code = code.slice(4);
-  let [body, note] = code.split('!');
-  const shaky = body.endsWith('*');
-  if (shaky) body = body.slice(0, -1);
-  const tiles = body.split(' ').map((t, i) => {
+  const shaky = code.endsWith('*');
+  if (shaky) code = code.slice(0, -1);
+  const tiles = code.split(' ').map((t, i) => {
     const rank = t[0], lv = t.slice(1);
     const cls = ['r', 'k', 'y'][i];
     const team = ['Red', 'Black', 'Yellow'][i];
     return `<div class="mu-u mu-u--${cls}"><img src="images/meundi/${team}_${rank}.png?v=20261003d" alt="${rank}" width="46" height="46"><span${lv === '0' ? ' class="mu-zero"' : ''}>Lv. ${lv}</span></div>`;
   }).join('');
-  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : note ? ` title="${note}"` : ''}><div class="mu-units">${tiles}</div></div>`;
+  return `<div class="mu-card${shaky ? ' mu-card--shaky' : ''}${rep ? ' mu-card--rep' : ''}"${shaky ? ' title="근소하거나 결과가 갈린 조합"' : rep ? ' title="단일 제보"' : ''}><div class="mu-units">${tiles}</div></div>`;
 }
 
 function _muRowsHtml(rows) {
@@ -214,16 +214,17 @@ async function _muPip() {
   const fr = d.createElement('iframe');
   fr.style.cssText = `position:absolute;left:0;top:0;border:0;width:${PW}px;height:600px;transform-origin:0 0;background:transparent`;
   fr.srcdoc = `<!doctype html><html${theme ? ` data-theme="${theme}"` : ''}><head><meta charset="utf-8">${links}<style>.mu-cards{flex-wrap:nowrap}</style></head><body style="margin:0;padding:8px;background:${cs.backgroundColor};color:${cs.color};font-family:${cs.fontFamily.replace(/"/g, "'")}">${clone.outerHTML}</body></html>`;
+  /* 카드 높이 + body 위아래 여백. 아직 그려지기 전이면 0 */
+  const cardH = () => (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 0;
   const fit = () => {
-    const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 600;
+    const h = cardH() || 600;
     fr.style.height = h + 'px';
     const s = Math.min(win.innerWidth / PW, win.innerHeight / h);
     fr.style.transform = `translate(${(win.innerWidth - PW * s) / 2}px,${(win.innerHeight - h * s) / 2}px) scale(${s})`;
   };
   fr.addEventListener('load', () => {
     fit();
-    const h = fr.contentDocument.body.firstElementChild.offsetHeight + 16;
-    try { win.resizeTo(PW, Math.round(PW * h / PW) + (win.outerHeight - win.innerHeight)); } catch {}
+    try { win.resizeTo(PW, cardH() + (win.outerHeight - win.innerHeight)); } catch {}
     fit();
   });
   /* 창 비율 보정: 드래그를 놓으면 높이를 카드 비율에 맞춰 되돌린다. 브라우저가 사용자 조작 없는 크기 변경을 막으면 조용히 무시된다. */
@@ -232,7 +233,7 @@ async function _muPip() {
     fit();
     clearTimeout(fixTimer);
     fixTimer = setTimeout(() => {
-      const h = (fr.contentDocument?.body.firstElementChild?.offsetHeight + 16) || 0;
+      const h = cardH();
       if (!h) return;
       const want = Math.round(win.innerWidth * h / PW);
       if (Math.abs(want - win.innerHeight) < 3) return;

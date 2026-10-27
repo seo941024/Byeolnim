@@ -19,10 +19,10 @@
 const fs = require('fs');
 const path = require('path');
 const { spawnSync } = require('child_process');
+const { UA } = require('./coordi_index');
 
 const SITE = path.join(__dirname, '..');
 const REPO = path.join(SITE, '..');
-const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
 const FORCE = process.argv.includes('--force');
 
 const step = (n, msg) => console.log(`\n[${n}/7] ${msg}`);

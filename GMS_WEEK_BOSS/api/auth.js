@@ -15,7 +15,7 @@
    해서 응답 시간 차이로 정답을 유추하지 못하게 막는다.
    ============================================= */
 const crypto = require('crypto');
-const { getRedis, isAdminId } = require('./_lib');
+const { getRedis, isAdminId, bad, parseBody, getJson, uidOf } = require('./_lib');
 
 const ID_RE = /^[A-Za-z0-9_]{3,16}$/;     // 대소문자 구분, 영문·숫자·밑줄
 // 한글·영문·숫자·기호·공백 1~12자. 순수 공백만으로는 안 되게 아래서 trim 후 길이를 다시 본다.
@@ -28,8 +28,6 @@ const FAIL_MAX = 10;                       // 10회 틀리면 잠시 차단
 const DATA_MAX = 1024 * 512;               // 저장 데이터 상한 512KB
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-/* isAdminId는 _lib.js로 옮겼다 — community.js(글/댓글 삭제 권한)도 같이 쓴다. */
 
 function hashPw(pw, salt) {
   // N=16384는 서버리스 환경에서 100ms 안팎 — 무차별 대입을 충분히 느리게 만든다
@@ -48,7 +46,11 @@ function safeEq(a, b) {
   return crypto.timingSafeEqual(ba, bb);
 }
 
-function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
+/* 비밀번호가 틀렸을 때: 잠금 카운터를 올리고 조금 늦게 답한다 */
+async function countFail(redis, failKey, fails) {
+  await redis.set(failKey, fails + 1, { ex: FAIL_TTL });
+  await sleep(150);
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return bad(res, 405, 'POST만 허용');
@@ -56,8 +58,7 @@ module.exports = async function handler(req, res) {
   const redis = getRedis();
   if (!redis) return bad(res, 500, '서버 저장소가 설정되지 않았습니다');
 
-  let body = req.body;
-  if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
+  const body = parseBody(req);
   if (!body || typeof body !== 'object') return bad(res, 400, '요청 형식이 올바르지 않습니다');
 
   const action = String(body.action || '');
@@ -97,20 +98,12 @@ module.exports = async function handler(req, res) {
       if (fails >= FAIL_MAX)
         return bad(res, 429, '로그인 시도가 너무 많습니다. 10분 후 다시 시도해주세요');
 
-      const raw = await redis.get('auth:user:' + id);
-      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      const rec = await getJson(redis, 'auth:user:' + id);
 
-      // 아이디가 없을 때도 같은 시간이 걸리게 해서 아이디 존재 여부를 못 알아내게 한다
-      if (!rec) {
-        hashPw(pw, 'dummy-salt-for-timing');
-        await redis.set(failKey, fails + 1, { ex: FAIL_TTL });
-        await sleep(150);
-        return bad(res, 401, '아이디 또는 비밀번호가 올바르지 않습니다');
-      }
-
-      if (!safeEq(hashPw(pw, rec.salt), rec.hash)) {
-        await redis.set(failKey, fails + 1, { ex: FAIL_TTL });
-        await sleep(150);
+      // 아이디가 없을 때도 해시를 한 번 계산해 같은 시간이 걸리게 해서 아이디 존재 여부를 못 알아내게 한다
+      const hash = hashPw(pw, rec ? rec.salt : 'dummy-salt-for-timing');
+      if (!rec || !safeEq(hash, rec.hash)) {
+        await countFail(redis, failKey, fails);
         return bad(res, 401, '아이디 또는 비밀번호가 올바르지 않습니다');
       }
 
@@ -124,7 +117,7 @@ module.exports = async function handler(req, res) {
     /* 아래는 전부 로그인된 사람만 */
     const token = String(body.token || '');
     if (!token) return bad(res, 401, '로그인이 필요합니다');
-    const uid = await redis.get('auth:tok:' + token);
+    const uid = await uidOf(redis, token);
     if (!uid) return bad(res, 401, '로그인이 만료되었습니다. 다시 로그인해주세요');
 
     /* ── 비밀번호 변경 ── */
@@ -134,8 +127,7 @@ module.exports = async function handler(req, res) {
       if (newPw.length < PW_MIN || newPw.length > PW_MAX)
         return bad(res, 400, `새 비밀번호는 ${PW_MIN}~${PW_MAX}자여야 합니다`);
 
-      const raw = await redis.get('auth:user:' + uid);
-      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      const rec = await getJson(redis, 'auth:user:' + uid);
       if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
 
       // 잘못된 현재 비밀번호도 로그인과 같은 잠금 카운터를 쓴다 — 여기가 뚫려있으면
@@ -146,8 +138,7 @@ module.exports = async function handler(req, res) {
         return bad(res, 429, '시도가 너무 많습니다. 10분 후 다시 시도해주세요');
 
       if (!safeEq(hashPw(curPw, rec.salt), rec.hash)) {
-        await redis.set(failKey, fails + 1, { ex: FAIL_TTL });
-        await sleep(150);
+        await countFail(redis, failKey, fails);
         return bad(res, 401, '현재 비밀번호가 올바르지 않습니다');
       }
       await redis.del(failKey);
@@ -167,8 +158,7 @@ module.exports = async function handler(req, res) {
       if (!nickname) return bad(res, 400, '닉네임을 입력해주세요');
       if (!NICK_RE.test(nickname)) return bad(res, 400, '닉네임은 한글·영문·숫자·기호로 1~12자여야 합니다');
 
-      const raw = await redis.get('auth:user:' + uid);
-      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      const rec = await getJson(redis, 'auth:user:' + uid);
       if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
 
       rec.nickname = nickname;
@@ -183,8 +173,7 @@ module.exports = async function handler(req, res) {
        레코드에 스냅샷으로 저장한다 — 실시간 조회가 아니다. 닉네임과 같은 원칙:
        나중에 캐릭터가 바뀌어도 이미 쓴 글에는 소급 반영되지 않는다. */
     if (action === 'setrepchar') {
-      const raw = await redis.get('auth:user:' + uid);
-      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+      const rec = await getJson(redis, 'auth:user:' + uid);
       if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
 
       if (body.clear) {
@@ -228,8 +217,7 @@ module.exports = async function handler(req, res) {
     if (action === 'load') {
       const raw = await redis.get('auth:data:' + uid);
       if (raw == null) return res.status(200).json({ ok: true, data: null });
-      const metaRaw = await redis.get('auth:datameta:' + uid);
-      const meta = metaRaw ? (typeof metaRaw === 'string' ? JSON.parse(metaRaw) : metaRaw) : null;
+      const meta = await getJson(redis, 'auth:datameta:' + uid);
       return res.status(200).json({
         ok: true,
         data: typeof raw === 'string' ? raw : JSON.stringify(raw),
@@ -239,10 +227,8 @@ module.exports = async function handler(req, res) {
 
     /* ── 로그인 상태 확인 ── */
     if (action === 'me') {
-      const raw = await redis.get('auth:user:' + uid);
-      const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
-      const metaRaw = await redis.get('auth:datameta:' + uid);
-      const meta = metaRaw ? (typeof metaRaw === 'string' ? JSON.parse(metaRaw) : metaRaw) : null;
+      const rec = await getJson(redis, 'auth:user:' + uid);
+      const meta = await getJson(redis, 'auth:datameta:' + uid);
       return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at, isAdmin: isAdminId(uid), repChar: (rec && rec.repChar) || null });
     }
 

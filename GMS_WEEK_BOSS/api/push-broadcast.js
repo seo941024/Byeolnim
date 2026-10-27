@@ -21,53 +21,28 @@
    ※ dryRun을 주면 실제로 보내지 않고 대상 수만 돌려준다. 문구를 확인하거나
       구독자 수를 먼저 세어볼 때 쓴다.
    ============================================= */
-const { getRedis } = require('./_lib');
+const { getRedis, bad, parseBody, hasSecret, webPush, readSub, removeSub } = require('./_lib');
 
 module.exports = async function handler(req, res) {
-  if (req.method !== 'POST') {
-    res.status(405).json({ ok: false, error: 'POST만 허용' });
-    return;
-  }
+  if (req.method !== 'POST') return bad(res, 405, 'POST만 허용');
 
   // 전체 발송은 되돌릴 수 없으므로 비밀번호 미설정 시 잠근다
   const secret = process.env.ADMIN_SECRET;
-  if (!secret) {
-    res.status(500).json({ ok: false, error: 'ADMIN_SECRET 미설정 — 전체 발송을 잠급니다' });
-    return;
-  }
-  const auth = req.headers['authorization'] || '';
-  const q = (req.query && req.query.secret) || '';
-  if (auth !== `Bearer ${secret}` && q !== secret) {
-    res.status(401).json({ ok: false, error: 'unauthorized' });
-    return;
-  }
+  if (!secret) return bad(res, 500, 'ADMIN_SECRET 미설정 — 전체 발송을 잠급니다');
+  if (!hasSecret(req, secret, true)) return bad(res, 401, 'unauthorized');
 
-  const pub = process.env.VAPID_PUBLIC_KEY;
-  const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) {
-    res.status(500).json({ ok: false, error: 'VAPID 키 미설정' });
-    return;
-  }
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return bad(res, 500, 'VAPID 키 미설정');
 
   const redis = getRedis();
-  if (!redis) {
-    res.status(500).json({ ok: false, error: 'Redis 미설정' });
-    return;
-  }
+  if (!redis) return bad(res, 500, 'Redis 미설정');
 
-  let body = req.body;
-  if (typeof body === 'string') {
-    try { body = JSON.parse(body); } catch { body = null; }
-  }
+  const body = parseBody(req);
   const title = String((body && body.title) || '').trim().slice(0, 60);
   const text  = String((body && body.body)  || '').trim().slice(0, 160);
   const url   = String((body && body.url)   || '/').slice(0, 200);
   const dryRun = !!(body && body.dryRun);
 
-  if (!title) {
-    res.status(400).json({ ok: false, error: '제목(title)이 비었습니다' });
-    return;
-  }
+  if (!title) return bad(res, 400, '제목(title)이 비었습니다');
 
   let ids = [];
   try { ids = (await redis.smembers('push:subs')) || []; } catch { ids = []; }
@@ -80,13 +55,8 @@ module.exports = async function handler(req, res) {
   const records = [];
   let skipped = 0;
   for (const id of ids) {
-    let rec = null;
-    try {
-      const raw = await redis.get('push:sub:' + id);
-      rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    } catch { rec = null; }
-    if (!rec || !rec.sub) { skipped++; continue; }
-    if (!rec.origin || (here && rec.origin !== here)) { skipped++; continue; }
+    const rec = await readSub(redis, id);
+    if (!rec || !rec.sub || !rec.origin || (here && rec.origin !== here)) { skipped++; continue; }
     records.push({ id, rec });
   }
 
@@ -95,8 +65,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const webpush = require('web-push');
-  webpush.setVapidDetails('mailto:seo941024@gmail.com', pub, priv);
+  const webpush = webPush();
 
   // 같은 tag를 쓰면 이전 공지 알림을 덮어써서 알림창에 쌓이지 않는다
   const tag = 'notice-' + Date.now().toString(36);
@@ -114,10 +83,10 @@ module.exports = async function handler(req, res) {
       sent++;
     } catch (e) {
       failed++;
-      // 404/410 = 구독 만료 또는 사용자가 알림을 끔 → 목록에서 정리한다
+      // 404/410 = 구독 만료 또는 사용자가 알림을 끔 → 목록과 계정 색인에서 정리한다
       const code = e && e.statusCode;
       if (code === 404 || code === 410) {
-        try { await redis.srem('push:subs', id); await redis.del('push:sub:' + id); pruned++; }
+        try { await removeSub(redis, id, rec.userId); pruned++; }
         catch { /* 다음 발송 때 다시 정리된다 */ }
       }
     }

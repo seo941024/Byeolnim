@@ -205,14 +205,17 @@ if (!_cubeTableLoading) {
 GMS_Calc/
 ├─ GMS_WEEK_BOSS/          웹앱 본체 · Vercel 배포 루트
 │  ├─ index.html           단일 페이지
-│  ├─ app.js               메뉴 이동, 캐릭터 목록, 공통 기능
+│  ├─ common.js            공통 도우미 · 이스케이프, 지연 로딩, 단축키, 자동 실행
+│  ├─ app.js               상태 저장, 메뉴 이동, 보스 수익 계산
+│  ├─ character.js         캐릭터 추가·조회, 캐릭터 목록 화면, 카드 그림 저장
+│  ├─ settings.js          설정, 백업, 테마·글꼴, 관리자 알림
 │  ├─ *.js                 메뉴별 기능 · cube.js, mixdye.js, starforce.js 등
 │  ├─ data_*.js            메뉴별 데이터
 │  ├─ api/                 서버리스 함수
 │  ├─ tools/               데이터 생성·수집 스크립트
 │  ├─ serve.js             로컬 개발 서버
 │  └─ sw.js, pwa.js        서비스 워커, 앱 설치
-├─ .github/workflows/      예약·수동 수집 작업
+├─ .github/workflows/      코디 데이터 수동 수집 작업
 └─ COORDI_DESIGN.md        코디 시뮬레이터 설계 문서
 ```
 
@@ -224,7 +227,7 @@ GMS_Calc/
 node GMS_WEEK_BOSS/serve.js
 ```
 
-`http://localhost:3001` 접속. 정적 파일과 일부 API를 로컬에서 그대로 제공.
+`http://localhost:3001` 접속. 정적 파일과 `api/` 함수 전체를 Vercel과 같은 방식으로 로컬 제공.
 
 ## 배포
 

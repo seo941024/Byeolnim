@@ -2,7 +2,7 @@
    클라우드 저장 — 회원가입 / 로그인 / 서버 저장·불러오기
 
    파일로 주고받던 백업을 서버에 올려두고 아이디로 꺼내 쓰게 한다.
-   올리는 내용은 기존 "내보내기" 번들과 완전히 같다(state + localStorage 전체).
+   올리는 내용은 파일 "내보내기"와 같은 묶음이다(settings.js의 backupBundle).
 
    토큰은 localStorage에 둔다. 6개월 뒤 서버에서 자동 만료된다.
 ═══════════════════════════════════════════════ */
@@ -18,11 +18,6 @@ let _csRepChar = null;   // { name, level, job, world, region, img } | null — 
 let _csBusy = false;
 let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
 let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
-
-/* 닉네임/아이디는 사용자가 정하는 값이라 innerHTML에 그대로 넣으면 위험하다 */
-function csEsc(s) {
-  return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-}
 
 function csToken() { return localStorage.getItem(CS_TOKEN_KEY) || ''; }
 
@@ -47,26 +42,33 @@ async function csApi(action, extra) {
   return j;
 }
 
-/* 지금 브라우저에 있는 모든 데이터를 한 덩어리로 — 기존 내보내기와 같은 형식 */
-function csCollectBundle() {
-  const extra = {};
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k === STORAGE_KEYS.boss) continue;   // state로 따로 담는다
-    if (BACKUP_SKIP_KEYS.has(k)) continue;   // 로그인 정보·기기 전용 값은 올리지 않는다
-    extra[k] = localStorage.getItem(k);
-  }
-  return { [BACKUP_MARK]: 1, state, extra };
+/* 요청하는 동안 버튼을 busyText로 바꿔 잠그고, 다른 요청도 막는다. 끝나면 원래 글자로 돌린다. */
+async function csCall(btnId, busyText, action, extra) {
+  _csBusy = true;
+  const btn = document.getElementById(btnId);
+  const label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = busyText; }
+  const j = await csApi(action, extra);
+  if (btn) { btn.disabled = false; btn.textContent = label; }
+  _csBusy = false;
+  return j;
 }
 
-/* 받아온 번들을 브라우저에 되살린다 */
-function csApplyBundle(bundle) {
-  if (!bundle) return false;
-  if (bundle.state) { state = bundle.state; save(); }
-  Object.entries(bundle.extra || {}).forEach(([k, v]) => {
-    if (typeof v === 'string' && !BACKUP_SKIP_KEYS.has(k)) localStorage.setItem(k, v);
-  });
-  return true;
+/* 서버가 알려 준 로그인 상태를 기억한다 */
+function csRemember(j) {
+  _csUser = j.id;
+  _csNick = j.nickname || j.id;
+  _csAdmin = !!j.isAdmin;
+  _csRepChar = j.repChar || null;
+}
+/* 로그아웃했거나 토큰이 만료됐을 때 */
+function csForget() {
+  localStorage.removeItem(CS_TOKEN_KEY);
+  localStorage.removeItem(CS_ID_KEY);
+  _csUser = null;
+  _csNick = null;
+  _csAdmin = false;
+  _csRepChar = null;
 }
 
 function csFmtTime(ms) {
@@ -84,7 +86,7 @@ function csSyncHeader() {
   /* 배지가 붙으므로 textContent 대신 innerHTML — 닉네임은 반드시 이스케이프한다.
      이름은 따로 감싼다. 버튼 폭이 좁아질 때 이름만 줄어들고 배지는 남아야 한다. */
   btn.innerHTML = shown
-    ? `${_csAdmin ? '<span class="admin-badge">👑ADMIN</span>' : ''}<span class="hbtn__name">${csEsc(shown)}</span>`
+    ? `${_csAdmin ? '<span class="admin-badge">👑ADMIN</span>' : ''}<span class="hbtn__name">${escHtml(shown)}</span>`
     : '로그인';
   btn.classList.toggle('hbtn--on', !!_csUser);
   btn.title = _csUser ? `${shown} — 클라우드 저장 열기` : '로그인 / 회원가입';
@@ -131,13 +133,13 @@ function csRender(savedAt) {
   box.innerHTML = `
     <div class="cs-me">
       <div class="cs-me__body">
-        <span class="cs-me__nick">${csEsc(_csNick || _csUser)}</span>
-        <span class="cs-me__idsub">@${csEsc(_csUser)}</span>
+        <span class="cs-me__nick">${escHtml(_csNick || _csUser)}</span>
+        <span class="cs-me__idsub">@${escHtml(_csUser)}</span>
       </div>
       <button class="sbtn sbtn--ghost sbtn--sm" id="csLogoutBtn">로그아웃</button>
     </div>
     <div class="cs-row mt8">
-      <input class="inp cs-inp" id="csNickInp" value="${csEsc(_csNick || _csUser)}" maxlength="12" placeholder="닉네임">
+      <input class="inp cs-inp" id="csNickInp" value="${escHtml(_csNick || _csUser)}" maxlength="12" placeholder="닉네임">
       <button class="sbtn sbtn--ghost" id="csNickSaveBtn">닉네임 저장</button>
     </div>
     <p class="dt-help mt8">한글·영문·숫자·기호로 1~12자까지 정할 수 있고, 우측 위 버튼에 이 이름으로 표시됩니다.</p>
@@ -146,7 +148,7 @@ function csRender(savedAt) {
       <button class="sbtn sbtn--ghost" id="csRepSaveBtn">대표 캐릭터 저장</button>
     </div>
     <p class="dt-help mt8">${_csRepChar
-      ? `현재 대표 캐릭터: <b>${csEsc(_csRepChar.name)}</b> (Lv.${_csRepChar.level} · ${csEsc(_csRepChar.world)}). 커뮤니티에서 내 닉네임을 누르면 이 캐릭터가 보입니다.`
+      ? `현재 대표 캐릭터: <b>${escHtml(_csRepChar.name)}</b> (Lv.${_csRepChar.level} · ${escHtml(_csRepChar.world)}). 커뮤니티에서 내 닉네임을 누르면 이 캐릭터가 보입니다.`
       : '커뮤니티에서 닉네임을 누르면 여기서 고른 캐릭터가 보입니다. 캐릭터 목록에 등록해 둔 것 중에서 고를 수 있습니다.'}</p>
     <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
     <div class="cs-row mt8">
@@ -193,24 +195,12 @@ async function csAuth(action) {
     if (pw !== pw2) { showToast('비밀번호가 서로 다릅니다. 다시 확인해주세요.'); return; }
   }
 
-  _csBusy = true;
-  const btn = document.getElementById('csGoBtn');
-  const label = btn.textContent;
-  btn.disabled = true; btn.textContent = '처리 중...';
-
-  const j = await csApi(action, { id, pw });
-
-  btn.disabled = false; btn.textContent = label;
-  _csBusy = false;
-
+  const j = await csCall('csGoBtn', '처리 중...', action, { id, pw });
   if (!j.ok) { showToast(j.error || '실패했습니다.'); return; }
 
   localStorage.setItem(CS_TOKEN_KEY, j.token);
   localStorage.setItem(CS_ID_KEY, j.id);
-  _csUser = j.id;
-  _csNick = j.nickname || j.id;
-  _csAdmin = !!j.isAdmin;
-  _csRepChar = j.repChar || null;
+  csRemember(j);
   showToast(action === 'signup' ? '가입 완료! 이제 서버에 저장할 수 있습니다.' : '로그인되었습니다.');
   // 이미 허용해 둔 이 브라우저의 푸시 구독을 방금 로그인한 계정에 연결한다.
   if (typeof bpSync === 'function') bpSync().catch(() => {});
@@ -219,12 +209,7 @@ async function csAuth(action) {
 
 async function csLogout() {
   await csApi('logout');
-  localStorage.removeItem(CS_TOKEN_KEY);
-  localStorage.removeItem(CS_ID_KEY);
-  _csUser = null;
-  _csNick = null;
-  _csAdmin = false;
-  _csRepChar = null;
+  csForget();
   _csPwOpen = false;
   // 이 기기의 푸시 구독을 토큰 없이 다시 올려 계정 연결을 끊는다(댓글 알림이 더 오지 않게)
   if (typeof bpSync === 'function') bpSync().catch(() => {});
@@ -241,19 +226,9 @@ async function csChangePw(savedAt) {
   if (!curPw || !newPw) { showToast('현재 비밀번호와 새 비밀번호를 입력해주세요.'); return; }
   if (newPw !== newPw2) { showToast('새 비밀번호가 서로 다릅니다. 다시 확인해주세요.'); return; }
 
-  _csBusy = true;
-  const btn = document.getElementById('csPwSubmitBtn');
-  btn.disabled = true; btn.textContent = '변경 중...';
-
-  const j = await csApi('changepw', { curPw, newPw });
-
-  _csBusy = false;
-  if (!j.ok) {
-    // 실패했을 땐 입력한 걸 지우지 않는다 — 오타 하나 고치려고 세 칸 다시 치게 하는 건 불친절하다
-    btn.disabled = false; btn.textContent = '비밀번호 변경';
-    showToast(j.error || '변경에 실패했습니다.');
-    return;
-  }
+  const j = await csCall('csPwSubmitBtn', '변경 중...', 'changepw', { curPw, newPw });
+  // 실패했을 땐 입력한 걸 지우지 않는다 — 오타 하나 고치려고 세 칸 다시 치게 하는 건 불친절하다
+  if (!j.ok) { showToast(j.error || '변경에 실패했습니다.'); return; }
   _csPwOpen = false;
   showToast('비밀번호를 변경했습니다.');
   csRender(savedAt);
@@ -265,12 +240,12 @@ async function csChangePw(savedAt) {
    나중에 그 캐릭터 정보를 갱신해도 이미 고른 값은 안 바뀐다(다시 저장해야 함) —
    닉네임과 같은 원칙. */
 function csRepCharOptions() {
-  const chars = (typeof state !== 'undefined' && Array.isArray(state.chars)) ? state.chars : [];
+  const chars = Array.isArray(state.chars) ? state.chars : [];
   const curName = _csRepChar && _csRepChar.name;
   const opts = chars.map((ch, i) => {
     const f = ch.fetched || {};
     const world = f.world || '';
-    return `<option value="${i}"${ch.name === curName ? ' selected' : ''}>${csEsc(ch.name)}${world ? ` (${csEsc(world)})` : ''}</option>`;
+    return `<option value="${i}"${ch.name === curName ? ' selected' : ''}>${escHtml(ch.name)}${world ? ` (${escHtml(world)})` : ''}</option>`;
   }).join('');
   const noneSelected = !curName || !chars.some(ch => ch.name === curName);
   return `<option value=""${noneSelected ? ' selected' : ''}>— 없음(해제) —</option>${opts}`;
@@ -278,32 +253,24 @@ function csRepCharOptions() {
 
 async function csSetRepChar(savedAt) {
   if (_csBusy) return;
-  const sel = document.getElementById('csRepSel');
-  const idx = sel.value;
-
-  _csBusy = true;
-  const btn = document.getElementById('csRepSaveBtn');
-  btn.disabled = true; btn.textContent = '저장 중...';
+  const idx = document.getElementById('csRepSel').value;
 
   let j;
   if (idx === '') {
-    j = await csApi('setrepchar', { clear: true });
+    j = await csCall('csRepSaveBtn', '저장 중...', 'setrepchar', { clear: true });
   } else {
     const ch = (state.chars || [])[Number(idx)];
     if (!ch) { j = { ok: false, error: '캐릭터를 찾을 수 없습니다.' }; }
     else {
       const f = ch.fetched || {};
-      j = await csApi('setrepchar', {
+      j = await csCall('csRepSaveBtn', '저장 중...', 'setrepchar', {
         name: ch.name, level: f.level || ch.level,
-        job: f.job || (typeof JOB_LIST !== 'undefined' ? JOB_LIST[ch.jobIdx]?.name : '') || '',
-        world: f.world || '', region: f.region || (state.region === 'eu' ? 'EU' : 'NA'),
+        job: charJobName(ch),
+        world: f.world || '', region: charRegion(ch),
         img: f.img || '', cardBg: ch.cardBg || null,
       });
     }
   }
-
-  _csBusy = false;
-  btn.disabled = false; btn.textContent = '대표 캐릭터 저장';
 
   if (!j.ok) { showToast(j.error || '대표 캐릭터 설정에 실패했습니다.'); return; }
   _csRepChar = j.repChar;
@@ -318,15 +285,7 @@ async function csSetNick(savedAt) {
   if (!nickname) { showToast('닉네임을 입력해주세요.'); return; }
   if (nickname === _csNick) return;   // 안 바뀌었으면 요청할 필요 없다
 
-  _csBusy = true;
-  const btn = document.getElementById('csNickSaveBtn');
-  btn.disabled = true; btn.textContent = '저장 중...';
-
-  const j = await csApi('setnick', { nickname });
-
-  _csBusy = false;
-  btn.disabled = false; btn.textContent = '닉네임 저장';
-
+  const j = await csCall('csNickSaveBtn', '저장 중...', 'setnick', { nickname });
   if (!j.ok) { showToast(j.error || '닉네임 변경에 실패했습니다.'); return; }
   _csNick = j.nickname;
   showToast('닉네임을 저장했습니다.');
@@ -336,49 +295,24 @@ async function csSetNick(savedAt) {
 /* ── 저장 / 불러오기 ── */
 async function csSave() {
   if (_csBusy) return;
-  _csBusy = true;
-  const btn = document.getElementById('csSaveBtn');
-  btn.disabled = true; btn.textContent = '저장 중...';
-
-  const j = await csApi('save', { data: JSON.stringify(csCollectBundle()) });
-
-  btn.disabled = false; btn.textContent = '서버에 저장';
-  _csBusy = false;
-
+  const j = await csCall('csSaveBtn', '저장 중...', 'save', { data: JSON.stringify(backupBundle()) });
   if (!j.ok) { showToast(j.error || '저장에 실패했습니다.'); return; }
   const el = document.getElementById('csSavedAt');
   if (el) el.textContent = csFmtTime(j.at);
   showToast('서버에 저장했습니다.');
 }
 
-async function csLoad() {
+function csLoad() {
   if (_csBusy) return;
-
   /* 덮어쓰기는 되돌릴 수 없으니 먼저 확인받는다 */
-  const msgEl = document.getElementById('confirmMsg');
-  const ov = document.getElementById('overlayConfirm');
-  if (msgEl && ov) {
-    msgEl.textContent = '서버에 저장된 데이터로 이 기기의 데이터를 덮어씁니다. 계속할까요?';
-    ov.classList.add('open');
-    document.getElementById('confirmOk').onclick = () => {
-      ov.classList.remove('open');
-      csDoLoad();
-    };
-    return;
-  }
-  csDoLoad();
+  openConfirm('서버에 저장된 데이터로 이 기기의 데이터를 덮어씁니다. 계속할까요?', () => {
+    closeConfirm();
+    csDoLoad();
+  });
 }
 
 async function csDoLoad() {
-  _csBusy = true;
-  const btn = document.getElementById('csLoadBtn');
-  if (btn) { btn.disabled = true; btn.textContent = '불러오는 중...'; }
-
-  const j = await csApi('load');
-
-  if (btn) { btn.disabled = false; btn.textContent = '서버에서 불러오기'; }
-  _csBusy = false;
-
+  const j = await csCall('csLoadBtn', '불러오는 중...', 'load');
   if (!j.ok) { showToast(j.error || '불러오기에 실패했습니다.'); return; }
   if (j.data == null) { showToast('서버에 저장된 데이터가 없습니다.'); return; }
 
@@ -386,7 +320,7 @@ async function csDoLoad() {
   try { bundle = JSON.parse(j.data); } catch { bundle = null; }
   if (!bundle) { showToast('저장된 데이터를 읽지 못했습니다.'); return; }
 
-  csApplyBundle(bundle);
+  applyBackupBundle(bundle);
   showToast('불러오기 완료! 새로고침합니다…');
   setTimeout(() => location.reload(), 600);
 }
@@ -397,20 +331,11 @@ async function csRefresh() {
   const j = await csApi('me');
   if (!j.ok) {
     // 서버가 잠깐 안 될 때는 토큰을 그대로 두고, 만료(401)일 때만 조용히 로그아웃 상태로
-    if (j.status !== 401) { csRender(null); return; }
-    localStorage.removeItem(CS_TOKEN_KEY);
-    localStorage.removeItem(CS_ID_KEY);
-    _csUser = null;
-    _csNick = null;
-    _csAdmin = false;
-    _csRepChar = null;
+    if (j.status === 401) csForget();
     csRender(null);
     return;
   }
-  _csUser = j.id;
-  _csNick = j.nickname || j.id;
-  _csAdmin = !!j.isAdmin;
-  _csRepChar = j.repChar || null;
+  csRemember(j);
   csRender(j.savedAt);
 }
 

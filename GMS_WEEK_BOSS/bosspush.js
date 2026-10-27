@@ -73,6 +73,15 @@ function bpSupported() {
   return 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
 }
 
+/* 이 기기의 구독을 서버에 올린다. 로그인했으면 토큰도 같이 보내 댓글 알림을 계정에 잇는다. */
+function bpPost(sub, extra) {
+  return fetch('/api/push-subscribe', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ subscription: sub, token: localStorage.getItem('gms_cloud_token') || '', ...extra }),
+  });
+}
+
 /* 켜기 — 권한을 받고 구독한 뒤 일정을 올린다.
    실패 사유를 문자열로 돌려주면 UI에서 그대로 보여줄 수 있다. */
 async function bpEnable() {
@@ -122,11 +131,7 @@ async function bpDisable() {
   const reg = await navigator.serviceWorker.ready;
   const sub = await reg.pushManager.getSubscription();
   if (sub) {
-    await fetch('/api/push-subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subscription: sub, token: localStorage.getItem('gms_cloud_token') || '', unsubscribe: true }),
-    }).catch(() => {});
+    await bpPost(sub, { unsubscribe: true }).catch(() => {});
     await sub.unsubscribe().catch(() => {});
   }
   return { ok: true };
@@ -139,12 +144,7 @@ async function bpSync() {
   const sub = await reg.pushManager.getSubscription();
   if (!sub) return { ok: false, count: 0 };
 
-  const items = bpCollectItems();
-  const res = await fetch('/api/push-subscribe', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ subscription: sub, token: localStorage.getItem('gms_cloud_token') || '', items }),
-  }).then(r => r.json()).catch(() => null);
+  const res = await bpPost(sub, { items: bpCollectItems() }).then(r => r.json()).catch(() => null);
 
   if (!res || !res.ok) return { ok: false, count: 0 };
   return { ok: true, count: res.count };
@@ -211,9 +211,8 @@ function bpShowPrompt() {
       </div>
     </div>`;
 
-  // #topBanners가 fixed라 설치 배너와 같은 통 안에서 위아래로 자연스럽게
-  // 쌓인다(bpEnsurePromptBanner가 항상 #pwaInstall 바로 다음에 놓는다) —
-  // 설치 배너가 열려 있으면 그 아래에, 없으면 그 자리에 온다.
+  // #topBanners는 배너를 위에서부터 세로로 쌓는 fixed 통이라, 설치 배너와 함께 떠도
+  // 겹치지 않고 먼저 만들어진 배너 아래에 온다.
   el.classList.add('open');
   el.classList.remove('opening'); void el.offsetWidth; el.classList.add('opening');
   el.addEventListener('animationend', () => el.classList.remove('opening'), { once: true });

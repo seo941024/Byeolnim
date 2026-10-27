@@ -20,14 +20,13 @@
 
 const fs = require('fs');
 const path = require('path');
+const { ROOT, UA, loadSiteData, toLayerItem } = require('./coordi_index');
 
 const API = 'https://maplestory.io/api';
 // 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다
 const VERSION = process.env.GMS_VERSION || '270';
 const PREFIX = `coordi/v${VERSION}`;
 const CHUNK = 100;
-const VIEWS = ['stand1', 'ladder'];
-const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
 // 실패해도 아이템을 건너뛰지 않고 받을 때까지 다시 요청한다. 다시 요청하기 전 쉬는 시간은 마지막 값을 계속 쓴다
 const RETRY_WAITS = [5, 15, 45, 120, 300];
 // 응답 대기. 90초였는데 2026-10-23 남자 성형에서 무응답이 이어져 지수 결정으로 첫 대기를 10초로 줄였다.
@@ -37,7 +36,6 @@ const RESPONSE_TIMEOUTS_SEC = [10, 10, 30, 60, 90];
 const args = process.argv.slice(2);
 const DRY = args.includes('--local') || args.includes('--dry');
 const NEW = args.includes('--new');
-const LOCAL_ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
 const LIMIT = args.includes('--limit') ? Number(args[args.indexOf('--limit') + 1]) : 0;
 const TIME_BUDGET_MS = Number(process.env.TIME_BUDGET_MIN || 340) * 60000;   // Actions 6시간 제한보다 여유 있게
 const started = Date.now();
@@ -74,7 +72,7 @@ const PARTS = [
   { key: 'earrings', sub: 'Earrings' },
 ];
 
-async function fetchRetry(url, as) {
+async function fetchRetry(url) {
   const at = (list, k) => list[Math.min(k, list.length - 1)];
   for (let attempt = 0; ; attempt++) {
     const ctrl = new AbortController();
@@ -88,7 +86,7 @@ async function fetchRetry(url, as) {
         throw new Error(`HTTP ${r.status}${ra ? ` · 다시 시도 권장 ${ra}초 뒤` : ''}`);
       }
       onOk();
-      return as === 'buf' ? Buffer.from(await r.arrayBuffer()) : await r.json();
+      return await r.json();
     } catch (e) {
       onTrouble(url, e.name === 'AbortError' ? new Error(`${wait}초 동안 응답 없음`) : e, attempt);
       await sleep(at(RETRY_WAITS, attempt) * 1000);
@@ -101,9 +99,7 @@ async function fetchRetry(url, as) {
 /* ── 받을 아이템 목록 ── */
 async function buildTargets() {
   const targets = [];   // { part, id }
-  const window = {};
-  new Function('window', fs.readFileSync(path.join(__dirname, '..', 'data_mixdye.js'), 'utf8'))(window);
-  const D = window.MIXDYE_DATA;
+  const D = loadSiteData('data_mixdye.js').MIXDYE_DATA;
   for (const [s, , , mask] of D.hairs) for (let c = 0; c < 8; c++) if (mask >> c & 1) targets.push({ part: 'hair', id: s + c });
   for (const [s, , , mask] of D.faces) for (let c = 0; c < 9; c++) if (mask >> c & 1) targets.push({ part: 'face', id: s + c * 100 });
   // 남자 헤어·성형은 따로 이름 붙인 묶음(hair_m, face_m)이라 이미 받은 여자 묶음 번호가 밀리지 않는다
@@ -135,38 +131,20 @@ function toChunks(targets, start = {}) {
   return chunks;
 }
 
-/* ── 아이템 하나를 층 데이터로 줄이기 ──
-   층: [z 이름, 기준점 x, y, 붙는 자리 {이름: [x, y]}, PNG base64] */
+/* ── 아이템 하나를 층 데이터로 줄이기. 404면 null ── */
 async function getItem(id) {
   const d = await fetchRetry(`${API}/GMS/${VERSION}/item/${id}`);
-  if (!d) return null;
-  const fb = d.frameBooks || {};
-  const out = { i: id, n: (d.description && d.description.name) || '', v: (d.metaInfo && d.metaInfo.vslots) || [], s: (d.metaInfo && d.metaInfo.islots) || [], f: {} };
-  for (const view of VIEWS) {
-    const book = fb[view] || fb.default;
-    const frame = book && book.frames && book.frames[0];
-    if (!frame || !frame.effects) continue;
-    const ls = [];
-    for (const v of Object.values(frame.effects)) {
-      if (!v.position || !v.image) continue;
-      const map = {};
-      for (const [k, m] of Object.entries(v.mapOffset || {})) map[k] = [m.x, m.y];
-      ls.push([v.position, v.origin.x, v.origin.y, map, v.image]);
-    }
-    if (ls.length) out.f[view] = ls;
-  }
-  return out;
+  return d ? toLayerItem(id, d) : null;
 }
 
 /* ── 저장소: --local·--dry면 로컬 폴더, 아니면 Vercel Blob ── */
 function makeStore() {
   if (DRY) {
-    const root = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
-    fs.mkdirSync(root, { recursive: true });
-    fs.writeFileSync(path.join(root, '.gitignore'), '*' + String.fromCharCode(10));
+    fs.mkdirSync(ROOT, { recursive: true });
+    fs.writeFileSync(path.join(ROOT, '.gitignore'), '*\n');
     return {
-      async getManifest() { try { return JSON.parse(fs.readFileSync(path.join(root, 'manifest.json'), 'utf8')); } catch { return null; } },
-      async put(name, body) { const p = path.join(root, name); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, body); },
+      async getManifest() { try { return JSON.parse(fs.readFileSync(path.join(ROOT, 'manifest.json'), 'utf8')); } catch { return null; } },
+      async put(name, body) { const p = path.join(ROOT, name); fs.mkdirSync(path.dirname(p), { recursive: true }); fs.writeFileSync(p, body); },
     };
   }
   if (!process.env.BLOB_READ_WRITE_TOKEN) throw new Error('BLOB_READ_WRITE_TOKEN이 없습니다');
@@ -191,8 +169,8 @@ function makeStore() {
     // 이미 받은 아이템은 빼고, 부위마다 마지막 묶음 다음 번호부터 새 묶음을 만든다
     if (!DRY) throw new Error('--new는 --local과 같이 쓴다');
     const have = new Set();
-    for (const part of fs.readdirSync(LOCAL_ROOT)) {
-      const dir = path.join(LOCAL_ROOT, part);
+    for (const part of fs.readdirSync(ROOT)) {
+      const dir = path.join(ROOT, part);
       if (part === 'skins' || part === 'basic' || !fs.statSync(dir).isDirectory()) continue;
       for (const f of fs.readdirSync(dir).filter(f => f.endsWith('.json'))) {
         start[part] = Math.max(start[part] || 0, Number(f.slice(0, -5)) + 1);
@@ -213,7 +191,7 @@ function makeStore() {
   if (LIMIT) todo = todo.slice(0, 1).map(c => ({ ...c, ids: c.ids.slice(0, LIMIT) }));
 
   for (const c of todo) {
-    // 일꾼 5명이 묶음 안의 아이템을 나눠 받는다. 동시 개수가 줄면 번호가 큰 일꾼부터 쉰다
+    // 최대 동시 수만큼 일꾼을 띄워 묶음 안의 아이템을 나눠 받는다. 동시 개수가 줄면 번호가 큰 일꾼부터 쉰다
     const got = new Array(c.ids.length);
     let next = 0, outOfTime = false;
     const worker = async w => {
@@ -232,7 +210,7 @@ function makeStore() {
         await sleep(jitter());
       }
     };
-    await Promise.all(LADDER.slice(-1).flatMap(n => Array.from({ length: n }, (_, w) => worker(w))));
+    await Promise.all(Array.from({ length: LADDER[LADDER.length - 1] }, (_, w) => worker(w)));
     if (outOfTime) {
       await store.put('manifest.json', JSON.stringify(manifest));
       console.log(`시간이 다 돼서 멈춤 · 완료 묶음 ${Object.keys(manifest.done).length}/${chunks.length} · 진행 중이던 ${c.key}는 다음에 처음부터`);

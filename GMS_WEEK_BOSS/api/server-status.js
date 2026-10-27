@@ -4,8 +4,7 @@
    넥슨 no-auth API는 CORS 헤더가 없어 브라우저에서 직접 호출이 안 되므로
    서버리스 함수를 거쳐 프론트에 넘겨준다.
    ============================================= */
-const NEXON_BASE = 'https://www.nexon.com/api/maplestory/no-auth/v1';
-const HEADERS = { 'User-Agent': 'Mozilla/5.0', 'Accept': 'application/json' };
+const { NEXON_API, NEXON_HEADERS, bad } = require('./_lib');
 
 /* Game/Login/기타 접두사 키들을 종류별로 묶어 온라인/전체 채널 수 집계 + 채널별 세부 목록.
    -1 = 해당 월드에 없는(미개통) 채널 슬롯 — 전체 개수/목록 모두에서 제외해야 한다.
@@ -36,12 +35,12 @@ module.exports = async function handler(req, res) {
   const region = (req.query.region || 'na').toLowerCase() === 'eu' ? 'eu' : 'na';
 
   try {
-    const r = await fetch(`${NEXON_BASE}/server-status/${region}`, { headers: HEADERS, signal: AbortSignal.timeout(8000) });
-    if (!r.ok) { res.status(502).json({ ok:false, error:'넥슨 서버 상태 조회 실패' }); return; }
+    const r = await fetch(`${NEXON_API}/v1/server-status/${region}`, { headers: NEXON_HEADERS, signal: AbortSignal.timeout(8000) });
+    if (!r.ok) return bad(res, 502, '넥슨 서버 상태 조회 실패');
     const d = await r.json();
     const worlds = (d.servers || []).filter(w => w.worldId != null && w.LogDate).map(summarizeWorld);
     res.status(200).json({ ok:true, region, worlds });
   } catch (e) {
-    res.status(502).json({ ok:false, error:'조회 실패: ' + e.message });
+    bad(res, 502, '조회 실패: ' + e.message);
   }
 };

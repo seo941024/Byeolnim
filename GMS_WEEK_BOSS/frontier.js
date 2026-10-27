@@ -36,11 +36,24 @@ const FRONTIER_TYPES = ['Human', 'Beast', 'Plant', 'Aquatic', 'Reptile', 'Fairy'
    Multiplier: +1.4x" — masonym.dev에서 확인). 그래서 줄 하나에 두 값을 같이 받는다. */
 /* condPick은 "조건은 골랐는데 수치는 아직"인 상태를 기억해 둔다 — 이게 없으면
    조건을 고르는 순간 다시 그려지면서 방금 고른 조건이 풀려버린다. */
+const _frNoLine = () => ({ add: '', mult: '', catalogIdx: '' });
+const _frNoPick = () => ({ base: '', event: '' });
 let _frTeam = [0, 1, 2].map(() => ({
   rank: 'unique', element: '', type: '',
-  line: { add: '', mult: '', catalogIdx: '' },
-  condPick: { base: '', event: '' },
+  line: _frNoLine(),
+  condPick: _frNoPick(),
 }));
+
+/* 옵션 하나를 카드의 잠재 줄로. 수치·조건은 등급별 목록에서 그대로 가져온다 */
+function _frLineOf(entry, catalogIdx) {
+  return entry ? {
+    catalogIdx,
+    add: entry.add != null ? entry.add : '',
+    mult: entry.mult != null ? entry.mult : '',
+    cond: entry.cond,
+    groupKey: entry.groupKey,
+  } : _frNoLine();
+}
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
 
@@ -225,18 +238,40 @@ function _frBonusDiceHtml(i) {
     </div>`;
 }
 
-function _frApplyBonus(i) {
-  const b = _frBonusDice[i];
+// 고른 계열·등급의 수치를 채운다. 덜 골랐으면 비운다
+function _frFillBonus(b) {
   const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
   const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
   const v = kind && ti >= 0 ? kind.vals[ti] : null;
   b.add = v && v.add != null ? v.add : '';
   b.mult = v && v.mult != null ? v.mult : '';
+}
+
+function _frApplyBonus(i) {
+  _frFillBonus(_frBonusDice[i]);
   _frRenderBonusDice();
   _frCalcAndRender();
 }
 
-/* 목록을 갈아끼우면 버튼이 새로 생기니 그때마다 다시 연결한다.
+/* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다. 팀 잠재와 보너스 주사위 메뉴가
+   같은 섹션에 있으므로 섹션 전체에서 닫는다. */
+function _frCloseMenus() {
+  document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
+}
+function _frBindToggles(box) {
+  box.querySelectorAll('.fr-dd__trigger').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+      const menu = btn.nextElementSibling;
+      const willOpen = menu.hidden;
+      _frCloseMenus();
+      menu.hidden = !willOpen;
+    });
+  });
+}
+
+/* 목록을 갈아끼우면 버튼이 새로 생기니 그 메뉴만 다시 연결한다 — 칸 전체를 다시 연결하면
+   이미 연결된 다른 메뉴 버튼에 핸들러가 겹쳐 붙는다.
    여기서 전체를 다시 그리면 방금 연 드롭다운이 닫혀버려서, 메뉴 안쪽만 바꾼다. */
 function _frBindBonusMenu(box) {
   box.querySelectorAll('.fr-bd-kind').forEach(btn => {
@@ -245,8 +280,9 @@ function _frBindBonusMenu(box) {
       const i = +btn.dataset.bi;
       _frBonusDice[i].kind = btn.dataset.kind;
       _frBonusDice[i].tier = '';
-      btn.closest('.fr-dd__menu').innerHTML = _frDiceTierMenuHtml(i, btn.dataset.kind, '');
-      _frBindBonusMenu(box);
+      const menu = btn.closest('.fr-dd__menu');
+      menu.innerHTML = _frDiceTierMenuHtml(i, btn.dataset.kind, '');
+      _frBindBonusMenu(menu);
     });
   });
   box.querySelectorAll('.fr-bd-back').forEach(btn => {
@@ -255,8 +291,9 @@ function _frBindBonusMenu(box) {
       const i = +btn.dataset.bi;
       _frBonusDice[i].kind = '';
       _frBonusDice[i].tier = '';
-      btn.closest('.fr-dd__menu').innerHTML = _frDiceKindMenuHtml(i);
-      _frBindBonusMenu(box);
+      const menu = btn.closest('.fr-dd__menu');
+      menu.innerHTML = _frDiceKindMenuHtml(i);
+      _frBindBonusMenu(menu);
     });
   });
   box.querySelectorAll('.fr-bd-tier').forEach(btn => {
@@ -274,16 +311,7 @@ function _frRenderBonusDice() {
   if (!box) return;
   box.innerHTML = Array.from({ length: FR_MAX_BONUS_DICE }, (_, i) => _frBonusDiceHtml(i)).join('');
 
-  /* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다 */
-  box.querySelectorAll('.fr-dd__trigger').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const menu = btn.nextElementSibling;
-      const willOpen = menu.hidden;
-      document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
-      menu.hidden = !willOpen;
-    });
-  });
+  _frBindToggles(box);
   box.querySelectorAll('.fr-bd-clear').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -309,9 +337,11 @@ function _frDiceCap() {
   return cap;
 }
 
+const FR_DICE_IDS = ['frDice1', 'frDice2', 'frDice3'];
+
 function _frSyncDiceOptions() {
   const cap = _frDiceCap();
-  ['frDice1', 'frDice2', 'frDice3'].forEach(id => {
+  FR_DICE_IDS.forEach(id => {
     const sel = document.getElementById(id);
     if (!sel || +sel.dataset.cap === cap) return;
     const cur = Math.min(parseInt(sel.value) || 1, cap);
@@ -333,10 +363,7 @@ function _frCalcRange() {
   for (let a = 1; a <= cap; a++) {
     for (let b = 1; b <= cap; b++) {
       for (let c = 1; c <= cap; c++) {
-        const dice = [a, b, c];
-        const { addSum, mult } = _frAggregate(dice);
-        const raw = (a + b + c + addSum) * mult;
-        const score = Math.floor(raw + 1e-9);
+        const { score } = _frScore([a, b, c]);
         if (score < min) min = score;
         if (score > max) max = score;
       }
@@ -345,14 +372,19 @@ function _frCalcRange() {
   return { min, max };
 }
 
+/* (주사위 합 + 합계값) × 배율 → 내림.
+   0.1 같은 값이 이진수로 딱 안 떨어져서 21×4.2가 88.19999...로 나오는 걸 막는다. */
+function _frScore(dice) {
+  const agg = _frAggregate(dice);
+  const diceSum = dice.reduce((a, b) => a + b, 0);
+  const raw = (diceSum + agg.addSum) * agg.mult;
+  return { ...agg, diceSum, raw, score: Math.floor(raw + 1e-9) };
+}
+
 function _frCalcAndRender() {
   _frSyncDiceOptions();
-  const dice = ['frDice1', 'frDice2', 'frDice3'].map(id => parseInt(document.getElementById(id)?.value) || 0);
-  const diceSum = dice.reduce((a, b) => a + b, 0);
-  const { addSum, mult, applied } = _frAggregate(dice);
-  const raw = (diceSum + addSum) * mult;
-  // 0.1 같은 값이 이진수로 딱 안 떨어져서 21×4.2가 88.19999...로 나오는 걸 막는다.
-  const score = Math.floor(raw + 1e-9);
+  const dice = FR_DICE_IDS.map(id => parseInt(document.getElementById(id)?.value) || 0);
+  const { diceSum, addSum, mult, applied, raw, score } = _frScore(dice);
 
   /* 고른 옵션이 지금 주사위에서 실제로 터졌는지 카드마다 알려준다 —
      영어 문구만 봐서는 조건이 맞는지 알기 어렵다. */
@@ -417,25 +449,6 @@ function _frRenderTeamBadges() {
   box.innerHTML = badges.length
     ? badges.map(b => `<span class="fr-badge">${b}</span>`).join('')
     : '<span class="fr-badge fr-badge--empty">Pick an element/type to see which party conditions this lineup satisfies</span>';
-}
-
-/* 옵션 줄 하나 = 합계값 입력 + 배율값 입력, 나란히. 실제 게임 옵션 중에
-   "Dice Total: -1, Final Multiplier: +1.4x"처럼 한 줄이 두 값을 동시에 주는 경우가 있어서
-   둘 다 받는다. idKind/idVal는 data attribute 이름과 값 — 팀 줄은 fi+li, 보너스 주사위는 bi 하나. */
-function _frTwoValLine(line, label, idKind, idVal, idKind2, idVal2) {
-  const attrs = idKind2 != null ? `data-${idKind}="${idVal}" data-${idKind2}="${idVal2}"` : `data-${idKind}="${idVal}"`;
-  return `
-    <div class="fr-line">
-      ${label ? `<span class="fr-bonus__lbl">${label}</span>` : ''}
-      <div class="fr-line__field">
-        <span class="fr-line__field-lbl">Dice Total</span>
-        <input class="inp fr-val-add" type="number" step="0.1" placeholder="예: 9" value="${line.add}" ${attrs}>
-      </div>
-      <div class="fr-line__field">
-        <span class="fr-line__field-lbl">× Multiplier</span>
-        <input class="inp fr-val-mult" type="number" step="0.1" placeholder="예: 1.4" value="${line.mult}" ${attrs}>
-      </div>
-    </div>`;
 }
 
 const FR_RANKS = [['common', '커먼'], ['rare', '레어'], ['epic', '에픽'], ['unique', '유니크']];
@@ -591,10 +604,7 @@ function _frIconDropdown(prefix, fi, list, iconFn, cur) {
    state 안에 들어가므로 클라우드 세이브에도 그대로 딸려 올라간다. */
 const FR_MAX_DECKS = 3;
 
-function _frActiveChar() {
-  return (typeof state === 'object' && state && Array.isArray(state.chars))
-    ? state.chars[state.activeChar] : null;
-}
+function _frActiveChar() { return state.chars[state.activeChar]; }
 
 function _frDecks(ch = _frActiveChar()) {
   if (!ch) return [];
@@ -619,34 +629,21 @@ function _frRestore(snap) {
     f.rank = s.rank || 'unique';
     f.element = s.element || '';
     f.type = s.type || '';
-    f.condPick = { base: '', event: '' };
-    f.line = { add: '', mult: '', catalogIdx: '' };
+    f.condPick = _frNoPick();
+    f.line = _frNoLine();
 
     const idx = s.idx;
     if (idx === '' || idx == null) return;
     const isEvent = String(idx).startsWith('e');
-    const rankKey = (f.rank || 'unique').toUpperCase();
-    const src = isEvent ? window.FR_EVENT_CATALOG : window.FR_CATALOG;
-    const pool = (src && src[rankKey]) || [];
-    const e = pool[isEvent ? +String(idx).slice(1) : +idx];
-    if (!e) return;   // 옵션 목록이 바뀌어 그 자리가 없어졌으면 비워 둔다
-    f.line = {
-      catalogIdx: String(idx),
-      add: e.add != null ? e.add : '',
-      mult: e.mult != null ? e.mult : '',
-      cond: e.cond,
-      groupKey: e.groupKey,
-    };
+    const { pool } = _frPool(i, isEvent ? 'event' : 'base');
+    // 옵션 목록이 바뀌어 그 자리가 없어졌으면 비워 둔다
+    f.line = _frLineOf(pool[isEvent ? +String(idx).slice(1) : +idx], String(idx));
   });
   (snap.bonus || []).forEach((s, i) => {
     if (i >= _frBonusDice.length) return;
     const b = _frBonusDice[i];
     b.kind = s.kind || ''; b.tier = s.tier || '';
-    const kind = FR_DICE_KINDS.find(k => k.key === b.kind);
-    const ti = FR_DICE_TIERS.findIndex(([t]) => t === b.tier);
-    const v = kind && ti >= 0 ? kind.vals[ti] : null;
-    b.add = v && v.add != null ? v.add : '';
-    b.mult = v && v.mult != null ? v.mult : '';
+    _frFillBonus(b);
   });
 }
 
@@ -719,13 +716,7 @@ function _frRenderDecks() {
 function _frSetLine(fi, kind, idx) {
   const { pool } = _frPool(fi, kind);
   const entry = idx === '' ? null : pool[+idx];
-  _frTeam[fi].line = entry ? {
-    catalogIdx: kind === 'event' ? 'e' + idx : String(idx),
-    add: entry.add != null ? entry.add : '',
-    mult: entry.mult != null ? entry.mult : '',
-    cond: entry.cond,
-    groupKey: entry.groupKey,
-  } : { add: '', mult: '', catalogIdx: '' };
+  _frTeam[fi].line = _frLineOf(entry, kind === 'event' ? 'e' + idx : String(idx));
   // 한쪽에서 실제로 고르면 반대쪽에 걸려 있던 조건은 풀어 준다 — 줄은 하나뿐이다.
   if (entry) _frTeam[fi].condPick[kind === 'event' ? 'base' : 'event'] = '';
   _frRenderTeam();
@@ -733,7 +724,7 @@ function _frSetLine(fi, kind, idx) {
 }
 
 /* 조건을 누르면 같은 칸의 목록만 수치 목록으로 갈아끼운다 — 여기서 전체를 다시 그리면
-   방금 연 드롭다운이 닫혀버린다. 목록을 갈아끼우면 버튼이 새로 생기니 다시 연결한다.
+   방금 연 드롭다운이 닫혀버린다. 목록을 갈아끼우면 버튼이 새로 생기니 그 메뉴만 다시 연결한다.
    조건 선택은 상태에도 남겨서, 나중에 다시 그려도 그 조건이 펼쳐진 채로 돌아온다. */
 function _frBindLineMenu(box) {
   box.querySelectorAll('.fr-ln-cond').forEach(btn => {
@@ -745,8 +736,9 @@ function _frBindLineMenu(box) {
       const groups = _frGroups(pool, cacheKey);
       // 수치가 하나뿐인 조건은 더 고를 게 없으니 바로 적용한다.
       if (groups[gi].items.length === 1) { _frSetLine(fi, kind, groups[gi].items[0].idx); return; }
-      btn.closest('.fr-dd__menu').innerHTML = _frValMenuHtml(fi, kind, groups, gi, '');
-      _frBindLineMenu(box);
+      const menu = btn.closest('.fr-dd__menu');
+      menu.innerHTML = _frValMenuHtml(fi, kind, groups, gi, '');
+      _frBindLineMenu(menu);
     });
   });
 
@@ -756,8 +748,9 @@ function _frBindLineMenu(box) {
       const fi = +btn.dataset.fi, kind = btn.dataset.kind;
       _frTeam[fi].condPick[kind] = '';
       const { pool, cacheKey } = _frPool(fi, kind);
-      btn.closest('.fr-dd__menu').innerHTML = _frCondMenuHtml(fi, kind, _frGroups(pool, cacheKey));
-      _frBindLineMenu(box);
+      const menu = btn.closest('.fr-dd__menu');
+      menu.innerHTML = _frCondMenuHtml(fi, kind, _frGroups(pool, cacheKey));
+      _frBindLineMenu(menu);
     });
   });
 
@@ -789,31 +782,14 @@ function _frRenderTeam() {
       ${_frLineHtml(i, f.line)}
     </div>`).join('');
 
-  /* 드롭다운 열고 닫기 — 하나 열면 다른 건 닫는다 */
-  box.querySelectorAll('.fr-dd__trigger').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const menu = btn.nextElementSibling;
-      const willOpen = menu.hidden;
-      // 보너스 주사위 메뉴도 같은 섹션에 있으므로 섹션 전체에서 닫는다
-      document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
-      menu.hidden = !willOpen;
-    });
-  });
-  box.querySelectorAll('.fr-dd__item[data-el]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const i = +btn.dataset.el;
-      _frTeam[i].element = btn.dataset.val;
-      _frRenderTeam();
-      _frCalcAndRender();   // 속성은 같은/다른 속성 조건에 걸리므로 점수를 다시 낸다
-    });
-  });
-  box.querySelectorAll('.fr-dd__item[data-ty]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const i = +btn.dataset.ty;
-      _frTeam[i].type = btn.dataset.val;
-      _frRenderTeam();
-      _frCalcAndRender();   // 타입도 조건에 걸리므로 점수를 다시 낸다
+  _frBindToggles(box);
+  [['el', 'element'], ['ty', 'type']].forEach(([attr, field]) => {
+    box.querySelectorAll(`.fr-dd__item[data-${attr}]`).forEach(btn => {
+      btn.addEventListener('click', () => {
+        _frTeam[+btn.dataset[attr]][field] = btn.dataset.val;
+        _frRenderTeam();
+        _frCalcAndRender();   // 속성·타입은 같은/다른 조건에 걸리므로 점수를 다시 낸다
+      });
     });
   });
   _frTeam.forEach((f, i) => {
@@ -821,8 +797,8 @@ function _frRenderTeam() {
       _frTeam[i].rank = e.target.value;
       // 등급이 바뀌면 옵션 풀 자체가 바뀌어서 기존 선택 인덱스가 다른 옵션을 가리키게 된다 —
       // 헷갈리지 않게 그 카드의 잠재 선택을 비워서 다시 고르게 한다.
-      _frTeam[i].line = { add: '', mult: '', catalogIdx: '' };
-      _frTeam[i].condPick = { base: '', event: '' };
+      _frTeam[i].line = _frNoLine();
+      _frTeam[i].condPick = _frNoPick();
       _frRenderTeam();
       _frCalcAndRender();
     });
@@ -840,9 +816,7 @@ function initFrontier() {
   if (sec.dataset.inited) { _frRenderDecks(); _frCalcAndRender(); return; }
   sec.dataset.inited = '1';
 
-  document.addEventListener('click', () => {
-    document.querySelectorAll('#sec-frontier .fr-dd__menu').forEach(m => { m.hidden = true; });
-  });
+  document.addEventListener('click', _frCloseMenus);
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">미스틱 프론티어 계산기</h2></div>
@@ -880,19 +854,11 @@ function initFrontier() {
     <div class="card mt16">
       <div class="card__title">라운드 점수 계산기</div>
 
-      <div class="fr-dice-row mt8">
+      <div class="fr-dice-row mt8">${FR_DICE_IDS.map((id, i) => `
         <div class="fr-dice">
-          <label class="fr-slot__lbl">주사위 1</label>
-          <select class="sel" id="frDice1">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-        </div>
-        <div class="fr-dice">
-          <label class="fr-slot__lbl">주사위 2</label>
-          <select class="sel" id="frDice2">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-        </div>
-        <div class="fr-dice">
-          <label class="fr-slot__lbl">주사위 3</label>
-          <select class="sel" id="frDice3">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
-        </div>
+          <label class="fr-slot__lbl">주사위 ${i + 1}</label>
+          <select class="sel" id="${id}">${[1,2,3,4,5,6].map(n=>`<option value="${n}">${n}</option>`).join('')}</select>
+        </div>`).join('')}
       </div>
 
       <div class="card__title mt16">보너스 주사위</div>
@@ -914,7 +880,7 @@ function initFrontier() {
       <div id="frPass" class="fr-pass"></div>
     </div>`;
 
-  ['frDice1', 'frDice2', 'frDice3', 'frTarget'].forEach(id => {
+  [...FR_DICE_IDS, 'frTarget'].forEach(id => {
     document.getElementById(id).addEventListener('input', _frCalcAndRender);
     document.getElementById(id).addEventListener('change', _frCalcAndRender);
   });

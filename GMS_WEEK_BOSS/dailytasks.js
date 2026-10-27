@@ -8,12 +8,12 @@
 ═══════════════════════════════════════════════ */
 
 const DAILY_TASK_PRESETS = [
-  { id: 'gollux',      label: '골럭스',        emoji: '', img: 'images/dailytasks/gollux.png' },
-  { id: 'akaium',      label: '아카이럼',      emoji: '', img: 'images/dailytasks/akaium.png' },
-  { id: 'dailyquest',  label: '일일퀘스트',    emoji: '', img: 'images/dailytasks/dailyquest.png' },
-  { id: 'monsterpark', label: '몬스터 파크',   emoji: '', img: 'images/dailytasks/monsterpark.png' },
-  { id: 'haste',       label: '헤이스트',      emoji: '', img: 'images/dailytasks/haste.webp' },
-  { id: 'starspeck',   label: '별조각 상자',   emoji: '', img: 'images/icons/Use_Mysterious_Star_Speck_Box.png' },
+  { id: 'gollux',      label: '골럭스',        img: 'images/dailytasks/gollux.png' },
+  { id: 'akaium',      label: '아카이럼',      img: 'images/dailytasks/akaium.png' },
+  { id: 'dailyquest',  label: '일일퀘스트',    img: 'images/dailytasks/dailyquest.png' },
+  { id: 'monsterpark', label: '몬스터 파크',   img: 'images/dailytasks/monsterpark.png' },
+  { id: 'haste',       label: '헤이스트',      img: 'images/dailytasks/haste.webp' },
+  { id: 'starspeck',   label: '별조각 상자',   img: 'images/icons/Use_Mysterious_Star_Speck_Box.png' },
 ];
 const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 
@@ -85,7 +85,7 @@ function _dtCreateChar(name, img, activeIds, region, level) {
 // 선택된 지역을 region으로 채워 넣어 갱신 대상에 포함시킨다.
 function _dtBackfillRegion() {
   const all = _dtLoadAll();
-  const region = typeof state !== 'undefined' ? state.region : 'na';
+  const region = state.region;
   let changed = false;
   Object.values(all.items).forEach(rec => {
     if (rec.img && !rec.region) { rec.region = region; rec.syncedAt = 0; changed = true; }
@@ -98,7 +98,6 @@ function _dtBackfillRegion() {
 // 캐릭터만 조용히 재조회한다. 실패해도 기존 값을 유지하며 사용자에게 알리지 않는다.
 async function dtRefreshStaleChars() {
   _dtBackfillRegion();
-  const interval = typeof REFRESH_INTERVAL !== 'undefined' ? REFRESH_INTERVAL : 6 * 60 * 60 * 1000;
   const all = _dtLoadAll();
   const now = Date.now();
   const staleIds = Object.keys(all.items).filter(id => {
@@ -107,7 +106,7 @@ async function dtRefreshStaleChars() {
     // 레벨을 저장하기 전에 등록된 캐릭터는 방금 동기화됐어도 level이 아예 없다 —
     // 그런 경우는 다음 6시간을 기다리지 않고 한 번은 무조건 다시 불러온다.
     if (rec.level == null) return true;
-    return now - (rec.syncedAt || 0) > interval;
+    return now - (rec.syncedAt || 0) > REFRESH_INTERVAL;
   });
   if (!staleIds.length) return;
 
@@ -165,16 +164,13 @@ function _dtToggleDone(charId, taskId) {
   _dtSaveChar(charId, rec.name, rec.img, rec.active, newDone);
 }
 
-function _dtTileHtml(charId, task, active, done) {
+function _dtTileHtml(charId, task, done) {
   const isDone = done.includes(task.id);
-  const thumbHtml = task.img
-    ? `<img class="dt-tile__img" src="${task.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-       <span class="dt-tile__emoji" style="display:none">${task.emoji}</span>`
-    : `<span class="dt-tile__emoji">${task.emoji}</span>`;
   return `
     <div class="dt-tile dt-tile--active ${isDone ? 'dt-tile--done' : ''}"
          data-char="${charId}" data-task="${task.id}" title="클릭: 오늘 완료 체크">
-      <span class="dt-tile__thumb">${thumbHtml}</span>
+      <span class="dt-tile__thumb"><img class="dt-tile__img" src="${task.img}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+       <span class="dt-tile__emoji" style="display:none"></span></span>
       <span class="dt-tile__label">${task.label}</span>
       ${isDone ? '<span class="dt-tile__stamp">CLEAR</span>' : ''}
     </div>`;
@@ -201,7 +197,7 @@ function _dtCardHtml(charId, rec) {
       </div>
       <div class="dt-tiles">
         ${activeTasks.length
-          ? activeTasks.map(t => _dtTileHtml(charId, t, active, done)).join('')
+          ? activeTasks.map(t => _dtTileHtml(charId, t, done)).join('')
           : '<p class="empty" style="margin:4px 0">추적할 항목이 없어요.</p>'}
       </div>
     </div>`;
@@ -209,9 +205,7 @@ function _dtCardHtml(charId, rec) {
 
 /* ── 캐릭터 추가 모달 (2단계) ── */
 
-function _dtCloseAddModal() {
-  const overlay = document.getElementById('dtAddOverlay');
-  if (overlay) overlay.classList.remove('open');
+function _dtResetPending() {
   _dtStep = 1;
   _dtPendingName = '';
   _dtPendingImg = null;
@@ -219,6 +213,11 @@ function _dtCloseAddModal() {
   _dtPendingRegion = null;
   _dtNewActive = new Set();
   _dtEditCharId = null;
+}
+
+function _dtCloseAddModal() {
+  document.getElementById('dtAddOverlay')?.classList.remove('open');
+  _dtResetPending();
 }
 
 function _dtEnsureOverlay() {
@@ -235,13 +234,7 @@ function _dtEnsureOverlay() {
 
 function _dtOpenAddModal() {
   const overlay = _dtEnsureOverlay();
-  _dtStep = 1;
-  _dtPendingName = '';
-  _dtPendingImg = null;
-  _dtPendingLevel = null;
-  _dtPendingRegion = null;
-  _dtNewActive = new Set();
-  _dtEditCharId = null;
+  _dtResetPending();
   _dtRenderAddModal();
   overlay.classList.add('open');
 }
@@ -254,8 +247,8 @@ function _dtOpenEditModal(charId) {
   _dtStep = 2;
   _dtPendingName = rec.name;
   _dtPendingImg = rec.img;
-  _dtPendingLevel = rec.level || null;
-  _dtPendingRegion = rec.region || null;
+  _dtPendingLevel = rec.level;
+  _dtPendingRegion = rec.region;
   _dtNewActive = new Set(rec.active);
   _dtEditCharId = charId;
   _dtRenderAddModal();
@@ -292,7 +285,7 @@ function _dtStep1Html() {
         <div class="field">
           <label class="field__label">캐릭터명</label>
           <input class="inp" id="dtManualName" placeholder="캐릭터명" autocomplete="off"
-                 value="${_dtPendingRegion ? '' : (_dtPendingName || '').replace(/"/g, '&quot;')}" />
+                 value="${_dtPendingRegion ? '' : escHtml(_dtPendingName)}" />
         </div>
         <div class="field">
           <label class="field__label">레벨</label>
@@ -312,7 +305,7 @@ function _dtWireStep1() {
     if (!name) { box.innerHTML = '<span class="lk-err">캐릭터명을 입력하세요.</span>'; return; }
     box.innerHTML = '<span class="lk-load">조회 중...</span>';
     try {
-      const region = typeof state !== 'undefined' ? state.region : 'na';
+      const region = state.region;
       const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=0&region=${region}`);
       const j = await r.json();
       if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
@@ -333,7 +326,7 @@ function _dtWireStep1() {
         _dtStep = 2;
         _dtRenderAddModal();
       });
-    } catch (e) {
+    } catch {
       box.innerHTML = '<span class="lk-err">조회 실패 — serve.js 서버가 실행 중인지 확인하세요.</span>';
     }
   });

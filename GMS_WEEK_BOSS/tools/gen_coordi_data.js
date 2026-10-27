@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { getListJson } = require('./coordi_index');
 
 // 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다. 직접 돌리면 아래 값
 const VERSION = process.env.GMS_VERSION || '270';
@@ -31,21 +32,7 @@ const PARTS = [
   { key: 'earrings', sub: 'Earrings', name: '귀걸이' },
 ];
 
-// 목록 요청은 크고 서버 오류가 잦아서 받을 때까지 다시 요청한다
-async function getJson(url) {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      const r = await fetch(url, { headers: { 'User-Agent': 'byeolnim-coordi-data' } });
-      if (r.ok) return await r.json();
-      if (r.status === 404) throw Object.assign(new Error(`404 ${url}`), { fatal: true });
-      throw new Error(`HTTP ${r.status}`);
-    } catch (e) {
-      if (e.fatal) throw e;   // 주소가 틀린 것이라 다시 요청해도 소용없다
-      console.log(`요청 오류 ${attempt + 1}번째 · ${e.message} · ${url}`);
-      await new Promise(res => setTimeout(res, Math.min(5000 * (attempt + 1), 60000)));
-    }
-  }
-}
+const getJson = url => getListJson(url, 'byeolnim-coordi-data');
 
 (async () => {
   const gms = await getJson(`${API}/GMS/${VERSION}/item/?&overallCategoryFilter=Equip`);
@@ -53,8 +40,8 @@ async function getJson(url) {
   const ko = new Map(kms.filter(x => x.name).map(x => [x.id, x.name.trim()]));
 
   const parts = {};
+  const g = id => { const d = Math.floor(id / 1000) % 10; return d === 0 ? 0 : d === 1 ? 1 : 2; };
   for (const P of PARTS) {
-    const g = id => { const d = Math.floor(id / 1000) % 10; return d === 0 ? 0 : d === 1 ? 1 : 2; };
     parts[P.key] = gms
       .filter(x => x.isCash && x.typeInfo && x.typeInfo.subCategory === P.sub && x.name)
       .map(x => [x.id, x.name.trim(), ko.get(x.id) || '', g(x.id)])

@@ -12,17 +12,15 @@
 
 const fs = require('fs');
 const path = require('path');
+const { ROOT, UA, VIEWS, loadSiteData, toLayerItem } = require('./coordi_index');
 
 const API = 'https://maplestory.io/api';
 // 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다
 const VERSION = process.env.GMS_VERSION || '270';
 const WZ = `${API}/wz/GMS/${VERSION}/`;
-const VIEWS = ['stand1', 'ladder'];
 // 귀 모양은 렌더 기본값(showEars 등 false)과 같이 사람 귀(humanEar)만 쓴다
 const SKIP_EARS = ['ear', 'lefEar', 'highlefEar'];
 const BASIC = [1041046, 1061039, 1042162, 1062112];
-const UA = 'byeolnim-coordi-collector (+https://byeolnim.vercel.app)';
-const ROOT = process.env.COORDI_LOCAL_DIR || path.join(__dirname, '..', '..', 'coordi_local');
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 const CACHE_FILE = path.join(ROOT, '.wz_cache.json');
@@ -53,7 +51,7 @@ async function wz(p) {
   return cache[k];
 }
 
-/* 층: [z 이름, 기준점 x, y, 붙는 자리 {이름: [x, y]}, PNG base64] — coordi_collect.js의 아이템 층과 같은 형식.
+/* 층: [z 이름, 기준점 x, y, 붙는 자리 {이름: [x, y]}, PNG base64] — coordi_index.js toLayerItem이 만드는 아이템 층과 같은 형식.
    머리 층은 그림이 _Canvas 쪽에 있고 붙는 자리도 그쪽 노드에만 있어서 _outlink를 따라간다 */
 async function frameLayers(img, view) {
   const base = `Character/${img}/${view}/0`;
@@ -82,26 +80,6 @@ async function frameLayers(img, view) {
   return out;
 }
 
-async function getItem(id) {
-  const d = await getJson(`${API}/GMS/${VERSION}/item/${id}`);
-  const fb = d.frameBooks || {};
-  const out = { i: id, n: d.description.name, v: d.metaInfo.vslots || [], s: d.metaInfo.islots || [], f: {} };
-  for (const view of VIEWS) {
-    const book = fb[view] || fb.default;
-    const frame = book && book.frames && book.frames[0];
-    if (!frame || !frame.effects) continue;
-    const ls = [];
-    for (const v of Object.values(frame.effects)) {
-      if (!v.position || !v.image) continue;
-      const map = {};
-      for (const [k, m] of Object.entries(v.mapOffset || {})) map[k] = [m.x, m.y];
-      ls.push([v.position, v.origin.x, v.origin.y, map, v.image]);
-    }
-    if (ls.length) out.f[view] = ls;
-  }
-  return out;
-}
-
 (async () => {
   fs.mkdirSync(ROOT, { recursive: true });
   const sm = await wz('Base/smap.img');
@@ -109,11 +87,10 @@ async function getItem(id) {
   for (const k of sm.children) smap[k] = (await wz(`Base/smap.img/${encodeURIComponent(k)}`)).value;
   const zmap = await getJson(`${API}/GMS/${VERSION}/zmap`);
 
-  const window = {};
-  new Function('window', fs.readFileSync(path.join(__dirname, '..', 'data_mixdye.js'), 'utf8'))(window);
+  const skins = loadSiteData('data_mixdye.js').MIXDYE_DATA.skins;
   fs.mkdirSync(path.join(ROOT, 'skins'), { recursive: true });
   const ALL = process.argv.includes('--all');
-  for (const [head, name] of window.MIXDYE_DATA.skins) {
+  for (const [head, name] of skins) {
     if (!ALL && fs.existsSync(path.join(ROOT, 'skins', `${head}.json`))) continue;
     const skin = [head - 10000, head], f = {};
     for (const view of VIEWS) {
@@ -129,7 +106,7 @@ async function getItem(id) {
   console.log(`rules.json · smap ${Object.keys(smap).length}개`);
 
   const items = [];
-  for (const id of BASIC) items.push(await getItem(id));
+  for (const id of BASIC) items.push(toLayerItem(id, await getJson(`${API}/GMS/${VERSION}/item/${id}`)));
   fs.mkdirSync(path.join(ROOT, 'basic'), { recursive: true });
   fs.writeFileSync(path.join(ROOT, 'basic', '000.json'), JSON.stringify({ part: 'basic', items }));
   console.log(`basic/000.json · ${items.map(x => x.n).join(', ')}`);

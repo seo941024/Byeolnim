@@ -3,6 +3,26 @@
 다른 컴퓨터(또는 새 Claude Code 세션)에서 이어서 작업할 때 이 파일을 먼저 읽게 하면 됩니다.
 "HANDOFF.md 읽고 이어서 작업해줘" 라고 시작하면 됩니다.
 
+## ✅ 코드 구조 정리 (2026-10-27) — 아래 옛 기록의 파일 위치보다 이것이 우선
+
+**파일이 바뀐 것**
+- `app.js`를 셋으로 나눔. 읽는 순서 `common.js → … → app.js → settings.js → character.js → hexa.js …`
+  - `app.js`: state·save·navigateTo·showToast·fmtMeso, 보스 수익 계산, 대여템, 공지(`NOTICE_LOG`·`NAV_LABELS`는 그대로 여기)
+  - `character.js`: 캐릭터 추가·수정 모달, 경험치 히스토리, 캐릭터 목록 화면(`renderCharInfo`), 카드 그림 저장
+  - `settings.js`: 설정 모달, 파일 백업·클라우드 공용 묶음(`backupBundle`·`BACKUP_SKIP_KEYS`), 테마·글꼴, 관리자 알림
+- `common.js`(새 파일, 가장 먼저 읽힘): `escHtml`, `todayStr`, `loadScriptOnce`, `lazySection`, `bindSimKeys`, `createAutoRunner`, `setActive`.
+  탭을 처음 열 때 데이터 받기, S·R·A 단축키, "목표까지 자동"은 이제 전부 이 도우미를 쓴다. 새 시뮬레이터도 이걸 쓸 것.
+- 서버: 응답·푸시·토큰 도우미가 `api/_lib.js`로 모임. `serve.js`는 `/api/<이름>`을 `api/<이름>.js` 그대로 실행(로컬 = 배포).
+- GitHub Actions 랭킹 수집(`collect.yml`, `scripts/crawl.js`) 삭제. 경험치 기록은 Vercel Cron `/api/collect` 하나만.
+- `style.css`: 끝의 !important 덮어쓰기 층을 본래 규칙에 합침, 중복 셀렉터 0, 쓰지 않는 규칙 175개 삭제.
+  정리 전후 모든 요소의 계산된 스타일이 같음을 PC·폰 × 다크·라이트로 비교 확인.
+
+**화면에 새로 생긴 것 (style.css "움직임 효과" 구역)**
+- 첫 로딩 화면 `#bootSplash`(index.html 맨 위, 걷는 스크립트는 맨 아래), 메뉴 전환 페이드, 모달 막 페이드, 카드 호버,
+  흐르는 배경 안개·별·네 갈래 반짝이, 섹션 제목 끝의 도는 별, 데이터 받는 중인 빈 섹션의 도는 별.
+- transform·opacity만 움직임. 배경 움직임은 데스크톱에서만, 동작 줄이기 설정이면 전부 멈춤.
+- 저장된 라이트 테마는 `<head>`의 인라인 스크립트가 먼저 건다(첫 순간 다크 화면 비침 방지).
+
 ## ✅ 최신 요약 (2026-09-26 ~ 10-02, 커밋 `aeedde6` ~ `6dfd01d`)
 
 **새로 생긴 것**

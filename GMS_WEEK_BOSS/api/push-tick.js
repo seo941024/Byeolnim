@@ -14,37 +14,21 @@
       정확히 그 순간이 아니라 "지난 GRACE분 이내"면 보낸다. 반대로 너무 오래
       지난 것은 이제 와서 알려봐야 의미가 없으니 조용히 버린다.
    ============================================= */
-const { getRedis } = require('./_lib');
+const { getRedis, bad, hasSecret, webPush, readSub, removeSub } = require('./_lib');
 
 // 크론이 밀리거나 한 번 실패해도 놓치지 않도록 허용하는 지연(분)
 const GRACE_MIN = 15;
 
 module.exports = async function handler(req, res) {
   const secret = process.env.CRON_SECRET;
-  if (secret) {
-    const auth = req.headers['authorization'] || '';
-    const q = (req.query && req.query.secret) || '';
-    if (auth !== `Bearer ${secret}` && q !== secret) {
-      res.status(401).json({ ok: false, error: 'unauthorized' });
-      return;
-    }
-  }
+  if (secret && !hasSecret(req, secret, true)) return bad(res, 401, 'unauthorized');
 
-  const pub = process.env.VAPID_PUBLIC_KEY;
-  const priv = process.env.VAPID_PRIVATE_KEY;
-  if (!pub || !priv) {
-    res.status(500).json({ ok: false, error: 'VAPID 키 미설정' });
-    return;
-  }
+  if (!process.env.VAPID_PUBLIC_KEY || !process.env.VAPID_PRIVATE_KEY) return bad(res, 500, 'VAPID 키 미설정');
 
   const redis = getRedis();
-  if (!redis) {
-    res.status(500).json({ ok: false, error: 'Redis 미설정' });
-    return;
-  }
+  if (!redis) return bad(res, 500, 'Redis 미설정');
 
-  const webpush = require('web-push');
-  webpush.setVapidDetails('mailto:seo941024@gmail.com', pub, priv);
+  const webpush = webPush();
 
   const now = Date.now();
   const graceMs = GRACE_MIN * 60 * 1000;
@@ -55,11 +39,7 @@ module.exports = async function handler(req, res) {
   let sent = 0, failed = 0, dropped = 0, pruned = 0;
 
   for (const id of ids) {
-    let rec = null;
-    try {
-      const raw = await redis.get('push:sub:' + id);
-      rec = typeof raw === 'string' ? JSON.parse(raw) : raw;
-    } catch { rec = null; }
+    const rec = await readSub(redis, id);
     if (!rec || !rec.sub || !Array.isArray(rec.items)) continue;
 
     const due = [];
@@ -92,12 +72,8 @@ module.exports = async function handler(req, res) {
         const code = e && e.statusCode;
         if (code === 404 || code === 410) {
           gone = true;
-          try {
-            await redis.srem('push:subs', id);
-            if (rec.userId) await redis.srem('push:user:' + rec.userId, id);
-            await redis.del('push:sub:' + id);
-            pruned++;
-          } catch { /* 지우는 것도 실패하면 다음 tick에서 다시 시도된다 */ }
+          try { await removeSub(redis, id, rec.userId); pruned++; }
+          catch { /* 지우는 것도 실패하면 다음 tick에서 다시 시도된다 */ }
           break;
         }
       }

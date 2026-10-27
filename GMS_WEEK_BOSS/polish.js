@@ -6,11 +6,11 @@
 
 function _polData() { return window.POLISH_DATA; }
 
-let _polState = { type: 'life', count: 1, tries: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
+const _polFresh = (type, count) => ({ type, count, tries: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] });
+let _polState = _polFresh('life', 1);
 
 function _polStep() {
   const D = _polData();
-  const t = D.TYPES[_polState.type];
   const chance = D.chance(_polState.type, _polState.count);
   const cost = D.cost(_polState.type, _polState.count);
 
@@ -19,7 +19,7 @@ function _polStep() {
   _polState.stonesUsed[_polState.type] += _polState.count;
   const ok = Math.random() < chance;
   if (ok) _polState.locked[_polState.type] = true; // 연마석은 한 번 성공하면 그걸로 끝 — 초기화 전까지 재시도 불가
-  _polState.log.unshift({ n: _polState.tries, type: t.key, count: _polState.count, chance, ok });
+  _polState.log.unshift({ n: _polState.tries, type: _polState.type, count: _polState.count, chance, ok });
   if (_polState.log.length > 200) _polState.log.length = 200;
   return ok;
 }
@@ -27,37 +27,21 @@ function _polStep() {
 function _polRollOnce() { _polStep(); _polRender(); }
 
 function _polReset() {
-  _polStopAuto();
-  _polState = { type: _polState.type, count: _polState.count, tries: 0, mesoSpent: 0, stonesUsed: { life: 0, faith: 0 }, locked: { life: false, faith: false }, log: [] };
+  _polAuto.stop();
+  _polState = _polFresh(_polState.type, _polState.count);
   _polRender();
 }
 
 const POL_AUTO_MAX = 200000;
-let _polAutoTimer = null;
-function _polStopAuto(msg) {
-  if (_polAutoTimer) { clearTimeout(_polAutoTimer); _polAutoTimer = null; }
-  const b = document.getElementById('polAutoBtn');
-  if (b) b.textContent = '성공할 때까지 자동 [A]';
-  if (msg) alert(msg);
-}
-function _polStartAuto() {
-  if (_polAutoTimer) { _polStopAuto(); return; }
-  const b = document.getElementById('polAutoBtn');
-  if (b) b.textContent = '중지 [A]';
-  const step = () => {
-    for (let i = 0; i < 500; i++) {
-      const ok = _polStep();
-      if (ok) { _polStopAuto(); _polRender(); return; }
-      if (_polState.tries >= POL_AUTO_MAX) {
-        _polStopAuto(`${POL_AUTO_MAX.toLocaleString()}번을 돌렸지만 성공하지 못해 멈췄습니다.`);
-        _polRender(); return;
-      }
-    }
-    _polRender();
-    _polAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
+const _polAuto = createAutoRunner({
+  btnId: 'polAutoBtn', idleLabel: '성공할 때까지 자동 [A]', runLabel: '중지 [A]', batch: 500,
+  tick: () => {
+    if (_polStep()) return 'done';
+    if (_polState.tries >= POL_AUTO_MAX) return 'max';
+  },
+  maxMsg: () => `${POL_AUTO_MAX.toLocaleString()}번을 돌렸지만 성공하지 못해 멈췄습니다.`,
+  render: _polRender,
+});
 
 function _polBuildCountOpts() {
   const D = _polData();
@@ -76,7 +60,7 @@ function _polRender() {
 
   document.querySelectorAll('.pol-type-tab').forEach(b => b.classList.toggle('active', b.dataset.poltype === _polState.type));
   const countSel = document.getElementById('polCount');
-  if (countSel) countSel.innerHTML = _polBuildCountOpts();
+  countSel.innerHTML = _polBuildCountOpts();
 
   document.getElementById('polChance').textContent = (Math.round(chance * 1000) / 10) + '%';
   document.getElementById('polCost').textContent = fmtMeso(cost);
@@ -85,7 +69,7 @@ function _polRender() {
   const locked = _polState.locked[_polState.type];
   document.getElementById('polRollBtn').disabled = locked;
   document.getElementById('polAutoBtn').disabled = locked;
-  document.getElementById('polCount').disabled = locked;
+  countSel.disabled = locked;
 
   document.getElementById('polTries').textContent = _polState.tries.toLocaleString();
   document.getElementById('polMesoSpent').textContent = fmtMeso(_polState.mesoSpent);
@@ -148,7 +132,7 @@ function initPolish() {
   sec.querySelectorAll('.pol-type-tab').forEach(tab => {
     tab.addEventListener('click', () => {
       if (tab.dataset.poltype === _polState.type) return;
-      _polStopAuto();
+      _polAuto.stop();
       _polState.type = tab.dataset.poltype;
       _polState.count = 1;
       _polRender();
@@ -158,45 +142,20 @@ function initPolish() {
     _polState.count = Number(e.target.value) || 1;
     _polRender();
   });
-  document.getElementById('polRollBtn').addEventListener('click', () => { _polStopAuto(); _polRollOnce(); });
-  document.getElementById('polAutoBtn').addEventListener('click', _polStartAuto);
+  document.getElementById('polRollBtn').addEventListener('click', () => { _polAuto.stop(); _polRollOnce(); });
+  document.getElementById('polAutoBtn').addEventListener('click', _polAuto.start);
   document.getElementById('polResetBtn').addEventListener('click', _polReset);
 
-  document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    if (!document.getElementById('sec-polish')?.classList.contains('active')) return;
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
-    e.preventDefault();
-    if (e.code === 'KeyS') document.getElementById('polRollBtn')?.click();
-    else if (e.code === 'KeyA') document.getElementById('polAutoBtn')?.click();
-    else if (e.code === 'KeyR') document.getElementById('polResetBtn')?.click();
+  /* 버튼을 누르는 방식이라 성공 뒤 꺼진 버튼은 단축키도 안 듣는다 */
+  bindSimKeys('sec-polish', key => {
+    document.getElementById({ s: 'polRollBtn', a: 'polAutoBtn', r: 'polResetBtn' }[key]).click();
   });
 
   _polRender();
 }
 
-let _polLoading = null, _polInited = false;
-function ensurePolishReady(cb) {
-  if (window.POLISH_DATA) {
-    if (!_polInited) { _polInited = true; initPolish(); }
-    cb && cb(); return;
-  }
-  if (!_polLoading) {
-    _polLoading = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'data_polish.js?v=20260926a';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('data_polish.js 로드 실패'));
-      document.body.appendChild(s);
-    });
-  }
-  _polLoading.then(() => {
-    if (!_polInited) { _polInited = true; initPolish(); }
-    cb && cb();
-  }).catch(() => {
-    const sec = document.getElementById('sec-polish');
-    if (sec) sec.innerHTML = '<div class="soon-box"><div class="soon-box__title">데이터를 불러오지 못했습니다</div><div class="soon-box__desc">새로고침해주세요.</div></div>';
-  });
-}
+/* 데이터는 이 탭을 처음 열 때만 받는다 */
+const _polEnsure = lazySection({
+  isReady: () => !!window.POLISH_DATA, src: 'data_polish.js?v=20260926a', init: initPolish, secId: 'sec-polish',
+});
+function ensurePolishReady(cb) { _polEnsure(cb); }

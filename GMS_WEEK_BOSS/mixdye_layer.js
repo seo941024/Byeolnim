@@ -25,52 +25,45 @@ const MX_LAYER_ORIGIN = { stand1: [54, 88], ladder: [49, 100] };
 const MX_LAYER_SIZE = 96;
 const MX_LAYER_LADDER_HIDE = ['face', 'accessoryEye', 'accessoryEyeBelowFace', 'accessoryFaceBelowFace'];
 
-let _mxLayer = null;          // { rules, zi, where: 아이템 ID → 묶음 이름 }, 받기 전에는 null
-let _mxLayerInitP = null;
+let _mxLayerInitP = null;           // Promise<{ rules, zi, where: 아이템 ID → 묶음 이름 }>
 const _mxLayerChunks = new Map();   // 묶음 이름 → Promise<Map(ID → 아이템)>
 const _mxLayerSkins = new Map();    // 피부 머리 ID → Promise<{ skin, f: 동작별 몸·머리 층 }>
 const _mxLayerImgs = new WeakMap(); // 층 → Promise<Image>
 
+const _mxLayerJson = path => fetch(MX_LAYER_BASE + path).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
+
+// 같은 열쇠는 같은 Promise를 돌려준다. 실패하면 지워서 다음에 다시 받는다. mixdye.js의 그림 기억도 이것을 쓴다
+function _mxOnce(map, key, make) {
+  if (!map.has(key)) map.set(key, make().catch(e => { map.delete(key); throw e; }));
+  return map.get(key);
+}
+
 function _mxLayerInit() {
+  // 실패하면 기억해 두지 않는다 — 다음 그림을 그릴 때 다시 받는다
   if (!_mxLayerInitP) {
-    const get = name => fetch(MX_LAYER_BASE + name).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); });
-    _mxLayerInitP = Promise.all([get(`index.json?v=${MX_LAYER_DATA_VER}`), get(`rules.json?v=${MX_LAYER_DATA_VER}`)]).then(([index, rules]) => {
+    _mxLayerInitP = Promise.all([_mxLayerJson(`index.json?v=${MX_LAYER_DATA_VER}`), _mxLayerJson(`rules.json?v=${MX_LAYER_DATA_VER}`)]).then(([index, rules]) => {
       const where = new Map();
       for (const [key, deltas] of Object.entries(index)) {
         let id = 0;
         for (const d of deltas) { id += d; where.set(id, key); }
       }
-      const zi = new Map(rules.zmap.map((z, i) => [z, i]));
-      _mxLayer = { rules, zi, where };
-    // 실패하면 기억해 두지 않는다 — 다음 그림을 그릴 때 다시 받는다
+      return { rules, zi: new Map(rules.zmap.map((z, i) => [z, i])), where };
     }).catch(e => { _mxLayerInitP = null; throw e; });
   }
   return _mxLayerInitP;
 }
 
 function _mxLayerChunk(key) {
-  if (!_mxLayerChunks.has(key)) {
-    _mxLayerChunks.set(key, fetch(`${MX_LAYER_BASE}${key}.json`)
-      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => new Map(d.items.map(it => [it.i, it])))
-      .catch(e => { _mxLayerChunks.delete(key); throw e; }));
-  }
-  return _mxLayerChunks.get(key);
+  return _mxOnce(_mxLayerChunks, key, () => _mxLayerJson(`${key}.json`).then(d => new Map(d.items.map(it => [it.i, it]))));
 }
 
 function _mxLayerSkin(head) {
-  if (!_mxLayerSkins.has(head)) {
-    _mxLayerSkins.set(head, fetch(`${MX_LAYER_BASE}skins/${head}.json`)
-      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .catch(e => { _mxLayerSkins.delete(head); throw e; }));
-  }
-  return _mxLayerSkins.get(head);
+  return _mxOnce(_mxLayerSkins, head, () => _mxLayerJson(`skins/${head}.json`));
 }
 
-async function _mxLayerItem(id) {
-  const key = _mxLayer && _mxLayer.where.get(id);
-  if (!key) throw new Error(`층 데이터 없음 ${id}`);
-  const it = (await _mxLayerChunk(key)).get(id);
+async function _mxLayerItem(where, id) {
+  const key = where.get(id);
+  const it = key && (await _mxLayerChunk(key)).get(id);
   if (!it) throw new Error(`층 데이터 없음 ${id}`);
   return it;
 }
@@ -89,10 +82,8 @@ function _mxLayerImg(layer) {
 
 // head: 피부 머리 ID, ids: 얼굴, 헤어, 코디 순서(렌더 요청과 같은 순서). 결과는 렌더와 같은 96×96 ImageData
 async function _mxLayerCompose(view, head, ids) {
-  await _mxLayerInit();
-  if (!_mxLayer) throw new Error('층 데이터 없음');
-  const { rules, zi } = _mxLayer;
-  const [items, skin] = await Promise.all([Promise.all(ids.map(_mxLayerItem)), _mxLayerSkin(head)]);
+  const { rules, zi, where } = await _mxLayerInit();
+  const [items, skin] = await Promise.all([Promise.all(ids.map(id => _mxLayerItem(where, id))), _mxLayerSkin(head)]);
 
   const layers = skin.f[view].map(l => ({ l, rank: -1, v: [] }));
   items.forEach((it, rank) => {
@@ -127,7 +118,7 @@ async function _mxLayerCompose(view, head, ids) {
       return false;
     });
   }
-  placed.sort((a, b) => (zi.has(a.l[0]) ? zi.get(a.l[0]) : -1) - (zi.has(b.l[0]) ? zi.get(b.l[0]) : -1));
+  placed.sort((a, b) => (zi.get(a.l[0]) ?? -1) - (zi.get(b.l[0]) ?? -1));
 
   const imgs = await Promise.all(placed.map(L => _mxLayerImg(L.l)));
   const c = document.createElement('canvas');
@@ -144,7 +135,7 @@ async function _mxLayerCompose(view, head, ids) {
 let _mxIcons = null, _mxIconsP = null;   // { cell, grid, lists: 목록 이름 → { at: 줄 ID → 칸 번호, avail: 줄 ID → 색 비트, sheets } }, 못 받으면 false
 function _mxIconsLoad() {
   if (!_mxIconsP) {
-    _mxIconsP = fetch(`${MX_LAYER_BASE}icons.json?v=${MX_LAYER_DATA_VER}`).then(r => { if (!r.ok) throw new Error(r.status); return r.json(); }).then(d => {
+    _mxIconsP = _mxLayerJson(`icons.json?v=${MX_LAYER_DATA_VER}`).then(d => {
       const lists = {};
       for (const [name, L] of Object.entries(d.lists)) {
         const at = new Map(), avail = new Map(), empty = new Set(L.empty);

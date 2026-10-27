@@ -1,5 +1,8 @@
 /* =============================================
-   app.js — 네비게이션 + 주보 트래커
+   app.js — 네비게이션 + 주보 트래커 + 업데이트 공지
+   state·save·fmtMeso·showToast와 캐릭터 표시 도우미(직업·서버 아이콘, 카드 배경)도 여기 둔다.
+   설정 창은 settings.js, 캐릭터 추가·수정과 캐릭터 목록 화면은 character.js.
+   두 파일은 이 파일 바로 뒤에 읽히고, 각자 끝에서 자기 화면을 처음 그린다.
    ============================================= */
 
 /* 이미지 우클릭(저장)·드래그 저장 막기. 텍스트 선택/복사는 그대로 둔다 —
@@ -10,13 +13,6 @@ document.addEventListener('contextmenu', e => {
 document.addEventListener('dragstart', e => {
   if (e.target.tagName === 'IMG') e.preventDefault();
 });
-
-/* 캐릭터 이름 등 사용자가 직접 입력하는 값은 innerHTML에 그대로 넣지 않는다.
-   클라우드 저장으로 다른 사람 브라우저에서도 이 값이 렌더링될 수 있어서,
-   여기서 안 막으면 저장된 이름이 곧 실행 가능한 스크립트가 될 수 있다. */
-function escHtml(s) {
-  return String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-}
 
 /* ── state ── */
 let state = { chars: [], activeChar: -1, region: 'na' };
@@ -84,9 +80,6 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
   });
 });
 
-/* 주간 초기화 카운트다운은 헤더에서 뺐다(2026-08-23). 표시 전용이라 다른 로직이
-   쓰지 않던 값이고, 그 자리에 로그인 버튼을 뒀다. */
-
 /* ── 네비게이션 ── */
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
@@ -104,18 +97,13 @@ const NAV_LABELS = {
 };
 function navigateTo(sec) {
   if (typeof va === 'function') va('event', { name: '메뉴 클릭', data: { section: NAV_LABELS[sec] || sec } });
-  document.querySelectorAll('.sb-nav__item').forEach(b => b.classList.remove('active'));
-  document.querySelectorAll('.sec').forEach(s => s.classList.remove('active'));
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
-  if (btn) btn.classList.add('active');
+  setActive(document.querySelectorAll('.sb-nav__item'), btn);
+  setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
   // 시뮬레이터 그룹 안의 메뉴가 열리면 그룹도 펼치고 머리를 강조한다
   const grp = btn?.closest('.sb-group');
-  document.querySelectorAll('.sb-group').forEach(g => {
-    g.classList.toggle('has-active', g === grp);
-    if (g === grp) g.classList.add('open');
-  });
-  const secEl = document.getElementById('sec-' + sec);
-  if (secEl) secEl.classList.add('active');
+  setActive(document.querySelectorAll('.sb-group'), grp, 'has-active');
+  grp?.classList.add('open');
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
   if (sec === 'serverstatus') renderServerStatus();
@@ -149,8 +137,7 @@ document.getElementById('headerLogo').addEventListener('click', () => navigateTo
    PC: 기본은 숨김. 화면 왼쪽 끝에 마우스를 대면 튀어나오고(sidebar-peek) 벗어나면 다시 숨는다.
    사이드바의 고정 버튼을 누르면 예전처럼 항상 펼쳐 둔다(sidebar-pinned, 다음 방문에도 유지). */
 function closeSidebar() {
-  document.body.classList.remove('sidebar-open');
-  document.body.classList.remove('sidebar-peek');
+  document.body.classList.remove('sidebar-open', 'sidebar-peek');
 }
 const SIDEBAR_PIN_KEY = 'gms_sidebar_pinned';
 function setSidebarPinned(on) {
@@ -236,38 +223,40 @@ function getMaxParty(boss, diff) {
 function ck(bossId, diff) { return `${bossId}_${diff}`; }
 
 /* ── 결정석 ── */
-function countWeeklyCrystals(ch) {
-  let n = 0;
+/* 체크해 둔 보스마다 fn(boss, bossId, diff, check). 키는 'bossId_diff'이고,
+   BOSS_DATA에서 빠진 보스면 boss가 undefined다. */
+function forEachCheck(ch, fn) {
   Object.entries(ch.checks || {}).forEach(([key, v]) => {
     if (!v?.on) return;
-    const bossId = key.slice(0, key.lastIndexOf('_'));
-    const boss = BOSS_DATA.find(b => b.id === bossId);
-    if (boss && !boss.monthly) n++;
+    const us = key.lastIndexOf('_');
+    const bossId = key.slice(0, us);
+    fn(BOSS_DATA.find(b => b.id === bossId), bossId, key.slice(us + 1), v);
   });
+}
+function countWeeklyCrystals(ch) {
+  let n = 0;
+  forEachCheck(ch, boss => { if (boss && !boss.monthly) n++; });
   return n;
 }
 function countMonthlyCrystals(ch) {
   let n = 0;
-  Object.entries(ch.checks || {}).forEach(([key, v]) => {
-    if (!v?.on) return;
-    const bossId = key.slice(0, key.lastIndexOf('_'));
-    const boss = BOSS_DATA.find(b => b.id === bossId);
-    if (boss && boss.monthly) n++;
-  });
+  forEachCheck(ch, boss => { if (boss && boss.monthly) n++; });
   return n;
-}
-function countCrystals(ch) {
-  return countWeeklyCrystals(ch) + countMonthlyCrystals(ch);
 }
 function countBossCrystals(ch, bossId) {
   let n = 0;
-  Object.entries(ch.checks || {}).forEach(([key, v]) => {
-    if (!v?.on) return;
-    if (key.slice(0, key.lastIndexOf('_')) === bossId) n++;
-  });
+  forEachCheck(ch, (boss, id) => { if (id === bossId) n++; });
   return n;
 }
-/* 한 캐릭터의 주간 보스 수익 합 */
+/* 판매 상한(MAX_CRYSTALS)에 드는 개수. 결정석 포함을 끈 캐릭터는 검은 마법사를 뺀다 —
+   이 값을 캐릭터마다 따로 보지 않고 하나로 묶어 두면, 어느 캐릭터에서 토글해도
+   전체에 적용되는 버그가 난다. */
+function sellableCrystals(ch) {
+  return countWeeklyCrystals(ch) + countMonthlyCrystals(ch)
+    - (ch.bmCrystalIncluded === false ? countBossCrystals(ch, 'blackmage') : 0);
+}
+
+/* 이번 달 목요일(주간 초기화) 횟수 */
 function thursdaysInMonth() {
   const now = new Date();
   const y = now.getFullYear(), m = now.getMonth();
@@ -277,13 +266,10 @@ function thursdaysInMonth() {
   return n;
 }
 
+/* 한 캐릭터의 주간 보스 수익 합 */
 function charWeeklyMeso(ch) {
   let sum = 0;
-  Object.entries(ch.checks || {}).forEach(([key, v]) => {
-    if (!v?.on) return;
-    const us = key.lastIndexOf('_');
-    const bossId = key.slice(0, us), diff = key.slice(us + 1);
-    const boss = BOSS_DATA.find(b => b.id === bossId);
+  forEachCheck(ch, (boss, bossId, diff, v) => {
     if (!boss || !boss.diffs[diff] || boss.monthly) return; // 월간 보스 제외
     sum += Math.floor(boss.diffs[diff] / (v.party || 1));
   });
@@ -293,11 +279,7 @@ function charWeeklyMeso(ch) {
 function charMonthlyMeso(ch) {
   const resets = thursdaysInMonth();
   let sum = 0;
-  Object.entries(ch.checks || {}).forEach(([key, v]) => {
-    if (!v?.on) return;
-    const us = key.lastIndexOf('_');
-    const bossId = key.slice(0, us), diff = key.slice(us + 1);
-    const boss = BOSS_DATA.find(b => b.id === bossId);
+  forEachCheck(ch, (boss, bossId, diff, v) => {
     if (!boss || !boss.diffs[diff]) return;
     const count = boss.monthly ? 1 : resets;
     sum += Math.floor(boss.diffs[diff] / (v.party || 1)) * count;
@@ -308,12 +290,7 @@ function charMonthlyMeso(ch) {
 function updateCrystalBar() {
   const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
   const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
-  // 캐릭터별로 토글이 꺼진 것만 뺀다 — 전부 하나의 값으로 묶여 있으면
-  // 어느 캐릭터에서 토글해도 전체에 적용되는 버그가 난다.
-  const bmExcluded = state.chars.reduce((s, c) =>
-    s + (c.bmCrystalIncluded === false ? countBossCrystals(c, 'blackmage') : 0), 0);
-  const cappedM = totalM - bmExcluded;
-  const total  = Math.min(totalW + cappedM, MAX_CRYSTALS);
+  const total  = Math.min(state.chars.reduce((s, c) => s + sellableCrystals(c), 0), MAX_CRYSTALS);
   document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
   document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
   const elCW = document.getElementById('totalCrystalWeekly');
@@ -335,7 +312,7 @@ function updateCrystalBar() {
     elWN.style.display = doneCount ? '' : 'none';
   }
   const elM = document.getElementById('totalMonthMeso');
-  if (elM) { elM.textContent = (monthTotal < 0 ? '-' : '') + fmtMeso(Math.abs(monthTotal)); elM.style.color = monthTotal < 0 ? 'var(--danger)' : ''; }
+  if (elM) { elM.textContent = fmtMeso(monthTotal); elM.style.color = monthTotal < 0 ? 'var(--danger)' : ''; }
 }
 
 /* ── 캐릭터 목록 렌더 (사이드바: active 1개만) ── */
@@ -395,9 +372,10 @@ function renderBossTable() {
   const cp  = document.getElementById('btnCrystalCount');
 
   const weekRow = document.getElementById('bossWeekRow');
+  const countHtml = (w, m) => `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">${w}개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">${m}개</span>`;
   if (!ch) {
     nm.textContent = '캐릭터를 선택하세요';
-    cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">0개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">0개</span>`;
+    cp.innerHTML = countHtml(0, 0);
     tb.innerHTML = `<tr><td colspan="4" class="empty">왼쪽에서 캐릭터를 선택하세요.</td></tr>`;
     document.getElementById('weeklyTotal').textContent = '0 메소';
     // 마지막 캐릭터를 지웠을 때 월 예상 수익에 지운 캐릭터 금액이 남지 않게 같이 비운다
@@ -409,28 +387,26 @@ function renderBossTable() {
   }
   if (weekRow) weekRow.style.display = '';
 
-  const cW = countWeeklyCrystals(ch);
-  const cM = countMonthlyCrystals(ch);
   nm.textContent = `${ch.name} 보스 목록`;
-  cp.innerHTML = `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">${cW}개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">${cM}개</span>`;
+  cp.innerHTML = countHtml(countWeeklyCrystals(ch), countMonthlyCrystals(ch));
 
   // 주간 합산 토글 — 캐릭터 목록 카드에서 여기로 옮겼다(보스 목록 옆이 더 눈에 띄고,
-  // 카드 한 장의 세로 길이도 그만큼 줄었다).
+  // 카드 한 장의 세로 길이도 그만큼 줄었다). 사이드바 카드에는 이 값이 안 보이므로 합계만 다시 센다.
   const weekToggle = document.getElementById('bossWeekToggle');
   if (weekToggle) {
-    weekToggle.classList.toggle('off', !!ch.weekDone);
-    weekToggle.classList.toggle('on', !ch.weekDone);
+    const paint = () => {
+      weekToggle.classList.toggle('off', !!ch.weekDone);
+      weekToggle.classList.toggle('on', !ch.weekDone);
+    };
+    paint();
     weekToggle.onclick = () => {
       ch.weekDone = !ch.weekDone;
       save();
-      weekToggle.classList.toggle('off', !!ch.weekDone);
-      weekToggle.classList.toggle('on', !ch.weekDone);
+      paint();
       updateCrystalBar();
-      renderCharList();
     };
   }
 
-  let total = 0;
   tb.innerHTML = '';
 
   BOSS_DATA.forEach(boss => {
@@ -456,7 +432,6 @@ function renderBossTable() {
     const maxP  = activeDiff ? getMaxParty(boss, activeDiff) : 6;
     const party = activeDiff ? (ch.checks[ck(boss.id, activeDiff)]?.party ?? 1) : null;
     const price = activeDiff ? Math.floor(boss.diffs[activeDiff] / party) : null;
-    if (price && !boss.monthly) total += price; // 월간 보스는 주간 합계 제외
 
     const partyHtml = !activeDiff
       ? '<span class="party-dash">-</span>'
@@ -498,29 +473,15 @@ function renderBossTable() {
     ch.bmCrystalIncluded = ch.bmCrystalIncluded === false; // 캐릭터 하나만 토글
     save();
     renderBossTable();
-    updateCrystalBar();
   });
   document.getElementById('bmCrystalInfo')?.addEventListener('click', () => {
     showToast('결정석을 주간 개수에 포함시키기');
   });
 
-  const wCost = rentalWeeklyCost();
-  const mCost = rentalMonthlyCost();
-  const weekNet = total - wCost;
-  const wEl2 = document.getElementById('weeklyTotal');
-  wEl2.textContent = (weekNet < 0 ? '-' : '') + fmtMeso(Math.abs(weekNet));
-  wEl2.style.color = weekNet < 0 ? 'var(--danger)' : 'var(--accent)';
-  const resets = thursdaysInMonth();
-  const monthEl = document.getElementById('monthlyTotal');
   const monthSubEl = document.getElementById('monthResetCount');
-  if (monthEl) {
-    const monthNet = charMonthlyMeso(ch) - mCost;
-    monthEl.textContent = (monthNet < 0 ? '-' : '') + fmtMeso(Math.abs(monthNet));
-    monthEl.style.color = monthNet < 0 ? 'var(--danger)' : '';
-  }
-  if (monthSubEl) monthSubEl.textContent = `(주${resets}회 기준)`;
+  if (monthSubEl) monthSubEl.textContent = `(주${thursdaysInMonth()}회 기준)`;
 
-  // 활성 캐릭터의 대여 슬롯·수요일 체크 동기화
+  // 활성 캐릭터의 대여 슬롯·수요일 체크 동기화. 이번 주·이번 달 합계와 사이드바 막대도 여기서 다시 그린다.
   initRentalSlots();
 
   // 난이도 select → 변경
@@ -532,19 +493,16 @@ function renderBossTable() {
       if (!ch.checks) ch.checks = {};
       Object.keys(boss.diffs).forEach(d => { ch.checks[ck(bossId,d)] = { on:false, party: ch.checks[ck(bossId,d)]?.party ?? 1 }; });
       if (diff) {
-        // 상단 막대(updateCrystalBar)와 같은 기준 — 결정석 포함을 끈 캐릭터의 검은 마법사는 빼고 센다
-        const sold = state.chars.reduce((s,c)=>s+countCrystals(c)-(c.bmCrystalIncluded === false ? countBossCrystals(c,'blackmage') : 0),0);
-        if (sold >= MAX_CRYSTALS) {
+        // 상단 막대(updateCrystalBar)와 같은 기준으로 센다
+        if (state.chars.reduce((s, c) => s + sellableCrystals(c), 0) >= MAX_CRYSTALS) {
           showToast(`주간 결정석은 최대 ${MAX_CRYSTALS}개까지 판매 가능합니다.`);
-          save(); renderBossTable(); renderCharList(); return;
-        }
-        if (!boss.monthly && countWeeklyCrystals(ch) >= 14) {
+        } else if (!boss.monthly && countWeeklyCrystals(ch) >= 14) {
           showToast('캐릭터당 주간 보스는 최대 14개까지 선택 가능합니다.');
-          save(); renderBossTable(); renderCharList(); return;
+        } else {
+          ch.checks[ck(bossId, diff)] = { on:true, party: ch.checks[ck(bossId, diff)]?.party ?? 1 };
         }
-        ch.checks[ck(bossId, diff)] = { on:true, party: ch.checks[ck(bossId, diff)]?.party ?? 1 };
       }
-      save(); renderBossTable(); renderCharList();
+      save(); renderBossTable();
     });
   });
 
@@ -586,11 +544,6 @@ function getRentalState(ch = state.chars[state.activeChar]) {
   if (!Array.isArray(ch.rental.slots)) ch.rental.slots = [];
   return ch.rental;
 }
-function saveRentalState(s, ch = state.chars[state.activeChar]) {
-  if (!ch) return;
-  ch.rental = s;
-  save();
-}
 
 function rentalWeeklyCost(ch = state.chars[state.activeChar]) {
   const s = getRentalState(ch);
@@ -617,9 +570,8 @@ function initRentalSlots() {
       const rs = getRentalState();
       const idx = rs.slots.indexOf(item.id);
       if (idx >= 0) rs.slots.splice(idx, 1); else rs.slots.push(item.id);
-      saveRentalState(rs);
+      save();
       initRentalSlots();
-      updateRentalTotals();
     });
     container.appendChild(slot);
   });
@@ -636,74 +588,36 @@ function updateRentalTotals() {
 
   const ch = state.chars[state.activeChar];
   if (!ch) return;
-  let bossWeekly = 0;
-  (ch.checks ? Object.entries(ch.checks) : []).forEach(([key, val]) => {
-    if (!val?.on) return;
-    const sep = key.lastIndexOf('_');
-    const bossId = key.slice(0, sep);
-    const diff   = key.slice(sep + 1);
-    const boss = BOSS_DATA.find(b => b.id === bossId);
-    if (!boss || boss.monthly) return;
-    bossWeekly += Math.floor((boss.diffs[diff] || 0) / Math.max(1, val.party || 1));
-  });
+  const weekNet = charWeeklyMeso(ch) - wCost;
+  const monthNet = charMonthlyMeso(ch) - rentalMonthlyCost();
   const wEl = document.getElementById('weeklyTotal');
   const mEl = document.getElementById('monthlyTotal');
-  const wCost2 = rentalWeeklyCost();
-  const mCost2 = rentalMonthlyCost();
-  const weekNet = bossWeekly - wCost2;
-  const monthNet = charMonthlyMeso(ch) - mCost2;
-  if (wEl) { wEl.textContent = (weekNet < 0 ? '-' : '') + fmtMeso(Math.abs(weekNet)); wEl.style.color = weekNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
-  if (mEl) { mEl.textContent = (monthNet < 0 ? '-' : '') + fmtMeso(Math.abs(monthNet)); mEl.style.color = monthNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (wEl) { wEl.textContent = fmtMeso(weekNet); wEl.style.color = weekNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (mEl) { mEl.textContent = fmtMeso(monthNet); mEl.style.color = monthNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
   updateCrystalBar();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  initRentalSlots();
-  const wedCb = document.getElementById('rentalWed');
-  if (wedCb) {
-    wedCb.addEventListener('change', () => {
-      if (!state.chars[state.activeChar]) return;
-      const rs = getRentalState();
-      rs.wed = wedCb.checked;
-      saveRentalState(rs);
-      updateRentalTotals();
-    });
-  }
+const rentalWedCb = document.getElementById('rentalWed');
+rentalWedCb?.addEventListener('change', () => {
+  if (!state.chars[state.activeChar]) return;
+  getRentalState().wed = rentalWedCb.checked;
+  save();
+  updateRentalTotals();
 });
 
 /* ── 보스 초기화 ── */
 document.getElementById('btnResetBoss').addEventListener('click', () => {
   const ch = state.chars[state.activeChar];
   if (!ch) return;
-  document.getElementById('confirmMsg').textContent = `'${ch.name}'의 보스 체크를 초기화할까요?`;
-  document.getElementById('overlayConfirm').classList.add('open');
-  document.getElementById('confirmOk').onclick = () => {
+  openConfirm(`'${ch.name}'의 보스 체크를 초기화할까요?`, () => {
     ch.checks = {};
-    save(); document.getElementById('overlayConfirm').classList.remove('open');
-    renderBossTable(); renderCharList();
-  };
+    save(); closeConfirm();
+    renderBossTable();
+  });
 });
 
-/* ── 캐릭터 모달 ── */
-let editIdx = -1, selectedJob = 0, fetchedInfo = null, selectedCardBg = null;
-
-function openCharModal(idx = -1) {
-  editIdx = idx;
-  selectedJob = idx >= 0 ? state.chars[idx].jobIdx : 0;
-  fetchedInfo = idx >= 0 && state.chars[idx].fetched ? { ...state.chars[idx].fetched } : null;
-  selectedCardBg = idx >= 0 ? (state.chars[idx].cardBg || null) : null;
-  document.getElementById('modalCharTitle').textContent = idx >= 0 ? '캐릭터 수정' : '캐릭터 추가';
-  document.getElementById('inpName').value  = idx >= 0 ? state.chars[idx].name  : '';
-  document.getElementById('inpLevel').value = idx >= 0 ? state.chars[idx].level : '';
-  document.getElementById('inpWorld').value = idx >= 0 ? (state.chars[idx].fetched?.world || '') : '';
-  document.getElementById('inpJobSearch').value = '';
-  document.getElementById('lkName').value = idx >= 0 ? state.chars[idx].name : '';
-  document.getElementById('lkResult').innerHTML = '';
-  renderJobGrid('');   // 직접 입력용 직업 그리드
-  renderCardBgGrid();
-  document.getElementById('overlayChar').classList.add('open');
-}
-
+/* ── 캐릭터 표시 도우미 ──
+   사이드바·캐릭터 목록·캘린더·커뮤니티·채널 추천·서버 상태가 같이 쓴다. */
 // 캐릭터 일러스트 뒤에 깔리는 배경 그림. 기본값은 CSS에 박혀 있는
 // images/icons/bg.webp이고, 캐릭터가 cardBg를 고르면 그걸로 갈아끼운다.
 // png를 먼저 시도하고 없으면 webp, 둘 다 없으면 요소가 사라져 기본 배경이 드러난다.
@@ -715,258 +629,17 @@ function portraitBgHtml(cardBg) {
     onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.remove();}">`;
 }
 
-/* ── 카드 배경 선택 그리드 ──
-   images/bg/bg{0..CARD_BG_COUNT-1}에 png 또는 webp로 넣어두면 뜨는 방식.
-   파일이 아직 없는 번호는 두 확장자 다 실패하니 타일 자체를 숨긴다 —
-   그래서 나중에 이미지만 채워 넣으면 코드를 안 건드려도 그 번호가 나타난다. */
-function renderCardBgGrid() {
-  const grid = document.getElementById('cardBgGrid');
-  if (!grid) return;
-  const tiles = [`<button type="button" class="cardbg-opt cardbg-opt--none${selectedCardBg ? '' : ' sel'}" data-bg="">없음</button>`];
-  for (let i = 0; i < CARD_BG_COUNT; i++) {
-    const bgId = 'bg' + i;
-    const [primary, fallback] = cardBgCandidates(i);
-    tiles.push(`
-      <button type="button" class="cardbg-opt${selectedCardBg === bgId ? ' sel' : ''}" data-bg="${bgId}">
-        <img src="${primary}" data-fallback="${fallback}"
-             onerror="if(!this.dataset.tried){this.dataset.tried='1';this.src=this.dataset.fallback;}else{this.closest('.cardbg-opt').remove();}">
-      </button>`);
-  }
-  grid.innerHTML = tiles.join('');
-  grid.querySelectorAll('.cardbg-opt').forEach(btn => {
-    btn.addEventListener('click', () => {
-      selectedCardBg = btn.dataset.bg || null;
-      grid.querySelectorAll('.cardbg-opt').forEach(b => b.classList.toggle('sel', b === btn));
-    });
-  });
-}
-
-/* ── 캐릭터 카드를 이미지로 저장 ──
-   넥슨 아바타는 다른 출처(msavatar1.nexon.net)라 캔버스에 그대로 그리면
-   캔버스가 오염(tainted)되어 toDataURL이 막힌다. /api/img 프록시를 거쳐
-   같은 출처처럼 받아온다(api/img.js, serve.js 둘 다 구현돼 있음). */
-function proxiedImgSrc(url) {
-  if (!url) return '';
-  try {
-    const u = new URL(url, location.href);
-    if (/nexon\.(net|com)$/i.test(u.hostname)) return `/api/img?url=${encodeURIComponent(url)}`;
-  } catch { /* 상대경로(내부 images/) 등 — 그대로 사용 */ }
-  return url;
-}
-/* 실제 카드 DOM을 그대로 캡처(html2canvas/html-to-image 둘 다 시도)하면
-   카드가 쓰는 컨테이너 쿼리(cqw, 카드 폭 기준 글씨 크기)를 두 라이브러리 다
-   제대로 못 살려서 이름/직업 글씨가 통째로 사라지거나 깨졌다(실측 확인).
-   그래서 캔버스에 직접 그리는 방식으로 되돌리되, 지난번에 빠졌던 서버 아이콘·
-   직업 아이콘을 추가하고 워터마크는 뺐다. */
-function loadImg(src) {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () => resolve(img);
-    img.onerror = reject;
-    img.src = src;
-  });
-}
-async function loadFirstAvailable(srcs) {
-  for (const s of srcs) {
-    try { return await loadImg(s); } catch { /* 다음 후보 시도 */ }
-  }
-  return null;
-}
-async function loadOptional(src) {
-  if (!src) return null;
-  try { return await loadImg(src); } catch { return null; }
-}
-function cardRoundRect(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.arcTo(x + w, y, x + w, y + h, r);
-  ctx.arcTo(x + w, y + h, x, y + h, r);
-  ctx.arcTo(x, y + h, x, y, r);
-  ctx.arcTo(x, y, x + w, y, r);
-  ctx.closePath();
-}
-function cardRoundRectLeft(ctx, x, y, w, h, r) {
-  ctx.beginPath();
-  ctx.moveTo(x + r, y);
-  ctx.lineTo(x + w, y);
-  ctx.lineTo(x + w, y + h);
-  ctx.lineTo(x + r, y + h);
-  ctx.arcTo(x, y + h, x, y + h - r, r);
-  ctx.lineTo(x, y + r);
-  ctx.arcTo(x, y, x + r, y, r);
-  ctx.closePath();
-}
-function drawImgCover(ctx, img, x, y, w, h) {
-  const ir = img.width / img.height, br = w / h;
-  let sw, sh, sx, sy;
-  if (ir > br) { sh = img.height; sw = sh * br; sx = (img.width - sw) / 2; sy = 0; }
-  else { sw = img.width; sh = sw / br; sx = 0; sy = (img.height - sh) / 2; }
-  ctx.drawImage(img, sx, sy, sw, sh, x, y, w, h);
-}
-function drawImgContain(ctx, img, x, y, w, h) {
-  const ir = img.width / img.height, br = w / h;
-  let dw, dh;
-  if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
-  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
-}
-function drawImgContainBottom(ctx, img, x, y, w, h) {
-  const ir = img.width / img.height, br = w / h;
-  let dw, dh;
-  if (ir > br) { dw = w; dh = w / ir; } else { dh = h; dw = h * ir; }
-  ctx.drawImage(img, x + (w - dw) / 2, y + h - dh, dw, dh);
-}
-
-async function exportCharCard(idx) {
-  const ch = state.chars[idx];
-  if (!ch) return;
-  const f = ch.fetched || {};
-  const jn = charJobName(ch);
-  const region = f.region || (state.region === 'eu' ? 'EU' : 'NA');
-  const world = f.world || '';
-  const lv = f.level || ch.level;
-
-  // 화면에서 실제로 쓰고 있는 폰트를 그대로 쓴다(고딕/Maple/8bit 중 사용자가 고른 것).
-  const fontStack = getComputedStyle(document.body).fontFamily || "'고딕','Segoe UI','Malgun Gothic',sans-serif";
-  const primaryFont = (fontStack.split(',')[0] || '고딕').trim().replace(/^['"]|['"]$/g, '');
-  try {
-    await Promise.all([
-      document.fonts.load(`16px "${primaryFont}"`),
-      document.fonts.load(`bold 16px "${primaryFont}"`),
-    ]);
-    await document.fonts.ready;
-  } catch { /* 폰트 로드 실패해도 fallback 폰트로 계속 진행 */ }
-  const F = (size, bold) => `${bold ? 'bold ' : ''}${size}px "${primaryFont}", "Segoe UI", "Malgun Gothic", sans-serif`;
-
-  const SCALE = 2, W = 460, H = 220, PW = 190, PAD = 12;
-  const canvas = document.createElement('canvas');
-  canvas.width = W * SCALE; canvas.height = H * SCALE;
-  const ctx = canvas.getContext('2d');
-  ctx.scale(SCALE, SCALE);
-
-  const cs = getComputedStyle(document.documentElement);
-  const panelBg   = cs.getPropertyValue('--bg-card').trim() || '#0e0b1e';
-  const panelVeil = cs.getPropertyValue('--panel-veil').trim() || 'rgba(15,10,32,.9)';
-  const textColor = cs.getPropertyValue('--text').trim() || '#fff';
-  const textSub   = cs.getPropertyValue('--text-sub').trim() || '#9a94b0';
-  const accent    = cs.getPropertyValue('--accent').trim() || '#f5c842';
-  const hue       = cs.getPropertyValue('--hue').trim() || '139,92,246';
-
-  // 카드 배경 — 둥근 사각형 밖은 그대로 투명(캔버스 기본값)으로 둬서 다운로드된
-  // png가 카드 모양 그대로 잘려 보이게 한다. panel-veil은 반투명이라 그 아래
-  // 불투명 바탕(--bg-card)을 먼저 깔아 어디에 붙여넣어도 카드가 또렷하게 보이게 함.
-  cardRoundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
-  ctx.fillStyle = panelBg;
-  ctx.fill();
-  ctx.fillStyle = panelVeil;
-  ctx.fill();
-
-  // 일러스트 박스(왼쪽)
-  ctx.save();
-  cardRoundRectLeft(ctx, 0, 0, PW, H, 14);
-  ctx.clip();
-  if (ch.cardBg) {
-    const id = ch.cardBg.replace(/^bg/, '');
-    const bgImg = await loadFirstAvailable(cardBgCandidates(id));
-    if (bgImg) drawImgCover(ctx, bgImg, 0, 0, PW, H);
-  }
-  const hasReal = !!f.img;
-  const charImg = await loadFirstAvailable(hasReal ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
-  if (charImg) {
-    const pct = 0.92;
-    const boxW = PW * pct, boxH = H * pct;
-    drawImgContainBottom(ctx, charImg, (PW - boxW) / 2, H - boxH, boxW, boxH);
-  }
-  ctx.restore();
-
-  // 텍스트(오른쪽) — 실제 카드(.ci-card__meta, .ci-card__ranks)와 동일하게
-  // 이름/직업 블록, Lv/서버 블록, 랭킹 블록 사이에 구분선을 넣는다.
-  const tx = PW + PAD * 2;
-  const rightEdge = W - PAD;
-  const jobHeadSrc = charJobHeadSrc(ch);
-  const jobHeadImg = await loadOptional(jobHeadSrc);
-  const jobIconSize = 52;
-
-  ctx.fillStyle = textColor;
-  ctx.font = F(22, true);
-  ctx.fillText(ch.name, tx, 38);
-
-  if (jobHeadImg) drawImgContain(ctx, jobHeadImg, rightEdge - jobIconSize, 10, jobIconSize, jobIconSize);
-
-  ctx.fillStyle = textSub;
-  ctx.font = F(13, false);
-  ctx.fillText(jn || '', tx, 60);
-
-  const divider = y => {
-    ctx.strokeStyle = cs.getPropertyValue('--border').trim() || 'rgba(255,255,255,.12)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(tx, y);
-    ctx.lineTo(rightEdge, y);
-    ctx.stroke();
-  };
-
-  divider(76);
-
-  ctx.fillStyle = accent;
-  ctx.font = F(19, true);
-  ctx.fillText(`Lv.${lv}`, tx, 102);
-
-  // 서버 아이콘 + "NA Kronos" 형태로 화면과 동일하게
-  const sIconSrc = world ? serverIconSrc(world) : '';
-  const sIconImg = await loadOptional(sIconSrc);
-  let worldTx = tx;
-  if (sIconImg) { drawImgContain(ctx, sIconImg, tx, 112, 16, 16); worldTx = tx + 22; }
-  ctx.fillStyle = textColor;
-  ctx.font = F(14, false);
-  ctx.fillText(`${region} ${world}`.trim(), worldTx, 124);
-
-  if (f.rank) {
-    divider(140);
-    ctx.fillStyle = textSub;
-    ctx.font = F(13, false);
-    ctx.fillText(`${region} 랭킹 #${f.rank.toLocaleString()}`, tx, 162);
-  }
-
-  // 카드 테두리는 맨 마지막에 그린다 — 일러스트/배경 이미지가 먼저 그려지면서
-  // 왼쪽 변의 테두리 선을 덮어버려 "테두리가 없다"고 보이던 문제가 있었음.
-  cardRoundRect(ctx, 0.5, 0.5, W - 1, H - 1, 14);
-  ctx.strokeStyle = `rgba(${hue},.6)`;
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
-  let dataUrl;
-  try {
-    dataUrl = canvas.toDataURL('image/png');
-  } catch (e) {
-    // 다른 출처 이미지가 프록시를 안 거치고 캔버스에 그려지면(예: f.img가
-    // 넥슨 도메인이 아닌 경우) 캔버스가 오염돼 여기서 SecurityError가 난다.
-    // 그냥 실패해서 아무 반응 없는 것처럼 보이지 않게 알려준다.
-    alert('명함 이미지를 만드는 중 오류가 발생했습니다: ' + e.message);
-    return;
-  }
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = `${(ch.name || 'character').replace(/[\\/:*?"<>|]/g, '_')}_카드.png`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-}
-
-/* ── GMS 랭킹 조회 + 히스토리 ──
-   랭킹 API는 '현재 상태'만 제공하므로, 조회할 때마다 스냅샷
-   (날짜·레벨·경험치·캐릭터이미지)을 로컬에 누적해 히스토리를 만든다. */
-const HIST_KEY = STORAGE_KEYS.charHistory;
-function loadHist() { try { return JSON.parse(localStorage.getItem(HIST_KEY) || '{}'); } catch { return {}; } }
-function saveHist(h) { localStorage.setItem(HIST_KEY, JSON.stringify(h)); }
-function histKeyOf(d) { return `${(d.region||'NA').toLowerCase()}_${d.reboot?'r':'n'}_${(d.name||'').toLowerCase()}`; }
+/* 직업명 비교용 — 대소문자·공백·특수문자 무시 */
+function normJobName(s) { return s.toLowerCase().replace(/[^a-z]/g, ''); }
 
 /* nexon 영문 직업명 → JOB_LIST 인덱스 (정규화 매칭) */
 function jobIdxFromName(jobName) {
   if (!jobName) return -1;
-  const norm = jobName.toLowerCase().replace(/[^a-z]/g, '');
-  return JOB_LIST.findIndex(j => j.name.toLowerCase().replace(/[^a-z]/g, '') === norm);
+  const norm = normJobName(jobName);
+  return JOB_LIST.findIndex(j => normJobName(j.name) === norm);
 }
 
+/* 직업 아이콘 파일명이 영문 직업명에서 공백만 뺀 것과 다른 직업 */
 const JOB_ASSET_NAMES = {
   'Dark Knight':'DarkNight',
   'Arch Mage (Fire, Poison)':'Arch_MageFP',
@@ -994,7 +667,6 @@ const JOB_ASSET_NAMES = {
   'Sia Astelle':'SiaAstelle',
   'Hoyoung':'HoYoung',
 };
-// (JOB_HEAD_ASSET_NAMES 제거: 헤드 파일명을 전신과 통일해 JOB_ASSET_NAMES 하나로 해석)
 // 파일명 대소문자는 images/server/의 실제 파일과 정확히 일치해야 한다.
 // 로컬 Windows는 대소문자를 안 가리지만 배포(Vercel/리눅스)는 가려서 404가 난다.
 const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'webp', Hyperion:'webp', Luna:'webp', Solis:'webp', Challengers:'webp' };
@@ -1003,783 +675,42 @@ const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'webp', Hyperion:'
 function charJobName(ch) {
   return ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name || '';
 }
-function _resolveAsset(en, ...maps) {
-  if (!en) return null;
-  for (const map of maps) {
-    if (map[en]) return map[en];
-  }
-  // 정규화 매칭 (대소문자·공백·특수문자 무시)
-  const norm = en.toLowerCase().replace(/[^a-z]/g, '');
-  for (const map of maps) {
-    const key = Object.keys(map).find(k => k.toLowerCase().replace(/[^a-z]/g, '') === norm);
-    if (key) return map[key];
-  }
-  return en.replace(/\s+/g, '');
-}
 function charJobHeadSrc(ch) {
-  const en = ch.fetched?.job || JOB_LIST[ch.jobIdx]?.name;
-  // 헤드 파일명은 전신과 동일하게 통일됨 → 전신과 같은 매핑 사용
-  const asset = _resolveAsset(en, JOB_ASSET_NAMES);
+  const en = charJobName(ch);
+  if (!en) return '';
+  // 표에 그대로 있는 이름 → 정규화해서 같은 이름 → 공백만 뺀 이름 순서로 찾는다
+  const norm = normJobName(en);
+  const key = JOB_ASSET_NAMES[en] ? en : Object.keys(JOB_ASSET_NAMES).find(k => normJobName(k) === norm);
+  const asset = key ? JOB_ASSET_NAMES[key] : en.replace(/\s+/g, '');
   return asset ? `images/jobs/Head/${asset}.webp` : '';
 }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];
   return ext ? `images/server/${encodeURIComponent(world)}.${ext}` : '';
 }
-function todayStr() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
-
-/* 조회 결과를 히스토리에 기록. 같은 날 중복은 최신값으로 갱신. */
-function recordSnapshot(d) {
-  const h = loadHist();
-  const key = histKeyOf(d);
-  const arr = h[key] || [];
-  const snap = { date: todayStr(), ts: Date.now(), level: d.level, exp: Number(d.exp)||0, img: d.img || '', job: d.job || '' };
-  const last = arr[arr.length - 1];
-  if (last && last.date === snap.date) arr[arr.length - 1] = snap;   // 같은 날 → 갱신
-  else if (!last || last.exp !== snap.exp || last.img !== snap.img || last.level !== snap.level) arr.push(snap);
-  h[key] = arr.slice(-60);   // 최근 60개만 보관
-  saveHist(h);
-  return h[key];
+/* 랭킹으로 조회한 캐릭터는 그 지역, 직접 넣은 캐릭터는 지금 고른 서버 토글을 따른다 */
+function charRegion(ch) {
+  return ch.fetched?.region || (state.region === 'eu' ? 'EU' : 'NA');
 }
 
-/* 히스토리 HTML (경험치 변화) */
-function renderHistHtml(d) {
-  const arr = (loadHist()[histKeyOf(d)] || []).slice().reverse();   // 최신순
-  if (arr.length <= 1) return '';
-  const expRows = arr.map((s, i) => {
-    const prev = arr[i + 1];
-    let delta = '';
-    if (prev) {
-      const diffLv = s.level - prev.level;
-      const diffExp = s.exp - prev.exp;
-      const parts = [];
-      if (diffLv) parts.push(`<span class="hist-up">▲${diffLv}레벨</span>`);
-      // 랭킹 exp는 현재 레벨 안에서의 양이라, 레벨이 오른 날은 차이가 음수가 된다 — 그날은 레벨만 보인다
-      if (diffExp && !diffLv) parts.push(`<span class="${diffExp>0?'hist-up':'hist-dn'}">${diffExp>0?'+':''}${Number(diffExp).toLocaleString()} EXP</span>`);
-      delta = parts.join(' ');
-    }
-    return `<div class="hist-row">
-      <span class="hist-date">${s.date}</span>
-      <span class="hist-lv">Lv.${s.level}</span>
-      <span class="hist-delta">${delta || '<span class="hp-dim">기준</span>'}</span>
-    </div>`;
-  }).join('');
-  return `
-    <div class="hist-sec"><div class="hist-title">경험치 / 레벨 히스토리</div>${expRows}</div>
-    `;
-}
-document.getElementById('lkBtn').addEventListener('click', async () => {
-  const name   = document.getElementById('lkName').value.trim();
-  const reboot = false;   // Heroic/일반 구분 없이 이름으로 검색됨
-  const box    = document.getElementById('lkResult');
-  if (!name) { box.innerHTML = '<span class="lk-err">캐릭터명을 입력하세요.</span>'; return; }
-  box.innerHTML = '<span class="lk-load">조회 중...</span>';
-  try {
-    const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=${reboot?1:0}&region=${state.region}`);
-    const j = await r.json();
-    if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
-    j.data.job = canonJobName(j.data.job);  // 약칭 → 정식 이름
-    fetchedInfo = j.data;
-    recordSnapshot(j.data);                 // 조회 시점 스냅샷 누적
-    // 입력란 자동 채우기
-    document.getElementById('inpName').value  = j.data.name;
-    document.getElementById('inpLevel').value = j.data.level;
-    // 직업 자동 선택
-    const ji = jobIdxFromName(j.data.job);
-    if (ji >= 0) selectedJob = ji;
-    box.innerHTML = `
-      <div class="lk-card">
-        ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
-        <div class="lk-card__info">
-          <div class="lk-card__name">${j.data.name} <span class="lk-card__job">${j.data.job}</span></div>
-          <div class="lk-card__meta">Lv.${j.data.level} · ${j.data.region} ${j.data.world} · 전체 ${j.data.rank.toLocaleString()}위</div>
-          <div class="lk-card__exp">누적 EXP ${Number(j.data.exp).toLocaleString()}</div>
-        </div>
-      </div>
-      <div class="lk-hist">${renderHistHtml(j.data)}</div>`;
-  } catch (e) {
-    box.innerHTML = '<span class="lk-err">조회 실패 — serve.js 서버가 실행 중인지 확인하세요.</span>';
-  }
-});
-
-function renderJobGrid(filter) {
-  const grid = document.getElementById('jobGrid');
-  grid.innerHTML = '';
-  const q = filter.toLowerCase();
-  JOB_LIST.forEach((job, i) => {
-    if (q && !job.name.toLowerCase().includes(q)) return;
-    const div = document.createElement('div');
-    div.className = 'job-item' + (i === selectedJob ? ' sel' : '');
-    const iconSrc = charJobHeadSrc({ jobIdx:i, fetched:null });
-    div.innerHTML = `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="job-noimg" style="display:none">JOB</span><span>${job.name}</span>`;
-    div.addEventListener('click', () => { selectedJob = i; renderJobGrid(filter); });
-    grid.appendChild(div);
-  });
-}
-
-document.getElementById('inpLevel').addEventListener('change', e => {
-  const v = parseInt(e.target.value);
-  if (!isNaN(v)) e.target.value = Math.max(1, Math.min(300, v));
-});
-document.getElementById('inpJobSearch').addEventListener('input', e => renderJobGrid(e.target.value));
-document.getElementById('btnAddChar').addEventListener('click', () => {
-  if (state.chars.length >= MAX_CHARS) return alert('최대 20개까지 추가 가능합니다.');
-  openCharModal();
-});
-['modalCharClose','modalCharCancel'].forEach(id => {
-  document.getElementById(id).addEventListener('click', () => document.getElementById('overlayChar').classList.remove('open'));
-});
-document.getElementById('modalCharSave').addEventListener('click', () => {
-  const inputName = document.getElementById('inpName').value.trim();
-  // 조회 결과가 있고 이름이 일치하면 랭킹 데이터 사용, 아니면 직접 입력
-  // 직접 입력 캐릭터도 서버를 고르면 fetched={world}가 생기는데 여기엔 name이 없다.
-  // 그 캐릭터를 수정하려고 열면 fetchedInfo.name이 undefined라 아래 비교에서 터졌었음
-  const useFetched = !!fetchedInfo?.name && inputName && fetchedInfo.name.toLowerCase() === inputName.toLowerCase();
-
-  let name, level, fetched;
-  if (useFetched) {
-    name  = fetchedInfo.name;
-    level = Math.max(200, Math.min(300, parseInt(fetchedInfo.level) || 200));
-    fetched = { ...fetchedInfo, syncedAt: Date.now() };   // 방금 조회 → 자동 최신화 대상에서 제외
-    const ji = jobIdxFromName(fetchedInfo.job);
-    selectedJob = ji >= 0 ? ji : selectedJob;
-  } else {
-    if (!inputName) return alert('캐릭터명을 입력하거나 랭킹 조회를 하세요.');
-    name  = inputName;
-    level = Math.max(1, Math.min(300, parseInt(document.getElementById('inpLevel').value) || 260));
-    const manualWorld = document.getElementById('inpWorld').value;
-    fetched = manualWorld ? { world: manualWorld } : null;   // 직접 입력 → 이미지 없음(서버만 선택 가능)
-  }
-
-  // 같은 캐릭터(이름) 중복 추가 방지 (대소문자 무시, 편집 중인 본인은 제외)
-  const dup = state.chars.findIndex((c, idx) =>
-    idx !== editIdx && c.name?.toLowerCase() === name.toLowerCase());
-  if (dup >= 0) return alert('이미 추가된 캐릭터입니다.');
-
-  if (editIdx >= 0) {
-    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched, cardBg: selectedCardBg };
-  } else {
-    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched, cardBg: selectedCardBg });
-    state.activeChar = state.chars.length - 1;
-  }
-  save();
-  document.getElementById('overlayChar').classList.remove('open');
-  renderCharList(); renderBossTable(); renderCharInfo();
-  // 활성 캐릭터가 바뀌었으면 헥사도 그 캐릭터 수치로 다시 읽는다 — 안 그러면 화면에 남은
-  // 이전 캐릭터 값이 다음 입력 때 새 활성 캐릭터의 저장 키로 덮어써진다
-  if (typeof renderAllHexaLists === 'function') renderAllHexaLists();
-  // 캘린더의 캐릭터 선택 목록에도 새 캐릭터가 바로 보이게 한다
-  if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
-  if (useFetched) syncServerHistThenRender(state.chars[state.activeChar]);
-});
-
-// 수정/삭제 버튼 (위임)
-document.getElementById('charList').addEventListener('click', e => {
-  const btn = e.target.closest('[data-action]');
-  if (!btn) return;
-  const i = parseInt(btn.dataset.i);
-  if (btn.dataset.action === 'edit') return openCharModal(i);
-  document.getElementById('confirmMsg').textContent = `'${state.chars[i].name}' 캐릭터를 삭제하시겠습니까?`;
+/* ── 확인 창 ──
+   확인을 누르면 onOk. 창을 닫는 건 onOk가 한다 — 닫지 않고 바로 새로고침하는 곳도 있다. */
+function openConfirm(msg, onOk) {
+  document.getElementById('confirmMsg').textContent = msg;
   document.getElementById('overlayConfirm').classList.add('open');
-  document.getElementById('confirmOk').onclick = () => {
-    state.chars.splice(i, 1);
-    if (state.activeChar >= state.chars.length) state.activeChar = state.chars.length - 1;
-    save(); document.getElementById('overlayConfirm').classList.remove('open');
-    renderCharList(); renderBossTable(); renderCharInfo();
-    // 헥사도 새 활성 캐릭터 수치로 다시 읽는다(위 저장 버튼과 같은 이유)
-    if (typeof renderAllHexaLists === 'function') renderAllHexaLists();
-    // 지운 캐릭터가 캘린더에 그대로 남지 않게 같이 다시 그린다
-    if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
-  };
-});
+  document.getElementById('confirmOk').onclick = onOk;
+}
+function closeConfirm() {
+  document.getElementById('overlayConfirm').classList.remove('open');
+}
 ['confirmClose','confirmCancel'].forEach(id => {
-  document.getElementById(id).addEventListener('click', () => document.getElementById('overlayConfirm').classList.remove('open'));
+  document.getElementById(id).addEventListener('click', closeConfirm);
 });
 // 뭔가를 길게 입력하는 창은 바깥을 잘못 눌렀을 때 쓰던 내용이 통째로 날아간다.
 // 그런 창(로그인, 관리자 알림 발송)은 여기서 빼고 ×로만 닫게 한다.
 document.querySelectorAll('.overlay:not(#overlayAuth):not(#overlayAdmin)').forEach(ov => {
   ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
 });
-
-
-/* ── 내보내기 / 불러오기 ──
-   보스/캐릭(state)뿐 아니라 해방·헥사·폰트 등 모든 localStorage 키를 함께 백업.
-
-   파일 안에 표시를 넣어두는 이유: 아무 JSON이나 읽어서 통째로 state에 넣어버리면
-   데이터가 깨진다. 우리가 만든 파일인지 먼저 확인하고 아니면 거부한다. */
-const BACKUP_MARK = '_byeolnim';
-/* 이 기기에만 의미가 있는 값이라 파일 백업·클라우드 저장에 넣지도, 되살리지도 않는다.
-   로그인 토큰이 파일에 들어가면 파일을 받은 사람이 그 계정으로 로그인되고,
-   알림 켜짐 표시는 구독이 없는 다른 기기에서 켜진 것처럼 보이게 된다. */
-const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed']);
-document.getElementById('btnExport').addEventListener('click', () => {
-  const extra = {};
-  // 모든 localStorage 키 백업 (캐릭터별 헥사 hx_*_<id> 등 포함)
-  for (let i = 0; i < localStorage.length; i++) {
-    const k = localStorage.key(i);
-    if (k === STORAGE_KEYS.boss) continue; // state로 따로 저장
-    if (BACKUP_SKIP_KEYS.has(k)) continue;
-    extra[k] = localStorage.getItem(k);
-  }
-  const bundle = { [BACKUP_MARK]: 1, state, extra };
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([JSON.stringify(bundle,null,2)],{type:'application/json'}));
-  a.download = `byeolnim_${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-});
-document.getElementById('btnImport').addEventListener('click', () => document.getElementById('fileImport').click());
-document.getElementById('fileImport').addEventListener('change', e => {
-  const file = e.target.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = ev => {
-    try {
-      const data = JSON.parse(ev.target.result);
-      // 우리 파일이 아니면 여기서 멈춘다 — 통째로 state에 넣으면 데이터가 깨진다.
-      if (!data || !data[BACKUP_MARK]) {
-        showToast('별님앱 백업 파일이 아닙니다.');
-        return;
-      }
-      /* 덮어쓰기 전에 속을 먼저 살펴본다. 넣다가 중간에 잘못되면 원래 데이터도 없고
-         새 데이터도 온전치 않은 상태로 남아서, 이상하면 아예 시작을 안 하는 게 낫다. */
-      const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
-      const st = data.state, ex = data.extra;
-      if (!isObj(st) || !Array.isArray(st.chars) || (ex !== undefined && !isObj(ex))) {
-        showToast('백업 파일이 손상된 것 같습니다.');
-        return;
-      }
-      state = st;
-      save();
-      Object.entries(ex || {}).forEach(([k, v]) => {
-        if (typeof v === 'string' && !BACKUP_SKIP_KEYS.has(k)) localStorage.setItem(k, v);
-      });
-      showToast('불러오기 완료! 새로고침합니다…');
-      setTimeout(() => location.reload(), 600);
-    } catch { showToast('파일 형식이 올바르지 않습니다.'); }
-  };
-  reader.readAsText(file);
-  e.target.value = '';
-});
-
-/* ═══════════════════════════════════════════════
-   캐릭터 정보 패널 (maplehub 스타일)
-   - 좌측: 큰 캐릭터 카드 (이미지 80% + 정보)
-   - 우측: 경험치 평균(7/14/30/90일), 일별 EXP 차트, 랭킹
-═══════════════════════════════════════════════ */
-/* 서버(Vercel Cron 수집) 히스토리를 가져와 로컬에 병합.
-   배포 환경에서만 동작하며, 로컬/미설정 시 조용히 무시되고 로컬 스냅샷이 쓰인다. */
-async function fetchServerHist(f) {
-  if (!f || !f.name) return null;
-  try {
-    const r = await fetch(`/api/history?name=${encodeURIComponent(f.name)}&region=${(f.region||'na').toLowerCase()}&reboot=${f.reboot?1:0}`);
-    const j = await r.json();
-    if (j.ok && Array.isArray(j.data) && j.data.length) {
-      const h = loadHist(); h[histKeyOf(f)] = j.data; saveHist(h);
-      return j.data;
-    }
-  } catch (e) { /* 미배포/미설정 → 폴백 */ }
-  return null;
-}
-function syncServerHistThenRender(ch) {
-  if (ch?.fetched) fetchServerHist(ch.fetched).then(d => { if (d) renderCharInfo(); });
-}
-
-/* ── 랭킹 정보 자동 최신화 ──
-   조회로 등록한 캐릭터는 fetched가 등록 시점에 고정되어 레벨/코디가 갱신되지 않는다.
-   앱 진입 시 마지막 갱신이 REFRESH_INTERVAL 이상 지난 캐릭터만 조용히 재조회한다.
-   실패해도 기존 값을 유지하며 사용자에게 알리지 않는다. */
-const REFRESH_INTERVAL = 6 * 60 * 60 * 1000;   // 6시간
-
-async function refreshStaleChars() {
-  const now = Date.now();
-  const stale = state.chars.filter(ch =>
-    ch.fetched && ch.fetched.name && now - (ch.fetched.syncedAt || 0) > REFRESH_INTERVAL);
-  if (!stale.length) return;
-
-  let changed = false;
-  for (const ch of stale) {
-    const f = ch.fetched;
-    try {
-      const r = await fetch(`/api/lookup?name=${encodeURIComponent(f.name)}&reboot=${f.reboot?1:0}&region=${(f.region||'na').toLowerCase()}`);
-      const j = await r.json();
-      if (!j.ok || !j.data) continue;
-      // reboot/region은 히스토리 키의 일부이므로 덮어쓰지 않는다
-      const d = j.data;
-      Object.assign(f, {
-        level: d.level, exp: d.exp, rank: d.rank,
-        job: canonJobName(d.job), world: d.world, worldID: d.worldID,
-        img: d.img || f.img, syncedAt: now,
-      });
-      if (d.level) ch.level = d.level;
-      changed = true;
-    } catch { /* 네트워크 실패 → 다음 진입 때 재시도 */ }
-  }
-  // 캘린더도 캐릭터 이름·얼굴을 쓰므로 같이 다시 그린다.
-  // 빠뜨리면 사이드바만 새 값이고 캘린더는 옛 이름이 남는다(실제로 그랬다).
-  if (changed) {
-    save(); renderCharList(); renderCharInfo();
-    if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
-  }
-}
-
-/* 코디 컬렉션. 넥슨 아바타 주소는 코디가 같아도 조회할 때마다 바뀌는 암호문이라
-   주소 비교로는 코디 변화를 알 수 없다. 이미지를 받아 내용 해시를 비교하고,
-   주소별 해시는 브라우저에 저장해 다음부터는 새 주소만 받는다. */
-const CI_HASH_KEY = 'ciImgHash';
-function ciHashCache() { try { return JSON.parse(localStorage.getItem(CI_HASH_KEY) || '{}'); } catch { return {}; } }
-async function ciImgHash(url, cache) {
-  if (cache[url]) return cache[url];
-  try {
-    const r = await fetch(proxiedImgSrc(url));
-    if (!r.ok) return null;
-    const d = await crypto.subtle.digest('SHA-1', await r.arrayBuffer());
-    return (cache[url] = [...new Uint8Array(d)].slice(0, 6).map(b => b.toString(16).padStart(2, '0')).join(''));
-  } catch { return null; }
-}
-function ciAgo(s) {
-  const t = s.ts || Date.parse(s.date) || Date.now();
-  const m = Math.max(0, Math.floor((Date.now() - t) / 60000));
-  if (m < 60) return '방금 전';
-  const h = Math.floor(m / 60);
-  if (h < 24) return h + '시간 전';
-  const d = Math.floor(h / 24);
-  if (d < 30) return d + '일 전';
-  if (d <= 360) return Math.ceil(d / 30) + '개월 전';
-  return Math.max(1, Math.floor(d / 365)) + '년 전';
-}
-async function ciFillLooks(ch) {
-  const f = ch?.fetched, el = document.getElementById('ciLooks');
-  if (!f || !el) return;
-  const arr = (loadHist()[histKeyOf(f)] || []).filter(s => s.img);
-  const cache = ciHashCache();
-  const runs = [];                       // 최신 코디부터. rec 은 그 코디가 처음 기록된 스냅샷
-  for (let i = arr.length - 1; i >= 0 && runs.length < 8; i -= 6) {
-    const batch = arr.slice(Math.max(0, i - 5), i + 1).reverse();
-    const hashes = await Promise.all(batch.map(s => ciImgHash(s.img, cache)));
-    for (let k = 0; k < batch.length && runs.length < 8; k++) {
-      const key = hashes[k] || 'u:' + batch[k].img;
-      const last = runs[runs.length - 1];
-      if (last && last.key === key) last.rec = batch[k];
-      else runs.push({ key, rec: batch[k] });
-    }
-  }
-  try {
-    const keys = Object.keys(cache);
-    if (keys.length > 500) keys.slice(0, keys.length - 500).forEach(k => delete cache[k]);
-    localStorage.setItem(CI_HASH_KEY, JSON.stringify(cache));
-  } catch { /* 저장 실패는 무시 */ }
-  if (document.getElementById('ciLooks') !== el) return;
-  el.innerHTML = runs.slice(0, 7).map(r => `<div class="ci-looks__item"><img src="${proxiedImgSrc(r.rec.img)}" alt="" onerror="this.style.visibility='hidden'" /><span>${ciAgo(r.rec)}</span></div>`).join('');
-}
-
-/* 선택 캐릭터의 레벨 / 경험치 기록 그래프. 세로축은 레벨에 경험치 비율을 더한 값이고,
-   필요 경험치 표가 없는 레벨은 비율 없이 레벨만 쓴다. */
-function ciExpChartHtml(ch) {
-  const f = ch?.fetched;
-  if (!f?.name) return '';
-  let arr = (loadHist()[histKeyOf(f)] || []).filter(s => s.level && s.date);
-  if (!arr.length && f.level) arr = [{ date: todayStr(), level: f.level, exp: Number(f.exp) || 0 }];
-  if (!arr.length) return '';
-  const md = d => { const [, m, dd] = d.split('-'); return `${+m}월 ${+dd}일`; };
-  const pct = s => expPercent(s.level, s.exp);
-  const last = arr[arr.length - 1];
-
-  /* 경험치: 최근 7일. 기록이 없는 날은 변화가 없던 날이라 직전 기록 값을 그대로 쓴다. */
-  const lastT = Date.parse(last.date);
-  const days = [];
-  for (let k = 6; k >= 0; k--) {
-    const d = new Date(lastT - k * 86400000).toISOString().slice(0, 10);
-    const rec = [...arr].reverse().find(s => s.date <= d);
-    if (rec) days.push({ date: d, level: rec.level, pct: pct(rec) });
-  }
-  const BW = 440, BH = 210, BT = 26, BB = 30;
-  const maxP = Math.max(1, ...days.map(d => d.pct || 0));
-  const slot = BW / days.length, bw = Math.min(46, slot * 0.6);
-  const bars = days.map((d, i) => {
-    const cx = slot * i + slot / 2;
-    const h = d.pct == null ? 0 : d.pct / maxP * (BH - BT - BB);
-    const y = BH - BB - h;
-    return `<rect class="ci-exp__bar" x="${(cx - bw / 2).toFixed(1)}" y="${y.toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(h, 0).toFixed(1)}" rx="4"><title>${md(d.date)} Lv. ${d.level}${d.pct == null ? '' : ' ' + d.pct.toFixed(2) + '%'}</title></rect>
-      <text class="ci-exp__val" x="${cx.toFixed(1)}" y="${(y - 6).toFixed(1)}">${d.pct == null ? d.level : d.pct.toFixed(3).replace(/0$/, '') + '%'}</text>
-      <text class="ci-exp__x" x="${cx.toFixed(1)}" y="${BH - 10}">${md(d.date)}</text>`;
-  }).join('');
-
-  /* 레벨: 처음 기록과 레벨이 바뀐 날, 마지막 기록 */
-  const lv = arr.filter((s, i) => i === 0 || s.level !== arr[i - 1].level || i === arr.length - 1);
-  const LW = 440, LH = 210, LP = 30;
-  const lo = Math.min(...lv.map(s => s.level)), hi = Math.max(...lv.map(s => s.level));
-  const lx = i => lv.length < 2 ? LW / 2 : LP + i * (LW - LP * 2) / (lv.length - 1);
-  const ly = s => hi === lo ? LH / 2 - 8 : 36 + (1 - (s.level - lo) / (hi - lo)) * (LH - 36 - 56);
-  const line = lv.map((s, i) => `${lx(i).toFixed(1)},${ly(s).toFixed(1)}`).join(' ');
-  const base = LH - 30;
-  const area = lv.length > 1 ? `<polygon class="ci-exp__area" points="${lx(0).toFixed(1)},${base} ${line} ${lx(lv.length - 1).toFixed(1)},${base}"/>` : '';
-  const pts = lv.map((s, i) => `<circle class="ci-exp__dot" cx="${lx(i).toFixed(1)}" cy="${ly(s).toFixed(1)}" r="4.5"/>
-      <text class="ci-exp__val" x="${lx(i).toFixed(1)}" y="${(ly(s) - 11).toFixed(1)}">${s.level}</text>
-      <text class="ci-exp__x" x="${lx(i).toFixed(1)}" y="${LH - 10}">${md(s.date)}</text>`).join('');
-
-  const codyHtml = arr.some(s => s.img) ? `
-      <div class="card mt16"><div class="card__title">코디 컬렉션</div>
-        <div class="ci-looks" id="ciLooks"></div>
-      </div>` : '';
-
-  return `
-    <div class="ci-exp">
-      <div class="ci-exp__head">${escHtml(ch.name)} 레벨 / 경험치</div>
-      <div class="ci-exp__row">
-        <div class="card"><div class="card__title">경험치 히스토리</div>
-          <svg class="ci-exp__svg" viewBox="0 0 ${BW} ${BH}"><line class="ci-exp__axis" x1="0" x2="${BW}" y1="${BH - BB}" y2="${BH - BB}"/>${bars}</svg></div>
-        <div class="card"><div class="card__title">레벨 히스토리</div>
-          <svg class="ci-exp__svg" viewBox="0 0 ${LW} ${LH}"><line class="ci-exp__axis" x1="0" x2="${LW}" y1="${base}" y2="${base}"/>${area}${lv.length > 1 ? `<polyline class="ci-exp__line" points="${line}"/>` : ''}${pts}</svg></div>
-      </div>${codyHtml}
-    </div>`;
-}
-
-const CHARINFO_HEAD = `
-  <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>
-  <p class="dt-help">추가한 캐릭터들을 카드로 모아 보여줍니다. 카드를 눌러 캐릭터를 선택하고, 드래그로 순서를 바꿀 수 있습니다.</p>`;
-
-function renderCharInfo() {
-  const box = document.getElementById('charInfoBody');
-  if (!box) return;
-
-  if (!state.chars.length) {
-    box.innerHTML = `${CHARINFO_HEAD}<div class="ci-empty">캐릭터를 추가하세요.</div>`;
-    return;
-  }
-
-  const cards = state.chars.map((ch, i) => {
-    const f = ch.fetched;
-    const jn = charJobName(ch);
-    const world = f?.world || '';
-    const region = f?.region || (state.region === 'eu' ? 'EU' : 'NA');
-    const sIcon = world ? serverIconSrc(world) : '';
-    const sIconHtml = sIcon ? `<img class="ci-servericon" src="${sIcon}" onerror="this.style.display='none'" />` : '';
-    // 넥슨 원본 URL 대신 /api/img 프록시를 거친다 — 카드 이미지 저장이 캔버스에
-    // 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
-    // 모습은 완전히 동일(프록시가 원본 그대로 스트리밍).
-    const portrait = f?.img
-      ? `<img src="${proxiedImgSrc(f.img)}" crossorigin="anonymous" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('cg-portrait--no')" />`
-      : `<img src="images/dailytasks/default.png" alt="" />`;
-    const lv = f?.level || ch.level;
-    const headSrc = charJobHeadSrc(ch);
-    const headHtml = headSrc ? `<img class="ci-jobicon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
-    const rankRowHtml = f?.rank
-      ? `<div class="ci-rank-row"><span>${region} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : '';
-    // 보스 수익 계산기에서 체크한 것 - 대여비. weekTotal(updateCrystalBar)과 같은 식이라
-    // 사이드바 합계와 카드에 찍힌 숫자가 항상 일치한다.
-    const weekly = charWeeklyMeso(ch) - rentalWeeklyCost(ch);
-    // 카드의 정보 칸은 일러스트 고정폭(112px) 때문에 실측 145px 안팎으로 좁다.
-    // fmtMeso 전체 표기("4억 4,467만 5,000 메소")는 여기서 값만으로도 108px를 먹어
-    // "이번 주 예상 수익" 라벨이 "이번…"으로 잘렸다(실측) — 라벨을 줄여도 근본
-    // 해결이 안 돼서, 히스토그램 축에 쓰던 fmtMesoCompact("4.4억")로 바꿨다.
-    // 정확한 값은 title(호버)로 남긴다.
-    const weeklyRowHtml = `<div class="ci-rank-row"><span>주간 수익</span><b${weekly < 0 ? ' style="color:var(--danger)"' : ''} title="${fmtMeso(weekly)}">${ch.weekDone ? '<i class="ci-income-done">완료 · </i>' : ''}${fmtMesoCompact(weekly)}</b></div>`;
-    // 랭킹 유무와 무관하게 항상 보이는 하나의 카드 하단 블록으로 합친다
-    const rankRow = `<div class="ci-card__ranks">${rankRowHtml}${weeklyRowHtml}</div>`;
-    const isActive = i === state.activeChar;
-    return `
-      <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
-        <button type="button" class="cg-card__save" data-ci="${i}">메애기 저장하기</button>
-        <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
-        <div class="ci-card__body">
-          <div class="ci-card__nameline">
-            <div>
-              <div class="ci-card__name">${escHtml(ch.name)}</div>
-              <div class="ci-card__job">${escHtml(jn || '')}</div>
-            </div>
-            ${headHtml}
-          </div>
-          <div class="ci-card__meta">
-            <span class="ci-lv">Lv.${lv}</span>
-            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>
-          </div>
-        </div>
-        ${rankRow}
-      </div>`;
-  }).join('');
-
-  box.innerHTML = `${CHARINFO_HEAD}<div class="cg-grid">${cards}</div>${ciExpChartHtml(state.chars[state.activeChar])}`;
-  ciFillLooks(state.chars[state.activeChar]);
-  box.querySelectorAll('.cg-card__save').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const i = Number(btn.dataset.ci);
-      btn.disabled = true; btn.textContent = '저장 중...';
-      exportCharCard(i).finally(() => { btn.disabled = false; btn.textContent = '메애기 저장하기'; });
-    });
-  });
-
-  let dragSrc = null;
-  box.querySelectorAll('.cg-card').forEach(card => {
-    card.setAttribute('draggable', 'true');
-    card.addEventListener('click', e => {
-      if (e.target.closest('[data-action]')) return;
-      selectChar(parseInt(card.dataset.ci));
-    });
-    card.addEventListener('dragstart', e => {
-      dragSrc = card;
-      card.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
-    });
-
-    // 터치 드래그 — 롱프레스(400ms) 후 드래그 시작, 그 전엔 스크롤 허용
-    let longPressTimer = null, touchDragging = false;
-    card.addEventListener('touchstart', e => {
-      touchDragging = false;
-      longPressTimer = setTimeout(() => {
-        touchDragging = true;
-        dragSrc = card;
-        card.classList.add('dragging');
-        if (navigator.vibrate) navigator.vibrate(40);
-      }, 400);
-    }, { passive: true });
-    card.addEventListener('touchmove', e => {
-      if (!touchDragging) { clearTimeout(longPressTimer); return; }
-      e.preventDefault();
-      const touch = e.touches[0];
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const target = el && el.closest('.cg-card');
-      box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
-      if (target && target !== dragSrc) target.classList.add('drag-over');
-    }, { passive: false });
-    card.addEventListener('touchend', e => {
-      clearTimeout(longPressTimer);
-      card.classList.remove('dragging');
-      box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
-      if (!touchDragging) { dragSrc = null; return; }
-      const touch = e.changedTouches[0];
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const target = el && el.closest('.cg-card');
-      if (!target || target === dragSrc) { dragSrc = null; return; }
-      const from = parseInt(dragSrc.dataset.ci);
-      const to   = parseInt(target.dataset.ci);
-      const arr  = state.chars;
-      arr.splice(to, 0, arr.splice(from, 1)[0]);
-      if (state.activeChar === from) state.activeChar = to;
-      else if (from < to && state.activeChar > from && state.activeChar <= to) state.activeChar--;
-      else if (from > to && state.activeChar >= to && state.activeChar < from) state.activeChar++;
-      dragSrc = null;
-      save(); renderCharList(); renderBossTable(); renderCharInfo();
-    });
-    card.addEventListener('touchcancel', () => {
-      clearTimeout(longPressTimer);
-      card.classList.remove('dragging');
-      box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
-      dragSrc = null; touchDragging = false;
-    });
-
-    card.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (card !== dragSrc) {
-        box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
-        card.classList.add('drag-over');
-      }
-    });
-    card.addEventListener('drop', e => {
-      e.preventDefault();
-      if (!dragSrc || dragSrc === card) return;
-      const from = parseInt(dragSrc.dataset.ci);
-      const to   = parseInt(card.dataset.ci);
-      const arr  = state.chars;
-      arr.splice(to, 0, arr.splice(from, 1)[0]);
-      if (state.activeChar === from) state.activeChar = to;
-      else if (from < to && state.activeChar > from && state.activeChar <= to) state.activeChar--;
-      else if (from > to && state.activeChar >= to && state.activeChar < from) state.activeChar++;
-      save(); renderCharList(); renderBossTable(); renderCharInfo();
-    });
-  });
-}
-
-/* ── 설정 모달 ── */
-const FONT_KEY = STORAGE_KEYS.font;
-const overlaySettings = document.getElementById('overlaySettings');
-document.getElementById('sbBtnSettings').addEventListener('click', () => overlaySettings.classList.add('open'));
-document.getElementById('headerBtnSettings').addEventListener('click', () => overlaySettings.classList.add('open'));
-document.getElementById('settingsClose').addEventListener('click', () => overlaySettings.classList.remove('open'));
-
-/* ── 관리자 — 전체 알림 발송 ──
-   비밀번호를 앱 안에서 대조하지 않는다. 클라이언트 코드는 누구나 열어볼 수 있어
-   거기 적힌 비밀번호는 이미 비밀이 아니고, 검사 자체도 우회할 수 있기 때문.
-   대신 입력한 값을 그대로 서버로 보내 서버가 판단한다(api/push-broadcast).
-   비밀번호가 틀리면 서버가 거부하므로 관리자탭이 열려 있어도 발송되지 않는다. */
-/* 예전엔 ?admin=1 로만 항목을 드러냈는데, 한 번 들어오면 기기에 기억돼서 그냥
-   주소로 들어와도 계속 보였다(= 숨기는 의미가 없었다). 지금은 비밀번호로 로그인해야
-   실제 기능이 드러나므로, 항목 자체는 그냥 두고 로그인으로 막는다. */
-const overlayAdmin = document.getElementById('overlayAdmin');
-
-/* 로그인에 성공한 비밀번호를 이 모달이 열려 있는 동안만 들고 있는다.
-   저장하지 않으므로 닫으면 다시 로그인해야 한다. */
-let _admSecret = null;
-
-function admSetLoggedIn(on) {
-  _admSecret = on ? _admSecret : null;
-  document.getElementById('admLoginStep').style.display  = on ? 'none' : '';
-  document.getElementById('admWorkStep').style.display   = on ? '' : 'none';
-  document.getElementById('admBtnLogin').style.display   = on ? 'none' : '';
-  document.getElementById('admBtnCheck').style.display   = on ? '' : 'none';
-  document.getElementById('admBtnSend').style.display    = on ? '' : 'none';
-}
-
-document.getElementById('btnAdmin')?.addEventListener('click', () => {
-  overlaySettings.classList.remove('open');
-  // 열 때마다 로그아웃 상태에서 시작한다
-  document.getElementById('admSecret').value = '';
-  document.getElementById('admResult').textContent = '';
-  admSetLoggedIn(false);
-  overlayAdmin.classList.add('open');
-});
-
-/* 로그인 — 비밀번호가 맞는지는 서버만 알 수 있으므로, 아무것도 보내지 않는
-   dryRun 요청으로 확인한다(대상 수만 세고 발송은 안 한다). 401이면 거부. */
-document.getElementById('admBtnLogin')?.addEventListener('click', async () => {
-  const resEl = document.getElementById('admResult');
-  const secret = document.getElementById('admSecret').value.trim();
-  if (!secret) { resEl.className = 'adm-result is-err'; resEl.textContent = '비밀번호를 입력하세요.'; return; }
-
-  const btn = document.getElementById('admBtnLogin');
-  btn.disabled = true;
-  resEl.className = 'adm-result'; resEl.textContent = '확인 중…';
-  try {
-    const r = await fetch('/api/push-broadcast', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
-      body: JSON.stringify({ title: '로그인 확인', dryRun: true }),
-    });
-    const j = await r.json().catch(() => null);
-    if (r.status === 401) { resEl.className = 'adm-result is-err'; resEl.textContent = '비밀번호가 맞지 않습니다.'; return; }
-    if (!r.ok || !j || !j.ok) {
-      resEl.className = 'adm-result is-err';
-      resEl.textContent = (j && j.error) || `요청 실패 (${r.status})`;
-      return;
-    }
-    _admSecret = secret;
-    admSetLoggedIn(true);
-    resEl.className = 'adm-result is-ok';
-    resEl.textContent = `로그인됨 · 받을 사람 ${j.targets}명` + (j.skipped ? ` (제외 ${j.skipped})` : '');
-  } catch (e) {
-    resEl.className = 'adm-result is-err';
-    resEl.textContent = '요청 실패: ' + (e && e.message || e);
-  } finally {
-    btn.disabled = false;
-  }
-});
-document.getElementById('adminClose')?.addEventListener('click', () => overlayAdmin.classList.remove('open'));
-/* 바깥을 클릭해도 닫지 않는다 — 알림 문구를 길게 쓰다가 실수로 바깥을 누르면
-   작성하던 내용이 통째로 날아간다. 닫기(×)로만 닫게 한다. */
-
-async function admSend(dryRun) {
-  const resEl  = document.getElementById('admResult');
-  const secret = _admSecret;   // 로그인할 때 확인된 비밀번호만 쓴다
-  const title  = document.getElementById('admTitle').value.trim();
-  const body   = document.getElementById('admBody').value.trim();
-
-  const say = (msg, ok) => {
-    resEl.textContent = msg;
-    resEl.className = 'adm-result' + (ok === true ? ' is-ok' : ok === false ? ' is-err' : '');
-  };
-
-  if (!secret) { say('비밀번호를 입력하세요.', false); return; }
-  if (!title)  { say('제목을 입력하세요.', false); return; }
-  // 전체 발송은 되돌릴 수 없으므로 한 번 더 묻는다
-  if (!dryRun && !confirm(`"${title}"\n\n알림을 켠 전원에게 지금 보냅니다. 취소할 수 없습니다.`)) return;
-
-  const btnC = document.getElementById('admBtnCheck');
-  const btnS = document.getElementById('admBtnSend');
-  btnC.disabled = btnS.disabled = true;
-  say(dryRun ? '확인 중…' : '발송 중…');
-
-  try {
-    const r = await fetch('/api/push-broadcast', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
-      body: JSON.stringify({ title, body, url: '/', dryRun }),
-    });
-    const j = await r.json().catch(() => null);
-    if (!r.ok || !j || !j.ok) {
-      const msg = r.status === 401 ? '비밀번호가 맞지 않습니다.' : ((j && j.error) || `요청 실패 (${r.status})`);
-      say(msg, false);
-    } else if (dryRun) {
-      say(`받을 사람 ${j.targets}명` + (j.skipped ? ` (제외 ${j.skipped})` : ''), true);
-    } else {
-      say(`발송 완료 · 성공 ${j.sent} / 실패 ${j.failed}`
-          + (j.pruned ? ` / 만료 정리 ${j.pruned}` : '')
-          + (j.skipped ? ` / 제외 ${j.skipped}` : ''), true);
-    }
-  } catch (e) {
-    say('요청 실패: ' + (e && e.message || e), false);
-  } finally {
-    btnC.disabled = btnS.disabled = false;
-  }
-}
-document.getElementById('admBtnCheck')?.addEventListener('click', () => admSend(true));
-document.getElementById('admBtnSend')?.addEventListener('click', () => admSend(false));
-
-/* 구독 목록 비우기 — 예전 주소로 설치한 기기까지 확실히 끊어내는 유일한 방법이다.
-   저장된 구독에는 출처가 없어 골라낼 수 없기 때문(이제부터 구독하는 것만 기록된다). */
-document.getElementById('admBtnPurge')?.addEventListener('click', async () => {
-  const resEl  = document.getElementById('admResult');
-  const secret = _admSecret;   // 로그인할 때 확인된 비밀번호만 쓴다
-  const say = (msg, ok) => {
-    resEl.textContent = msg;
-    resEl.className = 'adm-result' + (ok === true ? ' is-ok' : ok === false ? ' is-err' : '');
-  };
-  if (!secret) { say('비밀번호를 입력하세요.', false); return; }
-  if (!confirm('저장된 구독을 모두 지웁니다.\n\n지운 뒤에는 모두가 알림을 다시 켜야 합니다. 되돌릴 수 없습니다.')) return;
-
-  const btn = document.getElementById('admBtnPurge');
-  btn.disabled = true;
-  say('삭제 중…');
-  try {
-    const r = await fetch('/api/push-purge', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + secret },
-      body: JSON.stringify({ confirm: true }),
-    });
-    const j = await r.json().catch(() => null);
-    if (!r.ok || !j || !j.ok) {
-      say(r.status === 401 ? '비밀번호가 맞지 않습니다.' : ((j && j.error) || `요청 실패 (${r.status})`), false);
-    } else {
-      say(`구독 ${j.removed}개를 지웠습니다. 모두 알림을 다시 켜야 합니다.`, true);
-    }
-  } catch (e) {
-    say('요청 실패: ' + (e && e.message || e), false);
-  } finally {
-    btn.disabled = false;
-  }
-});
-
-document.getElementById('btnResetAll').addEventListener('click', () => {
-  document.getElementById('confirmMsg').textContent = '모든 데이터를 초기화하시겠습니까? 되돌릴 수 없습니다.';
-  document.getElementById('overlayConfirm').classList.add('open');
-  document.getElementById('confirmOk').onclick = () => {
-    Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
-    // 헥사는 캐릭터별 키(hx_skill_<id> 등), 코디 시뮬레이터는 자기 키에 따로 저장한다
-    const hxPrefixes = [STORAGE_KEYS.hexaSkill, STORAGE_KEYS.hexaMastery, STORAGE_KEYS.hexaBoost, STORAGE_KEYS.hexaCommon].map(b => b + '_');
-    Object.keys(localStorage).filter(k => hxPrefixes.some(p => k.startsWith(p))).forEach(k => localStorage.removeItem(k));
-    if (typeof MX_STORE !== 'undefined') localStorage.removeItem(MX_STORE);
-    location.reload();
-  };
-});
-
-/* 글자 크기 기준값(rem의 기준). 거의 모든 크기가 rem이라 여기만 올리면 전체가 같이 커진다.
-   PC에서 글씨가 작다는 피드백에 데스크톱만 +3px까지 올렸다가, 이번엔 너무 커졌다는
-   지적을 받아 +1px로 낮춘다(사이드바 메뉴 글씨가 특히 커 보였다).
-   '고딕'(ONE_Mobile_Title)은 원래 폭이 넓게 렌더링돼 15px로 낮춰뒀던 값이라 그 차이는 유지. */
-const MOBILE_MQ = window.matchMedia('(max-width: 768px)');
-function rootFontPx() {
-  const base = document.body.dataset.font === '고딕' ? 15 : 16;
-  return MOBILE_MQ.matches ? base : base + 1;
-}
-function applyRootFontSize() {
-  document.documentElement.style.fontSize = rootFontPx() + 'px';
-}
-// resize 이벤트만 보면 창 크기 변경을 놓치는 경우가 있어 미디어쿼리 변화도 같이 구독
-MOBILE_MQ.addEventListener('change', applyRootFontSize);
-window.addEventListener('resize', applyRootFontSize);
 
 /* ── 첫 방문 공지 카드 ──
    ※ 배포(커밋/푸시)할 때마다 여기에 이번에 바뀐 내용을 정리해 넣는다.
@@ -1975,7 +906,6 @@ function showNoticeModal() {
   if (!NOTICE.days.length) return;
   if (localStorage.getItem(NOTICE_SEEN_KEY) === NOTICE.id) return;
 
-  const esc = s => s.replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
   let overlay = document.getElementById('noticeOverlay');
   if (!overlay) {
     overlay = document.createElement('div');
@@ -1986,16 +916,16 @@ function showNoticeModal() {
   overlay.innerHTML = `
     <div class="modal" style="width:min(520px,94vw)">
       <div class="modal__head">
-        <span class="modal__title modal__title--notice">${esc(NOTICE.title)}</span>
+        <span class="modal__title modal__title--notice">${escHtml(NOTICE.title)}</span>
       </div>
       <div class="modal__body">
         ${NOTICE.days.map(day => `
           <div class="notice-day">
-            <div class="notice-date">${esc(day.date)}</div>
+            <div class="notice-date">${escHtml(day.date)}</div>
             ${day.items.map(it => `
               <div class="notice-item">
-                <div class="notice-item__head">${esc(it.head)}</div>
-                <div class="notice-item__desc">${esc(it.desc)}</div>
+                <div class="notice-item__head">${escHtml(it.head)}</div>
+                <div class="notice-item__desc">${escHtml(it.desc)}</div>
               </div>`).join('')}
           </div>`).join('')}
       </div>
@@ -2020,50 +950,6 @@ function showNoticeModal() {
 }
 document.addEventListener('DOMContentLoaded', showNoticeModal);
 
-function applyFont(name) {
-  document.body.style.fontFamily = `'${name}', 'Segoe UI', 'Malgun Gothic', sans-serif`;
-  document.body.style.fontWeight = '';
-  document.body.dataset.font = name;
-  applyRootFontSize();
-  localStorage.setItem(FONT_KEY, name);
-  document.querySelectorAll('.settings-font-btns [data-font]').forEach(b => {
-    b.classList.toggle('sbtn--primary', b.dataset.font === name);
-  });
-}
-
-document.querySelectorAll('.settings-font-btns [data-font]').forEach(btn => {
-  btn.addEventListener('click', () => applyFont(btn.dataset.font));
-});
-
-/* ── 테마 ──
-   색은 대부분 :root의 CSS 변수를 거쳐 쓰이므로, html에 data-theme만 걸면
-   style.css의 :root[data-theme="light"] 블록이 변수를 갈아끼운다. */
-const THEME_KEY = STORAGE_KEYS.theme;
-function applyTheme(name) {
-  const t = name === 'light' ? 'light' : 'dark';
-  document.documentElement.dataset.theme = t;
-  localStorage.setItem(THEME_KEY, t);
-  const btn = document.getElementById('themeToggle');
-  if (btn) {
-    btn.classList.toggle('theme-toggle--light', t === 'light');
-    btn.setAttribute('aria-pressed', t === 'light');
-  }
-  const label = document.getElementById('themeLabel');
-  if (label) label.textContent = t === 'light' ? '화이트 모드' : '다크 모드';
-  // 설정 모달의 테마 버튼도 같은 상태를 보여줘야 한다(헤더 토글은 모바일에서 숨겨진다)
-  document.querySelectorAll('[data-theme-set]').forEach(b => {
-    b.classList.toggle('sbtn--primary', b.dataset.themeSet === t);
-  });
-}
-document.getElementById('themeToggle')?.addEventListener('click', () => {
-  applyTheme(document.documentElement.dataset.theme === 'light' ? 'dark' : 'light');
-});
-// 모바일은 헤더 폭이 모자라 토글을 숨기므로 설정에서 고른다
-document.querySelectorAll('[data-theme-set]').forEach(btn => {
-  btn.addEventListener('click', () => applyTheme(btn.dataset.themeSet));
-});
-applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
-
 /* ── 초기화 ── */
 load();
 
@@ -2081,12 +967,14 @@ load();
   localStorage.removeItem('rental');
 })();
 
+// 헥사는 캐릭터별 키(hx_skill_<id> 등)에 저장한다. 전체 초기화(settings.js)도 이 목록을 쓴다.
+const HEXA_KEY_BASES = [STORAGE_KEYS.hexaSkill, STORAGE_KEYS.hexaMastery, STORAGE_KEYS.hexaBoost, STORAGE_KEYS.hexaCommon];
+
 // 구버전: 헥사가 전역(hx_skill 등)이었음 → 첫 캐릭터 키로 1회 이전 후 제거
 (function migrateHexa() {
-  const bases = [STORAGE_KEYS.hexaSkill, STORAGE_KEYS.hexaMastery, STORAGE_KEYS.hexaBoost, STORAGE_KEYS.hexaCommon];
   const ch0 = state.chars[0];
   const cid = ch0 ? (ch0.id ?? 0) : null;
-  bases.forEach(base => {
+  HEXA_KEY_BASES.forEach(base => {
     const legacy = localStorage.getItem(base); // 접미사 없는 구버전 키
     if (legacy == null) return;
     if (cid != null && localStorage.getItem(`${base}_${cid}`) == null) {
@@ -2097,12 +985,8 @@ load();
 })();
 
 applyRegionUI();
-applyFont(localStorage.getItem(FONT_KEY) || '고딕');
 renderCharList();
 renderBossTable();
-renderCharInfo();
-refreshStaleChars();
-
 
 /* 입력칸에서 Enter → blur(=commit). 입력은 바깥 클릭/Enter 전까지 자유롭게. */
 document.addEventListener('keydown', e => {

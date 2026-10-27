@@ -2,6 +2,8 @@
    보스 HP 카드
 ═══════════════════════════════════════════════ */
 const DIFF_KR_TO_ENG = { '이지':'easy', '노말':'normal', '하드':'hard', '카오스':'chaos', '익스트림':'extreme' };
+/* 난이도 표기는 앱 공용 난이도 필(DIFF_META)을 그대로 쓴다 → EASY/NORMAL/HARD... 영문 표기 */
+const _bhpDiffMeta = kr => DIFF_META[DIFF_KR_TO_ENG[kr] || 'normal'];
 // BOSS_DATA(보스 수익 계산기)엔 없고 보스 정보 페이지에만 있는 보스의 이미지.
 // 카드 썸네일은 다른 보스와 같은 정적 컷을 쓰고, 팝업의 움직이는 gif는
 // 파일명 stem(Bellona)으로 images/bosses_gif/Bellona.gif 를 자동으로 찾아간다.
@@ -19,25 +21,24 @@ function _bhpEnsureOverlay() {
     overlay.id = 'bhpOverlay';
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) { overlay.classList.remove('open'); _bhpCloseDesc(); } });
+    overlay.addEventListener('click', e => { if (e.target === overlay) _bhpCloseModal(); });
   }
   return overlay;
 }
 
-/* 이 보스가 어느 난이도에서든 드랍 목록을 갖고 있는지 */
-function _bhpBossHasAnyDrops(bossName) {
-  const prefix = bossName + '_';
-  return Object.keys(BOSS_DROP_ITEMS).some(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length);
+function _bhpCloseModal() {
+  document.getElementById('bhpOverlay').classList.remove('open');
+  _bhpCloseDesc();
 }
+
 /* 드랍이 있는 난이도를, 보스가 실제로 가진 난이도 순서(이지→익스트림)대로 */
 function _bhpDropDiffs(boss) {
   const prefix = boss.name + '_';
-  const own = (boss.diffs || []).map(d => d.diff);
   const keys = Object.keys(BOSS_DROP_ITEMS)
     .filter(k => k.startsWith(prefix) && BOSS_DROP_ITEMS[k].length)
     .map(k => k.slice(prefix.length));
   // 카드가 가진 난이도 순서를 그대로 따르고, 혹시 빠진 게 있으면 뒤에 붙인다
-  const ordered = own.filter(d => keys.includes(d));
+  const ordered = boss.diffs.map(d => d.diff).filter(d => keys.includes(d));
   keys.forEach(d => { if (!ordered.includes(d)) ordered.push(d); });
   return ordered;
 }
@@ -49,8 +50,7 @@ function _bhpOpenDropsModal(boss) {
 
   const sectionHtml = diffs.map(d => {
     const items = BOSS_DROP_ITEMS[boss.name + '_' + d] || [];
-    // 난이도 표기는 앱 공용 난이도 필(.dpill)을 그대로 재사용 → EASY/NORMAL/HARD... 영문 표기
-    const meta = DIFF_META[DIFF_KR_TO_ENG[d]] || DIFF_META.normal;
+    const meta = _bhpDiffMeta(d);
     return `
       <div class="bhp-drop-sec">
         <div class="bhp-drop-sec__diff"><span class="dpill ${meta.cls} sel"><span class="dpill__t">${meta.label}</span></span></div>
@@ -83,7 +83,7 @@ function _bhpOpenDropsModal(boss) {
         </div>
       </div>
     </div>`;
-  document.getElementById('bhpModalClose').addEventListener('click', () => { overlay.classList.remove('open'); _bhpCloseDesc(); });
+  document.getElementById('bhpModalClose').addEventListener('click', _bhpCloseModal);
   overlay.classList.add('open');
   overlay.querySelectorAll('.bhp-drop-item').forEach(el => {
     el.addEventListener('click', () => _bhpToggleDesc(el, el.dataset.file, el.dataset.name));
@@ -91,25 +91,20 @@ function _bhpOpenDropsModal(boss) {
 
   // 움직이는 보스 사진(gif) → 팝업 전용 정지컷(png) → 카드 썸네일 순으로 시도한다.
   // gif가 없는 보스는 images/bosses_gif/<stem>.png 를 넣어두면 그걸 쓴다.
-  const stemMatch = boss.img && boss.img.match(/([^/]+)\.\w+$/);
-  const stem = stemMatch ? stemMatch[1] : '';
+  const stem = boss.img?.match(/([^/]+)\.\w+$/)?.[1];
   const candidates = [];
   if (stem) candidates.push(`images/bosses_gif/${stem}.gif`, `images/bosses_gif/${stem}.png`);
   if (boss.img) candidates.push(boss.img);
   const imgEl = document.getElementById('bhpModalImg');
   const noimgEl = document.getElementById('bhpModalNoimg');
   const showNoimg = () => { imgEl.style.display = 'none'; noimgEl.style.display = 'flex'; };
+  if (!candidates.length) { showNoimg(); return; }
   let ci = 0;
-  if (!candidates.length) {
-    showNoimg();
-  } else {
-    imgEl.addEventListener('error', () => {
-      ci += 1;
-      if (ci < candidates.length) imgEl.src = candidates[ci];
-      else showNoimg();
-    });
-    imgEl.src = candidates[0];
-  }
+  imgEl.addEventListener('error', () => {
+    if (++ci < candidates.length) imgEl.src = candidates[ci];
+    else showNoimg();
+  });
+  imgEl.src = candidates[0];
 }
 
 /* ── 드랍 아이템 인게임 설명 (클릭하면 열림) ──
@@ -183,6 +178,11 @@ function fmtBossHpEok(eok) {
   return `${fmt(eok * 100)}M`;
 }
 
+/* 난이도 드롭다운 옵션 — 보스 카드와 버스 패널이 같이 쓴다 */
+function _bhpDiffOpts(boss, selected) {
+  return boss.diffs.map(d => `<option value="${d.diff}"${d.diff === selected ? ' selected' : ''}>${_bhpDiffMeta(d.diff).label}</option>`).join('');
+}
+
 /* 버스 패널만 다시 그리기 (카드 전체 재렌더 없이) */
 function renderBusPanel(groups) {
   const busEl = document.getElementById('busTable');
@@ -211,19 +211,13 @@ function renderBusPanel(groups) {
         const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
         const hp5 = parseBossHpValue(active.hp) * 0.05;
 
-        const diffOpts = boss.diffs.map(d => {
-          const eng = DIFF_KR_TO_ENG[d.diff] || 'normal';
-          const meta = DIFF_META[eng] || { label: d.diff };
-          return `<option value="${d.diff}"${d.diff === activeDiff ? ' selected' : ''}>${meta.label}</option>`;
-        }).join('');
-
         const imgHtml = boss.img
           ? `<img src="${boss.img}" class="bus-boss-img" onerror="this.style.display='none'" />`
           : '';
 
         return `<tr data-bus-boss="${boss.name}">
           <td class="bus-boss-name">${imgHtml}<span>${boss.name}</span></td>
-          <td><select class="bus-diff-sel" data-boss="${boss.name}">${diffOpts}</select></td>
+          <td><select class="bus-diff-sel" data-boss="${boss.name}">${_bhpDiffOpts(boss, activeDiff)}</select></td>
           <td class="bus-pct5"><b>${hp5 > 0 ? fmtBossHpEok(hp5) : '—'}</b></td>
           <td><button class="bus-remove" data-boss="${boss.name}" title="제거">✕</button></td>
         </tr>`;
@@ -297,23 +291,18 @@ function renderBossHPTable() {
     const active = boss.diffs.find(d => d.diff === activeDiff) || boss.diffs[0];
     bossHPActiveDiffs[boss.name] = active.diff;
 
-    const activeEngDiff = DIFF_KR_TO_ENG[active.diff] || 'normal';
-    const activeMeta = DIFF_META[activeEngDiff] || { label: active.diff, cls: 'diff-normal' };
+    const activeMeta = _bhpDiffMeta(active.diff);
 
+    const ft = active.ftype === 'auth' ? 'auth' : 'arc';
     const forceEl = active.force
-      ? `<span class="force ${active.ftype === 'auth' ? 'force-auth' : 'force-arc'}"><img src="images/icons/${active.ftype === 'auth' ? 'auth' : 'arc'}.png" class="force-icon" />${active.force}</span>`
+      ? `<span class="force force-${ft}"><img src="images/icons/${ft}.png" class="force-icon" />${active.force}</span>`
       : '';
 
-    const diffOpts = boss.diffs.map(d => {
-      const eng = DIFF_KR_TO_ENG[d.diff] || 'normal';
-      const meta = DIFF_META[eng] || { label: d.diff };
-      return `<option value="${d.diff}"${d.diff === active.diff ? ' selected' : ''}>${meta.label}</option>`;
-    }).join('');
-    const diffSel = `<select class="bhp-diff-sel" data-boss="${boss.name}">${diffOpts}</select>`;
+    const diffSel = `<select class="bhp-diff-sel" data-boss="${boss.name}">${_bhpDiffOpts(boss, active.diff)}</select>`;
 
     const activePill = `<div class="bhp-active-diff"><span class="dpill ${activeMeta.cls} sel"><span class="dpill__t">${activeMeta.label}</span></span></div>`;
 
-    const phases = (BOSS_HP_PHASES[boss.name + '_' + active.diff] || []);
+    const phases = BOSS_HP_PHASES[boss.name + '_' + active.diff] || [];
     const totalHpEok = parseBossHpValue(active.hp);
 
     const pdrHtml = active.pdr != null
@@ -338,7 +327,7 @@ function renderBossHPTable() {
     // 클릭 가능 여부는 "지금 고른 난이도"가 아니라 "이 보스가 어느 난이도에서든 드랍이
     // 있는지"로 판단한다. 예전엔 선택 난이도로만 봐서, 기본 난이도엔 드랍이 없고
     // 윗 난이도에만 있는 보스가 아예 안 눌리는 것처럼 보였다.
-    const hasDrops = _bhpBossHasAnyDrops(boss.name);
+    const hasDrops = _bhpDropDiffs(boss).length > 0;
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
       <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
@@ -365,7 +354,6 @@ function renderBossHPTable() {
     </div>`;
   }).join('');
 
-  /* 이름이 칸보다 길면 줄바꿈 대신 글자 가로폭만 줄여 한 줄에 맞춘다(장평). */
   _bhpFitNames();
 
   container.querySelectorAll('.bhp-diff-sel').forEach(sel => {
@@ -377,11 +365,8 @@ function renderBossHPTable() {
 
   container.querySelectorAll('.bhp-card__img--clickable').forEach(el => {
     el.addEventListener('click', () => {
-      const name = el.dataset.boss;
-      const boss = groups.find(g => g.name === name);
-      if (!boss) return;
-      // 선택된 난이도와 무관하게 모든 난이도를 한 번에 보여준다
-      _bhpOpenDropsModal(boss);
+      const boss = groups.find(g => g.name === el.dataset.boss);
+      if (boss) _bhpOpenDropsModal(boss);
     });
   });
 

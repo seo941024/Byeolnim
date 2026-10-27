@@ -18,7 +18,7 @@
    ============================================= */
 const crypto = require('crypto');
 const sanitizeHtml = require('sanitize-html');
-const { getRedis, isAdminId, sendPushToUsers } = require('./_lib');
+const { getRedis, isAdminId, sendPushToUsers, bad, parseBody, getJson, uidOf } = require('./_lib');
 
 const TITLE_MAX = 80;
 const BODY_TEXT_MAX = 5000;
@@ -35,7 +35,6 @@ const COMMENTS_MAX_PER_POST = 500; // 도배 방지용 상한
 const UPLOAD_MAX_BYTES = 3 * 1024 * 1024;
 const UPLOAD_ALLOWED = { 'image/png': 'png', 'image/jpeg': 'jpg', 'image/gif': 'gif', 'image/webp': 'webp' };
 
-function bad(res, code, msg) { res.status(code).json({ ok: false, error: msg }); }
 function newId() { return Date.now().toString(36) + crypto.randomBytes(4).toString('hex'); }
 
 const BLOB_URL_RE = /^https:\/\/[a-z0-9-]+\.public\.blob\.vercel-storage\.com\//i;
@@ -64,16 +63,27 @@ function postImageUrls(html) {
   return Array.from(String(html).matchAll(/<img\s+[^>]*src="([^"]+)"/gi), m => m[1]);
 }
 
-async function getUid(redis, token) {
-  if (!token) return null;
-  return await redis.get('auth:tok:' + token);
+/* 글쓰기·수정 공통 입력 검사. 문제가 있으면 { error }, 없으면 정화한 { title, html } */
+function readPostInput(body) {
+  const title = String(body.title || '').trim();
+  const rawHtml = String(body.body || '').trim();
+  const html = sanitizePostHtml(rawHtml);
+  const text = postText(html);
+  const images = postImageUrls(html);
+
+  if (!title) return { error: '제목을 입력해주세요' };
+  if (title.length > TITLE_MAX) return { error: `제목은 ${TITLE_MAX}자 이내여야 합니다` };
+  if (!html || (!text && !images.length)) return { error: '내용을 입력해주세요' };
+  if (rawHtml.length > BODY_HTML_MAX) return { error: `내용이 너무 깁니다(${BODY_HTML_MAX}자 이내)` };
+  if (text.length > BODY_TEXT_MAX) return { error: `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다` };
+  if (images.length > IMAGES_MAX) return { error: `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다` };
+  return { title, html };
 }
 
 /* 닉네임과 대표 캐릭터(설정한 사람만)를 한 번에 읽어서 글·댓글에 스냅샷으로
    박아 둔다 — 닉네임과 같은 원칙: 나중에 바뀌어도 이미 쓴 글에는 소급 안 됨. */
 async function getProfile(redis, uid) {
-  const raw = await redis.get('auth:user:' + uid);
-  const rec = raw ? (typeof raw === 'string' ? JSON.parse(raw) : raw) : null;
+  const rec = await getJson(redis, 'auth:user:' + uid);
   return { nickname: (rec && rec.nickname) || uid, repChar: (rec && rec.repChar) || null };
 }
 
@@ -83,8 +93,7 @@ module.exports = async function handler(req, res) {
   const redis = getRedis();
   if (!redis) return bad(res, 500, '서버 저장소가 설정되지 않았습니다');
 
-  let body = req.body;
-  if (typeof body === 'string') { try { body = JSON.parse(body); } catch { body = null; } }
+  const body = parseBody(req);
   if (!body || typeof body !== 'object') return bad(res, 400, '요청 형식이 올바르지 않습니다');
 
   const action = String(body.action || '');
@@ -102,16 +111,16 @@ module.exports = async function handler(req, res) {
       const ids = total ? await redis.zrange('community:posts', offset, offset + LIST_PAGE - 1, { rev: true }) : [];
       if (!ids || !ids.length) return res.status(200).json({ ok: true, posts: [], page: 1, totalPages: 1 });
 
-      const raws = await Promise.all(ids.map(id => redis.get('community:post:' + id)));
-      const posts = raws.filter(Boolean).map(r => {
-        const p = typeof r === 'string' ? JSON.parse(r) : r;
+      const found = await Promise.all(ids.map(id => getJson(redis, 'community:post:' + id)));
+      const posts = found.filter(Boolean).map(p => {
+        const imgs = postImageUrls(sanitizePostHtml(p.body || ''));
         // 목록에는 본문 전체 대신 미리보기(100자)와 첫 사진만 — 응답을 가볍게
         return {
           id: p.id, title: p.title, authorNick: p.authorNick, createdAt: p.createdAt,
           commentCount: p.commentCount || 0,
           bodyPreview: postText(p.body || '').slice(0, 100),
-          thumb: postImageUrls(sanitizePostHtml(p.body || ''))[0] || (p.images && p.images[0]) || null,
-          imageCount: postImageUrls(sanitizePostHtml(p.body || '')).length || (p.images && p.images.length) || 0,
+          thumb: imgs[0] || (p.images && p.images[0]) || null,
+          imageCount: imgs.length || (p.images && p.images.length) || 0,
         };
       });
       return res.status(200).json({ ok: true, posts, page, totalPages });
@@ -120,20 +129,17 @@ module.exports = async function handler(req, res) {
     /* ── 글 하나 + 댓글 (로그인 불필요) ── */
     if (action === 'get') {
       const id = String(body.id || '');
-      const raw = await redis.get('community:post:' + id);
-      if (!raw) return bad(res, 404, '글을 찾을 수 없습니다');
-      const post = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const post = await getJson(redis, 'community:post:' + id);
+      if (!post) return bad(res, 404, '글을 찾을 수 없습니다');
       // 리치 에디터 도입 전의 평문 글까지 포함해, 표시 직전에 한 번 더 정화한다.
       post.body = sanitizePostHtml(post.body || '');
 
-      const craw = await redis.get('community:comments:' + id);
-      const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
+      const comments = await getJson(redis, 'community:comments:' + id, []);
       return res.status(200).json({ ok: true, post, comments });
     }
 
     /* 아래는 전부 로그인된 사람만 */
-    const token = String(body.token || '');
-    const uid = await getUid(redis, token);
+    const uid = await uidOf(redis, String(body.token || ''));
     if (!uid) return bad(res, 401, '로그인이 필요합니다');
 
     /* ── 사진 업로드 (Vercel Blob) ──
@@ -167,18 +173,9 @@ module.exports = async function handler(req, res) {
 
     /* ── 글쓰기 ── */
     if (action === 'create') {
-      const title = String(body.title || '').trim();
-      const rawHtml = String(body.body || '').trim();
-      const html = sanitizePostHtml(rawHtml);
-      const text = postText(html);
-      const images = postImageUrls(html);
-
-      if (!title) return bad(res, 400, '제목을 입력해주세요');
-      if (title.length > TITLE_MAX) return bad(res, 400, `제목은 ${TITLE_MAX}자 이내여야 합니다`);
-      if (!html || (!text && !images.length)) return bad(res, 400, '내용을 입력해주세요');
-      if (rawHtml.length > BODY_HTML_MAX) return bad(res, 400, `내용이 너무 깁니다(${BODY_HTML_MAX}자 이내)`);
-      if (text.length > BODY_TEXT_MAX) return bad(res, 400, `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다`);
-      if (images.length > IMAGES_MAX) return bad(res, 400, `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다`);
+      const input = readPostInput(body);
+      if (input.error) return bad(res, 400, input.error);
+      const { title, html } = input;
 
       const { nickname, repChar } = await getProfile(redis, uid);
       const id = newId();
@@ -192,26 +189,15 @@ module.exports = async function handler(req, res) {
     /* ── 글 수정 (작성자만 — 관리자도 남의 글 내용은 못 고친다, 삭제만 가능) ── */
     if (action === 'edit') {
       const id = String(body.id || '');
-      const raw = await redis.get('community:post:' + id);
-      if (!raw) return bad(res, 404, '글을 찾을 수 없습니다');
-      const post = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const post = await getJson(redis, 'community:post:' + id);
+      if (!post) return bad(res, 404, '글을 찾을 수 없습니다');
       if (post.authorId !== uid) return bad(res, 403, '수정 권한이 없습니다');
 
-      const title = String(body.title || '').trim();
-      const rawHtml = String(body.body || '').trim();
-      const html = sanitizePostHtml(rawHtml);
-      const text = postText(html);
-      const images = postImageUrls(html);
+      const input = readPostInput(body);
+      if (input.error) return bad(res, 400, input.error);
 
-      if (!title) return bad(res, 400, '제목을 입력해주세요');
-      if (title.length > TITLE_MAX) return bad(res, 400, `제목은 ${TITLE_MAX}자 이내여야 합니다`);
-      if (!html || (!text && !images.length)) return bad(res, 400, '내용을 입력해주세요');
-      if (rawHtml.length > BODY_HTML_MAX) return bad(res, 400, `내용이 너무 깁니다(${BODY_HTML_MAX}자 이내)`);
-      if (text.length > BODY_TEXT_MAX) return bad(res, 400, `내용은 글자 기준 ${BODY_TEXT_MAX}자 이내여야 합니다`);
-      if (images.length > IMAGES_MAX) return bad(res, 400, `사진은 ${IMAGES_MAX}장까지만 올릴 수 있습니다`);
-
-      post.title = title;
-      post.body = html;
+      post.title = input.title;
+      post.body = input.html;
       post.editedAt = Date.now();
       await redis.set('community:post:' + id, JSON.stringify(post));
       return res.status(200).json({ ok: true, id });
@@ -220,9 +206,8 @@ module.exports = async function handler(req, res) {
     /* ── 글 삭제 (작성자 또는 관리자) ── */
     if (action === 'delete') {
       const id = String(body.id || '');
-      const raw = await redis.get('community:post:' + id);
-      if (!raw) return bad(res, 404, '글을 찾을 수 없습니다');
-      const post = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const post = await getJson(redis, 'community:post:' + id);
+      if (!post) return bad(res, 404, '글을 찾을 수 없습니다');
       if (post.authorId !== uid && !isAdminId(uid)) return bad(res, 403, '삭제 권한이 없습니다');
 
       await redis.del('community:post:' + id);
@@ -239,12 +224,10 @@ module.exports = async function handler(req, res) {
       if (!text) return bad(res, 400, '댓글 내용을 입력해주세요');
       if (text.length > COMMENT_MAX) return bad(res, 400, `댓글은 ${COMMENT_MAX}자 이내여야 합니다`);
 
-      const praw = await redis.get('community:post:' + postId);
-      if (!praw) return bad(res, 404, '글을 찾을 수 없습니다');
-      const post = typeof praw === 'string' ? JSON.parse(praw) : praw;
+      const post = await getJson(redis, 'community:post:' + postId);
+      if (!post) return bad(res, 404, '글을 찾을 수 없습니다');
 
-      const craw = await redis.get('community:comments:' + postId);
-      const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
+      const comments = await getJson(redis, 'community:comments:' + postId, []);
       if (comments.length >= COMMENTS_MAX_PER_POST) return bad(res, 400, '댓글이 너무 많습니다');
 
       let parent = null;
@@ -277,8 +260,7 @@ module.exports = async function handler(req, res) {
     if (action === 'comment-delete') {
       const postId = String(body.postId || '');
       const commentId = String(body.commentId || '');
-      const craw = await redis.get('community:comments:' + postId);
-      const comments = craw ? (typeof craw === 'string' ? JSON.parse(craw) : craw) : [];
+      const comments = await getJson(redis, 'community:comments:' + postId, []);
       const target = comments.find(c => c.id === commentId);
       if (!target) return bad(res, 404, '댓글을 찾을 수 없습니다');
       if (target.authorId !== uid && !isAdminId(uid)) return bad(res, 403, '삭제 권한이 없습니다');
@@ -294,9 +276,8 @@ module.exports = async function handler(req, res) {
       const next = comments.filter(c => !removed.has(c.id));
       await redis.set('community:comments:' + postId, JSON.stringify(next));
 
-      const praw = await redis.get('community:post:' + postId);
-      if (praw) {
-        const post = typeof praw === 'string' ? JSON.parse(praw) : praw;
+      const post = await getJson(redis, 'community:post:' + postId);
+      if (post) {
         post.commentCount = next.length;
         await redis.set('community:post:' + postId, JSON.stringify(post));
       }

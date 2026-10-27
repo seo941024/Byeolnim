@@ -47,27 +47,25 @@ const FLAME_WEAPON_ATT_GENESIS = {
 const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_ATT_GENESIS);
 
 function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
-  const w = isBoss ? 2 : 0;
-  const t = tier; // 1-5
+  const stage = tier + (isBoss ? 2 : 0);   // tier 1~5, 보스 장비면 +2
   if (['ATTACK','MAGIC ATK'].includes(option) && weaponSubtype) {
     const table = FLAME_WEAPON_ATT_GENESIS[weaponSubtype];
-    // 표는 "단계(=tier+w) 3~7"만 있다. 논보스 1·2단계처럼 표 밖이면 기존 공식으로 대체한다.
-    const stage = t + w;
+    // 표는 단계 3~7만 있다. 논보스 1·2단계처럼 표 밖이면 기존 공식으로 대체한다.
     if (table && stage >= 3 && stage <= 7) return table[stage - 3];
   }
   // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
   if (['STR','DEX','INT','LUK','방어력'].includes(option))
-    return (level < 250 ? Math.floor(level / 20) + 1 : 12) * (t + w);
+    return (level < 250 ? Math.floor(level / 20) + 1 : 12) * stage;
   if (['STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK'].includes(option))
-    return (Math.floor(level / 40) + 1) * (t + w);
+    return (Math.floor(level / 40) + 1) * stage;
   if (['ALL%','ATTACK','MAGIC ATK','데미지%'].includes(option))
-    return t + w;
+    return stage;
   if (option === '보공%')
-    return (t + w) * 2;
+    return stage * 2;
   if (['HP','MP'].includes(option))
-    return (level < 250 ? Math.floor(level / 10) * 30 : 700) * (t + w);
+    return (level < 250 ? Math.floor(level / 10) * 30 : 700) * stage;
   if (option === '착용레벨감소')
-    return -((t + w) * 5);
+    return -(stage * 5);
   return 0;
 }
 
@@ -154,24 +152,27 @@ function flameScoreSim() {
   }, 0);
 }
 
+/* 기하분포 — 1회 확률 p일 때 cnt회 안에 한 번 이상 뜰 확률(%), 상위 pct%까지 필요한 횟수 */
+function _geoPctByCount(p, cnt) { return (1 - Math.pow(1 - p, cnt)) * 100; }
+function _geoCountByPct(p, pct) { return Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p)); }
+
 function _flameScoreRenderResult(results, N, target) {
   const resEl = document.getElementById('flameScoreResult');
-  const FLAME_NAMES = { POWERFUL:'강력한 환생의 불꽃', ETERNAL:'영원한 환생의 불꽃', ABYSS:'심연의 환생의 불꽃' };
 
   const cards = results.map(({ key, meta, k, p }) => {
     if (k === 0) return `
       <div class="flame-score-card">
-        <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
+        <div class="flame-score-card__name">${meta.label}</div>
         <p style="font-size:.8rem;color:var(--danger);margin:4px 0">달성 확률이 너무 낮아 계산 불가</p>
       </div>`;
 
     const mean     = Math.round(1 / p);
-    const medianPct = Math.round((1 - Math.pow(1 - p, mean)) * 100 * 100) / 100;
+    const medianPct = Math.round(_geoPctByCount(p, mean) * 100) / 100;
     const uid = `fsp_${key}`;
 
     return `
       <div class="flame-score-card">
-        <div class="flame-score-card__name">${FLAME_NAMES[key]}</div>
+        <div class="flame-score-card__name">${meta.label}</div>
         <div class="flame-score-card__prob">확률: ${(p*100).toFixed(7)}%</div>
         <div class="flame-score-card__mean">평균 · 상위 ${medianPct}%: ${mean.toLocaleString()}회</div>
         <div class="sf-bidir" style="margin-top:8px">
@@ -195,24 +196,21 @@ function _flameScoreRenderResult(results, N, target) {
   // 각 카드 양방향 입력 연결 + 기본값(평균) 채우기
   results.forEach(({ key, k, p }) => {
     if (!k) return;
-    const uid        = `fsp_${key}`;
-    const pctEl      = document.getElementById(`${uid}_pct`);
-    const cntEl      = document.getElementById(`${uid}_cnt`);
-    const pctToCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
-    const countToPct = cnt => (1 - Math.pow(1 - p, cnt)) * 100;
+    const pctEl = document.getElementById(`fsp_${key}_pct`);
+    const cntEl = document.getElementById(`fsp_${key}_cnt`);
 
     // 기본값: 평균 횟수 & 해당 백분위
     const mean = Math.round(1 / p);
     cntEl.value = mean;
-    pctEl.value = countToPct(mean).toFixed(4);
+    pctEl.value = _geoPctByCount(p, mean).toFixed(4);
 
-    pctEl?.addEventListener('input', () => {
+    pctEl.addEventListener('input', () => {
       const v = parseFloat(pctEl.value);
-      if (!isNaN(v) && v > 0 && v < 100) cntEl.value = pctToCount(v);
+      if (!isNaN(v) && v > 0 && v < 100) cntEl.value = _geoCountByPct(p, v);
     });
-    cntEl?.addEventListener('input', () => {
+    cntEl.addEventListener('input', () => {
       const v = parseInt(cntEl.value);
-      if (!isNaN(v) && v > 0) pctEl.value = countToPct(v).toFixed(4);
+      if (!isNaN(v) && v > 0) pctEl.value = _geoPctByCount(p, v).toFixed(4);
     });
   });
 }
@@ -262,17 +260,11 @@ function flameRefreshOptionSelects() {
 
     const tierSel = document.getElementById(`flameGoalTier${i}`);
     if (!tierSel) continue;
-    const curTier = tierSel.value;
 
-    // 티어 라벨: 1추(최고)~5추(최저)
-    // value 1=최고(oldT5), value 5=최저(oldT1)
+    // 그 불꽃에서 안 뜨는 등급은 막는다. value 1(1추)이 prob[4], value 5(5추)가 prob[0]
     Array.from(tierSel.options).forEach(opt => {
-      const val = parseInt(opt.value);
-      const oldTier = 6 - val; // val1→oldT5, val5→oldT1
-      opt.text = `${val}추`; // val1→1추, val5→5추
-      opt.disabled = prob[oldTier - 1] === 0;
+      opt.disabled = prob[5 - parseInt(opt.value)] === 0;
     });
-    tierSel.value = curTier;
 
     // 현재 선택값이 disabled면 첫 번째 가능한 값으로 이동
     if (tierSel.options[tierSel.selectedIndex]?.disabled) {
@@ -286,12 +278,12 @@ function flameRefreshOptionSelects() {
    확률 0인 등급은 flameRefreshOptionSelects가 disabled로 만들어 두므로 그걸 그대로 쓴다. */
 function flameResetGoalTiers() {
   const { prob } = FLAME_TYPES[_flameGetFlameKey()];
+  // value 1이 1추, 5-value가 prob 배열의 자리다(1추 → prob[4])
+  const best = [1, 2, 3, 4, 5].find(v => prob[5 - v] > 0);
+  if (!best) return;
   for (let i = 1; i <= 4; i++) {
     const sel = document.getElementById(`flameGoalTier${i}`);
-    if (!sel) continue;
-    // value 1이 1추, 6-value가 prob 배열의 자리다(1추 → prob[4])
-    const best = [1, 2, 3, 4, 5].find(v => prob[6 - v - 1] > 0);
-    if (best) sel.value = String(best);
+    if (sel) sel.value = String(best);
   }
 }
 
@@ -304,7 +296,7 @@ function flameBuildStatTable() {
   const display = isWeapon ? FLAME_DISPLAY_WEAPON : FLAME_DISPLAY_ARMOR;
   const { prob } = FLAME_TYPES[flameKey];
 
-  // 단계 1=최고(old T5) ~ 단계 5=최저(old T1), 역순 표시
+  // 1추=tier5(최고) ~ 5추=tier1(최저), 역순 표시
   const rows = display.map(opt => {
     const vals = [5,4,3,2,1].map(t => {
       const v = flameStatValue(opt, t, level, isBoss, weaponSubtype);
@@ -348,7 +340,7 @@ function _flameExactProb(flameKey, goals, isWeapon) {
   const pPresent = comb(M - G, 4 - G) / comb(M, 4); // G개가 모두 뽑힐 확률
   let pTier = 1;
   for (const g of goals) {
-    const th = 6 - g.minTier;             // tier >= th (checkGoals와 동일)
+    const th = 6 - g.minTier;             // tier >= th (_flameHandGoalsMet과 동일)
     let s = 0; for (let t = th; t <= 5; t++) s += prob[t - 1];
     pTier *= s;
   }
@@ -357,13 +349,8 @@ function _flameExactProb(flameKey, goals, isWeapon) {
 
 function _isGoalPossible(flameKey, goals) {
   const { prob } = FLAME_TYPES[flameKey];
-  return goals.every(g => {
-    if (!g.opt || g.opt === 'none') return true;
-    const minOldTier = 6 - g.minTier; // minTier 1(1추)→oldT5, 5(5추)→oldT1
-    // 해당 tier 이상의 확률 합이 0이면 불가능
-    const possible = prob.slice(minOldTier - 1).some(p => p > 0);
-    return possible;
-  });
+  // 목표 등급 이상(tier >= 6 - minTier, prob[5 - minTier]부터)의 확률이 전부 0이면 불가능
+  return goals.every(g => prob.slice(5 - g.minTier).some(p => p > 0));
 }
 
 /* 무기는 공격력·마력 추옵 값이 무기 종류마다 달라서, 종류를 안 고르면
@@ -373,17 +360,14 @@ function _flameWeaponSubtypeMissing() {
 }
 
 function flameSimulate() {
-  const resEl0 = document.getElementById('flameSimResult');
+  const resEl = document.getElementById('flameSimResult');
   if (_flameWeaponSubtypeMissing()) {
-    resEl0.innerHTML = '<p class="empty" style="color:var(--danger)">무기 종류를 먼저 골라주세요.</p>';
+    resEl.innerHTML = '<p class="empty" style="color:var(--danger)">무기 종류를 먼저 골라주세요.</p>';
     return;
   }
   const flameKey = _flameGetFlameKey();
-  const level    = _flameGetLevel();
-  const isBoss   = _flameGetIsBoss();
   const isWeapon = _flameGetIsWeapon();
   const goals    = flameGetGoals();
-  const resEl    = document.getElementById('flameSimResult');
 
   if (!goals.length) {
     resEl.innerHTML = '<p class="empty">목표 옵션을 설정하세요.</p>';
@@ -404,14 +388,12 @@ function flameSimulate() {
   }
 
   const mean = Math.round(1 / p);
-  // 기하분포: 상위 n% 달성 횟수 = ceil(log(1 - n/100) / log(1 - p))
-  const pctCount = pct => Math.ceil(Math.log(1 - pct / 100) / Math.log(1 - p));
 
   const pcts = [50, 75, 90, 95, 99];
   const rows = pcts.map(pct => `
     <div class="sf-res-item">
       <span class="sf-res-label">상위 ${pct}%</span>
-      <span class="sf-res-val">${pctCount(pct).toLocaleString()}개</span>
+      <span class="sf-res-val">${_geoCountByPct(p, pct).toLocaleString()}개</span>
     </div>`).join('');
 
   // 확률 표기: 아주 작으면 유효숫자 유지
@@ -455,12 +437,11 @@ function flameRollScore(lines) {
    묶음이 끝날 때 한 번만 그린다. 굴린 lines를 반환해 목표 판정에 쓴다. */
 function _flameRollOnce(silent) {
   if (_flameWeaponSubtypeMissing()) { alert('무기 종류를 먼저 골라주세요.'); return []; }
-  const flame   = document.querySelector('#flameTypeGroup .sf-toggle.active')?.dataset.val || 'POWERFUL';
-  const isWeapon = document.querySelector('#flameEquipGroup .sf-toggle.active')?.dataset.val === 'weapon';
+  const flame    = _flameGetFlameKey();
+  const isWeapon = _flameGetIsWeapon();
   const level    = parseInt(document.getElementById('flameLevel').value) || 200;
-  const isBoss   = document.getElementById('flameBoss').checked;
 
-  const lines = rollFlame(flame, level, isBoss, isWeapon, isWeapon ? _flameGetWeaponSubtype() : undefined);
+  const lines = rollFlame(flame, level, _flameGetIsBoss(), isWeapon, isWeapon ? _flameGetWeaponSubtype() : undefined);
   const score = flameRollScore(lines);
 
   _flameHand.count[flame] = (_flameHand.count[flame] || 0) + 1;
@@ -475,12 +456,8 @@ function _flameRollOnce(silent) {
    목표 옵션 칸(flameGoalOpt1~4 / flameGoalTier1~4)은 확률 계산 탭과 같이 쓴다
    (flameGetGoals). 지정한 줄들이 전부 그 등급 이상으로 같이 뜨면 멈춘다.
    flameSimulate의 _isGoalPossible과 같은 th = 6 - minTier 기준을 쓴다. */
-function _flameHasGoals() {
-  return flameGetGoals().some(g => g.opt && g.opt !== 'none');
-}
-
 function _flameHandGoalsMet(lines) {
-  const goals = flameGetGoals().filter(g => g.opt && g.opt !== 'none');
+  const goals = flameGetGoals();
   if (!goals.length) return false;
   return goals.every(g => {
     const th = 6 - g.minTier; // minTier 1(1추)→th5, 5(5추)→th1, _flameExactProb과 동일
@@ -489,41 +466,28 @@ function _flameHandGoalsMet(lines) {
   });
 }
 
-let _flameAutoTimer = null;
 const FLAME_AUTO_BATCH = 300;
 const FLAME_AUTO_MAX   = 300000;
 let _flameAutoDone = 0;
 
-function _flameStopAuto(msg) {
-  if (_flameAutoTimer) { clearInterval(_flameAutoTimer); _flameAutoTimer = null; }
-  const btn = document.getElementById('flameBtnAuto');
-  if (btn) { btn.textContent = '목표까지 자동 [A]'; btn.classList.remove('sbtn--danger'); }
-  _flameRenderHand();
-  if (msg) alert(msg);
-}
-
-function _flameStartAuto() {
-  if (_flameAutoTimer) { _flameStopAuto(); return; }
-  if (_flameWeaponSubtypeMissing()) { alert('무기 종류를 먼저 골라주세요.'); return; }
-  if (!_flameHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
-
-  const btn = document.getElementById('flameBtnAuto');
-  if (btn) { btn.textContent = '■ 중지 [A]'; btn.classList.add('sbtn--danger'); }
-  _flameAutoDone = 0;
-
-  _flameAutoTimer = setInterval(() => {
-    for (let i = 0; i < FLAME_AUTO_BATCH; i++) {
-      const lines = _flameRollOnce(true);
-      _flameAutoDone++;
-      if (_flameHandGoalsMet(lines)) { _flameStopAuto(); return; }
-      if (_flameAutoDone >= FLAME_AUTO_MAX) {
-        _flameStopAuto(`${FLAME_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`);
-        return;
-      }
-    }
-    _flameRenderHand();   // 묶음이 끝날 때만 그린다
-  }, 0);
-}
+const _flameAuto = createAutoRunner({
+  btnId: 'flameBtnAuto', idleLabel: '목표까지 자동 [A]', runLabel: '■ 중지 [A]', runClass: 'sbtn--danger',
+  batch: FLAME_AUTO_BATCH,
+  canStart: () => {
+    if (_flameWeaponSubtypeMissing()) { alert('무기 종류를 먼저 골라주세요.'); return false; }
+    if (!flameGetGoals().length) { alert('목표 옵션을 먼저 정해주세요.'); return false; }
+  },
+  onStart: () => { _flameAutoDone = 0; },
+  tick: () => {
+    const lines = _flameRollOnce(true);
+    _flameAutoDone++;
+    if (_flameHandGoalsMet(lines)) return 'done';
+    if (_flameAutoDone >= FLAME_AUTO_MAX) return 'max';
+  },
+  maxMsg: () => `${FLAME_AUTO_MAX.toLocaleString()}회를 돌렸지만 목표가 나오지 않아 멈췄습니다.`,
+  render: _flameRenderHand,
+});
+function _flameStopAuto() { _flameAuto.stop(); }
 
 /* 한 줄을 "옵션 +수치" 로 적는다. 착용레벨감소는 값이 음수라 부호를 그대로 쓴다. */
 function _flameLineText(l) {
@@ -765,8 +729,7 @@ function initAddOption() {
   sec.querySelectorAll('#flameEquipGroup .sf-toggle, #flameTypeGroup .sf-toggle').forEach(btn => {
     btn.addEventListener('click', () => {
       const group = btn.closest('.sf-toggle-group');
-      group.querySelectorAll('.sf-toggle').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+      setActive(group.querySelectorAll('.sf-toggle'), btn);
       /* 불꽃을 바꾸면 목표 등급을 그 불꽃에서 가능한 최고 등급으로 되돌린다.
          강력한 환생의 불꽃은 1추가 안 떠서 2추로 밀려 있는데, 영원한·심연의로 바꿔도
          그 2추가 그대로 남아 있었다. 이 둘은 1추를 노리고 쓰는 불꽃이다. */
@@ -778,8 +741,7 @@ function initAddOption() {
 
   const levelEl = document.getElementById('flameLevel');
   levelEl.addEventListener('change', () => {
-    const v = Math.max(100, Math.min(250, parseInt(levelEl.value) || 150));
-    levelEl.value = v;
+    levelEl.value = _flameGetLevel();   // 100~250으로 자른다
     refresh();
   });
   document.getElementById('flameBoss').addEventListener('change', refresh);
@@ -802,47 +764,40 @@ function initAddOption() {
   // ★ _flameRollOnce를 리스너로 그대로 넘기면 클릭 이벤트 객체가 첫 인자(silent)로
   //   들어가 화면이 안 그려진다 — 인자 없이 감싸서 호출한다.
   document.getElementById('flameBtnRoll')?.addEventListener('click', () => { _flameStopAuto(); _flameRollOnce(); });
-  document.getElementById('flameBtnAuto')?.addEventListener('click', _flameStartAuto);
+  document.getElementById('flameBtnAuto')?.addEventListener('click', _flameAuto.start);
   document.getElementById('flameBtnHandReset')?.addEventListener('click', () => { _flameStopAuto(); _flameHandReset(); });
 
-  /* S=굴리기, R=초기화, A=자동. 추옵 탭의 직접 불꽃 쓰기가 열려 있을 때만
-     동작하고, 입력칸에 포커스가 있거나 모달이 떠 있으면 가로채지 않는다. */
-  document.addEventListener('keydown', e => {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    if (!sec.classList.contains('active')) return;
-    if (document.getElementById('flameTabHand')?.style.display === 'none') return;
-    const tag = document.activeElement?.tagName;
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open')) return;
-    e.preventDefault();
-    if (e.code === 'KeyS') { _flameStopAuto(); _flameRollOnce(); }
-    else if (e.code === 'KeyR') { document.getElementById('flameBtnHandReset')?.click(); }
-    else if (e.code === 'KeyA') { document.getElementById('flameBtnAuto')?.click(); }
+  /* S=굴리기, R=초기화, A=자동. 추옵 탭의 직접 불꽃 쓰기가 열려 있을 때만 */
+  bindSimKeys('sec-addoption', key => {
+    if (document.getElementById('flameTabHand')?.style.display === 'none') return false;
+    if (key === 's') { _flameStopAuto(); _flameRollOnce(); }
+    else if (key === 'r') document.getElementById('flameBtnHandReset')?.click();
+    else document.getElementById('flameBtnAuto')?.click();
   });
 
   _flameHandReset();
 
-  sec.querySelectorAll('.sf-tab').forEach(tab => {
+  const tabs = sec.querySelectorAll('.sf-tab');
+  tabs.forEach(tab => {
     tab.addEventListener('click', () => {
       _flameStopAuto(); // 다른 탭으로 넘어가면 자동 돌리기는 멈춘다
-      sec.querySelectorAll('.sf-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
+      setActive(tabs, tab);
       const which = tab.dataset.tab;               // sim | score | hand
-      const isSim = which === 'sim', isHand = which === 'hand';
+      const isSim = which === 'sim', isScore = which === 'score', isHand = which === 'hand';
       // 장비 종류·불꽃 선택은 직접 굴리기에서도 써야 하므로 추옵 계산기에서만 숨긴다
-      document.getElementById('flameEquipGroup').parentElement.style.display = which === 'score' ? 'none' : '';
-      document.getElementById('flameTypeGroup').parentElement.style.display  = which === 'score' ? 'none' : '';
+      document.getElementById('flameEquipGroup').parentElement.style.display = isScore ? 'none' : '';
+      document.getElementById('flameTypeGroup').parentElement.style.display  = isScore ? 'none' : '';
       // 목표 옵션은 확률 계산·직접 불꽃 쓰기 둘 다에서 쓴다(추옵 계산기에서만 숨긴다)
-      document.getElementById('flameGoalShared').style.display      = which === 'score' ? 'none' : '';
-      document.getElementById('flameTabSim').style.display          = isSim  ? '' : 'none';
-      document.getElementById('flameTabScore').style.display        = which === 'score' ? '' : 'none';
-      document.getElementById('flameTabHand').style.display         = isHand ? '' : 'none';
-      document.getElementById('flameStatTableCard').style.display   = isSim  ? '' : 'none';
-      document.getElementById('flameSimResultCard').style.display   = isSim  ? '' : 'none';
-      document.getElementById('flameScoreResultCard').style.display = which === 'score' ? '' : 'none';
-      document.getElementById('flameHandResultCard').style.display  = isHand ? '' : 'none';
+      document.getElementById('flameGoalShared').style.display      = isScore ? 'none' : '';
+      document.getElementById('flameTabSim').style.display          = isSim   ? '' : 'none';
+      document.getElementById('flameTabScore').style.display        = isScore ? '' : 'none';
+      document.getElementById('flameTabHand').style.display         = isHand  ? '' : 'none';
+      document.getElementById('flameStatTableCard').style.display   = isSim   ? '' : 'none';
+      document.getElementById('flameSimResultCard').style.display   = isSim   ? '' : 'none';
+      document.getElementById('flameScoreResultCard').style.display = isScore ? '' : 'none';
+      document.getElementById('flameHandResultCard').style.display  = isHand  ? '' : 'none';
       // 추옵 계산기는 항상 방어구로 계산하므로, 앞에서 무기를 골랐어도 무기 칸과 레벨 잠금을 풀어둔다
-      if (which === 'score') {
+      if (isScore) {
         document.getElementById('flameWeaponSubtypeWrap').style.display = 'none';
         document.getElementById('flameLevel').disabled = false;
       } else syncWeaponSubtypeVisibility();

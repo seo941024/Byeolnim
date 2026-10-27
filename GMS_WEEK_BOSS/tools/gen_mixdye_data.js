@@ -14,6 +14,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { getListJson } = require('./coordi_index');
 
 // 버전은 tools/coordi_update.js가 maplestory.io 최신 버전을 넘겨 준다. 직접 돌리면 아래 값
 const VERSION = process.env.GMS_VERSION || '270';
@@ -50,21 +51,7 @@ const PARTS = {
   },
 };
 
-// 목록 요청은 크고 서버 오류가 잦아서 받을 때까지 다시 요청한다
-async function getJson(url) {
-  for (let attempt = 0; ; attempt++) {
-    try {
-      const r = await fetch(url, { headers: { 'User-Agent': 'byeolnim-mixdye-data' } });
-      if (r.ok) return await r.json();
-      if (r.status === 404) throw Object.assign(new Error(`404 ${url}`), { fatal: true });
-      throw new Error(`HTTP ${r.status}`);
-    } catch (e) {
-      if (e.fatal) throw e;   // 주소가 틀린 것이라 다시 요청해도 소용없다
-      console.log(`요청 오류 ${attempt + 1}번째 · ${e.message} · ${url}`);
-      await new Promise(res => setTimeout(res, Math.min(5000 * (attempt + 1), 60000)));
-    }
-  }
-}
+const getJson = url => getListJson(url, 'byeolnim-mixdye-data');
 
 // sex: 1 여자, 0 남자. 남녀가 섞인 번호대(mixed)는 양쪽 목록에 '성별 미확인'으로 들어간다
 async function build(key, sex) {

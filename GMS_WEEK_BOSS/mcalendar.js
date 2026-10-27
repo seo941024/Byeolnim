@@ -42,6 +42,16 @@ function mcLoadEv() {
   try { return JSON.parse(localStorage.getItem(STORAGE_KEYS.mapleCalEvents)) || {}; }
   catch { return {}; }
 }
+/* 그 날짜 목록에서 id 하나를 뺀다. 날짜가 비면 키째로 지운다. 뺐으면 true */
+function mcDropById(data, date, id) {
+  const list = data[date];
+  if (!list) return false;
+  const i = list.findIndex(x => String(x.id) === String(id));
+  if (i < 0) return false;
+  list.splice(i, 1);
+  if (!list.length) delete data[date];
+  return true;
+}
 function mcStoreEv(data) {
   localStorage.setItem(STORAGE_KEYS.mapleCalEvents, JSON.stringify(data));
   // 일정이 바뀌면 서버가 들고 있는 알림 시각도 같이 맞춰야 한다.
@@ -108,9 +118,6 @@ function mcVisible(recs) {
 
 function mcDateStr(y, m, d) {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-}
-function mcEsc(s) {
-  return String(s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
 }
 function mcChar(id) { return state.chars.find(c => c.id === id); }
 
@@ -255,10 +262,10 @@ function mcRenderCharChip() {
   const face = mcCharFace(ch);
   chip.innerHTML = `
     <span class="mc-charchip__face">
-      ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
+      ${face ? `<img src="${escHtml(face)}" alt="" onerror="this.style.display='none'">` : ''}
     </span>
     <span class="mc-charchip__body">
-      <span class="mc-charchip__name">${mcEsc(ch.name)}</span>
+      <span class="mc-charchip__name">${escHtml(ch.name)}</span>
       ${mcCharLv(ch) ? `<span class="mc-charchip__lv">Lv.${mcCharLv(ch)}</span>` : ''}
       <span class="mc-charchip__sub">캐릭터 변경</span>
     </span>`;
@@ -291,11 +298,11 @@ function mcOpenCharPicker() {
           ${state.chars.map(ch => {
             const face = mcCharFace(ch);
             return `
-              <button class="mc-char${ch.id === mcState.charId ? ' sel' : ''}" data-cid="${ch.id}" title="${mcEsc(ch.name)}">
+              <button class="mc-char${ch.id === mcState.charId ? ' sel' : ''}" data-cid="${ch.id}" title="${escHtml(ch.name)}">
                 <span class="mc-char__face">
-                  ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
+                  ${face ? `<img src="${escHtml(face)}" alt="" onerror="this.style.display='none'">` : ''}
                 </span>
-                <span class="mc-char__name">${mcEsc(ch.name)}</span>
+                <span class="mc-char__name">${escHtml(ch.name)}</span>
                 ${mcCharLv(ch) ? `<span class="mc-char__lv">Lv.${mcCharLv(ch)}</span>` : ''}
               </button>`;
           }).join('')}
@@ -391,16 +398,16 @@ function mcRenderGrid() {
         <span class="mc-cell__d">${d}</span>
         <span class="mc-cell__evs">
           ${evShown.map(ev => `
-            <span class="mc-cell__ev" style="background:${mcEsc(ev.color)};color:${mcTextOn(ev.color)}"
-                  title="${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}">
-              ${mcEsc(mcFmtTime(ev))} ${mcEsc(ev.text)}
+            <span class="mc-cell__ev" style="background:${escHtml(ev.color)};color:${mcTextOn(ev.color)}"
+                  title="${escHtml(mcFmtTime(ev))} ${escHtml(ev.text)}">
+              ${escHtml(mcFmtTime(ev))} ${escHtml(ev.text)}
             </span>`).join('')}
           ${evRest > 0 ? `<span class="mc-cell__more">일정 +${evRest}</span>` : ''}
         </span>
         <span class="mc-cell__icons">
           ${shown.map(r => {
             const it = mcItem(r.f);
-            return `<img src="images/WANT/${mcEsc(r.f)}" alt="${mcEsc(it?.name || '')}" onerror="this.style.display='none'">`;
+            return `<img src="images/WANT/${escHtml(r.f)}" alt="${escHtml(it?.name || '')}" onerror="this.style.display='none'">`;
           }).join('')}
           ${rest > 0 ? `<span class="mc-cell__more">+${rest}</span>` : ''}
         </span>
@@ -426,7 +433,7 @@ function mcOpenDay(date) {
   ov.innerHTML = `
     <div class="modal modal--mc-day">
       <div class="modal__head">
-        <span class="modal__title modal__title--mc">${mcEsc(date)} (${dow}) · ${mcEsc(ch.name)}</span>
+        <span class="modal__title modal__title--mc">${escHtml(date)} (${dow}) · ${escHtml(ch.name)}</span>
         <button class="modal__close" id="mcDayClose">×</button>
       </div>
       <div class="mc-tabs">
@@ -522,21 +529,21 @@ function mcOpenDayAll(date) {
     return `
       <div class="mc-allblock">
         <div class="mc-allblock__head">
-          ${face ? `<img src="${mcEsc(face)}" alt="" onerror="this.style.display='none'">` : ''}
-          <span>${mcEsc(ch ? ch.name : '삭제된 캐릭터')}</span>
+          ${face ? `<img src="${escHtml(face)}" alt="" onerror="this.style.display='none'">` : ''}
+          <span>${escHtml(ch ? ch.name : '삭제된 캐릭터')}</span>
         </div>
         ${mineEv.map(ev => `
           <div class="mc-logrow">
-            <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
-            <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
-            <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
+            <span class="mc-logrow__chip" style="background:${escHtml(ev.color)}"></span>
+            <span class="mc-logrow__time">${escHtml(mcFmtTime(ev))}</span>
+            <span class="mc-logrow__name">${escHtml(ev.text)}</span>
           </div>`).join('')}
         ${mineIt.length ? `
           <div class="mc-allblock__items">
             ${mineIt.map(r => {
               const it = mcItem(r.f);
-              return `<img class="mc-allblock__item" src="images/WANT/${mcEsc(r.f)}"
-                        alt="${mcEsc(it?.name || '')}" title="${mcEsc(it?.name || r.f)}"
+              return `<img class="mc-allblock__item" src="images/WANT/${escHtml(r.f)}"
+                        alt="${escHtml(it?.name || '')}" title="${escHtml(it?.name || r.f)}"
                         onerror="this.style.visibility='hidden'">`;
             }).join('')}
           </div>` : ''}
@@ -547,7 +554,7 @@ function mcOpenDayAll(date) {
   ov.innerHTML = `
     <div class="modal modal--mc-day">
       <div class="modal__head">
-        <span class="modal__title modal__title--mc">${mcEsc(date)} (${dow}) · 전체</span>
+        <span class="modal__title modal__title--mc">${escHtml(date)} (${dow}) · 전체</span>
         <button class="modal__close" id="mcDayClose">×</button>
       </div>
       <div class="modal__body">
@@ -619,8 +626,9 @@ function mcRenderPicker() {
   const hex = mcColorHex();
   const [r, g, b] = mcHsvToRgb(mcState.hue, mcState.sat, mcState.val);
   sv.style.setProperty('--mc-hue', mcRgbToHex(mcHsvToRgb(mcState.hue, 1, 1)));
-  document.getElementById('mcPickSvDot').style.left = (mcState.sat * 100) + '%';
-  document.getElementById('mcPickSvDot').style.top = ((1 - mcState.val) * 100) + '%';
+  const dot = document.getElementById('mcPickSvDot');
+  dot.style.left = (mcState.sat * 100) + '%';
+  dot.style.top = ((1 - mcState.val) * 100) + '%';
   document.getElementById('mcPickHueDot').style.left = (mcState.hue / 360 * 100) + '%';
   document.getElementById('mcPickPrev').style.background = hex;
   document.getElementById('mcPickVal').textContent = `RGB ${r}, ${g}, ${b}  ${hex.toUpperCase()}`;
@@ -678,12 +686,11 @@ function mcAddEvent() {
   const h = parseInt(document.getElementById('mcEvH').value, 10) || 0;
   const mi = parseInt(document.getElementById('mcEvM').value, 10) || 0;
   const ampm = document.getElementById('mcEvAmpm').value;
+  const data = mcLoadEv();
 
   // 수정 모드 — 새로 추가하지 않고 기존 항목을 그대로 덮어쓴다
   if (mcState.editEvId != null) {
-    const data = mcLoadEv();
-    const list = data[mcState.sel] || [];
-    const ev = list.find(e => String(e.id) === String(mcState.editEvId));
+    const ev = (data[mcState.sel] || []).find(e => String(e.id) === String(mcState.editEvId));
     if (ev) {
       Object.assign(ev, { text, ampm, h, mi, color: mcColorHex() });
       mcStoreEv(data);
@@ -694,7 +701,6 @@ function mcAddEvent() {
     return;
   }
 
-  const data = mcLoadEv();
   const mine = (data[mcState.sel] || []).filter(e => e.c === mcState.charId);
   if (mine.length >= MC_MAX_EVENTS) {
     return alert(`하루에 일정은 ${MC_MAX_EVENTS}개까지만 추가할 수 있습니다.`);
@@ -733,12 +739,7 @@ function mcAddEvent() {
 
 function mcRemoveEvent(date, id) {
   const data = mcLoadEv();
-  const list = data[date];
-  if (!list) return;
-  const i = list.findIndex(e => String(e.id) === String(id));
-  if (i < 0) return;
-  list.splice(i, 1);
-  if (!list.length) delete data[date];
+  if (!mcDropById(data, date, id)) return;
   mcStoreEv(data);
   // 지금 수정 중이던 걸 지웠다면 폼이 고아 상태로 남으므로 원상 복귀한다
   if (String(mcState.editEvId) === String(id)) mcCancelEditEvent();
@@ -756,12 +757,12 @@ function mcRenderItems() {
   if (!box) return;
   box.innerHTML = MC_CATEGORIES.map(cat => `
     <div class="mc-cat">
-      <div class="mc-cat__title">${mcEsc(cat.title)}</div>
+      <div class="mc-cat__title">${escHtml(cat.title)}</div>
       <div class="mc-itemlist">
         ${cat.items.map(it => `
-          <button class="mc-item" data-file="${mcEsc(it.file)}" tabindex="0">
-            <img src="images/WANT/${mcEsc(it.file)}" alt="${mcEsc(it.name)}" onerror="this.style.visibility='hidden'">
-            <span class="mc-item__name">${mcEsc(it.name)}</span>
+          <button class="mc-item" data-file="${escHtml(it.file)}" tabindex="0">
+            <img src="images/WANT/${escHtml(it.file)}" alt="${escHtml(it.name)}" onerror="this.style.visibility='hidden'">
+            <span class="mc-item__name">${escHtml(it.name)}</span>
           </button>`).join('')}
       </div>
     </div>`).join('');
@@ -837,12 +838,7 @@ function mcAdd(file) {
 
 function mcRemove(date, id) {
   const data = mcLoad();
-  const list = data[date];
-  if (!list) return;
-  const i = list.findIndex(r => String(r.id) === String(id));
-  if (i < 0) return;
-  list.splice(i, 1);
-  if (!list.length) delete data[date];
+  if (!mcDropById(data, date, id)) return;
   mcStore(data);
   mcRenderGrid(); mcRenderLog();
 }
@@ -856,11 +852,11 @@ function mcRenderLog() {
   const evs = mcEventsOf(mcState.sel);
   evBox.innerHTML = evs.length ? evs.map(ev => `
       <div class="mc-logrow${String(ev.id) === String(mcState.editEvId) ? ' mc-logrow--editing' : ''}">
-        <span class="mc-logrow__chip" style="background:${mcEsc(ev.color)}"></span>
-        <span class="mc-logrow__time">${mcEsc(mcFmtTime(ev))}</span>
-        <span class="mc-logrow__name">${mcEsc(ev.text)}</span>
-        <button class="mc-logrow__edit" data-ev-edit="${mcEsc(ev.id)}" title="수정">✎</button>
-        <button class="mc-logrow__del" data-ev="${mcEsc(ev.id)}" title="삭제">×</button>
+        <span class="mc-logrow__chip" style="background:${escHtml(ev.color)}"></span>
+        <span class="mc-logrow__time">${escHtml(mcFmtTime(ev))}</span>
+        <span class="mc-logrow__name">${escHtml(ev.text)}</span>
+        <button class="mc-logrow__edit" data-ev-edit="${escHtml(ev.id)}" title="수정">✎</button>
+        <button class="mc-logrow__del" data-ev="${escHtml(ev.id)}" title="삭제">×</button>
       </div>`).join('')
     : '<p class="empty">이 날짜에 등록한 일정이 없습니다.</p>';
 
@@ -869,9 +865,9 @@ function mcRenderLog() {
     const it = mcItem(r.f);
     return `
       <div class="mc-logrow">
-        <img class="mc-logrow__item" src="images/WANT/${mcEsc(r.f)}" alt="" onerror="this.style.visibility='hidden'">
-        <span class="mc-logrow__name">${mcEsc(it?.name || r.f)}</span>
-        <button class="mc-logrow__del" data-id="${mcEsc(r.id)}" title="삭제">×</button>
+        <img class="mc-logrow__item" src="images/WANT/${escHtml(r.f)}" alt="" onerror="this.style.visibility='hidden'">
+        <span class="mc-logrow__name">${escHtml(it?.name || r.f)}</span>
+        <button class="mc-logrow__del" data-id="${escHtml(r.id)}" title="삭제">×</button>
       </div>`;
   }).join('') : '<p class="empty">이 날짜에 기록한 아이템이 없습니다.</p>';
 

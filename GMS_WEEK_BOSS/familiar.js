@@ -23,8 +23,8 @@ function _famData() { return window.FAMILIAR_DATA; }
 
 /* 등급 한 단계 아래 */
 function _famLower(rank) {
-  const i = _famData().RANKS.indexOf(rank);
-  return i > 0 ? _famData().RANKS[i - 1] : rank;
+  const R = _famData().RANKS, i = R.indexOf(rank);
+  return i > 0 ? R[i - 1] : rank;
 }
 
 /* 가중 추첨 — 확률 0인 항목(삭제된 옵션)은 자연히 안 뽑힌다 */
@@ -54,19 +54,22 @@ function _famPrimeCount(lines) {
   return lines.filter(l => _famData().PRIME.has(l.opt.key)).length;
 }
 
-function _famRollOnce() {
-  const D = _famData();
-  if (!D) return;
+/* 카드 한 장을 쓰고 그 판의 기록 항목을 돌려준다. 기록에 올릴지는 부르는 쪽이 정한다 */
+function _famDraw() {
   _famState.cards++;
   _famState.lines = _famRoll(_famState.rank);
-  const pc = _famPrimeCount(_famState.lines);
-  _famState.log.unshift({ n: _famState.cards, lines: _famState.lines, prime: pc });
-  if (_famState.log.length > 100) _famState.log.length = 100;
-  _famRender();
+  return { n: _famState.cards, lines: _famState.lines, prime: _famPrimeCount(_famState.lines) };
 }
 
+function _famLog(e) {
+  _famState.log.unshift(e);
+  if (_famState.log.length > 100) _famState.log.length = 100;
+}
+
+function _famRollOnce() { _famLog(_famDraw()); _famRender(); }
+
 function _famReset() {
-  _famStopAuto();
+  _famAuto.stop();
   _famState = { rank: _famState.rank, cards: 0, lines: [], log: [] };
   _famRender();
 }
@@ -79,8 +82,6 @@ function _famGetGoals() {
   return [...document.querySelectorAll('#famGoalRows .fam-goal-sel')]
     .map(s => s.value).filter(Boolean);
 }
-
-function _famHasGoals() { return _famGetGoals().length > 0; }
 
 function _famGoalsMet(lines) {
   const goals = _famGetGoals();
@@ -95,46 +96,21 @@ function _famGoalsMet(lines) {
   return true;
 }
 
+/* 자동은 목표·상한에 닿은 판만 기록에 올린다 */
 const FAM_AUTO_MAX = 2000000;
-let _famAutoTimer = null;
-
-function _famStopAuto(msg) {
-  if (_famAutoTimer) { clearTimeout(_famAutoTimer); _famAutoTimer = null; }
-  const btn = document.getElementById('famAutoBtn');
-  if (btn) btn.textContent = '목표까지 자동 [A]';
-  if (msg) alert(msg);
-}
-
-/* 한 번에 여러 판을 돌리고 화면은 묶어서 갱신한다 — 판마다 그리면 느려진다. */
-function _famStartAuto() {
-  if (_famAutoTimer) { _famStopAuto(); return; }
-  if (!_famHasGoals()) { alert('목표 옵션을 먼저 정해주세요.'); return; }
-  const btn = document.getElementById('famAutoBtn');
-  if (btn) btn.textContent = '중지 [A]';
-
-  const step = () => {
-    const D = _famData();
-    for (let i = 0; i < 2000; i++) {
-      _famState.cards++;
-      const lines = _famRoll(_famState.rank);
-      _famState.lines = lines;
-      const pc = _famPrimeCount(lines);
-      if (_famGoalsMet(lines)) {
-        _famState.log.unshift({ n: _famState.cards, lines, prime: pc, goal: true });
-        if (_famState.log.length > 100) _famState.log.length = 100;
-        _famStopAuto(); _famRender(); return;
-      }
-      if (_famState.cards >= FAM_AUTO_MAX) {
-        _famState.log.unshift({ n: _famState.cards, lines, prime: pc });
-        _famStopAuto(`${FAM_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표가 나오지 않아 멈췄습니다.`);
-        _famRender(); return;
-      }
-    }
-    _famRender();
-    _famAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
+const _famAuto = createAutoRunner({
+  btnId: 'famAutoBtn', idleLabel: '목표까지 자동 [A]', runLabel: '중지 [A]', batch: 2000,
+  canStart: () => {
+    if (!_famGetGoals().length) { alert('목표 옵션을 먼저 정해주세요.'); return false; }
+  },
+  tick: () => {
+    const e = _famDraw();
+    if (_famGoalsMet(e.lines)) { e.goal = true; _famLog(e); return 'done'; }
+    if (_famState.cards >= FAM_AUTO_MAX) { _famState.log.unshift(e); return 'max'; }
+  },
+  maxMsg: () => `${FAM_AUTO_MAX.toLocaleString()}번을 돌렸지만 목표가 나오지 않아 멈췄습니다.`,
+  render: _famRender,
+});
 
 /* 목표 드롭다운 채우기 — 두 줄 다 뜰 수 있는 등급의 옵션을 모두 넣는다 */
 function _famBuildGoalOpts() {
@@ -164,52 +140,39 @@ function _famLineHtml(l) {
 }
 
 function _famRender() {
-  const D = _famData(); if (!D) return;
-  const panel = document.getElementById('famPanel');
-  const linesEl = document.getElementById('famLines');
-  const cntEl = document.getElementById('famCardCount');
-  const logEl = document.getElementById('famLog');
-  if (!panel) return;
+  const D = _famData();
+  const rank = _famState.rank;
 
-  panel.dataset.grade = _famState.rank;
-  document.getElementById('famPanelTitle').textContent = D.RANK_LABEL[_famState.rank] || _famState.rank;
+  document.getElementById('famPanel').dataset.grade = rank;
+  document.getElementById('famPanelTitle').textContent = D.RANK_LABEL[rank] || rank;
   const icoEl = document.getElementById('famPanelIcon');
-  if (icoEl) { icoEl.src = _famIconSrc(_famState.rank); icoEl.style.display = ''; }
+  icoEl.src = _famIconSrc(rank); icoEl.style.display = '';
 
-  linesEl.innerHTML = _famState.lines.length
+  document.getElementById('famLines').innerHTML = _famState.lines.length
     ? _famState.lines.map(_famLineHtml).join('')
     : `<div class="pot-line pot-line--empty">카드를 사용해 옵션을 확인하세요</div>`;
 
-  if (cntEl) cntEl.textContent = _famState.cards.toLocaleString();
+  document.getElementById('famCardCount').textContent = _famState.cards.toLocaleString();
 
   /* 왼쪽 카드 그림도 등급에 맞춰 바꾼다 */
   const cardImg = document.getElementById('famCardImg');
-  if (cardImg) { cardImg.src = _ruMiniSrc(_famState.rank); cardImg.style.display = ''; }
+  cardImg.src = _ruMiniSrc(rank); cardImg.style.display = '';
 
-  /* 레어는 확률이 추정치라 그 사실을 반드시 같이 띄운다 */
-  const noteEl = document.getElementById('famNote');
-  if (noteEl) {
-    const lower = _famLower(_famState.rank);
-    const estList = D.ESTIMATED_RANKS || [];
-    /* 이 판에 실제로 쓰이는 등급(현재 + 아랫줄) 중 추정치인 것만 짚어준다 */
-    const used = [_famState.rank, D.LINES[lower] ? lower : null].filter(Boolean);
-    const est = used.filter(function (g) { return estList.indexOf(g) >= 0; })
-                    .map(function (g) { return D.RANK_LABEL[g]; });
-    noteEl.innerHTML =
-      (est.length
-        ? '<b>' + est.join('·') + ' 옵션은 정확한 자료가 없어 정규화 방식으로 추론된 값입니다.</b><br>'
-        : '') +
-      D.SOURCE_NOTE;
-  }
+  /* 레어는 확률이 추정치라 그 사실을 반드시 같이 띄운다.
+     이 판에 실제로 쓰이는 등급(현재 + 아랫줄) 중 추정치인 것만 짚어준다 */
+  const est = [rank, _famLower(rank)]
+    .filter(g => D.LINES[g] && D.ESTIMATED_RANKS.includes(g))
+    .map(g => D.RANK_LABEL[g]);
+  document.getElementById('famNote').innerHTML =
+    (est.length ? '<b>' + est.join('·') + ' 옵션은 정확한 자료가 없어 정규화 방식으로 추론된 값입니다.</b><br>' : '') +
+    D.SOURCE_NOTE;
 
-  if (logEl) {
-    logEl.innerHTML = _famState.log.map(e => `
+  document.getElementById('famLog').innerHTML = _famState.log.map(e => `
       <div class="fam-log-row${e.prime ? ' is-hit' : ''}">
         <span class="fam-log-n">${e.n.toLocaleString()}</span>
-        <img class="fam-log-icon" src="${_famIconSrc(_famState.rank)}" alt="" onerror="this.style.display='none'">
+        <img class="fam-log-icon" src="${_famIconSrc(rank)}" alt="" onerror="this.style.display='none'">
         ${e.lines.map(l => `<span class="fam-log-line" data-grade="${l.grade}">${l.opt.en}</span>`).join('')}
       </div>`).join('');
-  }
 }
 
 
@@ -220,23 +183,24 @@ function _famRender() {
    그 다음 시도는 무조건 성공한다. */
 const FAM_PITY = { RARE: 5, EPIC: 14 };
 
-let _ruState = { rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false };
+const _ruFresh = () => ({ rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false });
+let _ruState = _ruFresh();
 
 function _ruMiniSrc(g) { return 'images/familiar/mini_' + (g || 'rare').toLowerCase() + '.png'; }
 
 function _ruReset() {
-  _ruStopAuto();
-  _ruState = { rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false };
+  _ruAuto.stop();
+  _ruState = _ruFresh();
   _ruRender();
 }
 
 /* 한 번 시도. 천장에 닿았으면 확률을 무시하고 성공시킨다. */
 function _ruStep() {
-  if (_ruState.done) return false;
+  if (_ruState.done) return;
   const D = _famData();
   const cur = _ruState.rank;
   const info = D.RANKUP[cur];
-  if (!info) { _ruState.done = true; return false; }
+  if (!info) { _ruState.done = true; return; }
 
   const cap = FAM_PITY[cur];
   const forced = cap != null && _ruState.pity >= cap;
@@ -254,41 +218,26 @@ function _ruStep() {
     _ruState.fails++;
     _ruState.pity++;
   }
-  return ok;
 }
 
 function _ruRollOnce() { _ruStep(); _ruRender(); }
 
-let _ruAutoTimer = null;
-function _ruStopAuto() {
-  if (_ruAutoTimer) { clearTimeout(_ruAutoTimer); _ruAutoTimer = null; }
-  const b = document.getElementById('ruAutoBtn');
-  if (b) b.textContent = '유니크까지 자동 [A]';
-}
-
-function _ruStartAuto() {
-  if (_ruAutoTimer) { _ruStopAuto(); return; }
-  if (_ruState.done) { alert('이미 유니크입니다. 초기화 후 다시 시작해주세요.'); return; }
-  const b = document.getElementById('ruAutoBtn');
-  if (b) b.textContent = '중지 [A]';
-  const step = function () {
-    for (let i = 0; i < 200; i++) {
-      _ruStep();
-      if (_ruState.done) { _ruStopAuto(); _ruRender(); return; }
-    }
-    _ruRender();
-    _ruAutoTimer = setTimeout(step, 0);
-  };
-  step();
-}
+const _ruAuto = createAutoRunner({
+  btnId: 'ruAutoBtn', idleLabel: '유니크까지 자동 [A]', runLabel: '중지 [A]', batch: 200,
+  canStart: () => {
+    if (_ruState.done) { alert('이미 유니크입니다. 초기화 후 다시 시작해주세요.'); return false; }
+  },
+  tick: () => { _ruStep(); if (_ruState.done) return 'done'; },
+  render: _ruRender,
+});
 
 function _ruRender() {
-  const D = _famData(); if (!D) return;
+  const D = _famData();
   /* 카드 그림은 지금 등급 한 장만 원본 크기로 보여준다 */
   const img = document.getElementById('ruCardImg');
-  if (img) { img.src = _ruMiniSrc(_ruState.rank); img.style.display = ''; }
+  img.src = _ruMiniSrc(_ruState.rank); img.style.display = '';
   const lbl = document.getElementById('ruCardLbl');
-  if (lbl) { lbl.textContent = D.RANK_LABEL[_ruState.rank]; lbl.dataset.grade = _ruState.rank; }
+  lbl.textContent = D.RANK_LABEL[_ruState.rank]; lbl.dataset.grade = _ruState.rank;
 
   const info = D.RANKUP[_ruState.rank];
   const cap = FAM_PITY[_ruState.rank];
@@ -306,12 +255,12 @@ function _ruRender() {
   document.getElementById('ruTotalPoints').textContent = pts.toLocaleString();
 
   const btn = document.getElementById('ruRollBtn');
-  if (btn) { btn.disabled = _ruState.done; btn.textContent = _ruState.done ? '유니크 달성' : '등급업 [S]'; }
+  btn.disabled = _ruState.done; btn.textContent = _ruState.done ? '유니크 달성' : '등급업 [S]';
 
   document.getElementById('ruLog').innerHTML = _ruState.log.map(function (e) {
     return '<div class="fam-log-row' + (e.ok ? ' is-hit' : '') + '">' +
       '<span class="fam-log-n">' + e.n + '</span>' +
-      '<img class="fam-log-icon" src="images/icons/' + e.from.toLowerCase() + '.png" alt="" onerror="this.style.display=\'none\'">' +
+      '<img class="fam-log-icon" src="' + _famIconSrc(e.from) + '" alt="" onerror="this.style.display=\'none\'">' +
       '<span class="fam-log-line" data-grade="' + e.from + '">' + D.RANK_LABEL[e.from] + '</span>' +
       '<span class="ru-log-res ' + (e.ok ? 'ok' : 'no') + '">' + (e.ok ? '성공' : '실패') + '</span>' +
       (e.forced ? '<span class="ru-log-pity">천장</span>' : '') +
@@ -429,29 +378,31 @@ function initFamiliar() {
     </div>`;
 
   // 탭 전환
-  sec.querySelectorAll('.sf-tab[data-famtab]').forEach(function (tab) {
+  const tabs = sec.querySelectorAll('.sf-tab[data-famtab]');
+  tabs.forEach(function (tab) {
     tab.addEventListener('click', function () {
-      sec.querySelectorAll('.sf-tab[data-famtab]').forEach(function (t) { t.classList.remove('active'); });
-      tab.classList.add('active');
+      setActive(tabs, tab);
       const t = tab.dataset.famtab;
       document.getElementById('famTabRankup').style.display = t === 'rankup' ? '' : 'none';
       document.getElementById('famTabOption').style.display = t === 'option' ? '' : 'none';
-      _famStopAuto(); _ruStopAuto();
+      _famAuto.stop(); _ruAuto.stop();
     });
   });
 
-  document.getElementById('ruRollBtn').addEventListener('click', function () { _ruStopAuto(); _ruRollOnce(); });
-  document.getElementById('ruAutoBtn').addEventListener('click', _ruStartAuto);
+  const ruRoll = () => { _ruAuto.stop(); _ruRollOnce(); };
+  const famRoll = () => { _famAuto.stop(); _famRollOnce(); };
+  document.getElementById('ruRollBtn').addEventListener('click', ruRoll);
+  document.getElementById('ruAutoBtn').addEventListener('click', _ruAuto.start);
   document.getElementById('ruResetBtn').addEventListener('click', _ruReset);
 
-  document.getElementById('famRollBtn').addEventListener('click', function () { _famStopAuto(); _famRollOnce(); });
-  document.getElementById('famAutoBtn').addEventListener('click', _famStartAuto);
+  document.getElementById('famRollBtn').addEventListener('click', famRoll);
+  document.getElementById('famAutoBtn').addEventListener('click', _famAuto.start);
   document.getElementById('famResetBtn').addEventListener('click', _famReset);
 
-  sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(function (btn) {
+  const rankEls = sec.querySelectorAll('#famRankGroup .sf-toggle');
+  rankEls.forEach(function (btn) {
     btn.addEventListener('click', function () {
-      sec.querySelectorAll('#famRankGroup .sf-toggle').forEach(function (b) { b.classList.remove('active'); });
-      btn.classList.add('active');
+      setActive(rankEls, btn);
       _famState.rank = btn.dataset.rank;
       _famRefreshGoals();
       _famReset();
@@ -459,22 +410,11 @@ function initFamiliar() {
   });
 
   /* S=굴리기, R=초기화, A=자동 — 지금 열려 있는 탭에 맞는 동작을 한다 */
-  document.addEventListener('keydown', function (e) {
-    if (!['KeyS', 'KeyR', 'KeyA'].includes(e.code) || e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-    if (!document.getElementById('sec-familiar').classList.contains('active')) return;
-    const tag = document.activeElement ? document.activeElement.tagName : '';
-    if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
-    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
-    e.preventDefault();
+  bindSimKeys('sec-familiar', key => {
     const isRankup = document.getElementById('famTabRankup').style.display !== 'none';
-    if (e.code === 'KeyS') {
-      if (isRankup) { _ruStopAuto(); _ruRollOnce(); }
-      else { _famStopAuto(); _famRollOnce(); }
-    } else if (e.code === 'KeyR') {
-      document.getElementById(isRankup ? 'ruResetBtn' : 'famResetBtn')?.click();
-    } else if (e.code === 'KeyA') {
-      document.getElementById(isRankup ? 'ruAutoBtn' : 'famAutoBtn')?.click();
-    }
+    if (key === 's') (isRankup ? ruRoll : famRoll)();
+    else if (key === 'r') (isRankup ? _ruReset : _famReset)();
+    else (isRankup ? _ruAuto : _famAuto).start();
   });
 
   _famRefreshGoals();
@@ -482,27 +422,8 @@ function initFamiliar() {
   _famRender();
 }
 
-/* 데이터는 이 탭을 처음 열 때만 받는다(큐브와 같은 방식) */
-let _famLoading = null, _famInited = false;
-function ensureFamiliarReady(cb) {
-  if (window.FAMILIAR_DATA) {
-    if (!_famInited) { _famInited = true; initFamiliar(); }
-    cb && cb(); return;
-  }
-  if (!_famLoading) {
-    _famLoading = new Promise((resolve, reject) => {
-      const s = document.createElement('script');
-      s.src = 'data_familiar.js?v=20260821c';
-      s.onload = resolve;
-      s.onerror = () => reject(new Error('data_familiar.js 로드 실패'));
-      document.body.appendChild(s);
-    });
-  }
-  _famLoading.then(() => {
-    if (!_famInited) { _famInited = true; initFamiliar(); }
-    cb && cb();
-  }).catch(() => {
-    const sec = document.getElementById('sec-familiar');
-    if (sec) sec.innerHTML = '<div class="soon-box"><div class="soon-box__title">데이터를 불러오지 못했습니다</div><div class="soon-box__desc">새로고침해주세요.</div></div>';
-  });
-}
+/* 데이터는 이 탭을 처음 열 때만 받는다 */
+const _famEnsure = lazySection({
+  isReady: () => !!window.FAMILIAR_DATA, src: 'data_familiar.js?v=20260821c', init: initFamiliar, secId: 'sec-familiar',
+});
+function ensureFamiliarReady(cb) { _famEnsure(cb); }

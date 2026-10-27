@@ -23,32 +23,33 @@ let _cmTotalPages = 1;
 let _cmBusy = false;
 let _cmEditor = null;
 let _cmReplyTo = null;   // 답글 대상 댓글 id. 깊이 제한 없이 계속 이어서 달 수 있다.
-let _cmEditPostId = null; // null이면 새 글쓰기, id가 있으면 그 글을 수정하는 중
-let _cmEditPost = null;   // 수정 중인 글의 원본 데이터(제목·본문 미리 채우기용)
+let _cmEditPost = null;   // 수정 중인 글. null이면 새 글쓰기
+
+const CM_HEAD = '<div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>';
 
 // 기본 Quill 색 포맷은 style="color: ..."를 만든다. 서버는 style을 전혀
 // 허용하지 않으므로, 세 가지 고정 색상만 class로 기록하는 포맷으로 교체한다.
 const CM_COLOR_CLASS = Quill.import('attributors/class/color');
 Quill.register(CM_COLOR_CLASS, true);
 
-function cmEsc(s) {
-  return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;' }[c]));
-}
-
 function cmToken() { return localStorage.getItem('gms_cloud_token') || ''; }
 function cmLoggedIn() { return !!cmToken(); }
 
+/* 수정은 삭제와 달리 작성자 본인만 — 관리자도 남의 글 내용은 못 바꾼다(서버와 동일 규칙) */
+function cmCanEdit(authorId) {
+  return cmLoggedIn() && authorId === (localStorage.getItem('gms_cloud_id') || '');
+}
 /* 관리자는 남의 글·댓글도 지울 수 있다. 실제 판단은 서버(ADMIN_IDS)가 하고,
    여기서는 버튼을 보여줄지만 정한다 — 이 값을 위조해도 서버에서 막힌다.
    _csAdmin은 cloudsave.js가 로그인 응답의 isAdmin으로 채워 둔 전역이다. */
 function cmIsAdmin() { return typeof _csAdmin !== 'undefined' && _csAdmin === true; }
 function cmCanDelete(authorId) {
-  if (!cmLoggedIn()) return false;
-  return authorId === (localStorage.getItem('gms_cloud_id') || '') || cmIsAdmin();
+  return cmCanEdit(authorId) || (cmLoggedIn() && cmIsAdmin());
 }
-/* 수정은 삭제와 달리 작성자 본인만 — 관리자도 남의 글 내용은 못 바꾼다(서버와 동일 규칙) */
-function cmCanEdit(authorId) {
-  return cmLoggedIn() && authorId === (localStorage.getItem('gms_cloud_id') || '');
+
+function cmGo(view) {
+  _cmView = view;
+  renderCommunity();
 }
 
 async function cmApi(action, extra) {
@@ -63,8 +64,7 @@ async function cmApi(action, extra) {
   } catch {
     return { ok: false, error: '서버에 연결하지 못했습니다' };
   }
-  let j = null;
-  try { j = await r.json(); } catch { j = null; }
+  const j = await r.json().catch(() => null);
   return j || { ok: false, error: '서버 응답을 읽지 못했습니다' };
 }
 
@@ -103,20 +103,20 @@ function cmShowRepChar(nick, repChar) {
   const bodyHtml = repChar ? `
     <div class="cm-rep">
       <div class="cm-rep__portrait">
-        ${typeof portraitBgHtml === 'function' ? portraitBgHtml(repChar.cardBg) : ''}
-        <img class="cm-rep__img" src="${repChar.img ? cmEsc(repChar.img) : 'images/dailytasks/default.png'}" alt=""
+        ${portraitBgHtml(repChar.cardBg)}
+        <img class="cm-rep__img" src="${repChar.img ? escHtml(repChar.img) : 'images/dailytasks/default.png'}" alt=""
           onerror="this.src='images/dailytasks/default.png'">
       </div>
-      <div class="cm-rep__name">${cmEsc(repChar.name)}</div>
-      <div class="cm-rep__lv">Lv.${cmEsc(String(repChar.level))}</div>
-      ${repChar.world ? `<div class="cm-rep__world-line">${sIcon ? `<img src="${cmEsc(sIcon)}" onerror="this.style.display='none'">` : ''}<span>${cmEsc(repChar.world)}</span></div>` : ''}
-      ${repChar.job ? `<div class="cm-rep__job">${cmEsc(repChar.job)}</div>` : ''}
+      <div class="cm-rep__name">${escHtml(repChar.name)}</div>
+      <div class="cm-rep__lv">Lv.${escHtml(String(repChar.level))}</div>
+      ${repChar.world ? `<div class="cm-rep__world-line">${sIcon ? `<img src="${escHtml(sIcon)}" onerror="this.style.display='none'">` : ''}<span>${escHtml(repChar.world)}</span></div>` : ''}
+      ${repChar.job ? `<div class="cm-rep__job">${escHtml(repChar.job)}</div>` : ''}
     </div>`
     : '<p class="empty">대표 캐릭터가 설정되지 않았습니다.</p>';
   ov.innerHTML = `
     <div class="modal cm-rep-modal">
       <div class="modal__head">
-        <span class="modal__title">${cmEsc(nick)}</span>
+        <span class="modal__title">${escHtml(nick)}</span>
         <button class="modal__close" id="cmRepClose">×</button>
       </div>
       <div class="modal__body">${bodyHtml}</div>
@@ -136,7 +136,7 @@ function renderCommunity() {
 
 function cmRenderList(sec) {
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
+    ${CM_HEAD}
     <p class="dt-help">자유롭게 글을 쓰고 다른 사람 글에 댓글을 달 수 있습니다. 글쓰기와 댓글은 로그인이 필요합니다.</p>
     <div class="cm-toolbar">
       <button class="sbtn sbtn--primary" id="cmWriteBtn">글쓰기</button>
@@ -146,10 +146,8 @@ function cmRenderList(sec) {
 
   document.getElementById('cmWriteBtn').addEventListener('click', () => {
     if (!cmLoggedIn()) { showToast('로그인 후 글을 쓸 수 있습니다.'); return; }
-    _cmEditPostId = null;
     _cmEditPost = null;
-    _cmView = 'write';
-    renderCommunity();
+    cmGo('write');
   });
 
   cmLoadPage(_cmPage);
@@ -164,7 +162,7 @@ async function cmLoadPage(page) {
   const j = await cmApi('list', { page });
   _cmBusy = false;
   if (!j.ok) {
-    document.getElementById('cmList').innerHTML = `<p class="empty">${cmEsc(j.error)}</p>`;
+    document.getElementById('cmList').innerHTML = `<p class="empty">${escHtml(j.error)}</p>`;
     return;
   }
   _cmPosts = j.posts;
@@ -182,13 +180,13 @@ function cmPaintList() {
     return;
   }
   box.innerHTML = _cmPosts.map(p => `
-    <button type="button" class="cm-item" data-id="${cmEsc(p.id)}">
-      ${p.thumb ? `<img class="cm-item__thumb" src="${cmEsc(p.thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
+    <button type="button" class="cm-item" data-id="${escHtml(p.id)}">
+      ${p.thumb ? `<img class="cm-item__thumb" src="${escHtml(p.thumb)}" alt="" loading="lazy" onerror="this.style.display='none'">` : ''}
       <span class="cm-item__body">
-        <span class="cm-item__title">${cmEsc(p.title)}${p.commentCount ? `<span class="cm-item__cc">[${p.commentCount}]</span>` : ''}</span>
-        <span class="cm-item__preview">${cmEsc(p.bodyPreview)}</span>
+        <span class="cm-item__title">${escHtml(p.title)}${p.commentCount ? `<span class="cm-item__cc">[${p.commentCount}]</span>` : ''}</span>
+        <span class="cm-item__preview">${escHtml(p.bodyPreview)}</span>
         <span class="cm-item__meta">
-          <span class="cm-item__nick">${cmEsc(p.authorNick)}</span>
+          <span class="cm-item__nick">${escHtml(p.authorNick)}</span>
           <span>${cmFmtTime(p.createdAt)}</span>
           ${p.imageCount ? `<span>사진 ${p.imageCount}장</span>` : ''}
         </span>
@@ -198,8 +196,7 @@ function cmPaintList() {
   box.querySelectorAll('.cm-item').forEach(el => {
     el.addEventListener('click', () => {
       _cmPostId = el.dataset.id;
-      _cmView = 'post';
-      renderCommunity();
+      cmGo('post');
     });
   });
 
@@ -238,7 +235,7 @@ function cmPaintPager() {
 
 /* ── 글쓰기 ── */
 function cmRenderWrite(sec) {
-  const editing = !!_cmEditPostId;
+  const editing = !!_cmEditPost;
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">${editing ? '글 수정' : '글쓰기'}</h2></div>
     <div class="card cm-write">
@@ -275,24 +272,22 @@ function cmRenderWrite(sec) {
       ['blockquote', 'image'], ['clean'],
     ] },
   });
-  const toolbar = _cmEditor.getModule('toolbar');
-  toolbar.addHandler('image', () => document.getElementById('cmFile').click());
-  _cmEditor.root.addEventListener('paste', e => cmCaptureEditorImages(e));
-  _cmEditor.root.addEventListener('drop', e => cmCaptureEditorImages(e));
+  const pickFiles = () => document.getElementById('cmFile').click();
+  _cmEditor.getModule('toolbar').addHandler('image', pickFiles);
+  _cmEditor.root.addEventListener('paste', cmCaptureEditorImages);
+  _cmEditor.root.addEventListener('drop', cmCaptureEditorImages);
 
-  if (editing && _cmEditPost) {
+  if (editing) {
     document.getElementById('cmTitle').value = _cmEditPost.title;
     _cmEditor.root.innerHTML = _cmEditPost.body;
   }
 
   document.getElementById('cmCancelBtn').addEventListener('click', () => {
-    _cmView = editing ? 'post' : 'list';
-    _cmEditPostId = null;
     _cmEditPost = null;
     _cmEditor = null;
-    renderCommunity();
+    cmGo(editing ? 'post' : 'list');
   });
-  document.getElementById('cmPickBtn').addEventListener('click', () => document.getElementById('cmFile').click());
+  document.getElementById('cmPickBtn').addEventListener('click', pickFiles);
   document.getElementById('cmFile').addEventListener('change', e => cmUploadFiles(e.target.files));
   document.getElementById('cmSubmitBtn').addEventListener('click', cmSubmitPost);
 }
@@ -346,36 +341,34 @@ async function cmSubmitPost() {
   if (!title) { showToast('제목을 입력해주세요.'); return; }
   if (!text && !_cmEditor.root.querySelector('img')) { showToast('내용을 입력해주세요.'); return; }
 
-  const editing = !!_cmEditPostId;
+  const editing = !!_cmEditPost;
   const btn = document.getElementById('cmSubmitBtn');
   _cmBusy = true; btn.disabled = true; btn.textContent = editing ? '수정 중...' : '등록 중...';
-  const j = editing ? await cmApi('edit', { id: _cmEditPostId, title, body }) : await cmApi('create', { title, body });
+  const j = editing ? await cmApi('edit', { id: _cmEditPost.id, title, body }) : await cmApi('create', { title, body });
   _cmBusy = false; btn.disabled = false; btn.textContent = editing ? '수정 완료' : '등록';
 
   if (!j.ok) { showToast(j.error); return; }
   showToast(editing ? '글이 수정되었습니다.' : '글이 등록되었습니다.');
   _cmEditor = null;
   _cmPostId = j.id;
-  _cmEditPostId = null;
   _cmEditPost = null;
-  _cmView = 'post';
   if (!editing) _cmPage = 1; // 새 글은 최신순 1페이지 맨 위에 뜨니, 목록으로 돌아갔을 때 그게 보이게
-  renderCommunity();
+  cmGo('post');
 }
 
 /* ── 글 하나 + 댓글 ── */
 async function cmRenderPost(sec) {
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
+    ${CM_HEAD}
     <p class="empty">불러오는 중...</p>`;
 
   const j = await cmApi('get', { id: _cmPostId });
   if (!j.ok) {
     sec.innerHTML = `
-      <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
-      <p class="empty">${cmEsc(j.error)}</p>
+      ${CM_HEAD}
+      <p class="empty">${escHtml(j.error)}</p>
       <button class="sbtn sbtn--ghost" id="cmBackBtn">목록으로</button>`;
-    document.getElementById('cmBackBtn').addEventListener('click', () => { _cmView = 'list'; renderCommunity(); });
+    document.getElementById('cmBackBtn').addEventListener('click', () => cmGo('list'));
     return;
   }
 
@@ -384,20 +377,20 @@ async function cmRenderPost(sec) {
   const canEditPost = cmCanEdit(p.authorId);
 
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">커뮤니티</h2></div>
+    ${CM_HEAD}
     <div class="cm-toolbar">
       <button class="sbtn sbtn--ghost" id="cmBackBtn">← 목록</button>
       ${canEditPost ? '<button class="sbtn sbtn--ghost sbtn--sm" id="cmEditPostBtn">글 수정</button>' : ''}
       ${canDeletePost ? '<button class="sbtn sbtn--danger sbtn--sm" id="cmDelPost">글 삭제</button>' : ''}
     </div>
     <div class="card cm-post">
-      <h3 class="cm-post__title">${cmEsc(p.title)}</h3>
+      <h3 class="cm-post__title">${escHtml(p.title)}</h3>
       <div class="cm-post__meta">
-        <button type="button" class="cm-post__nick" id="cmPostNickBtn">${cmEsc(p.authorNick)}</button>
+        <button type="button" class="cm-post__nick" id="cmPostNickBtn">${escHtml(p.authorNick)}</button>
         <span>${cmFmtTime(p.createdAt)}${p.editedAt ? ' · 수정됨' : ''}</span>
       </div>
       <div class="cm-post__body">${p.body}</div>
-      ${(p.images || []).map(u => `<img class="cm-post__img" src="${cmEsc(u)}" alt="" loading="lazy" onerror="this.style.display='none'">`).join('')}
+      ${(p.images || []).map(u => `<img class="cm-post__img" src="${escHtml(u)}" alt="" loading="lazy" onerror="this.style.display='none'">`).join('')}
     </div>
 
     <div class="card cm-comments">
@@ -415,25 +408,22 @@ async function cmRenderPost(sec) {
       </div>` : '<p class="dt-help">댓글을 쓰려면 로그인해주세요.</p>'}
     </div>`;
 
-  document.getElementById('cmBackBtn').addEventListener('click', () => { _cmView = 'list'; renderCommunity(); });
+  document.getElementById('cmBackBtn').addEventListener('click', () => cmGo('list'));
   document.getElementById('cmPostNickBtn').addEventListener('click', () => cmShowRepChar(p.authorNick, p.authorRepChar));
   document.getElementById('cmEditPostBtn')?.addEventListener('click', () => {
-    _cmEditPostId = p.id;
     _cmEditPost = p;
-    _cmView = 'write';
-    renderCommunity();
+    cmGo('write');
   });
   document.getElementById('cmDelPost')?.addEventListener('click', async () => {
     if (!confirm('이 글을 삭제할까요? 되돌릴 수 없습니다.')) return;
     const d = await cmApi('delete', { id: p.id });
     if (!d.ok) { showToast(d.error); return; }
     showToast('글을 삭제했습니다.');
-    _cmView = 'list';
-    renderCommunity();
+    cmGo('list');
   });
 
   cmPaintComments(j.comments);
-  document.getElementById('cmCommentBtn')?.addEventListener('click', cmSubmitComment);
+  document.getElementById('cmCommentBtn')?.addEventListener('click', () => cmSendComment('cmCommentBody', 'cmCommentBtn', '댓글 내용을 입력해주세요.'));
   document.getElementById('cmCommentPushBtn')?.addEventListener('click', async () => {
     const r = typeof bpEnable === 'function' ? await bpEnable() : { ok: false, msg: '이 브라우저는 알림을 지원하지 않아요.' };
     if (!r.ok) { showToast(r.msg || '알림을 켜지 못했습니다.'); return; }
@@ -447,21 +437,21 @@ function cmPaintComments(comments) {
   if (!box) return;
   if (!comments.length) { box.innerHTML = '<p class="empty">아직 댓글이 없습니다.</p>'; return; }
   const byId = new Map(comments.map(c => [c.id, c]));
-  const roots = comments.filter(c => !c.parentId || !byId.has(c.parentId));
-  const replies = new Map();
-  comments.filter(c => c.parentId && byId.has(c.parentId)).forEach(c => {
-    const list = replies.get(c.parentId) || [];
-    list.push(c); replies.set(c.parentId, list);
-  });
+  const roots = [], replies = new Map();
+  for (const c of comments) {
+    if (!c.parentId || !byId.has(c.parentId)) { roots.push(c); continue; }
+    if (!replies.has(c.parentId)) replies.set(c.parentId, []);
+    replies.get(c.parentId).push(c);
+  }
   const card = (c, depth) => `
     <div class="cm-c${depth ? ' cm-c--reply' : ''}"${depth ? ` style="--cm-reply-depth:${Math.min(depth, 4)}"` : ''}>
       <div class="cm-c__head">
-        <button type="button" class="cm-c__nick" data-cnick="${cmEsc(c.id)}">${cmEsc(c.authorNick)}</button>
+        <button type="button" class="cm-c__nick" data-cnick="${escHtml(c.id)}">${escHtml(c.authorNick)}</button>
         <span class="cm-c__time">${cmFmtTime(c.createdAt)}</span>
-        ${cmLoggedIn() ? `<button class="cm-c__reply" data-rid="${cmEsc(c.id)}">답글</button>` : ''}
-        ${cmCanDelete(c.authorId) ? `<button class="cm-c__del" data-cid="${cmEsc(c.id)}" title="댓글 삭제">×</button>` : ''}
+        ${cmLoggedIn() ? `<button class="cm-c__reply" data-rid="${escHtml(c.id)}">답글</button>` : ''}
+        ${cmCanDelete(c.authorId) ? `<button class="cm-c__del" data-cid="${escHtml(c.id)}" title="댓글 삭제">×</button>` : ''}
       </div>
-      <div class="cm-c__body">${cmEsc(c.body)}</div>
+      <div class="cm-c__body">${escHtml(c.body)}</div>
     </div>`;
   const branch = (c, depth) => {
     const children = (replies.get(c.id) || []).map(r => branch(r, depth + 1)).join('');
@@ -470,7 +460,7 @@ function cmPaintComments(comments) {
         <textarea class="inp cm-cinput" id="cmReplyBody" maxlength="1000" placeholder="답글을 입력하세요"></textarea>
         <div class="cm-replywrite__actions">
           <button class="sbtn sbtn--ghost sbtn--sm" id="cmReplyCancelBtn">취소</button>
-          <button class="sbtn sbtn--primary sbtn--sm" id="cmReplyBtn" data-rid="${cmEsc(c.id)}">답글 등록</button>
+          <button class="sbtn sbtn--primary sbtn--sm" id="cmReplyBtn" data-rid="${escHtml(c.id)}">답글 등록</button>
         </div>
       </div>` : '';
     return card(c, depth) + children + writer;
@@ -503,37 +493,21 @@ function cmPaintComments(comments) {
     _cmReplyTo = null;
     cmPaintComments(comments);
   });
-  document.getElementById('cmReplyBtn')?.addEventListener('click', cmSubmitReply);
+  document.getElementById('cmReplyBtn')?.addEventListener('click', () =>
+    cmSendComment('cmReplyBody', 'cmReplyBtn', '답글 내용을 입력해주세요.', document.getElementById('cmReplyBtn')?.dataset.rid || ''));
 }
 
-async function cmSubmitComment() {
+// 댓글과 답글은 parentId만 다르다. 댓글이면 parentId가 undefined라 요청에서 빠진다
+async function cmSendComment(inputId, btnId, emptyMsg, parentId) {
   if (_cmBusy) return;
-  const el = document.getElementById('cmCommentBody');
-  const text = el.value.trim();
-  if (!text) { showToast('댓글 내용을 입력해주세요.'); return; }
-
-  const btn = document.getElementById('cmCommentBtn');
-  _cmBusy = true; btn.disabled = true;
-  const j = await cmApi('comment', { postId: _cmPostId, body: text });
-  _cmBusy = false; btn.disabled = false;
-
-  if (!j.ok) { showToast(j.error); return; }
-  el.value = '';
-  renderCommunity();
-}
-
-async function cmSubmitReply() {
-  if (_cmBusy) return;
-  const el = document.getElementById('cmReplyBody');
-  const parentId = document.getElementById('cmReplyBtn')?.dataset.rid || '';
-  const text = (el?.value || '').trim();
-  if (!text) { showToast('답글 내용을 입력해주세요.'); return; }
-  const btn = document.getElementById('cmReplyBtn');
+  const text = (document.getElementById(inputId)?.value || '').trim();
+  if (!text) { showToast(emptyMsg); return; }
+  const btn = document.getElementById(btnId);
   _cmBusy = true; btn.disabled = true;
   const j = await cmApi('comment', { postId: _cmPostId, parentId, body: text });
   _cmBusy = false; btn.disabled = false;
   if (!j.ok) { showToast(j.error); return; }
-  _cmReplyTo = null;
+  if (parentId !== undefined) _cmReplyTo = null;
   renderCommunity();
 }
 
@@ -543,9 +517,7 @@ window.addEventListener('load', () => {
   const postId = new URLSearchParams(location.search).get('community');
   if (!postId || typeof navigateTo !== 'function') return;
   _cmPostId = postId;
-  _cmView = 'post';
-  navigateTo('community');
-  _cmView = 'post';
-  renderCommunity();
+  navigateTo('community');   // 섹션을 열면서 목록으로 바꾸므로 그 뒤에 글 보기로 간다
+  cmGo('post');
   history.replaceState(null, '', location.pathname);
 });

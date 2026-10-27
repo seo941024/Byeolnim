@@ -41,8 +41,7 @@ const NTH = { first: 0, second: 1, third: 2 };
 
 /* 원본 설명문을 기계가 판정할 수 있는 조건으로 바꾼다. 문구가 템플릿이라 규칙으로 다 잡힌다.
    조건이 없는 상시 옵션은 always, 확률만 바꿔서 점수엔 못 넣는 건 chance. */
-function parseCond(desc, lv, group) {
-  const D = desc;
+function parseCond(D, lv, group) {
   if (group) return { t: 'group', key: group.key };
   if (lv.x != null) return { t: 'chance' };
 
@@ -74,37 +73,37 @@ function parseCond(desc, lv, group) {
 }
 
 function build(d) {
-const base = {}, event = {};
-['COMMON', 'RARE', 'EPIC', 'UNIQUE'].forEach(r => { base[r] = []; event[r] = []; });
+  const base = {}, event = {};
+  ['COMMON', 'RARE', 'EPIC', 'UNIQUE'].forEach(r => { base[r] = []; event[r] = []; });
 
-// 레전드리는 게임에 없어서 뺀다.
-const mf = d.filter(o => o.system === 'Mystic Frontier' && o.rarity !== 'Legendary');
-let skippedExpired = 0, unparsed = [];
-mf.forEach(o => {
-  const lv = o.levels['1'] || {};
-  // 설명에 종료일이 박제된 지난 이벤트는 지금 못 뽑으니 뺀다.
-  if (/^\[EVENT\]/.test(o.description)) { skippedExpired++; return; }
+  // 레전드리는 게임에 없어서 뺀다.
+  const mf = d.filter(o => o.system === 'Mystic Frontier' && o.rarity !== 'Legendary');
+  let skippedExpired = 0, unparsed = [];
+  mf.forEach(o => {
+    const lv = o.levels['1'] || {};
+    // 설명에 종료일이 박제된 지난 이벤트는 지금 못 뽑으니 뺀다.
+    if (/^\[EVENT\]/.test(o.description)) { skippedExpired++; return; }
 
-  const label = render(o.description, lv);
-  const g = GROUPS.find(x => x.re.test(o.description));
-  const cond = parseCond(o.description, lv, g);
-  if (!cond) unparsed.push(o.description);
+    const label = render(o.description, lv);
+    const g = GROUPS.find(x => x.re.test(o.description));
+    const cond = parseCond(o.description, lv, g);
+    if (!cond) unparsed.push(o.description);
 
-  const add = lv.add != null ? lv.add : (lv.sub != null ? -lv.sub : null);
-  const mult = lv.mul != null ? lv.mul : null;
+    const add = lv.add != null ? lv.add : (lv.sub != null ? -lv.sub : null);
+    const mult = lv.mul != null ? lv.mul : null;
 
-  const entry = { label, add, mult, cond };
-  if (g) entry.groupKey = g.key;
+    const entry = { label, add, mult, cond };
+    if (g) entry.groupKey = g.key;
 
-  (o.endTime ? event : base)[o.rarity.toUpperCase()].push(entry);
-});
+    (o.endTime ? event : base)[o.rarity.toUpperCase()].push(entry);
+  });
 
-const j = v => JSON.stringify(v);
-const dump = obj => '{\n' + Object.keys(obj).map(r =>
-  `  ${r}: [\n${obj[r].map(e => '    ' + j(e)).join(',\n')}\n  ]`
-).join(',\n') + '\n}';
+  const j = v => JSON.stringify(v);
+  const dump = obj => '{\n' + Object.keys(obj).map(r =>
+    `  ${r}: [\n${obj[r].map(e => '    ' + j(e)).join(',\n')}\n  ]`
+  ).join(',\n') + '\n}';
 
-const out = `/* 미스틱 프론티어 잠재 옵션 카탈로그.
+  const out = `/* 미스틱 프론티어 잠재 옵션 카탈로그.
 
    출처: masonym.dev/familiar_data/familiar_options.json — 게임 파일을 그대로 덤프한
    데이터라 문구와 수치가 인게임과 같다. 이 파일은 스크립트로 통째로 생성하니
@@ -133,18 +132,18 @@ if (typeof window !== 'undefined') {
 if (typeof module !== 'undefined') module.exports = { FR_CATALOG, FR_EVENT_GROUPS, FR_EVENT_CATALOG };
 `;
 
-fs.writeFileSync(OUT, out);
-console.log('지난 이벤트 제외:', skippedExpired);
-Object.keys(base).forEach(r => console.log(' ', r.padEnd(7), '일반', base[r].length, '/ 이벤트', event[r].length));
+  fs.writeFileSync(OUT, out);
+  console.log('지난 이벤트 제외:', skippedExpired);
+  Object.keys(base).forEach(r => console.log(' ', r.padEnd(7), '일반', base[r].length, '/ 이벤트', event[r].length));
 
-// 조건을 못 읽은 줄이 있으면 그 옵션은 점수에 안 붙는다 — 조용히 넘어가면 안 된다.
-if (unparsed.length) {
-  console.error('\n조건 해석 실패', unparsed.length, '건 — parseCond에 규칙을 추가해야 한다:');
-  [...new Set(unparsed)].forEach(u => console.error('  ', u));
-  process.exitCode = 1;
-} else {
-  console.log('\n조건 해석 실패 0건 →', OUT);
-}
+  // 조건을 못 읽은 줄이 있으면 그 옵션은 점수에 안 붙는다 — 조용히 넘어가면 안 된다.
+  if (unparsed.length) {
+    console.error('\n조건 해석 실패', unparsed.length, '건 — parseCond에 규칙을 추가해야 한다:');
+    [...new Set(unparsed)].forEach(u => console.error('  ', u));
+    process.exitCode = 1;
+  } else {
+    console.log('\n조건 해석 실패 0건 →', OUT);
+  }
 }
 
 fetch(SRC)

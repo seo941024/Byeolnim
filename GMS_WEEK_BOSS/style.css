@@ -358,11 +358,12 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .hbtn__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .admin-badge {
   flex: none; position: relative; overflow: hidden;
-  padding: 2px 9px 2px 7px; border-radius: var(--radius-pill);
-  font-size: .62rem; font-weight: 900; letter-spacing: .8px;
+  padding: 2px 8px; border-radius: 5px;
+  font-size: .62rem; font-weight: 900; letter-spacing: 1px;
   color: #3a2600;
   background: linear-gradient(135deg, #fff2bf 0%, rgb(var(--star)) 45%, #d8961c 100%);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.65), 0 2px 10px rgba(var(--star),.45);
+  border: 1px solid #a8740a;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.65);
 }
 /* 금속 광택처럼 빛이 한 번씩 훑고 지나간다 — 작은 배지 안의 transform이라 가볍다 */
 .admin-badge::after {
@@ -377,9 +378,18 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 /* 로그인 표시는 테두리로 준다. 글자색은 라이트 테마에서 .hbtn이 더 높은 명세도로
    덮어쓰기 때문에(:root[data-theme="light"] .hbtn) 테마별로 갈리지만, 테두리는 양쪽 다 걸린다. */
 .hbtn--on { border-color: rgba(var(--star),.75); }
+/* 로그인하면 버튼이 명찰이 된다 — 알약 대신 둥근 사각형, 진한 금색 테두리 두 겹(바깥 테두리 + 안쪽 선) */
+#headerBtnAuth.hbtn--on {
+  border-radius: 9px; padding: 3px 12px 3px 4px; gap: 8px;
+  border-width: 2px; border-color: rgb(var(--star));
+  box-shadow: inset 0 0 0 1px rgba(var(--star),.35);
+}
+#headerBtnAuth.hbtn--on:not(:has(.admin-badge)) { padding-left: 12px; }
+#headerBtnAuth.hbtn--on .hbtn__name { font-weight: 900; letter-spacing: .5px; }
 :root:not([data-theme="light"]) .hbtn--on { color: var(--accent); }
 /* 라이트 테마의 .hbtn 규칙이 명세도(0,3,0)로 더 높아 위 테두리를 덮는다 → 같은 급으로 다시 건다 */
 :root[data-theme="light"] .hbtn--on { border-color: rgba(154,111,18,.85); }
+:root[data-theme="light"] #headerBtnAuth.hbtn--on { border-color: #b8860b; box-shadow: inset 0 0 0 1px rgba(184,134,11,.3); }
 .hbtn:hover {
   background: rgba(var(--hue-d),.15);
   border-color: var(--primary);
@@ -2697,14 +2707,14 @@ body::before {
 }
 
 /* ── 홈 (home.js) ──
-   뮤즈대시 첫 화면 구성: 꽉 찬 머리 영역에 모눈종이·큰 윤곽 글자·캐릭터, 왼쪽 위의 도는 별,
-   아래로 내려가라는 화살표, 가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다 */
+   뮤즈대시 첫 화면 구성: 모눈종이 머리 영역에 로고 캐릭터와 떠다니는 별님앱 글자, 아래로 내려가라는 화살표,
+   가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다 */
 #sec-home { gap: 30px; }
 .home-hero {
   position: relative; overflow: hidden; isolation: isolate;
-  min-height: clamp(440px, calc(100vh - var(--top-h) - 48px), 760px);
-  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
-  padding: 56px 20px 84px; border-radius: 26px; text-align: center;
+  min-height: clamp(360px, 52vh, 560px);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
+  padding: 44px 24px 76px; border-radius: 26px; text-align: center;
   border: 1px solid rgba(var(--hue-l),.3);
   background:
     linear-gradient(rgba(var(--hue-l),.11) 1px, transparent 1px) 0 0 / 36px 36px,
@@ -2726,22 +2736,13 @@ body::before {
     linear-gradient(160deg, #fffaf0, #f4eeff);
   box-shadow: 0 18px 50px rgba(150,110,20,.14), inset 0 1px 0 #fff;
 }
-/* 뒤에 깔린 큰 윤곽 글자 — 뮤즈대시 첫 화면의 큰 로고 글자처럼 */
-.home-hero__word {
-  position: absolute; inset: 0; z-index: -1; display: flex; align-items: center; justify-content: center;
-  font-size: clamp(4rem, 15vw, 13rem); font-weight: 900; letter-spacing: .04em; line-height: 1; white-space: nowrap;
-  color: transparent; -webkit-text-stroke: 2px rgba(var(--hue-l),.22); user-select: none; pointer-events: none;
-}
-:root[data-theme="light"] .home-hero__word { -webkit-text-stroke-color: rgba(184,134,11,.2); }
-/* 왼쪽 위에서 5초에 한 바퀴 도는 별 — 뮤즈대시 첫 화면 왼쪽 위 아이콘 자리 */
-.home-hero__spin { position: absolute; top: 22px; left: 26px; font-size: 26px; line-height: 1; color: rgb(var(--star)); text-shadow: 0 0 14px rgba(var(--star),.8); }
 .home-hero__spark { position: absolute; color: rgb(var(--star)); line-height: 1; text-shadow: 0 0 12px rgba(var(--star),.8); }
 .home-hero__spark--1 { top: 18%; right: 14%; font-size: 22px; }
 .home-hero__spark--2 { bottom: 24%; left: 12%; font-size: 16px; color: #e4dcff; text-shadow: 0 0 12px rgba(214,200,255,.9); }
 .home-hero__spark--3 { top: 30%; left: 20%; font-size: 12px; }
 :root[data-theme="light"] .home-hero__spark--2 { color: #9b7be6; }
-/* 로고 캐릭터 — 원본의 정확히 4배라 도트가 고르다. 올리면 웃는다 */
-.home-hero__char { position: relative; width: 248px; height: 216px; margin-bottom: 8px; }
+/* 로고 캐릭터 — 원본의 정확히 4배라 도트가 고르다. 가만히 있고, 올리면 웃는다 */
+.home-hero__char { position: relative; width: 248px; height: 216px; }
 .home-hero__face {
   position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated;
   filter: drop-shadow(0 16px 18px rgba(0,0,0,.4)); transition: opacity .15s;
@@ -2749,11 +2750,6 @@ body::before {
 .home-hero__face--smile { opacity: 0; }
 .home-hero__char:hover .home-hero__face--smile { opacity: 1; }
 .home-hero__char:hover .home-hero__face:not(.home-hero__face--smile) { opacity: 0; }
-.home-hero__shadow {
-  position: absolute; left: 50%; bottom: -16px; width: 58%; height: 18px; border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(0,0,0,.42), transparent); transform: translateX(-50%);
-}
-:root[data-theme="light"] .home-hero__shadow { background: radial-gradient(closest-side, rgba(120,90,20,.25), transparent); }
 .home-hero__title {
   font-size: clamp(2.6rem, 6vw, 4.2rem); font-weight: 900; letter-spacing: 3px; line-height: 1.1;
   background: linear-gradient(90deg, rgb(var(--star)) 0%, #ffe9a8 40%, #cac0f2 100%);
@@ -2761,22 +2757,6 @@ body::before {
   filter: drop-shadow(0 4px 14px rgba(0,0,0,.35));
 }
 :root[data-theme="light"] .home-hero__title { background-image: linear-gradient(90deg, #b07d0c 0%, #d79a14 40%, #7c4fd6 100%); filter: none; }
-.home-hero__sub { font-size: .98rem; font-weight: 700; letter-spacing: 1px; color: var(--text-sub); }
-.home-hero__cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 14px; }
-.home-btn {
-  position: relative; overflow: hidden;
-  padding: 11px 24px; border-radius: var(--radius-pill);
-  font-size: .9rem; font-weight: 800; color: var(--text);
-  background: rgba(255,255,255,.05); border: 1.5px solid rgba(var(--hue-l),.5);
-  transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s, background .2s;
-}
-.home-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(var(--hue-d),.35); }
-.home-btn--main { color: #2a1a00; border-color: transparent; background: linear-gradient(135deg, #ffe08a, rgb(var(--star)) 45%, #e0a92b); box-shadow: 0 6px 20px rgba(var(--star),.35); }
-.home-btn--main::after {
-  content: ''; position: absolute; inset: 0;
-  background: linear-gradient(100deg, transparent 30%, rgba(255,255,255,.7) 50%, transparent 70%);
-  transform: translateX(-130%);
-}
 /* 아래로 내려가라는 화살표 — 뮤즈대시처럼 위에서 나타나 내려가며 사라진다 */
 .home-hero__arrow { position: absolute; left: 50%; bottom: 18px; width: 40px; height: 44px; margin-left: -20px; }
 .home-hero__arrow span {
@@ -2794,6 +2774,24 @@ body::before {
 .home-h::after { content: ' ✦'; color: rgb(var(--star)); -webkit-text-fill-color: rgb(var(--star)); font-size: .7em; }
 :root[data-theme="light"] .home-h { background-image: linear-gradient(90deg, #241a35 0%, #5b3fb0 65%, #a8740a 100%); }
 :root[data-theme="light"] .home-h::after { color: #c9971a; -webkit-text-fill-color: #c9971a; }
+
+/* 내 캐릭터 — 머리 영역의 별님앱 글자 아래. 사이드바에서 옮겨 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
+   [캐릭터 + 추가] / [명찰 | 결정석 막대] / [명찰 | 주간 수익 | 월간 수익] */
+.home-mine { width: min(1120px, 100%); text-align: left; }
+.home-mine .sb-char-area {
+  display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: stretch;
+  padding: 16px 18px 18px; border: 1px solid rgba(var(--hue),.22); border-radius: 22px;
+  background: var(--panel-veil); box-shadow: 0 10px 30px rgba(0,0,0,.35);
+}
+:root[data-theme="light"] .home-mine .sb-char-area { background: #fff; box-shadow: 0 12px 30px rgba(150,110,20,.12); }
+.home-mine .sb-char-head { grid-column: 1 / -1; padding: 0; }
+.home-mine .sb-pin, .home-mine #sbBtnSettings { display: none; }
+.home-mine .char-list { grid-column: 1; grid-row: 2 / span 2; padding: 0; }
+.home-mine .crystal-bar { grid-column: 2 / -1; grid-row: 2; align-self: center; padding: 4px 2px; }
+.home-mine .sb-weekmeso { grid-row: 3; margin: 0; justify-content: center; padding: 14px 18px; }
+.home-mine .sb-weekmeso:nth-child(4) { grid-column: 2; }
+.home-mine .sb-weekmeso:nth-child(5) { grid-column: 3; }
+.home-mine .sb-weekmeso__val { font-size: 1.3rem; }
 
 /* 주요 기능 슬라이드 — 가운데 카드는 앞으로, 양옆은 작고 흐리게 뒤로(뮤즈대시 카드 슬라이드) */
 .home-car { position: relative; height: 344px; overflow: hidden; touch-action: pan-y; border-radius: 22px; }
@@ -2877,9 +2875,11 @@ body::before {
 .home-tile__name { font-size: .82rem; font-weight: 800; text-align: center; color: var(--text); }
 
 @media (max-width: 768px) {
-  .home-hero { min-height: calc(100vh - var(--top-h) - 32px); padding: 44px 14px 80px; border-radius: 20px; }
+  .home-hero { min-height: 0; padding: 32px 12px 68px; border-radius: 20px; }
   .home-hero__char { width: 186px; height: 162px; }   /* 원본의 3배 */
   .home-car { height: 424px; }
+  .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
+  .home-mine :is(.char-list, .crystal-bar, .sb-weekmeso:nth-child(4), .sb-weekmeso:nth-child(5)) { grid-column: 1; grid-row: auto; }
   .home-slide { width: 84%; grid-template-columns: 1fr; grid-template-rows: 170px 1fr; }
   .home-slide.is-prev { transform: translateX(-128%) scale(.82); }
   .home-slide.is-next { transform: translateX(28%) scale(.82); }
@@ -2888,24 +2888,18 @@ body::before {
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .home-hero__spin { animation: bootSpin 5s linear infinite; }
   .home-hero__spark { animation: bootTwinkle 2.2s ease-in-out infinite; }
   .home-hero__spark--2 { animation-delay: .7s; }
   .home-hero__spark--3 { animation-delay: 1.4s; }
-  .home-hero__face { animation: heroBob 1.6s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
-  .home-hero__shadow { animation: heroShadow 1.6s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
+  .home-hero__title { animation: titleFloat 2.4s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
   .home-hero__arrow span { animation: heroArrow 2s ease-in-out infinite; }
-  .home-btn--main::after { animation: badgeShine 3.8s ease-in-out infinite; }
   .home-slide__glow { animation: bootSpin 6s linear infinite; }
   .home-slide__icon { animation: heroIconFloat 2.6s ease-in-out infinite alternate; }
-  .sec--enter :is(.home-hero__char, .home-hero__title, .home-hero__sub, .home-hero__cta, .home-block) { animation: riseIn .6s cubic-bezier(.2,.8,.2,1) backwards; }
-  .sec--enter .home-hero__title { animation-delay: .08s; }
-  .sec--enter .home-hero__sub   { animation-delay: .14s; }
-  .sec--enter .home-hero__cta   { animation-delay: .2s; }
-  .sec--enter .home-block       { animation-delay: .26s; }
+  .sec--enter :is(.home-mine, .home-block) { animation: riseIn .6s cubic-bezier(.2,.8,.2,1) backwards; }
+  .sec--enter .home-mine  { animation-delay: .08s; }
+  .sec--enter .home-block { animation-delay: .16s; }
 }
-@keyframes heroBob { from { transform: translateY(6px); } to { transform: translateY(-12px); } }
-@keyframes heroShadow { from { transform: translateX(-50%) scale(1); opacity: .9; } to { transform: translateX(-50%) scale(.78); opacity: .55; } }
+@keyframes titleFloat { from { transform: translateY(4px); } to { transform: translateY(-8px); } }
 @keyframes heroArrow {
   0%, 30% { opacity: 0; transform: translateY(-14px) rotate(45deg); }
   60%     { opacity: 1; transform: translateY(0) rotate(45deg); }
@@ -3663,6 +3657,17 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 @media (max-width: 768px) {
   .sb-pin { display: none; }
+}
+/* ── 사이드바 잠시 끔 (body.no-sidebar) ──
+   캐릭터 명찰·결정석·수익은 홈(home.js)으로 옮겨 보여 주고, 메뉴 이동은 홈의 전체 메뉴와 헤더 로고로 한다.
+   다시 켜려면 index.html의 body에서 no-sidebar만 빼면 된다 */
+body.no-sidebar :is(.sidebar, .sidebar-hotzone, .sidebar-overlay, .hamburger) { display: none; }
+body.no-sidebar .app { grid-template-columns: minmax(0, 1fr); }
+/* 폰은 원래 사이드바 안의 설정 버튼을 썼다 — 사이드바가 꺼진 동안에는 헤더 설정 버튼을 다시 보이고,
+   햄버거가 빠진 자리만큼 명찰 폭을 줄여 헤더가 넘치지 않게 한다 */
+@media (max-width: 768px) {
+  body.no-sidebar #headerBtnSettings { display: inline-flex; }
+  body.no-sidebar #headerBtnAuth { max-width: calc(100vw - 230px); }
 }
 
 .mx-source { margin-top: -10px; }

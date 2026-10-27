@@ -86,7 +86,7 @@ function csSyncHeader() {
   /* 배지가 붙으므로 textContent 대신 innerHTML — 닉네임은 반드시 이스케이프한다.
      이름은 따로 감싼다. 버튼 폭이 좁아질 때 이름만 줄어들고 배지는 남아야 한다. */
   btn.innerHTML = shown
-    ? `${_csAdmin ? '<span class="admin-badge">👑ADMIN</span>' : ''}<span class="hbtn__name">${escHtml(shown)}</span>`
+    ? `${_csAdmin ? '<span class="admin-badge">ADMIN</span>' : ''}<span class="hbtn__name">${escHtml(shown)}</span>`
     : '로그인';
   btn.classList.toggle('hbtn--on', !!_csUser);
   btn.title = _csUser ? `${shown} — 클라우드 저장 열기` : '로그인 / 회원가입';

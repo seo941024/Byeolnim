@@ -1,19 +1,20 @@
 /* =============================================
    home.js — 첫 화면(홈)
-   뮤즈대시 첫 화면처럼 꽉 찬 머리 영역(모눈종이·큰 글자·로고 캐릭터·도는 별·아래 화살표),
-   가운데 카드가 앞으로 나오는 주요 기능 슬라이드, 사이드바와 같은 전체 메뉴 바둑판으로 짠다.
+   뮤즈대시 첫 화면처럼 모눈종이 머리 영역(떠다니는 별님앱 글자, 그 아래 사이드바에 있던 명찰·결정석·수익,
+   아래 화살표), 가운데 카드가 앞으로 나오는 주요 기능 슬라이드,
+   사이드바와 같은 전체 메뉴 바둑판으로 짠다.
    움직임은 style.css "홈" 구역에 있고, 여기서는 그리기와 슬라이드 넘기기만 한다.
    ============================================= */
 
 /* 주요 기능 슬라이드. art가 있으면 그 그림을 배경으로 크게 깔고, 없으면 사이드바 아이콘을 크게 띄운다 */
 const HOME_FEATURES = [
-  { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석과 예상 수익', art: 'images/bosses/kalos.webp' },
-  { sec: 'cube',       title: '큐브 시뮬레이터',     desc: '잠재 옵션 확률과 직접 굴리기' },
-  { sec: 'starforce',  title: '스타포스 시뮬레이터', desc: '기댓값 계산과 직접 강화' },
-  { sec: 'mixdye',     title: '코디 시뮬레이터',     desc: '믹스 염색과 코디 미리보기' },
-  { sec: 'mcalendar',  title: '메이플 캘린더',       desc: '보스 일정과 획득 아이템 기록' },
-  { sec: 'liberation', title: '무기 해방 계산기',     desc: '해방 완료 예상 날짜' },
-  { sec: 'bosshp',     title: '보스 정보',           desc: '보스 HP와 드랍 아이템', art: 'images/bosses/seren.webp' },
+  { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석 개수와 예상 수익을 계산합니다.', art: 'images/bosses/kalos.webp' },
+  { sec: 'cube',       title: '큐브 시뮬레이터',     desc: '큐브 잠재 옵션 확률과 시뮬레이션을 사용할 수 있습니다.' },
+  { sec: 'starforce',  title: '스타포스 시뮬레이터', desc: '목표 성까지 드는 메소 기댓값을 계산하고 직접 강화해 볼 수 있습니다.' },
+  { sec: 'mixdye',     title: '코디 시뮬레이터',     desc: '믹스 염색과 코디를 캐릭터에 입혀 미리 볼 수 있습니다.' },
+  { sec: 'mcalendar',  title: '메이플 캘린더',       desc: '보스 일정과 획득한 아이템을 날짜별로 기록합니다.' },
+  { sec: 'liberation', title: '무기 해방 계산기',     desc: '해방 완료 예상 날짜를 알려줍니다.' },
+  { sec: 'bosshp',     title: '보스 정보',           desc: '보스 HP와 난이도별 드랍 아이템을 보여줍니다.', art: 'images/bosses/seren.webp' },
 ];
 const HOME_AUTO_MS = 4500;
 
@@ -49,22 +50,16 @@ function renderHome() {
   const feats = HOME_FEATURES.filter(f => icons[f.sec] !== undefined);
   sec.innerHTML = `
     <div class="home-hero">
-      <span class="home-hero__word" aria-hidden="true">BYEOLNIM</span>
-      <span class="home-hero__spin" aria-hidden="true">✦</span>
       <span class="home-hero__spark home-hero__spark--1" aria-hidden="true">✦</span>
       <span class="home-hero__spark home-hero__spark--2" aria-hidden="true">✦</span>
       <span class="home-hero__spark home-hero__spark--3" aria-hidden="true">✦</span>
-      <div class="home-hero__char" aria-hidden="true">
+      <!-- 로고 캐릭터 얼굴 — 만들어 두었지만 지금은 끈다. 다시 쓰려면 hidden만 뺀다 -->
+      <div class="home-hero__char" aria-hidden="true" hidden>
         <img class="home-hero__face" src="images/logo/head_normal.png" alt="" width="248" height="216">
         <img class="home-hero__face home-hero__face--smile" src="images/logo/head_smile.png" alt="" width="248" height="216">
-        <span class="home-hero__shadow"></span>
       </div>
       <h1 class="home-hero__title">별님앱</h1>
-      <p class="home-hero__sub">메이플스토리 GMS 보스·강화·코디 계산기</p>
-      <div class="home-hero__cta">
-        <button class="home-btn home-btn--main" data-go="boss" type="button">보스 수익 계산기</button>
-        <button class="home-btn" data-go="charinfo" type="button">캐릭터 목록</button>
-      </div>
+      <div class="home-mine" id="homeMine"></div>
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="주요 기능으로 내려가기"><span></span></button>
     </div>
 
@@ -91,6 +86,14 @@ function renderHome() {
   sec.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => navigateTo(b.dataset.go)));
   document.getElementById('homeArrow').addEventListener('click', () =>
     document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+
+  /* 사이드바를 끈 동안(body.no-sidebar)에는 사이드바의 캐릭터 영역을 통째로 여기로 옮긴다.
+     요소를 옮기는 것이라 id와 클릭 동작이 그대로 살아 있고, app.js가 그리던 그대로 갱신된다.
+     사이드바를 다시 켜면 옮기지 않으므로 내 캐릭터 칸은 빈 채로 숨는다 */
+  const mine = document.getElementById('homeMine');
+  const charArea = document.querySelector('.sb-char-area');
+  if (document.body.classList.contains('no-sidebar') && charArea) mine.appendChild(charArea);
+  else mine.hidden = true;
 
   const car = document.getElementById('homeCar');
   const slides = [...car.querySelectorAll('.home-slide')];

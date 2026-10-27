@@ -21,10 +21,12 @@
 - 첫 화면이 캐릭터 목록 대신 홈(`home.js`, `#sec-home`). 모눈종이 머리 영역에 떠다니는 별·님·앱 스티커 글자와 그 아래 내 캐릭터,
   가운데 카드가 앞으로 나오는 주요 기능 슬라이드(`HOME_FEATURES`, 설명은 합니다체 문장), 사이드바를 읽어 만드는 전체 메뉴.
   로고 캐릭터 얼굴은 만들어 두고 `hidden`으로 꺼 둠(지수 요청).
-- **캐릭터 영역 자리**: `index.html`의 `<body class="char-home">`. 이때 home.js `placeCharArea`가 `.sb-char-area`, 곧 명찰·결정석·주간/월간 수익을
-  홈에서는 홈 머리 영역으로, 다른 메뉴에서는 사이드바 맨 위로 옮긴다. `navigateTo`가 메뉴를 바꿀 때마다 부른다.
-  요소 하나를 옮기므로 한 화면에 한 번만 보이고 id·이벤트는 그대로. 자리마다 카드 모양이 달라 옮긴 뒤 `renderCharList`로 다시 그린다.
-  body에서 `char-home`을 빼면 늘 사이드바에 있다. 폰은 헤더 설정 버튼을 늘 보인다.
+- **캐릭터 영역**: 사이드바 맨 위 `.sb-char-area`, 곧 명찰·결정석·주간/월간 수익은 어느 메뉴에서나 그대로 있다.
+  `index.html`의 `<body class="char-home">`이면 home.js `mountHomeCharArea`가 이 영역을 복사해 홈 머리 영역에도 둔다.
+  복사본의 id 앞에는 `h_`가 붙고, app.js `renderCharList`·`updateCrystalBar`가 `charAreaEls(id)`로 두 곳에 함께 적는다.
+  홈 쪽 목록은 홈 카드 모양으로 그린다. 추가 버튼은 원본 버튼을 대신 누르고, 수정·삭제는 character.js `onCharListClick`을 같이 쓴다.
+  사이드바 캐릭터 영역에 id 있는 요소를 새로 넣으면 `updateCrystalBar`처럼 `charAreaEls`로 두 곳을 같이 갱신할 것.
+  body에서 `char-home`을 빼면 복사하지 않는다. 폰은 헤더 설정 버튼을 늘 보인다.
 - **사이드바**: PC는 늘 숨겨 두고 왼쪽 끝에 마우스를 대면 튀어나온다. 폰은 햄버거 드로어. 항상 펼쳐 두는 고정 기능과 그 버튼은 2026-10-27에 지웠다.
 - 로그인 버튼은 명찰 모양(금색 두 겹 테두리 안에 [ADMIN] 이름). 왕관 이모지는 뺌.
 - 홈 제목 `_homeTitleHtml`: 글자마다 SVG 하나에 금색 바깥 테두리·굵은 흰 테두리·채움을 겹쳐 그린다. 채움은 예전 제목의 금색→연보라

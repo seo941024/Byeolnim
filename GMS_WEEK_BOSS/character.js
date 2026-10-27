@@ -204,8 +204,8 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   if (useFetched) syncServerHistThenRender(state.chars[state.activeChar]);
 });
 
-// 수정/삭제 버튼 (위임)
-document.getElementById('charList').addEventListener('click', e => {
+// 수정/삭제 버튼 (위임). 홈에 복사한 목록(#h_charList)에는 home.js가 이 함수를 붙인다
+function onCharListClick(e) {
   const btn = e.target.closest('[data-action]');
   if (!btn) return;
   const i = parseInt(btn.dataset.i);
@@ -216,7 +216,8 @@ document.getElementById('charList').addEventListener('click', e => {
     save(); closeConfirm();
     renderAfterCharsChange();
   });
-});
+}
+document.getElementById('charList').addEventListener('click', onCharListClick);
 
 /* 캐릭터를 추가·수정·삭제한 뒤 — 캐릭터를 보여주는 화면을 모두 다시 그린다 */
 function renderAfterCharsChange() {

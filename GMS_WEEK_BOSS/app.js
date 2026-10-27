@@ -101,8 +101,6 @@ function navigateTo(sec, fromHistory = false) {
   // 메뉴를 열 때마다 브라우저 기록을 하나 남겨 마우스 뒤로 버튼, Alt+←, 폰 뒤로 제스처가 직전 메뉴로 돌아가게 한다.
   // 주소는 그대로 두고 기록에 메뉴 이름만 담는다. 지금 메뉴를 다시 누르면 남기지 않는다
   if (!fromHistory && history.state?.sec !== sec) history.pushState({ sec }, '');
-  // 캐릭터 영역은 홈에서는 홈에, 다른 메뉴에서는 사이드바에 둔다. 옮기는 곳은 home.js placeCharArea
-  if (typeof placeCharArea === 'function') placeCharArea(sec);
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
@@ -298,54 +296,58 @@ function charMonthlyMeso(ch) {
   return sum;
 }
 
+/* 사이드바 캐릭터 영역과 home.js가 홈에 복사한 영역에 같은 값을 적는다. 복사본의 id는 앞에 h_가 붙는다 */
+function charAreaEls(id) {
+  return [document.getElementById(id), document.getElementById('h_' + id)].filter(Boolean);
+}
+
 function updateCrystalBar() {
   const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
   const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
   const total  = Math.min(state.chars.reduce((s, c) => s + sellableCrystals(c), 0), MAX_CRYSTALS);
-  document.getElementById('totalCrystalCount').textContent = `${total} / ${MAX_CRYSTALS}`;
-  document.getElementById('totalCrystalFill').style.width = (total/MAX_CRYSTALS*100) + '%';
-  const elCW = document.getElementById('totalCrystalWeekly');
-  if (elCW) elCW.textContent = totalW;
-  const elCM = document.getElementById('totalCrystalMonthly');
-  if (elCM) elCM.textContent = totalM;
+  charAreaEls('totalCrystalCount').forEach(el => { el.textContent = `${total} / ${MAX_CRYSTALS}`; });
+  charAreaEls('totalCrystalFill').forEach(el => { el.style.width = (total/MAX_CRYSTALS*100) + '%'; });
+  charAreaEls('totalCrystalWeekly').forEach(el => { el.textContent = totalW; });
+  charAreaEls('totalCrystalMonthly').forEach(el => { el.textContent = totalM; });
   // 대여 비용은 캐릭터별로 합산해서 차감
   // weekDone이 켜진 캐릭터는 주간 합계에서 뺀다 — 이미 돈 캐릭터를 잠깐 빼고
   // 남은 캐릭터로 얼마가 더 들어오는지 보려는 용도. 수익 자체는 그대로 남는다.
   const weekTotal  = state.chars.reduce((s, c) =>
     c.weekDone ? s : s + charWeeklyMeso(c) - rentalWeeklyCost(c), 0);
   const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c) - rentalMonthlyCost(c), 0);
-  const elW = document.getElementById('totalWeekMeso');
-  if (elW) elW.textContent = fmtMeso(weekTotal);
+  charAreaEls('totalWeekMeso').forEach(el => { el.textContent = fmtMeso(weekTotal); });
   const doneCount = state.chars.filter(c => c.weekDone).length;
-  const elWN = document.getElementById('totalWeekDoneNote');
-  if (elWN) {
-    elWN.textContent = doneCount ? `${doneCount}명 제외됨` : '';
-    elWN.style.display = doneCount ? '' : 'none';
-  }
-  const elM = document.getElementById('totalMonthMeso');
-  if (elM) { elM.textContent = fmtMeso(monthTotal); elM.style.color = monthTotal < 0 ? 'var(--danger)' : ''; }
+  charAreaEls('totalWeekDoneNote').forEach(el => {
+    el.textContent = doneCount ? `${doneCount}명 제외됨` : '';
+    el.style.display = doneCount ? '' : 'none';
+  });
+  charAreaEls('totalMonthMeso').forEach(el => { el.textContent = fmtMeso(monthTotal); el.style.color = monthTotal < 0 ? 'var(--danger)' : ''; });
   const elHW = document.getElementById('hcWeekly');
   const act = state.chars[state.activeChar];
   if (elHW && act) elHW.outerHTML = hcWeeklyHtml(act);
 }
 
-/* ── 캐릭터 목록 렌더 (사이드바: active 1개만) ── */
+/* ── 캐릭터 목록 렌더 (active 1개만) ── 사이드바 목록과, 있으면 홈에 복사한 목록(#h_charList)에 함께 그린다 */
 function renderCharList() {
-  const ul = document.getElementById('charList');
+  charAreaEls('charList').forEach(renderCharListInto);
+  updateCrystalBar();
+}
+
+function renderCharListInto(ul) {
   ul.innerHTML = '';
   if (!state.chars.length) {
     ul.innerHTML = '<li style="text-align:center;color:var(--text-sub);font-size:.8rem;padding:14px">캐릭터를 추가하세요</li>';
-    updateCrystalBar(); return;
+    return;
   }
   const i  = state.activeChar ?? 0;
   const ch = state.chars[i];
-  if (!ch) { updateCrystalBar(); return; }
+  if (!ch) return;
   const li = document.createElement('li');
   li.className = 'char-card active';
   const portrait = ch.fetched?.img
     ? `<img src="${ch.fetched.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('char-card__portrait--no')" />`
     : `<img src="images/dailytasks/default.png" alt="" />`;
-  // 이 목록이 홈으로 옮겨져 있으면 홈 카드로 그린다. 옮기는 곳은 home.js placeCharArea
+  // 홈에 복사한 목록이면 홈 카드로 그린다
   if (ul.closest('#homeMine')) {
     li.classList.add('char-card--home');
     li.innerHTML = charHomeCardHtml(ch, i, portrait);
@@ -368,7 +370,6 @@ function renderCharList() {
   }
   li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
   ul.appendChild(li);
-  updateCrystalBar();
 }
 
 function charCardBtnsHtml(i) {

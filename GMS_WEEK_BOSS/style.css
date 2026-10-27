@@ -269,8 +269,8 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
    - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다. */
 :root {
-  --cur-default: url('images/icons/cursor.png?v=20261027c') 1 1, default;
-  --cur-pointer: url('images/icons/cursor.png?v=20261027c') 1 1, pointer;
+  --cur-default: url('images/icons/cursor.png?v=20261027d') 1 1, default;
+  --cur-pointer: url('images/icons/cursor.png?v=20261027d') 1 1, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }
@@ -2821,7 +2821,7 @@ body::before {
 :root[data-theme="light"] .home-h { background-image: linear-gradient(90deg, #241a35 0%, #5b3fb0 65%, #a8740a 100%); }
 :root[data-theme="light"] .home-h::after { color: #c9971a; -webkit-text-fill-color: #c9971a; }
 
-/* 내 캐릭터 — 머리 영역의 별님앱 글자 아래. 사이드바에서 옮겨 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
+/* 내 캐릭터 — 머리 영역의 별님앱 글자 아래. 사이드바에서 복사해 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
    [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익 | 월간 수익] */
 .home-mine { width: min(1120px, 100%); text-align: left; }
 .home-mine .sb-char-area {
@@ -2834,7 +2834,6 @@ body::before {
 /* 결정석·수익 칸 위 제목. 사이드바에서는 숨기고 홈에서만 캐릭터 제목과 같은 글자로 보인다 */
 .sb-income-label { display: none; }
 .home-mine .sb-income-label { display: block; grid-column: 2 / -1; grid-row: 1; align-self: center; max-width: none; }
-.home-mine #sbBtnSettings { display: none; }
 .home-mine .char-list { grid-column: 1; grid-row: 2 / span 2; padding: 0; }
 .home-mine .crystal-bar { grid-column: 2 / -1; grid-row: 2; align-self: center; padding: 4px 2px; }
 .home-mine .sb-weekmeso { grid-row: 3; margin: 0; justify-content: center; padding: 14px 18px; }
@@ -3759,8 +3758,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   }
 }
 /* ── 캐릭터 영역을 홈에 둠 (body.char-home) ──
-   캐릭터 명찰·결정석·수익은 홈에서는 홈 머리 영역에, 다른 메뉴에서는 사이드바 맨 위에 보인다. 옮기는 곳은 home.js placeCharArea.
-   폰은 원래 그 영역 안 설정 버튼을 썼다 — 홈에서는 그 버튼이 숨으므로 헤더 설정 버튼을 늘 보인다 */
+   캐릭터 명찰·결정석·수익은 사이드바 맨 위에 늘 있고, home.js mountHomeCharArea가 홈 머리 영역에도 복사해 둔다.
+   폰은 원래 그 영역 안 설정 버튼을 썼다 — 홈 복사본에는 그 버튼을 빼므로 헤더 설정 버튼을 늘 보인다 */
 @media (max-width: 768px) {
   body.char-home #headerBtnSettings { display: inline-flex; flex-shrink: 0; }
   /* 햄버거·로고·이름표·설정이 한 줄에 서므로 로고는 줄이지 않고 이름이 길면 이름표만 말줄임으로 줄인다 */

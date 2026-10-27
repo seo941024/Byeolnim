@@ -126,7 +126,7 @@ function renderHome() {
   document.getElementById('homeArrow').addEventListener('click', () =>
     document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
-  if (document.body.classList.contains('char-home')) placeCharArea(document.querySelector('.sec.active')?.id.slice(4));
+  if (document.body.classList.contains('char-home')) mountHomeCharArea();
   else document.getElementById('homeMine').hidden = true;
 
   const car = document.getElementById('homeCar');
@@ -164,14 +164,20 @@ function renderHome() {
   }, HOME_AUTO_MS);
 }
 
-/* 캐릭터 영역 자리 — body.char-home이면 홈에서는 홈 머리 영역, 다른 메뉴에서는 사이드바 맨 위.
-   한 화면에 한 번만 보이도록 요소 하나를 옮겨 다닌다. 요소를 옮기는 것이라 id와 클릭 동작이 그대로 살아 있고,
-   자리마다 카드 모양이 달라서 옮긴 뒤 다시 그린다. body에서 char-home을 빼면 늘 사이드바에 있고 내 캐릭터 칸은 숨는다 */
-function placeCharArea(sec) {
-  const area = document.querySelector('.sb-char-area');
-  const target = sec === 'home' ? document.getElementById('homeMine') : document.querySelector('.sidebar');
-  if (!area || !target || !document.body.classList.contains('char-home') || area.parentElement === target) return;
-  if (sec === 'home') target.appendChild(area); else target.prepend(area);
+/* body.char-home이면 사이드바의 캐릭터 영역을 복사해 홈 머리 영역에도 둔다. 사이드바에도 그대로 남는다.
+   복사본의 id 앞에는 h_를 붙여 겹치지 않게 하고, 값은 app.js renderCharList·updateCrystalBar가 두 곳에 함께 적는다.
+   추가 버튼은 사이드바 원본 버튼을 대신 누르고, 수정·삭제는 character.js onCharListClick을 그대로 쓴다.
+   body에서 char-home을 빼면 복사하지 않고 내 캐릭터 칸은 숨는다 */
+function mountHomeCharArea() {
+  const src = document.querySelector('.sidebar .sb-char-area');
+  const mine = document.getElementById('homeMine');
+  if (!src || !mine) return;
+  const copy = src.cloneNode(true);
+  copy.querySelector('#sbBtnSettings')?.remove();   // 폰 설정 버튼은 헤더에 따로 있다
+  copy.querySelectorAll('[id]').forEach(el => { el.id = 'h_' + el.id; });
+  copy.querySelector('#h_btnAddChar').addEventListener('click', () => document.getElementById('btnAddChar').click());
+  copy.querySelector('#h_charList').addEventListener('click', onCharListClick);
+  mine.replaceChildren(copy);
   renderCharList();
 }
 

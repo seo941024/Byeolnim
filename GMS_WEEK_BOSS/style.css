@@ -2762,27 +2762,12 @@ body::before {
    그 아래 따로 선 내 캐릭터 칸, 가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다.
    모눈 무늬는 맨 뒷배경 body와 로딩 화면에만 쓴다 */
 #sec-home { gap: 30px; }
-/* 높이는 제목만큼만 잡는다. 남는 높이를 두고 가운데로 모으면 제목이 내려가서 윗변 기준으로 자리를 잡는 스티커와 어긋난다 */
+/* 높이는 제목만큼만 잡는다. 남는 높이를 두고 가운데로 모으면 제목이 내려가서 윗변 기준으로 자리를 잡는 스티커와 어긋난다.
+   테두리·배경·그림자 없이 맨 뒷배경 위에 제목과 스티커만 띄운다 */
 .home-hero {
   position: relative; overflow: hidden; isolation: isolate;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-  padding: 44px 24px 76px; border-radius: 14px; text-align: center;
-  border: 1px solid rgba(var(--hue-l),.3);
-  background:
-    radial-gradient(70% 60% at 50% 36%, rgba(var(--hue),.45), transparent 70%),
-    radial-gradient(40% 40% at 88% 88%, rgba(var(--star),.18), transparent 70%),
-    radial-gradient(36% 36% at 8% 90%, rgba(var(--hue-d),.35), transparent 70%),
-    linear-gradient(160deg, #1d1236, #0b0716);
-  box-shadow: 0 20px 60px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06);
-}
-:root[data-theme="light"] .home-hero {
-  border-color: rgba(214,160,20,.35);
-  background:
-    radial-gradient(70% 60% at 50% 36%, rgba(var(--star),.30), transparent 70%),
-    radial-gradient(40% 40% at 88% 88%, rgba(170,140,255,.22), transparent 70%),
-    radial-gradient(36% 36% at 8% 90%, rgba(255,170,200,.22), transparent 70%),
-    linear-gradient(160deg, #fffaf0, #f4eeff);
-  box-shadow: 0 18px 50px rgba(150,110,20,.14), inset 0 1px 0 #fff;
+  padding: 44px 24px 76px; text-align: center;
 }
 .home-hero__spark { position: absolute; color: rgb(var(--star)); line-height: 1; text-shadow: 0 0 12px rgba(var(--star),.8); }
 /* 머리 영역 좌우 메이플 아이콘 스티커 — 숨기지 않고, 화면이 좁아지면 좌우 %자리라 안쪽으로 모인다. 조금 겹치는 것은 괜찮다는 지수 의견.
@@ -2882,6 +2867,7 @@ body::before {
 }
 
 .home-block { display: flex; flex-direction: column; gap: 16px; }
+.home-block[hidden] { display: none; }   /* char-home이 아니면 캐릭터 정보 칸을 통째로 숨긴다 */
 .home-h {
   font-size: 1.35rem; font-weight: 900; letter-spacing: .5px;
   background: linear-gradient(90deg, #ffffff 0%, #f7e2ad 60%, #cac0f2 100%);
@@ -3039,7 +3025,7 @@ body::before {
 .home-tile__name { font-size: .82rem; font-weight: 800; text-align: center; color: var(--text); }
 
 @media (max-width: 768px) {
-  .home-hero { padding: 32px 12px 68px; border-radius: 12px; }
+  .home-hero { padding: 32px 12px 68px; }
   .home-hero__char { width: 186px; height: 162px; }   /* 원본의 3배 */
   .home-car { height: 424px; }
   .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
@@ -3073,9 +3059,8 @@ body::before {
   .home-deco__s--6 { animation-duration: 3s;   animation-delay: -2.6s; }
   .home-slide__glow { animation: bootSpin 6s linear infinite; }
   .home-slide__icon { animation: heroIconFloat 2.6s ease-in-out infinite alternate; }
-  .sec--enter :is(.home-mine, .home-block) { animation: riseIn .6s cubic-bezier(.2,.8,.2,1) backwards; }
-  .sec--enter .home-mine  { animation-delay: .08s; }
-  .sec--enter .home-block { animation-delay: .16s; }
+  .sec--enter .home-block { animation: riseIn .6s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: .16s; }
+  .sec--enter .home-block--mine { animation-delay: .08s; }
 }
 @keyframes stickerFloat { from { transform: translateY(3px); } to { transform: translateY(-9px); } }
 @keyframes sparkFloat { from { transform: translateY(2px) rotate(-8deg); } to { transform: translateY(-11px) rotate(8deg); } }

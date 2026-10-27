@@ -105,7 +105,10 @@ function renderHome() {
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
 
-    <div class="home-mine" id="homeMine"></div>
+    <div class="home-block home-block--mine" id="homeMineBlock">
+      <h2 class="home-h">캐릭터 정보</h2>
+      <div class="home-mine" id="homeMine"></div>
+    </div>
 
     <div class="home-block" id="homeFeatures">
       <h2 class="home-h">추천 기능</h2>
@@ -132,7 +135,7 @@ function renderHome() {
     document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
   if (document.body.classList.contains('char-home')) mountHomeCharArea();
-  else document.getElementById('homeMine').hidden = true;
+  else document.getElementById('homeMineBlock').hidden = true;
 
   const car = document.getElementById('homeCar');
   const slides = [...car.querySelectorAll('.home-slide')];

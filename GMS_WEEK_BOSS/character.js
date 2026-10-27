@@ -108,7 +108,12 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
     // Heroic/일반 구분 없이 이름으로 검색되므로 reboot는 늘 0
     const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=0&region=${state.region}`);
     const j = await r.json();
-    if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
+    if (!j.ok) { box.innerHTML = `<span class="lk-err">${escHtml(j.error)}</span>`; return; }
+    // 레벨 200 이상만 조회해 등록한다. 랭킹에는 200 미만도 나오지만 보스 계산 대상이 아니다
+    if ((parseInt(j.data.level) || 0) < 200) {
+      box.innerHTML = '<span class="lk-err">캐릭터의 레벨이 200 미만입니다. 레벨 200 이상 캐릭터만 조회할 수 있습니다.</span>';
+      return;
+    }
     j.data.job = canonJobName(j.data.job);  // 약칭 → 정식 이름
     fetchedInfo = j.data;
     recordSnapshot(j.data);                 // 조회 시점 스냅샷 누적
@@ -122,8 +127,8 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
       <div class="lk-card">
         ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
         <div class="lk-card__info">
-          <div class="lk-card__name">${j.data.name} <span class="lk-card__job">${j.data.job}</span></div>
-          <div class="lk-card__meta">Lv.${j.data.level} · ${j.data.region} ${j.data.world} · 전체 ${j.data.rank.toLocaleString()}위</div>
+          <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(j.data.job)}</span></div>
+          <div class="lk-card__meta">Lv.${j.data.level} · ${escHtml(j.data.region)} ${escHtml(j.data.world)} · 전체 ${j.data.rank.toLocaleString()}위</div>
           <div class="lk-card__exp">누적 EXP ${Number(j.data.exp).toLocaleString()}</div>
         </div>
       </div>
@@ -170,7 +175,7 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   let name, level, fetched;
   if (useFetched) {
     name  = fetchedInfo.name;
-    level = Math.max(200, Math.min(300, parseInt(fetchedInfo.level) || 200));
+    level = Math.min(300, parseInt(fetchedInfo.level) || 200);   // 조회는 200 이상만 받는다
     fetched = { ...fetchedInfo, syncedAt: Date.now() };   // 방금 조회 → 자동 최신화 대상에서 제외
     const ji = jobIdxFromName(fetchedInfo.job);
     selectedJob = ji >= 0 ? ji : selectedJob;

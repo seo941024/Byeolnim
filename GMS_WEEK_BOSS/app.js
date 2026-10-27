@@ -323,6 +323,9 @@ function updateCrystalBar() {
   }
   const elM = document.getElementById('totalMonthMeso');
   if (elM) { elM.textContent = fmtMeso(monthTotal); elM.style.color = monthTotal < 0 ? 'var(--danger)' : ''; }
+  const elHW = document.getElementById('hcWeekly');
+  const act = state.chars[state.activeChar];
+  if (elHW && act) elHW.outerHTML = hcWeeklyHtml(act);
 }
 
 /* ── 캐릭터 목록 렌더 (사이드바: active 1개만) ── */
@@ -341,27 +344,79 @@ function renderCharList() {
   const portrait = ch.fetched?.img
     ? `<img src="${ch.fetched.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('char-card__portrait--no')" />`
     : `<img src="images/dailytasks/default.png" alt="" />`;
-  const jn = charJobName(ch);
-  const world = ch.fetched?.world || '';
-  const sIcon = world ? serverIconSrc(world) : '';
-  const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
-  li.innerHTML = `
+  // 사이드바를 끈 동안에는 이 목록이 홈으로 옮겨져 있으므로 홈 카드로 그린다
+  if (document.body.classList.contains('no-sidebar')) {
+    li.classList.add('char-card--home');
+    li.innerHTML = charHomeCardHtml(ch, i, portrait);
+  } else {
+    const jn = charJobName(ch);
+    const world = ch.fetched?.world || '';
+    const sIcon = world ? serverIconSrc(world) : '';
+    const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
+    li.innerHTML = `
     <div class="char-card__inner">
       <div class="char-card__txt">
         <div class="char-card__name">${escHtml(ch.name)}</div>
         <div class="char-card__lv">Lv.${ch.level}</div>
         ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(world)}</span></div>` : ''}
         ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
-        <div class="char-card__btns">
-          <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
-          <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
-        </div>
+        ${charCardBtnsHtml(i)}
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
     </div>`;
+  }
   li.addEventListener('click', e => { if (!e.target.closest('[data-action]')) selectChar(i); });
   ul.appendChild(li);
   updateCrystalBar();
+}
+
+function charCardBtnsHtml(i) {
+  return `<div class="char-card__btns">
+          <button class="ccbtn ccbtn--edit" data-action="edit" data-i="${i}">수정</button>
+          <button class="ccbtn ccbtn--del"  data-action="del"  data-i="${i}">삭제</button>
+        </div>`;
+}
+
+/* 홈의 내 캐릭터 카드. 캐릭터 목록 카드(renderCharInfo)와 같은 정보에 경험치 막대를 더했다.
+   경험치 표(data_exp.js)가 없는 레벨은 막대를 그리지 않는다 */
+function charHomeCardHtml(ch, i, portrait) {
+  const f = ch.fetched;
+  const jn = charJobName(ch);
+  const world = f?.world || '';
+  const region = charRegion(ch);
+  const sIcon = world ? serverIconSrc(world) : '';
+  const headSrc = charJobHeadSrc(ch);
+  const lv = f?.level || ch.level;
+  const pct = f ? expPercent(lv, Number(f.exp)) : null;
+  return `
+    <div class="hc">
+      <div class="char-card__portrait hc__pic${f?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
+      <div class="hc__body">
+        <div class="hc__top">
+          <div class="hc__id">
+            <div class="hc__name">${escHtml(ch.name)}</div>
+            ${jn ? `<div class="hc__job">${escHtml(jn)}</div>` : ''}
+          </div>
+          ${headSrc ? `<img class="hc__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
+        </div>
+        <div class="hc__meta">
+          <span class="hc__lv">Lv.${lv}</span>
+          ${world ? `<span class="hc__server">${sIcon ? `<img src="${sIcon}" alt="" onerror="this.style.display='none'" />` : ''}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
+        </div>
+        ${pct == null ? '' : `<div class="hc__exp"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"><i style="width:${pct.toFixed(2)}%"></i></span><span class="hc__exp-val">${pct.toFixed(3)}%</span></div>`}
+        <div class="hc__stats">
+          ${f?.rank ? `<div class="hc__stat"><span>${escHtml(region)} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : ''}
+          <div class="hc__stat"><span>주간 수익</span>${hcWeeklyHtml(ch)}</div>
+        </div>
+        ${charCardBtnsHtml(i)}
+      </div>
+    </div>`;
+}
+
+/* 보스를 체크할 때마다 카드 전체를 다시 그리지 않도록 주간 수익만 따로 만든다(updateCrystalBar가 갈아 끼운다) */
+function hcWeeklyHtml(ch) {
+  const weekly = charWeeklyMeso(ch) - rentalWeeklyCost(ch);
+  return `<b id="hcWeekly"${weekly < 0 ? ' class="hc__neg"' : ''} title="${fmtMeso(weekly)}">${ch.weekDone ? '<i class="ci-income-done">완료 · </i>' : ''}${fmtMesoCompact(weekly)}</b>`;
 }
 
 function selectChar(i) {
@@ -561,7 +616,11 @@ function rentalWeeklyCost(ch = state.chars[state.activeChar]) {
 }
 function rentalMonthlyCost(ch = state.chars[state.activeChar]) {
   const s = getRentalState(ch);
-  return rentalWeeklyCost(ch) * (s.wed ? 2 : 4);
+  // 매주 대여하므로 그달 목요일(리셋) 수만큼 낸다 — 월 수익도 목요일 수로 센다.
+  // 수요일 대여는 한 번에 2주를 잡으므로 보스 주 1주마다 대여 반 번 값이다. 달을 넘는 대여(10/31 수요일 →
+  // 11월 첫 주까지)는 두 달이 반씩 나눠 갖게 되어, 달마다 올림하던 예전 방식과 달리 1년 합계가 실제 횟수와 맞는다
+  const weeks = thursdaysInMonth();
+  return rentalWeeklyCost(ch) * (s.wed ? weeks / 2 : weeks);
 }
 
 function initRentalSlots() {

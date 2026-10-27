@@ -504,11 +504,8 @@ function _hrRollLines(grade) {
     ...(lower ? { [lower]: _rawOpts(dk, part, lv, lower) } : {}),
   };
 
-  /* "<쓸만한 OO> 스킬 사용 가능" 같은 유니크 효과는 한 아이템에 한 줄만 붙는다
-     (실제 게임 제약 — 같은 3줄 안에 두 개가 같이 뜨지 않는다). 그래서 앞선 줄에서
-     이미 유니크가 나왔으면, 그 뒤 줄들은 유니크 종류를 아예 후보에서 빼고
-     나머지 옵션들끼리 확률을 다시 정규화해서 뽑는다. */
-  let hasUnique = false;
+  /* 한 아이템에 한 줄만 붙는 옵션은 없다(지수 확인) — 줄마다 독립으로 뽑는다.
+     예전에는 쓸만한 스킬·무적 같은 옵션 20종을 한 줄로 막아서 옵션 확률 탭과 결과가 달랐다 */
   const lines = [];
   for (const ln of [1, 2, 3]) {
     const info = og.find(o => o.line === ln);
@@ -518,15 +515,12 @@ function _hrRollLines(grade) {
     // 어느 등급 풀에서 뽑을지 먼저 정한다
     const useLower = _weightedPick([cp, lp]) === 1;
     const pickGrade = useLower ? lower : grade;
-    let pool = pools[pickGrade] || [];
-    if (hasUnique) pool = pool.filter(o => _parse(o.name).type !== 'unique');
+    const pool = pools[pickGrade] || [];
     if (!pool.length) continue;
 
     const idx = _weightedPick(pool.map(o => o.probability));
     if (idx < 0) continue;
-    const picked = pool[idx];
-    if (_parse(picked.name).type === 'unique') hasUnique = true;
-    lines.push({ name: picked.name, grade: pickGrade });
+    lines.push({ name: pool[idx].name, grade: pickGrade });
   }
   return lines;
 }

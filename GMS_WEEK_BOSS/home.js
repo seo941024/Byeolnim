@@ -1,6 +1,6 @@
 /* =============================================
    home.js — 첫 화면(홈)
-   뮤즈대시 첫 화면처럼 모눈종이 머리 영역(떠다니는 별님앱 글자, 그 아래 사이드바에 있던 명찰·결정석·수익,
+   뮤즈대시 첫 화면처럼 모눈종이 머리 영역(떠다니는 별·님·앱 스티커 글자, 그 아래 내 캐릭터 카드·결정석·수익,
    아래 화살표), 가운데 카드가 앞으로 나오는 주요 기능 슬라이드,
    사이드바와 같은 전체 메뉴 바둑판으로 짠다.
    움직임은 style.css "홈" 구역에 있고, 여기서는 그리기와 슬라이드 넘기기만 한다.
@@ -17,6 +17,45 @@ const HOME_FEATURES = [
   { sec: 'bosshp',     title: '보스 정보',           desc: '보스 HP와 난이도별 드랍 아이템을 보여줍니다.', art: 'images/bosses/seren.webp' },
 ];
 const HOME_AUTO_MS = 4500;
+
+/* 별·님·앱 스티커 글자와 반짝이. 글꼴은 메이플스토리 Bold에서 이 세 글자만 뽑은 font/maple_title.woff.
+   글자마다 금색 바깥 테두리, 굵은 흰 테두리, 채움을 같은 자리에 세 번 겹쳐 그린다.
+   SVG라 테두리 모서리를 둥글게 줄 수 있다. vb는 글꼴 크기 100에서 그 글자 윤곽에 테두리 15만큼을 더한
+   가로 범위이고, 세로는 세 글자가 같은 줄에 서도록 모두 -90.6부터 122.4로 맞췄다.
+   채움은 예전 제목과 같은 금색에서 연보라로 가는 가로 그라데이션을 세 글자에 나눠 이어 칠한다 */
+const HOME_TITLE_CHARS = [
+  { ch: '별', vb: '-10.7 -90.6 107.8 122.4' },
+  { ch: '님', vb: '-10 -90.6 105.6 122.4' },
+  { ch: '앱', vb: '-12.6 -90.6 117.7 122.4' },
+];
+/* 홈 머리 영역에 반짝이는 ✦와 같은 네 갈래 별 */
+const HOME_TITLE_SPARK = 'M0-50Q9-9 50 0Q9 9 0 50Q-9 9-50 0Q-9-9 0-50Z';
+
+function _homeSticker(shape, vb, cls) {
+  return `<span class="home-title__ch ${cls}"><svg viewBox="${vb}" aria-hidden="true">
+      ${['ring', 'white', 'fill'].map(l => shape(`home-title__${l}`)).join('')}
+    </svg></span>`;
+}
+
+function _homeTitleHtml() {
+  // 글자 k의 채움 — 단어 전체 그라데이션 중 k번째 3분의 1 구간. 구간 끝 색은 style.css의 --st-g01·--st-g12
+  const grads = [
+    ['--st-g0', '--st-g01'],
+    ['--st-g01', '--st-g1', '--st-g12'],
+    ['--st-g12', '--st-g2'],
+  ];
+  const stops = g => g.length === 2
+    ? `<stop offset="0" style="stop-color:var(${g[0]})"/><stop offset="1" style="stop-color:var(${g[1]})"/>`
+    : `<stop offset="0" style="stop-color:var(${g[0]})"/><stop offset=".2" style="stop-color:var(${g[1]})"/><stop offset="1" style="stop-color:var(${g[2]})"/>`;
+  return `<h1 class="home-title" aria-label="별님앱">
+      <svg class="home-title__defs" aria-hidden="true" focusable="false"><defs>
+        ${grads.map((g, i) => `<linearGradient id="homeTitleFill${i + 1}">${stops(g)}</linearGradient>`).join('')}
+        <linearGradient id="homeTitleSpark" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--st-sa)"/><stop offset="1" style="stop-color:var(--st-sb)"/></linearGradient>
+      </defs></svg>
+      ${HOME_TITLE_CHARS.map((c, i) => _homeSticker(cls => `<text class="${cls}">${c.ch}</text>`, c.vb, `home-title__ch--${i + 1}`)).join('')}
+      ${_homeSticker(cls => `<path class="${cls}" d="${HOME_TITLE_SPARK}"/>`, '-80 -80 160 160', 'home-title__spark')}
+    </h1>`;
+}
 
 let _homeIdx = 0, _homeTimer = null, _homeHold = false;
 
@@ -58,7 +97,7 @@ function renderHome() {
         <img class="home-hero__face" src="images/logo/head_normal.png" alt="" width="248" height="216">
         <img class="home-hero__face home-hero__face--smile" src="images/logo/head_smile.png" alt="" width="248" height="216">
       </div>
-      <h1 class="home-hero__title">별님앱</h1>
+      ${_homeTitleHtml()}
       <div class="home-mine" id="homeMine"></div>
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="주요 기능으로 내려가기"><span></span></button>
     </div>

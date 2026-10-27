@@ -149,7 +149,8 @@ function _soulResetStep() {
   let upgraded = false;
   if (gu) {
     _soulPotState.gradeStreak++;
-    const forced = _soulPotState.gradeStreak >= gu.ceil;
+    // 천장: ceil번 재설정해도 안 오르면 그 다음 재설정(ceil+1번째)에서 확정 — 예) 레어→에픽 100번 실패 후 101번째
+    const forced = _soulPotState.gradeStreak > gu.ceil;
     if (forced || Math.random() < gu.chance) {
       _soulPotState.grade = gu.to;
       _soulPotState.gradeStreak = 0;

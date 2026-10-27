@@ -63,6 +63,11 @@ function libRefresh(cfg) {
   if (document.querySelector(`${p} .gen-date-big, ${p} .gen-res-row`)) cfg.render();
 }
 
+/* 보스의 최대 파티 인원. 숫자 하나이거나 난이도별 묶음(스우 익스트림 2인 등)이다 */
+function libMaxParty(b, diff) {
+  return typeof b.maxParty === 'object' ? (b.maxParty[diff] ?? 6) : b.maxParty;
+}
+
 function libYield(cfg, id) {
   const sel  = cfg.st.sel[id] || {};
   const diff = sel.diff || 'none';
@@ -110,7 +115,7 @@ function libBossCardHtml(cfg, b) {
             <div class="party-stepper ${cfg.cls}__party" data-id="${b.id}">
               <button class="pm" ${party<=1?'disabled':''}>−</button>
               <span class="party-stepper__val">${party}</span>
-              <button class="pp" ${party>=b.maxParty?'disabled':''}>+</button>
+              <button class="pp" ${party>=libMaxParty(b, diff)?'disabled':''}>+</button>
             </div>
           </div>
           <div class="gen-boss__row3">
@@ -136,7 +141,7 @@ function libUpdateCard(cfg, panel, b) {
   traceEl.textContent = `+${libFmt(libYield(cfg, b.id))}`;
   traceEl.classList.toggle('on', active);
   card.querySelector('.pm').disabled = party <= 1;
-  card.querySelector('.pp').disabled = party >= b.maxParty;
+  card.querySelector('.pp').disabled = party >= libMaxParty(b, sel.diff || 'none');
   card.querySelector('.party-stepper__val').textContent = party;
 }
 
@@ -152,13 +157,20 @@ function libBindBossCards(cfg, panel) {
     const b = bossOf(ps);
     const party = () => (cfg.st.sel[b.id] || {}).party || 1;
     ps.querySelector('.pm').addEventListener('click', () => { if (party() > 1) set(b, { party: party() - 1 }, true); });
-    ps.querySelector('.pp').addEventListener('click', () => { if (party() < b.maxParty) set(b, { party: party() + 1 }, true); });
+    ps.querySelector('.pp').addEventListener('click', () => {
+      if (party() < libMaxParty(b, (cfg.st.sel[b.id] || {}).diff || 'none')) set(b, { party: party() + 1 }, true);
+    });
   });
   panel.querySelectorAll(`.${cfg.cls}__cb`).forEach(cb => {
     cb.addEventListener('change', () => set(bossOf(cb), { cleared: cb.checked }, false));
   });
   panel.querySelectorAll(`.${cfg.cls}__diff`).forEach(s => {
-    s.addEventListener('change', () => set(bossOf(s), { diff: s.value }, true));
+    // 난이도를 바꿔 최대 인원이 줄면 인원도 거기 맞춘다(하드 6인 → 익스트림 2인)
+    s.addEventListener('change', () => {
+      const b = bossOf(s), max = libMaxParty(b, s.value);
+      const party = (cfg.st.sel[b.id] || {}).party || 1;
+      set(b, party > max ? { diff: s.value, party: max } : { diff: s.value }, true);
+    });
   });
 }
 
@@ -187,7 +199,7 @@ const GEN = {
   topNl: true,   // 제네시스 카드만 이름 줄 앞뒤에 줄바꿈이 들어간다 — innerHTML을 그대로 두려고 맞춤
   bosses: Object.keys(TRACE_YIELD).map(id => {
     const b = BOSS_DATA.find(x => x.id === id) || { name:id, img:'' };
-    return { id, name: b.name, img: b.img, maxParty: 6 };
+    return { id, name: b.name, img: b.img, maxParty: b.maxParty ?? 6 };   // 보스 수익 계산기와 같은 난이도별 최대 인원
   }),
   yields: TRACE_YIELD,
   mult: () => genState.pass ? GENESIS_PASS_MULT : 1,
@@ -195,6 +207,11 @@ const GEN = {
   ckLabel: id => genMonthly(id) ? '금월 격파' : '이번주',
   render: renderResult,
 };
+// 예전에는 제네시스만 모든 보스를 6인까지 받았다 — 저장된 인원이 그 난이도 최대보다 크면 최대로 맞춘다
+GEN.bosses.forEach(b => {
+  const sel = genState.sel && genState.sel[b.id];
+  if (sel && sel.party > libMaxParty(b, sel.diff || 'none')) sel.party = libMaxParty(b, sel.diff || 'none');
+});
 
 /* ─── 계산 로직 ─── */
 function calcResult() {
@@ -608,7 +625,7 @@ function renderAstraResult() {
   const r = calcAstraResult();
 
   if (r.allDone) {
-    panel.innerHTML = libMsgHtml('아스트라 2차까지 모두 완료했습니다.');
+    panel.innerHTML = libMsgHtml('아스트라 3차 해방까지 모두 완료했습니다.');
     return;
   }
   if (r.rows.length === 0) {

@@ -106,4 +106,5 @@ const ASTRA_QUESTS = [
   { name:'2차 퀘스트', frag:3000, trace:600 },
   { name:'3차 퀘스트', frag:4000, trace:800 },
 ];
-const ASTRA_WEAPON_STAGES = ['일반', '아스트라 1차', '아스트라 2차'];
+// 지금 낀 보조무기. 3차 해방이 마지막이라 '아스트라 3차'를 고르면 남은 퀘스트가 없다
+const ASTRA_WEAPON_STAGES = ['일반', '아스트라 1차', '아스트라 2차', '아스트라 3차'];

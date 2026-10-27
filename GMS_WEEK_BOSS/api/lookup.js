@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const info = await lookupCharacter(name, reboot, region);
-    if (!info) return bad(res, 200, '캐릭터를 찾을 수 없습니다. (월드/리부트 구분 확인)');
+    if (!info) return bad(res, 200, '캐릭터를 찾을 수 없습니다. 캐릭터의 레벨이 200 미만이거나 월드·리부트 구분이 다를 수 있습니다.');
 
     // 추적 등록 + 즉시 스냅샷 (Redis 사용 가능할 때만)
     const redis = getRedis();

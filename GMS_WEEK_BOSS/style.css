@@ -178,7 +178,7 @@
   --btn:        rgb(var(--star));
   --btn-hover:  #efba2c;
   --on-btn:     var(--text);
-  --btn-border: transparent;
+  --btn-border: #e3ad24;   /* 다크처럼 얇은 테두리. 바탕보다 한 단계 짙은 노랑 */
   --btn-shadow: 0 2px 6px rgba(214,160,20,.22);
   --lookup-bg: #ffffff;
   --gt-rare: #2f5fd0; --gt-epic: #7c34d6; --gt-unique: #8a6b00; --gt-legendary: #566f00;

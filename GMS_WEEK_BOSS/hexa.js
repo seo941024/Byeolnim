@@ -90,6 +90,7 @@ function renderAllHexaLists() {
   renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, [ico(5), ico(6), ico(7), ico(8)]);
   renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   [ico(9), ico(10), ico(11), ico(12)]);
   renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  commonIcoFull);
+  _hxClampHaveSE(); // 캐릭터 레벨에 따라 솔 에르다 최대 소지량이 달라진다
   _hxCompute(); // 탭 진입/캐릭 전환 시 결과 자동 표시
 }
 
@@ -164,10 +165,27 @@ function _hxCompute() {
       ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.
     </div>`;
 }
+/* 솔 에르다 최대 소지량 — 캐릭터 레벨에 따라 284까지 20개, 285~289는 25개, 290부터 30개.
+   캐릭터가 없으면 레벨을 모르므로 가장 큰 30개까지 받는다 */
+function solErdaMax() {
+  const ch = state.chars[state.activeChar];
+  if (!ch) return 30;
+  const lv = parseInt(ch.fetched?.level || ch.level) || 0;
+  return lv >= 290 ? 30 : lv >= 285 ? 25 : 20;
+}
+/* 보유 솔 에르다 칸의 최대값을 활성 캐릭터에 맞추고, 넘는 값은 최대로 잘라 칸에도 되돌려 적는다 */
+function _hxClampHaveSE() {
+  const inp = document.getElementById('hxHaveSE');
+  if (!inp) return;
+  const max = solErdaMax();
+  inp.max = max;
+  inp.value = Math.max(0, Math.min(max, parseInt(inp.value) || 0));
+}
+
 document.getElementById('hxCalc')?.addEventListener('click', _hxCompute);
-// 보유 솔 에르다/조각 변경 시 자동 재계산. 솔 에르다는 최대 20개라 잘라서 칸에도 되돌려 적는다
-document.getElementById('hxHaveSE')?.addEventListener('change', e => {
-  e.target.value = Math.max(0, Math.min(20, parseInt(e.target.value) || 0));
+// 보유 솔 에르다/조각 변경 시 자동 재계산
+document.getElementById('hxHaveSE')?.addEventListener('change', () => {
+  _hxClampHaveSE();
   _hxCompute();
 });
 document.getElementById('hxHaveSEF')?.addEventListener('change', _hxCompute);

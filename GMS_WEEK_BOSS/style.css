@@ -2818,7 +2818,7 @@ body::before {
 /* 결정석·수익 칸 위 제목. 사이드바에서는 숨기고 홈에서만 캐릭터 제목과 같은 글자로 보인다 */
 .sb-income-label { display: none; }
 .home-mine .sb-income-label { display: block; grid-column: 2 / -1; grid-row: 1; align-self: center; max-width: none; }
-.home-mine .sb-pin, .home-mine #sbBtnSettings { display: none; }
+.home-mine #sbBtnSettings { display: none; }
 .home-mine .char-list { grid-column: 1; grid-row: 2 / span 2; padding: 0; }
 .home-mine .crystal-bar { grid-column: 2 / -1; grid-row: 2; align-self: center; padding: 4px 2px; }
 .home-mine .sb-weekmeso { grid-row: 3; margin: 0; justify-content: center; padding: 14px 18px; }
@@ -3725,37 +3725,30 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 
 /* ── PC 사이드바 자동 숨김 (app.js의 사이드바 부분) ──
-   고정(sidebar-pinned)이 아니면 사이드바를 화면 밖으로 빼고 본문을 전체 폭으로 쓴다.
+   사이드바를 늘 화면 밖으로 빼고 본문을 전체 폭으로 쓴다.
    왼쪽 끝 좁은 띠(.sidebar-hotzone)에 마우스를 대면 본문 위로 튀어나온다(sidebar-peek). */
 .sidebar-hotzone { display: none; }
-.sb-pin { padding: 5px 10px; font-size: .74rem; }
-.sb-pin.is-on { border-color: var(--primary); color: var(--text); }
 @media (min-width: 769px) {
-  body:not(.sidebar-pinned) .app { grid-template-columns: minmax(0,1fr); }
-  body:not(.sidebar-pinned) .sidebar {
+  .app { grid-template-columns: minmax(0,1fr); }
+  .sidebar {
     position: fixed; left: 0; top: var(--top-h); z-index: 90;
     width: 22.67rem; height: calc(100vh - var(--top-h));
     transform: translateX(-100%); transition: transform .22s ease;
   }
-  body.sidebar-peek:not(.sidebar-pinned) .sidebar { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,.55); }
-  body:not(.sidebar-pinned) .sidebar-hotzone {
+  body.sidebar-peek .sidebar { transform: translateX(0); box-shadow: 8px 0 32px rgba(0,0,0,.55); }
+  .sidebar-hotzone {
     display: block; position: fixed; left: 0; top: var(--top-h); bottom: 0; width: 16px; z-index: 89;
     background: linear-gradient(90deg, rgba(var(--hue-l),.22), transparent);
   }
 }
+/* ── 캐릭터 영역을 홈에 둠 (body.char-home) ──
+   캐릭터 명찰·결정석·수익은 home.js가 홈으로 옮겨 보여 주고, 사이드바에는 메뉴만 남는다.
+   폰은 원래 사이드바의 캐릭터 영역 안 설정 버튼을 썼다 — 그 버튼이 홈으로 옮겨져 숨으므로 헤더 설정 버튼을 다시 보인다 */
 @media (max-width: 768px) {
-  .sb-pin { display: none; }
-}
-/* ── 사이드바 잠시 끔 (body.no-sidebar) ──
-   캐릭터 명찰·결정석·수익은 홈(home.js)으로 옮겨 보여 주고, 메뉴 이동은 홈의 전체 메뉴와 헤더 로고로 한다.
-   다시 켜려면 index.html의 body에서 no-sidebar만 빼면 된다 */
-body.no-sidebar :is(.sidebar, .sidebar-hotzone, .sidebar-overlay, .hamburger) { display: none; }
-body.no-sidebar .app { grid-template-columns: minmax(0, 1fr); }
-/* 폰은 원래 사이드바 안의 설정 버튼을 썼다 — 사이드바가 꺼진 동안에는 헤더 설정 버튼을 다시 보이고,
-   햄버거가 빠진 자리만큼 명찰 폭을 줄여 헤더가 넘치지 않게 한다 */
-@media (max-width: 768px) {
-  body.no-sidebar #headerBtnSettings { display: inline-flex; }
-  body.no-sidebar #headerBtnAuth { max-width: calc(100vw - 230px); }
+  body.char-home #headerBtnSettings { display: inline-flex; flex-shrink: 0; }
+  /* 햄버거·로고·홈·이름표·설정이 한 줄에 서므로 로고는 줄이지 않고 이름이 길면 이름표만 말줄임으로 줄인다 */
+  body.char-home .header__logo { flex-shrink: 0; }
+  body.char-home .header__right, body.char-home #headerBtnAuth { min-width: 0; }
 }
 
 .mx-source { margin-top: -10px; }

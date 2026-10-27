@@ -156,24 +156,13 @@ window.addEventListener('popstate', e => {
 
 /* ── 사이드바 ──
    모바일(≤768px): 햄버거로 여닫는 드로어(sidebar-open).
-   PC: 기본은 숨김. 화면 왼쪽 끝에 마우스를 대면 튀어나오고(sidebar-peek) 벗어나면 다시 숨는다.
-   사이드바의 고정 버튼을 누르면 예전처럼 항상 펼쳐 둔다(sidebar-pinned, 다음 방문에도 유지). */
+   PC: 늘 숨겨 두고, 화면 왼쪽 끝에 마우스를 대면 튀어나오고(sidebar-peek) 벗어나면 다시 숨는다.
+   항상 펼쳐 두는 고정 기능은 지웠다 */
 function closeSidebar() {
   document.body.classList.remove('sidebar-open', 'sidebar-peek');
 }
-const SIDEBAR_PIN_KEY = 'gms_sidebar_pinned';
-function setSidebarPinned(on) {
-  document.body.classList.toggle('sidebar-pinned', on);
-  document.body.classList.remove('sidebar-peek');
-  const b = document.getElementById('sbBtnPin');
-  if (b) { b.textContent = on ? '고정 해제' : '사이드바 고정'; b.classList.toggle('is-on', on); }
-  try { localStorage.setItem(SIDEBAR_PIN_KEY, on ? '1' : '0'); } catch (e) {}
-}
 (() => {
-  let pinned = false;
-  try { pinned = localStorage.getItem(SIDEBAR_PIN_KEY) === '1'; } catch (e) {}
-  setSidebarPinned(pinned);
-  document.getElementById('sbBtnPin')?.addEventListener('click', () => setSidebarPinned(!document.body.classList.contains('sidebar-pinned')));
+  try { localStorage.removeItem('gms_sidebar_pinned'); } catch (e) {}   // 지운 고정 기능이 남긴 값
 
   const hot = document.createElement('div');
   hot.className = 'sidebar-hotzone';
@@ -356,8 +345,8 @@ function renderCharList() {
   const portrait = ch.fetched?.img
     ? `<img src="${ch.fetched.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('char-card__portrait--no')" />`
     : `<img src="images/dailytasks/default.png" alt="" />`;
-  // 사이드바를 끈 동안에는 이 목록이 홈으로 옮겨져 있으므로 홈 카드로 그린다
-  if (document.body.classList.contains('no-sidebar')) {
+  // body.char-home이면 이 목록이 홈으로 옮겨져 있으므로 홈 카드로 그린다
+  if (document.body.classList.contains('char-home')) {
     li.classList.add('char-card--home');
     li.innerHTML = charHomeCardHtml(ch, i, portrait);
   } else {

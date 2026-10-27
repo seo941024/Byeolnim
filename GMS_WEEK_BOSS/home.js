@@ -126,12 +126,12 @@ function renderHome() {
   document.getElementById('homeArrow').addEventListener('click', () =>
     document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
-  /* 사이드바를 끈 동안(body.no-sidebar)에는 사이드바의 캐릭터 영역을 통째로 여기로 옮긴다.
+  /* body.char-home이면 사이드바의 캐릭터 영역을 통째로 여기로 옮긴다. 사이드바에는 메뉴만 남는다.
      요소를 옮기는 것이라 id와 클릭 동작이 그대로 살아 있고, app.js가 그리던 그대로 갱신된다.
-     사이드바를 다시 켜면 옮기지 않으므로 내 캐릭터 칸은 빈 채로 숨는다 */
+     body에서 char-home을 빼면 옮기지 않으므로 캐릭터 영역은 사이드바로 돌아가고 내 캐릭터 칸은 숨는다 */
   const mine = document.getElementById('homeMine');
   const charArea = document.querySelector('.sb-char-area');
-  if (document.body.classList.contains('no-sidebar') && charArea) mine.appendChild(charArea);
+  if (document.body.classList.contains('char-home') && charArea) mine.appendChild(charArea);
   else mine.hidden = true;
 
   const car = document.getElementById('homeCar');

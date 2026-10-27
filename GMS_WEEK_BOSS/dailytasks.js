@@ -273,7 +273,7 @@ function _dtStep1Html() {
       </div>
       <div class="modal__body">
         <div class="lookup-box">
-          <div class="lookup-box__title">GMS 랭킹에서 불러오기</div>
+          <div class="lookup-box__title">검색으로 데이터 불러오기</div>
           <div class="lookup-box__row">
             <input class="inp" id="dtLkName" placeholder="GMS 캐릭터명 · 영문" autocomplete="off" />
             <button class="sbtn sbtn--primary" id="dtLkBtn">조회</button>
@@ -281,7 +281,7 @@ function _dtStep1Html() {
         </div>
         <div class="lookup-box__result" id="dtLkResult"></div>
 
-        <div class="char-manual-sep">또는 직접 입력</div>
+        <div class="char-manual-sep">직접 입력</div>
         <div class="field">
           <label class="field__label">캐릭터명</label>
           <input class="inp" id="dtManualName" placeholder="캐릭터명" autocomplete="off"

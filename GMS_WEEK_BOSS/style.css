@@ -112,6 +112,12 @@
      맞지만, 라이트에서는 --grad 자체가 골드 계열이라 --accent(역시 골드)를
      쓰면 금색 위에 금색 글자가 된다. 배경과 독립적으로 테마별로 정한다. */
   --on-grad: var(--accent);
+  /* 버튼·선택된 탭 바탕. 그라데이션 없이 한 색으로 칠한다 */
+  --btn:        #45365f;
+  --btn-hover:  #524172;
+  --on-btn:     var(--accent);
+  --btn-border: rgba(var(--hue-l),.25);
+  --btn-shadow: 0 2px 6px rgba(0,0,0,.3);
   --lookup-bg: rgba(86,48,115,.12);
 
   /* 등급 색은 한 곳에서만 정한다. --g-*는 테두리·배경용 원색,
@@ -167,6 +173,12 @@
   --hue-l: 214,168,44;
   --hue-d: 138,99,9;
   --on-grad: #ffffff;
+  /* 골드 그라데이션 버튼이 황토색처럼 칙칙하다는 의견으로, 라이트 버튼은 보라 한 색으로 바꿨다 */
+  --btn:        #7c4fd6;
+  --btn-hover:  #6b3fc4;
+  --on-btn:     #ffffff;
+  --btn-border: transparent;
+  --btn-shadow: 0 2px 6px rgba(124,79,214,.25);
   --lookup-bg: #ffffff;
   --gt-rare: #2f5fd0; --gt-epic: #7c34d6; --gt-unique: #8a6b00; --gt-legendary: #566f00;
 }
@@ -334,7 +346,7 @@ textarea, [contenteditable="true"] { cursor: text; }
   position: absolute; top: 2px; left: 2px;
   width: 16px; height: 16px;
   border-radius: 50%;
-  background: var(--grad);
+  background: var(--btn);
   box-shadow: var(--shadow);
   transition: transform .18s ease;
 }
@@ -908,25 +920,22 @@ tr.done .boss-thumb img { filter: none; }
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   border: 1px solid transparent;
 }
-.sbtn--add {
-  background: var(--grad); color: var(--on-grad);
-  font-size: .76rem; padding: 5px 13px;
-  box-shadow: 0 3px 10px rgba(0,0,0,.35);
-  border-color: rgba(var(--hue-l),.25);
+.sbtn--add, .sbtn--primary {
+  background: var(--btn); color: var(--on-btn);
+  box-shadow: var(--btn-shadow);
+  border-color: var(--btn-border);
 }
-.sbtn--add:hover { filter: brightness(1.1); }
-.sbtn--primary {
-  background: var(--grad); color: var(--on-grad);
-  box-shadow: 0 4px 14px rgba(0,0,0,.4);
-  border-color: rgba(var(--hue-l),.25);
-}
-.sbtn--primary:hover { filter: brightness(1.1); }
+.sbtn--add { font-size: .76rem; padding: 5px 13px; }
+.sbtn--add:hover, .sbtn--primary:hover { background: var(--btn-hover); }
 .sbtn--ghost {
   background: rgba(255,255,255,.06);
   color: var(--text-sub);
   border-color: var(--border);
 }
 .sbtn--ghost:hover { background: rgba(255,255,255,.12); color: var(--text); }
+/* 라이트의 보조 버튼은 아이보리 바탕·골드 테두리 대신 흰 바탕에 옅은 회색 테두리 */
+:root[data-theme="light"] .sbtn--ghost { background: #fff; border-color: rgba(20,18,28,.16); color: var(--text); }
+:root[data-theme="light"] .sbtn--ghost:hover { background: rgba(124,79,214,.07); border-color: rgba(124,79,214,.45); }
 .sbtn--danger { background: var(--danger); color: #fff; box-shadow: 0 4px 12px rgba(240,80,96,.3); }
 .sbtn--danger:hover { filter: brightness(1.1); }
 .w100 { width: 100%; justify-content: center; }
@@ -1025,7 +1034,7 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 }
 .lib-tab:last-child { border-right: none; }
 .lib-tab:hover { background: rgba(var(--hue),.1); color: var(--primary); }
-.lib-tab.active { background: var(--grad); color: var(--on-grad); box-shadow: none; }
+.lib-tab.active { background: var(--btn); color: var(--on-btn); box-shadow: none; }
 .lib-panel { display: none; flex-direction: column; gap: 14px; }
 .lib-panel.active { display: flex; }
 .lib-progress { height: 7px; background: rgba(255,255,255,.08); border-radius: 99px; overflow: hidden; }
@@ -2032,6 +2041,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .region-toggle__btn { flex: 1; padding: 5px 18px; border-radius: var(--radius-pill); font-size: .78rem; font-weight: 700; letter-spacing: .6px; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: var(--cur-pointer); transition: all .15s; }
 .region-toggle__btn:last-child { border-right: none; }
 .region-toggle__btn.active { background: var(--primary); color: #fff; box-shadow: 0 3px 12px rgba(0,0,0,.4); text-shadow: 0 0 8px rgba(var(--star),.4); }
+:root[data-theme="light"] .region-toggle__btn.active { background: var(--btn); color: var(--on-btn); box-shadow: var(--btn-shadow); text-shadow: none; }
 .region-toggle__btn:hover:not(.active) { background: rgba(var(--hue),.1); color: var(--text); }
 
 .lookup-box__row { display: flex; gap: 8px; }
@@ -3257,7 +3267,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   font-size: .84rem; font-weight: 800; color: var(--text-sub);
   background: var(--bg3); border: 1px solid var(--border);
 }
-.cs-tab.sel { color: #fff; background: var(--grad); border-color: transparent; }
+.cs-tab.sel { color: var(--on-btn); background: var(--btn); border-color: transparent; }
 .cs-pwbox {
   padding: 12px; background: var(--bg3); border: 1px solid var(--border);
   border-radius: var(--radius-sm);

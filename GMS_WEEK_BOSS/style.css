@@ -562,6 +562,12 @@ textarea, [contenteditable="true"] { cursor: text; }
 .char-card .char-card__portrait .ccbtn--del  { background: rgba(208,34,54,.86); color: #fff; }
 .char-card .char-card__portrait .ccbtn--edit:hover { background: var(--primary); color: #000; }
 .char-card .char-card__portrait .ccbtn--del:hover  { background: var(--danger); color: #fff; }
+/* 마우스가 있는 기기에서는 평소 흐리게 두고 캐릭터 그림에 올리거나 키보드로 고를 때만 또렷하게.
+   폰처럼 올릴 수 없는 기기는 늘 또렷하게 보인다 */
+@media (hover: hover) {
+  .char-card__portrait .char-card__btns { opacity: .22; transition: opacity .18s ease; }
+  .char-card__portrait:hover .char-card__btns, .char-card__portrait:focus-within .char-card__btns { opacity: 1; }
+}
 .char-card__jobicon { flex-shrink: 0; width: 28px; height: 28px; object-fit: contain; margin: -3px -2px -4px 0; }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .char-card__stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .68rem; }

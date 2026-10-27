@@ -729,13 +729,12 @@ function initMixdye() {
       if (!p.byIdBy[g].has(st.id)) st.id = p.rowsBy[g][0][0];
     }
   }
-  const cnt = (p, g) => p.rowsBy[g].length.toLocaleString();
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
-    <p class="dt-help">캐릭터 성별을 고르고 헤어·성형의 믹스 염색과 믹스 렌즈를 미리 보거나, 코디 탭에서 모자·한벌옷 같은 캐시 아이템을 입혀 봅니다. 헤어는 여자 ${cnt(MX_PARTS.hair, 'f')}종·남자 ${cnt(MX_PARTS.hair, 'm')}종, 성형은 여자 ${cnt(MX_PARTS.face, 'f')}종·남자 ${cnt(MX_PARTS.face, 'm')}종입니다.</p>
+    <p class="dt-help">캐릭터 성별을 고르고 헤어·성형의 믹스 염색과 믹스 렌즈를 미리 보거나, 코디 탭에서 모자·한벌옷 같은 캐시 아이템을 입혀 봅니다.</p>
     <p class="dt-help mx-notice">※ 믹스 염색·믹스 렌즈·피부 선 색은 실제 게임 계산이 아니라 비슷하게 만든 근사치입니다. 게임 화면과 색이 다를 수 있습니다.</p>
-    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터를 미리 받아 두고 사이트에서 직접 조립합니다. 게임 그림의 권리는 NEXON에 있습니다.</p>
+    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터를 미리 받아 두고 사이트에서 직접 조합합니다. 이미지의 권리는 NEXON에 있습니다.</p>
 
     <div class="mx-topbar">
       <div class="sf-tabs mx-sextabs">

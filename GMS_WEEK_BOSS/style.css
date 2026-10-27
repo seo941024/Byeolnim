@@ -271,10 +271,12 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
      흰 테두리가 잘려 있어서 한 칸 넓혀 그 자리만 흰색으로 채우고, 39×37을 도트 그대로 2배 한 78×74다.
      핫스팟 1 1은 왼쪽 위 화살표 끝이다. 예전 cursor32.png는 원본을 32×30으로 줄여 그림이 뭉개졌었다.
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
-   - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다. */
+   - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다.
+   - 크롬은 32px보다 큰 커서를 그림 전체가 화면 안에 들어올 때만 그린다. 화면 오른쪽·아래 끝에서는 큰 그림을 못 쓰고
+     목록의 다음 그림으로 넘어가므로, 32px 안으로 줄인 cursor_small.png를 둘째로 적어 시스템 손 모양 대신 이 그림이 나오게 한다 */
 :root {
-  --cur-default: url('images/icons/cursor.png?v=20261027e') 1 1, default;
-  --cur-pointer: url('images/icons/cursor.png?v=20261027e') 1 1, pointer;
+  --cur-default: url('images/icons/cursor.png?v=20261027e') 1 1, url('images/icons/cursor_small.png?v=20261028a') 0 0, default;
+  --cur-pointer: url('images/icons/cursor.png?v=20261027e') 1 1, url('images/icons/cursor_small.png?v=20261028a') 0 0, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }

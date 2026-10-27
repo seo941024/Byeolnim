@@ -307,11 +307,12 @@ textarea, [contenteditable="true"] { cursor: text; }
   box-shadow: 0 1px 0 rgba(var(--star),.06), 0 4px 32px rgba(0,0,0,.7), 0 0 60px rgba(86,48,115,.15);
 }
 .header__logo { display: flex; align-items: center; gap: 8px; }
-/* 로고 글자색은 다크·라이트 모두 이 밝은 노랑→연보라 그대로다. 테마 채도를 조절해도 따라 바뀌지 않게 값으로 박아 둔다 */
+/* 로고 글자색 — 다크는 채도를 낮춘 금색→연보라, 라이트는 원래의 밝은 노랑 #f6c744→연보라 #c4b5fd.
+   라이트를 다크와 같은 낮춘 색이나 진한 금색으로 두면 칙칙하다는 의견이 있었다 */
 .header__title {
   display: flex; flex-direction: column; gap: 1px; line-height: 1.15;
   font-size: 1rem; font-weight: 800; letter-spacing: .5px;
-  background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
+  background: linear-gradient(90deg, rgb(var(--star)) 0%, #cac0f2 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -320,11 +321,14 @@ textarea, [contenteditable="true"] { cursor: text; }
    그 자리에 다시 긴 글자를 얹지 않도록 여기선 숨긴다. */
 .header__title-en {
   font-size: .62rem; font-weight: 700; opacity: .75; letter-spacing: .2px;
-  background: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
+  background: linear-gradient(90deg, rgb(var(--star)) 0%, #cac0f2 100%);
   -webkit-background-clip: text; background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .header__title-kr { font-size: 1.14em; font-weight: 900; letter-spacing: 1px; }
+:root[data-theme="light"] .header__title, :root[data-theme="light"] .header__title-en {
+  background-image: linear-gradient(90deg, #f6c744 0%, #c4b5fd 100%);
+}
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 
 /* 테마 토글 — 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */
@@ -2769,9 +2773,11 @@ body::before {
 .home-hero__face--smile { opacity: 0; }
 .home-hero__char:hover .home-hero__face--smile { opacity: 1; }
 .home-hero__char:hover .home-hero__face:not(.home-hero__face--smile) { opacity: 0; }
-/* 별·님·앱 스티커 글자 — 같은 글자를 금색 바깥 테두리, 굵은 흰 테두리, 채움 순서로 겹친다.
-   세 글자는 조금씩 기울이고 높낮이를 달리해 삐뚤빼뚤하게 놓고, 반짝이는 앱 오른쪽 아래에 붙인다.
-   채움 --st-g0 → g1 → g2는 예전 제목 그라데이션(0%·40%·100%)이고, g01·g12는 그 그라데이션의 1/3·2/3 지점 색이다 */
+/* 별·님·앱 스티커 글자 — 같은 글자를 노랑 바깥 테두리, 굵은 흰 테두리, 채움 순서로 겹친다.
+   세 글자는 조금씩 기울이고 높낮이를 달리해 삐뚤빼뚤하게 놓고, 앱 오른쪽 아래에 글자와 조금 떨어뜨려
+   큰 반짝이를, 그 오른쪽 아래에 아주 작은 반짝이를 둔다.
+   채움 --st-g0 → g1 → g2는 0%·40%·100% 가로 그라데이션이고, g01·g12는 그 그라데이션의 1/3·2/3 지점 색이다.
+   좌상단 로고와 같이 다크는 채도를 낮춘 금색, 라이트는 밝은 노랑→연보라로 칠한다 */
 .home-title {
   --st-h: clamp(78px, 12vw, 124px);
   --st-ring: rgb(var(--star)); --st-white: #fff;
@@ -2781,10 +2787,10 @@ body::before {
   --st-sa: #fff4b8; --st-sb: rgb(var(--star));
   --st-shadow: drop-shadow(0 5px 0 rgba(30,14,60,.45)) drop-shadow(0 12px 18px rgba(0,0,0,.35));
   position: relative; display: flex; align-items: flex-end; justify-content: center;
-  margin: 4px 0 6px; line-height: 0;
+  margin: 4px 0 calc(var(--st-h) * .36); line-height: 0;
 }
 :root[data-theme="light"] .home-title {
-  --st-ring: #e2aa1e; --st-g0: #b07d0c; --st-g1: #d79a14; --st-g2: #7c4fd6; --st-sb: #f2b81c;
+  --st-ring: #ffbf1f; --st-g0: #ffc83d; --st-g1: #ffe27a; --st-g2: #c4b5fd; --st-sa: #fff6c4; --st-sb: #ffc933;
   --st-shadow: drop-shadow(0 5px 0 rgba(150,110,20,.22)) drop-shadow(0 12px 16px rgba(150,110,20,.18));
 }
 .home-title__defs { position: absolute; width: 0; height: 0; overflow: hidden; }
@@ -2806,8 +2812,15 @@ body::before {
 .home-title__ch--1 { rotate: -8deg; translate: 0 6px; }
 .home-title__ch--2 { rotate: 5deg; translate: 0 -10px; margin-left: -4px; }
 .home-title__ch--3 { rotate: -4deg; translate: 0 5px; margin-left: -4px; }
-.home-title__spark { position: absolute; right: calc(var(--st-h) * -.5); bottom: calc(var(--st-h) * -.24); rotate: 10deg; }
+.home-title__spark { position: absolute; right: calc(var(--st-h) * -.86); bottom: calc(var(--st-h) * -.3); rotate: 10deg; }
 .home-title__spark svg { height: calc(var(--st-h) * .72); }
+/* 큰 반짝이 오른쪽 아래의 아주 작은 반짝이. 작게 그려지는 만큼 테두리 값을 줄여 모양이 묻히지 않게 한다 */
+.home-title__mini { right: calc(var(--st-h) * -.95); bottom: calc(var(--st-h) * -.4); rotate: -12deg; }
+.home-title__mini svg { height: calc(var(--st-h) * .3); }
+.home-title__mini .home-title__ring  { stroke-width: 40px; }
+.home-title__mini .home-title__white { stroke-width: 28px; }
+/* 좁은 폰에서는 오른쪽 반짝이들이 머리 영역 밖으로 잘리므로 제목 묶음을 조금 왼쪽으로 옮긴다 */
+@media (max-width: 480px) { .home-title { translate: calc(var(--st-h) * -.4) 0; } }
 /* 아래로 내려가라는 화살표 — 뮤즈대시처럼 위에서 나타나 내려가며 사라진다 */
 .home-hero__arrow { position: absolute; left: 50%; bottom: 18px; width: 40px; height: 44px; margin-left: -20px; }
 .home-hero__arrow span {
@@ -2998,6 +3011,7 @@ body::before {
   .home-title__ch--2 svg { animation-duration: 2.5s; animation-delay: -.8s; }
   .home-title__ch--3 svg { animation-duration: 2.3s; animation-delay: -1.5s; }
   .home-title__spark svg { animation: sparkFloat 1.9s cubic-bezier(.45,.05,.55,.95) infinite alternate; animation-delay: -.4s; }
+  .home-title__mini svg { animation-duration: 1.5s; animation-delay: -1.1s; }
   .home-hero__arrow span { animation: heroArrow 2s ease-in-out infinite; }
   .home-slide__glow { animation: bootSpin 6s linear infinite; }
   .home-slide__icon { animation: heroIconFloat 2.6s ease-in-out infinite alternate; }

@@ -54,6 +54,7 @@ function _homeTitleHtml() {
       </defs></svg>
       ${HOME_TITLE_CHARS.map((c, i) => _homeSticker(cls => `<text class="${cls}">${c.ch}</text>`, c.vb, `home-title__ch--${i + 1}`)).join('')}
       ${_homeSticker(cls => `<path class="${cls}" d="${HOME_TITLE_SPARK}"/>`, '-80 -80 160 160', 'home-title__spark')}
+      ${_homeSticker(cls => `<path class="${cls}" d="${HOME_TITLE_SPARK}"/>`, '-80 -80 160 160', 'home-title__spark home-title__mini')}
     </h1>`;
 }
 

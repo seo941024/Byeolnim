@@ -282,11 +282,15 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
 .header__logo { display: flex; align-items: center; gap: 8px; }
 /* 로고 캐릭터 머리 — 평소엔 기본 얼굴, 올리면 웃는 얼굴. 두 장은 표정만 다르고 위치가 픽셀까지 같아서
    겹쳐 두고 투명도만 바꾼다(그때 그림을 새로 받지 않으니 바꿔 끼울 때 깜빡이지 않는다) */
-/* 높이 40.5px = 원본 54px의 0.75배(고해상도 화면은 1.5배). 40px이면 0.74배라 도트가 들쭉날쭉 빠지는데,
-   0.75배는 네 칸마다 한 칸씩 규칙적으로 줄어 계단이 고르다. 도트 그림이라 부드럽게 늘리지 않는다 */
-.header__face { position: relative; flex-shrink: 0; height: 40.5px; aspect-ratio: 62 / 54; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
+/* 높이 27px = 원본의 정확히 절반. 도트 그림을 0.75배처럼 어중간하게 줄이면 픽셀을 들쭉날쭉 버려서 깨져 보였다.
+   일반 화면은 2×2 칸을 평균 낸 반 크기 그림(*_half.png, 픽셀을 버리지 않는다)을, 고해상도 화면은 원본을
+   srcset으로 받아 어느 쪽이든 1:1로 그린다 */
+.header__face { position: relative; flex-shrink: 0; height: 27px; aspect-ratio: 62 / 54; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
 .header__logo:hover .header__face { transform: translateY(-2px) rotate(-5deg); }
-.header__face-img { position: absolute; inset: 0; width: 100%; height: 100%; image-rendering: pixelated; }
+.header__face-img { position: absolute; inset: 0; width: 100%; height: 100%; }
+/* 화면 배율이 딱 1·2배면 그림이 화면 픽셀과 1:1이라, 위치가 소수점이어도 번지지 않게 도트 방식으로 찍는다.
+   1.25·1.5배 같은 배율은 원본을 줄여 그려야 하므로 부드러운 축소에 맡긴다(도트 방식이면 다시 깨진다) */
+@media (resolution: 1dppx), (resolution: 2dppx) { .header__face-img { image-rendering: pixelated; } }
 .header__face-img--smile { opacity: 0; }
 .header__logo:hover .header__face-img--smile, .header__logo:active .header__face-img--smile { opacity: 1; }
 .header__logo:hover .header__face-img:not(.header__face-img--smile),

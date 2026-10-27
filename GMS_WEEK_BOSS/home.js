@@ -6,15 +6,16 @@
    움직임은 style.css "홈" 구역에 있고, 여기서는 그리기와 슬라이드 넘기기만 한다.
    ============================================= */
 
-/* 주요 기능 슬라이드. art가 있으면 그 그림을 배경으로 크게 깔고, 없으면 사이드바 아이콘을 크게 띄운다 */
+/* 주요 기능 슬라이드. 카드마다 사이드바 메뉴 아이콘을 크게 띄운다.
+   보스 그림을 깔아 본 적이 있는데, 폰처럼 칸이 납작해지면 그림이 늘어나 잘려서 뺐다 */
 const HOME_FEATURES = [
-  { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석 개수와 예상 수익을 계산합니다.', art: 'images/bosses/kalos.webp' },
+  { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석 개수와 예상 수익을 계산합니다.' },
   { sec: 'cube',       title: '큐브 시뮬레이터',     desc: '큐브 잠재 옵션 확률과 시뮬레이션을 사용할 수 있습니다.' },
   { sec: 'starforce',  title: '스타포스 시뮬레이터', desc: '목표 성까지 드는 메소 기댓값을 계산하고 직접 강화해 볼 수 있습니다.' },
   { sec: 'mixdye',     title: '코디 시뮬레이터',     desc: '믹스 염색과 코디를 캐릭터에 입혀 미리 볼 수 있습니다.' },
   { sec: 'mcalendar',  title: '메이플 캘린더',       desc: '보스 일정과 획득한 아이템을 날짜별로 기록합니다.' },
   { sec: 'liberation', title: '무기 해방 계산기',     desc: '해방 완료 예상 날짜를 알려줍니다.' },
-  { sec: 'bosshp',     title: '보스 정보',           desc: '보스 HP와 난이도별 드랍 아이템을 보여줍니다.', art: 'images/bosses/seren.webp' },
+  { sec: 'bosshp',     title: '보스 정보',           desc: '보스 HP와 난이도별 드랍 아이템을 보여줍니다.' },
 ];
 const HOME_AUTO_MS = 4500;
 
@@ -68,12 +69,8 @@ function _homeNavItems() {
 }
 
 function _homeSlideHtml(f, i, icons) {
-  const icon = icons[f.sec] || '';
-  const art = f.art
-    ? `<img class="home-slide__art" src="${f.art}" alt="" loading="lazy">`
-    : `<span class="home-slide__glow"></span><img class="home-slide__icon" src="${icon}" alt="">`;
   return `<button class="home-slide" data-i="${i}" data-sec="${f.sec}" type="button">
-      <span class="home-slide__pic${f.art ? ' home-slide__pic--art' : ''}">${art}</span>
+      <span class="home-slide__pic"><span class="home-slide__glow"></span><img class="home-slide__icon" src="${icons[f.sec] || ''}" alt=""></span>
       <span class="home-slide__body">
         <span class="home-slide__title">${escHtml(f.title)}</span>
         <span class="home-slide__desc">${escHtml(f.desc)}</span>

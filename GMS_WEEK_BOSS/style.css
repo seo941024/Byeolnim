@@ -2618,6 +2618,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sec--enter :is(.card, .cg-card, .bhp-card, .dt-card):nth-child(4) { animation-delay: .18s; }
 .sec--enter :is(.card, .cg-card, .bhp-card, .dt-card):nth-child(n+5) { animation-delay: .24s; }
 @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } }
+/* 스크롤하면 떠오르기 — common.js revealOnScroll. transform을 쓰는 카드 hover와 겹치지 않게 translate로 움직인다 */
+.rv { opacity: 0; translate: 0 24px; }
+.rv.rv-in { opacity: 1; translate: 0 0; transition: opacity .5s ease, translate .6s cubic-bezier(.2,.8,.2,1); }
 /* 제목 밑에 금빛 선이 그어진다 */
 .sec-head { position: relative; }
 .sec-head::after {
@@ -2921,7 +2924,7 @@ body::before {
 .hc__stats { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; }
 .hc__stat { display: flex; flex-direction: column; gap: 1px; min-width: 0; padding: 6px 9px; border-radius: 6px; background: rgba(var(--hue),.12); border: 1px solid rgba(var(--hue-l),.16); }
 .hc__stat span { font-size: .68rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hc__stat b { font-size: 1rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hc__stat b { font-size: .9rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .char-weekly.is-neg { color: var(--danger); }
 
 :root[data-theme="light"] .hc__pic {
@@ -3019,6 +3022,9 @@ body::before {
   .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
   .home-mine :is(.char-list, .sb-income-label, .crystal-bar, .sb-weekmeso:nth-child(5), .sb-weekmeso:nth-child(6)) { grid-column: 1; grid-row: auto; }
   .hc { grid-template-columns: 104px minmax(0, 1fr); }
+  /* 폰은 칸이 좁아 랭킹 숫자가 칸 밖으로 나가던 것을 글자를 줄여 맞춘다 */
+  .hc__stat { padding: 5px 7px; }
+  .hc__stat b { font-size: .8rem; }
   .home-slide { width: 84%; grid-template-columns: 1fr; grid-template-rows: 170px 1fr; }
   .home-slide.is-prev { transform: translateX(-128%) scale(.82); }
   .home-slide.is-next { transform: translateX(28%) scale(.82); }

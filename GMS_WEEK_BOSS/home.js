@@ -154,6 +154,7 @@ function renderHome() {
   });
 
   _homeGo(_homeIdx);
+  revealOnScroll(sec);   // 첫 화면 아래쪽 주요 기능·전체 메뉴는 스크롤하면 떠오른다
   clearInterval(_homeTimer);
   // 홈이 보이고, 탭이 앞에 있고, 마우스가 올라가 있지 않을 때만 넘긴다
   _homeTimer = setInterval(() => {

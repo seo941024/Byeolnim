@@ -144,3 +144,49 @@ function createAutoRunner({ btnId, idleLabel, runLabel, runClass, idleClass, bat
 function setActive(items, el, cls = 'active') {
   items.forEach(x => x.classList.toggle(cls, x === el));
 }
+
+/* ── 움직임 효과 공용 ── 움직임 줄이기 설정이면 둘 다 바로 그린다 */
+const _motionOff = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+
+/* 숫자 굴러 올라가기 — 값이 바뀌면 0.4초 동안 이전 값에서 새 값까지 굴러간다.
+   fmt는 숫자를 글자로 바꾸는 함수다. 처음 그릴 때와 탭이 뒤에 있을 때는 바로 바꾼다 */
+function setCountText(el, value, fmt) {
+  if (!el) return;
+  const from = el._countVal;
+  el._countVal = value;
+  cancelAnimationFrame(el._countRaf);
+  if (from == null || from === value || document.hidden || _motionOff?.matches) { el.textContent = fmt(value); return; }
+  const t0 = performance.now();
+  const step = now => {
+    const k = Math.min(1, (now - t0) / 400);
+    el.textContent = fmt(from + (value - from) * (1 - Math.pow(1 - k, 3)));
+    if (k < 1) el._countRaf = requestAnimationFrame(step);
+  };
+  el._countRaf = requestAnimationFrame(step);
+}
+
+/* 스크롤하면 떠오르기 — 메뉴를 열 때 화면 아래에 있어 안 보이는 카드만 숨겨 두었다가,
+   스크롤해서 보이면 한 번 떠오르게 한다. 이미 보이는 카드는 .sec--enter 등장 효과에 맡긴다.
+   움직임은 투명도와 translate만 쓴다. 카드 안의 카드는 바깥 카드와 함께 움직인다 */
+const REVEAL_SEL = '.card, .cg-card, .bhp-card, .dt-card, .home-h, .home-car, .home-tile, .ss-grid > *';
+let _revealIO = null;
+function revealOnScroll(root) {
+  if (!root || !('IntersectionObserver' in window) || _motionOff?.matches) return;
+  _revealIO ||= new IntersectionObserver(entries => {
+    entries.filter(e => e.isIntersecting).forEach((e, k) => {
+      const el = e.target, delay = Math.min(k, 5) * 60;
+      _revealIO.unobserve(el);
+      el.style.transitionDelay = delay + 'ms';
+      el.classList.add('rv-in');
+      setTimeout(() => { el.classList.remove('rv', 'rv-in'); el.style.transitionDelay = ''; }, 700 + delay);
+    });
+  }, { rootMargin: '0px 0px -8% 0px' });
+  const H = window.innerHeight;
+  root.querySelectorAll(REVEAL_SEL).forEach(el => {
+    const outer = el.parentElement?.closest(REVEAL_SEL);
+    if ((outer && root.contains(outer)) || el.classList.contains('rv')) return;
+    if (el.getBoundingClientRect().top < H) return;
+    el.classList.add('rv');
+    _revealIO.observe(el);
+  });
+}

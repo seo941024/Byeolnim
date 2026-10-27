@@ -136,6 +136,9 @@ function navigateTo(sec, fromHistory = false) {
     secEl.classList.add('sec--enter');
     clearTimeout(secEl._enterTimer);
     secEl._enterTimer = setTimeout(() => secEl.classList.remove('sec--enter'), 900);
+    // 그린 직후 한 번, 늦게 그려지는 메뉴를 위해 조금 뒤 한 번 더 화면 밖 카드를 찾는다
+    requestAnimationFrame(() => revealOnScroll(secEl));
+    setTimeout(() => revealOnScroll(secEl), 600);
   }
 }
 document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
@@ -301,27 +304,30 @@ function charAreaEls(id) {
   return [document.getElementById(id), document.getElementById('h_' + id)].filter(Boolean);
 }
 
+/* 굴러가는 도중의 소수 값도 메소 표기로 */
+const mesoCount = v => fmtMeso(Math.round(v));
+
 function updateCrystalBar() {
   const totalW = state.chars.reduce((s, c) => s + countWeeklyCrystals(c), 0);
   const totalM = state.chars.reduce((s, c) => s + countMonthlyCrystals(c), 0);
   const total  = Math.min(state.chars.reduce((s, c) => s + sellableCrystals(c), 0), MAX_CRYSTALS);
-  charAreaEls('totalCrystalCount').forEach(el => { el.textContent = `${total} / ${MAX_CRYSTALS}`; });
+  charAreaEls('totalCrystalCount').forEach(el => setCountText(el, total, v => `${Math.round(v)} / ${MAX_CRYSTALS}`));
   charAreaEls('totalCrystalFill').forEach(el => { el.style.width = (total/MAX_CRYSTALS*100) + '%'; });
-  charAreaEls('totalCrystalWeekly').forEach(el => { el.textContent = totalW; });
-  charAreaEls('totalCrystalMonthly').forEach(el => { el.textContent = totalM; });
+  charAreaEls('totalCrystalWeekly').forEach(el => setCountText(el, totalW, Math.round));
+  charAreaEls('totalCrystalMonthly').forEach(el => setCountText(el, totalM, Math.round));
   // 대여 비용은 캐릭터별로 합산해서 차감
   // weekDone이 켜진 캐릭터는 주간 합계에서 뺀다 — 이미 돈 캐릭터를 잠깐 빼고
   // 남은 캐릭터로 얼마가 더 들어오는지 보려는 용도. 수익 자체는 그대로 남는다.
   const weekTotal  = state.chars.reduce((s, c) =>
     c.weekDone ? s : s + charWeeklyMeso(c) - rentalWeeklyCost(c), 0);
   const monthTotal = state.chars.reduce((s, c) => s + charMonthlyMeso(c) - rentalMonthlyCost(c), 0);
-  charAreaEls('totalWeekMeso').forEach(el => { el.textContent = fmtMeso(weekTotal); });
+  charAreaEls('totalWeekMeso').forEach(el => setCountText(el, weekTotal, mesoCount));
   const doneCount = state.chars.filter(c => c.weekDone).length;
   charAreaEls('totalWeekDoneNote').forEach(el => {
     el.textContent = doneCount ? `${doneCount}명 제외됨` : '';
     el.style.display = doneCount ? '' : 'none';
   });
-  charAreaEls('totalMonthMeso').forEach(el => { el.textContent = fmtMeso(monthTotal); el.style.color = monthTotal < 0 ? 'var(--danger)' : ''; });
+  charAreaEls('totalMonthMeso').forEach(el => { setCountText(el, monthTotal, mesoCount); el.style.color = monthTotal < 0 ? 'var(--danger)' : ''; });
   const act = state.chars[state.activeChar];
   if (act) document.querySelectorAll('.char-weekly').forEach(el => { el.outerHTML = charWeeklyHtml(act); });
 }
@@ -466,10 +472,10 @@ function renderBossTable() {
     nm.textContent = '캐릭터를 선택하세요';
     cp.innerHTML = countHtml(0, 0);
     tb.innerHTML = `<tr><td colspan="4" class="empty">왼쪽에서 캐릭터를 선택하세요.</td></tr>`;
-    document.getElementById('weeklyTotal').textContent = '0 메소';
+    setCountText(document.getElementById('weeklyTotal'), 0, mesoCount);
     // 마지막 캐릭터를 지웠을 때 월 예상 수익에 지운 캐릭터 금액이 남지 않게 같이 비운다
     const monthEl0 = document.getElementById('monthlyTotal');
-    if (monthEl0) { monthEl0.textContent = '0 메소'; monthEl0.style.color = ''; }
+    if (monthEl0) { setCountText(monthEl0, 0, mesoCount); monthEl0.style.color = ''; }
     if (weekRow) weekRow.style.display = 'none';
     initRentalSlots();
     return;
@@ -685,8 +691,8 @@ function updateRentalTotals() {
   const monthNet = charMonthlyMeso(ch) - rentalMonthlyCost();
   const wEl = document.getElementById('weeklyTotal');
   const mEl = document.getElementById('monthlyTotal');
-  if (wEl) { wEl.textContent = fmtMeso(weekNet); wEl.style.color = weekNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
-  if (mEl) { mEl.textContent = fmtMeso(monthNet); mEl.style.color = monthNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (wEl) { setCountText(wEl, weekNet, mesoCount); wEl.style.color = weekNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
+  if (mEl) { setCountText(mEl, monthNet, mesoCount); mEl.style.color = monthNet < 0 ? 'var(--danger)' : 'var(--accent)'; }
   updateCrystalBar();
 }
 

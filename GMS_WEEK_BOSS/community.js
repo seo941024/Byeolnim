@@ -519,5 +519,5 @@ window.addEventListener('load', () => {
   _cmPostId = postId;
   navigateTo('community');   // 섹션을 열면서 목록으로 바꾸므로 그 뒤에 글 보기로 간다
   cmGo('post');
-  history.replaceState(null, '', location.pathname);
+  history.replaceState(history.state, '', location.pathname);   // app.js navigateTo가 남긴 메뉴 기록은 그대로 둔다
 });

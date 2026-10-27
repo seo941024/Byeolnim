@@ -309,6 +309,8 @@ input[type="text"], input[type="number"], input[type="search"], textarea { curso
   background-image: linear-gradient(90deg, #b07d0c 0%, #7c4fd6 100%);
 }
 .header__center { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+/* 로고 옆 홈 버튼 — 홈이 아닐 때만 보인다 */
+.header__home { flex-shrink: 0; margin-left: -8px; padding: 6px 12px; }
 
 /* 테마 토글 — 다크/화이트 텍스트 표기 + 아이콘 없는 스위치 */
 .theme-toggle-wrap { display: flex; align-items: center; gap: 7px; }
@@ -3032,6 +3034,7 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
   .theme-toggle-wrap { display: none; }
   .theme-toggle__label { display: none; }
   .header__right .hbtn { padding: 6px 10px; font-size: .72rem; }
+  .header__home { margin-left: -2px; padding: 6px 9px; font-size: .72rem; }
 
   /* 터치 영역 확보 — 라벨로 감싸이지 않아 아이콘 자체를 정확히 눌러야 하는 버튼들.
      보기 크기(글꼴·배경)는 그대로 두고 최소 눌림 영역만 넓힌다. */

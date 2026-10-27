@@ -30,6 +30,8 @@
   제목 글자를 바꾸면 fontTools로 다시 뽑고 home.js의 글자별 viewBox도 다시 잰다. 앱 오른쪽 아래에 같은 테두리의 ✦ 반짝이.
 - 사이드바를 끈 동안 내 캐릭터는 홈 카드로 그린다: app.js `charHomeCardHtml`. 캐릭터 목록 카드와 같은 정보에 경험치 막대를 더함.
   주간 수익만 `hcWeeklyHtml`로 따로 만들어 `updateCrystalBar`가 갈아 끼운다.
+- 메뉴 이동은 브라우저 기록에 남는다: `navigateTo`가 `history.pushState({ sec })`, `popstate`에서 그 메뉴로 돌아간다. 주소는 바꾸지 않는다.
+  홈이 아닐 때 헤더 로고 옆에 `#headerHome` 홈 버튼이 보인다.
 - 헤더 좌측 얼굴은 지움. 머리 그림 `images/logo/head_normal.png`·`head_smile.png`는 남겨 두고, 로딩 화면은 웃는 얼굴 2배를 쓴다.
   로고 글자를 누르면 홈.
 - 다크 테마 채도를 낮춤: `--hue`·`--primary` 계열과 금색. 금색은 `--star`(r,g,b) 변수 하나로 모았다 — 새 CSS도 `rgb(var(--star))`를 쓸 것.

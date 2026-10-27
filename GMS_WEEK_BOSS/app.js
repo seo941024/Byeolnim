@@ -95,8 +95,13 @@ const NAV_LABELS = {
   bosshp: '보스 정보', serverstatus: '서버 상태',
   community: '커뮤니티',
 };
-function navigateTo(sec) {
-  if (typeof va === 'function') va('event', { name: '메뉴 클릭', data: { section: NAV_LABELS[sec] || sec } });
+/* fromHistory: 브라우저 뒤로가기·앞으로가기로 온 이동. 이때는 기록을 새로 남기지 않는다 */
+function navigateTo(sec, fromHistory = false) {
+  if (!fromHistory && typeof va === 'function') va('event', { name: '메뉴 클릭', data: { section: NAV_LABELS[sec] || sec } });
+  // 메뉴를 열 때마다 브라우저 기록을 하나 남겨 마우스 뒤로 버튼, Alt+←, 폰 뒤로 제스처가 직전 메뉴로 돌아가게 한다.
+  // 주소는 그대로 두고 기록에 메뉴 이름만 담는다. 지금 메뉴를 다시 누르면 남기지 않는다
+  if (!fromHistory && history.state?.sec !== sec) history.pushState({ sec }, '');
+  document.getElementById('headerHome').hidden = sec === 'home';
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
@@ -141,6 +146,13 @@ document.querySelectorAll('.sb-group__head').forEach(head => {
   head.addEventListener('click', () => head.closest('.sb-group').classList.toggle('open'));
 });
 document.getElementById('headerLogo').addEventListener('click', () => navigateTo('home'));
+document.getElementById('headerHome').addEventListener('click', () => navigateTo('home'));
+// 첫 화면은 홈이다. 새로고침하면 브라우저가 이전 기록 값을 그대로 돌려주므로 지금 칸을 홈으로 다시 적는다
+history.replaceState({ sec: 'home' }, '');
+window.addEventListener('popstate', e => {
+  const sec = e.state?.sec;
+  navigateTo(sec && document.getElementById('sec-' + sec) ? sec : 'home', true);
+});
 
 /* ── 사이드바 ──
    모바일(≤768px): 햄버거로 여닫는 드로어(sidebar-open).

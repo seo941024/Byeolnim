@@ -102,6 +102,7 @@ function renderHome() {
       <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
         `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
+      <p class="home-tagline">글로벌 메이플스토리<br>종합 유틸 사이트</p>
       <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
 

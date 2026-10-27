@@ -2790,7 +2790,13 @@ body::before {
 .home-deco__s--4 { right: 6%;  --cy: .21;  rotate: 14deg; }
 .home-deco__s--5 { right: 17%; --cy: .34;  rotate: -9deg; }
 .home-deco__s--6 { right: 8%;  --cy: 1.08; rotate: 6deg; }
-.home-hero .home-title { position: relative; z-index: 1; }
+.home-hero .home-title { position: relative; z-index: 1; margin-bottom: calc(var(--st-h) * .14); }
+/* 별님앱 아래 두 줄 소개 문구. 반짝이들은 제목 오른쪽 끝 바깥에 있어 가운데 문구와 겹치지 않는다 */
+.home-tagline {
+  position: relative; z-index: 1;
+  font-size: 1.25rem; font-weight: 800; line-height: 1.45; letter-spacing: .3px; color: var(--text);
+}
+@media (max-width: 480px) { .home-tagline { font-size: 1.05rem; } }
 @media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
 /* 폰은 자리가 좁아 크기만 줄인다. 가운데 자리는 그대로라 위아래로 움직이지 않는다 */
 @media (max-width: 600px) { .home-deco { --ds: .55; } }
@@ -2918,12 +2924,15 @@ body::before {
   content: ''; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 2;
   background: linear-gradient(90deg, transparent, rgb(var(--star)), rgba(var(--hue-l),.9), transparent);
 }
+/* 오른쪽 결정석·메소 칸이 카드보다 길어지면 카드가 그 높이까지 늘어나 위아래 끝을 맞춘다.
+   늘어난 높이는 이름·레벨·경험치·랭킹 줄 사이에 고르게 나눠 준다 */
+.home-mine .char-card--home { flex: 1; }
 .hc { display: grid; grid-template-columns: 132px minmax(0, 1fr); height: 100%; }
 .hc__pic {
   border-right: 1px solid rgba(var(--star),.22);
   background: radial-gradient(circle at 50% 60%, rgba(var(--hue),.45), transparent 70%);
 }
-.hc__body { display: flex; flex-direction: column; gap: 7px; min-width: 0; padding: 12px 14px 10px; }
+.hc__body { display: flex; flex-direction: column; justify-content: space-between; gap: 7px; min-width: 0; padding: 12px 14px 10px; }
 .hc__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
 .hc__id { min-width: 0; }
 .hc__name { font-size: 1.15rem; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -3049,6 +3058,8 @@ body::before {
   .home-title__ch--3 svg { animation-duration: 2.3s; animation-delay: -1.5s; }
   .home-title__spark svg { animation: sparkFloat 1.9s cubic-bezier(.45,.05,.55,.95) infinite alternate; animation-delay: -.4s; }
   .home-title__mini svg { animation-duration: 1.5s; animation-delay: -1.1s; }
+  /* 소개 문구도 제목 글자와 박자를 달리해 둥실 */
+  .home-tagline { animation: stickerFloat 2.8s cubic-bezier(.45,.05,.55,.95) -1.2s infinite alternate; }
   .home-hero__arrow span { animation: heroArrow 2s ease-in-out infinite; }
   /* 스티커마다 박자를 달리해 천천히 둥실 */
   .home-deco__s { animation: decoFloat 3.2s cubic-bezier(.45,.05,.55,.95) infinite alternate; }

@@ -148,21 +148,46 @@ function setActive(items, el, cls = 'active') {
 /* ── 움직임 효과 공용 ── 움직임 줄이기 설정이면 둘 다 바로 그린다 */
 const _motionOff = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 
-/* 숫자 굴러 올라가기 — 값이 바뀌면 0.4초 동안 이전 값에서 새 값까지 굴러간다.
-   fmt는 숫자를 글자로 바꾸는 함수다. 처음 그릴 때와 탭이 뒤에 있을 때는 바로 바꾼다 */
-function setCountText(el, value, fmt) {
-  if (!el) return;
-  const from = el._countVal;
-  el._countVal = value;
+/* 숫자 굴러 올라가기 — 값이 바뀌면 0.4초 동안 지금 보이는 값에서 새 값까지 굴러간다. fmt는 숫자를 글자로 바꾸는 함수.
+   처음 그릴 때는 바로 적는다. 사이드바가 닫혀 있거나 다른 메뉴에 있어 숫자가 화면 밖이면 글자를 그대로 두고 기다렸다가,
+   사이드바를 열거나 그 메뉴로 돌아와 숫자가 60% 넘게 보이는 순간 굴러가게 한다.
+   _shownVal은 지금 화면에 적힌 값, _countVal은 가야 할 값이다 */
+let _countIO = null;
+function _countVisible(el) {
+  if (document.hidden) return false;
+  const r = el.getBoundingClientRect();
+  return r.width > 0 && r.bottom > 0 && r.right > 0 && r.top < innerHeight && r.left < innerWidth;
+}
+function _countRun(el) {
+  const from = el._shownVal, to = el._countVal, fmt = el._countFmt;
   cancelAnimationFrame(el._countRaf);
-  if (from == null || from === value || document.hidden || _motionOff?.matches) { el.textContent = fmt(value); return; }
+  if (from === to) { el.textContent = fmt(to); return; }
   const t0 = performance.now();
   const step = now => {
     const k = Math.min(1, (now - t0) / 400);
-    el.textContent = fmt(from + (value - from) * (1 - Math.pow(1 - k, 3)));
+    el._shownVal = k < 1 ? from + (to - from) * (1 - Math.pow(1 - k, 3)) : to;
+    el.textContent = fmt(el._shownVal);
     if (k < 1) el._countRaf = requestAnimationFrame(step);
   };
   el._countRaf = requestAnimationFrame(step);
+}
+function setCountText(el, value, fmt) {
+  if (!el) return;
+  el._countVal = value;
+  el._countFmt = fmt;
+  if (el._shownVal == null || _motionOff?.matches) {
+    cancelAnimationFrame(el._countRaf);
+    el._shownVal = value;
+    el.textContent = fmt(value);
+    return;
+  }
+  if (_countVisible(el)) { _countIO?.unobserve(el); _countRun(el); return; }
+  _countIO ||= new IntersectionObserver(entries => entries.forEach(e => {
+    if (!e.isIntersecting || document.hidden) return;
+    _countIO.unobserve(e.target);
+    _countRun(e.target);
+  }), { threshold: 0.6 });
+  _countIO.observe(el);
 }
 
 /* 스크롤하면 떠오르기 — 메뉴를 열 때 화면 아래에 있어 안 보이는 카드만 .fx-rise로 숨겨 두었다가,

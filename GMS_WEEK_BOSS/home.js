@@ -1,12 +1,12 @@
 /* =============================================
    home.js — 첫 화면(홈)
    뮤즈대시 첫 화면처럼 모눈종이 머리 영역(떠다니는 별·님·앱 스티커 글자, 그 아래 내 캐릭터 카드·결정석·수익,
-   아래 화살표), 가운데 카드가 앞으로 나오는 주요 기능 슬라이드,
-   사이드바와 같은 전체 메뉴 바둑판으로 짠다.
+   아래 화살표), 가운데 카드가 앞으로 나오는 추천 기능 슬라이드,
+   사이드바와 같은 전체 기능 바둑판으로 짠다.
    움직임은 style.css "홈" 구역에 있고, 여기서는 그리기와 슬라이드 넘기기만 한다.
    ============================================= */
 
-/* 주요 기능 슬라이드. 카드마다 사이드바 메뉴 아이콘을 크게 띄운다.
+/* 추천 기능 슬라이드. 카드마다 사이드바 메뉴 아이콘을 크게 띄운다.
    보스 그림을 깔아 본 적이 있는데, 폰처럼 칸이 납작해지면 그림이 늘어나 잘려서 뺐다 */
 const HOME_FEATURES = [
   { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석 개수와 예상 수익을 계산합니다.' },
@@ -103,11 +103,11 @@ function renderHome() {
         `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
       <div class="home-mine" id="homeMine"></div>
-      <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="주요 기능으로 내려가기"><span></span></button>
+      <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
 
     <div class="home-block" id="homeFeatures">
-      <h2 class="home-h">주요 기능</h2>
+      <h2 class="home-h">추천 기능</h2>
       <div class="home-car" id="homeCar">
         <div class="home-car__track">${feats.map((f, i) => _homeSlideHtml(f, i, icons)).join('')}</div>
         <button class="home-car__nav home-car__nav--prev" data-step="-1" type="button" aria-label="이전">‹</button>
@@ -117,7 +117,7 @@ function renderHome() {
     </div>
 
     <div class="home-block">
-      <h2 class="home-h">전체 메뉴</h2>
+      <h2 class="home-h">전체 기능</h2>
       <div class="home-grid">${nav.map(n => `
         <button class="home-tile" data-go="${n.sec}" type="button">
           <span class="home-tile__icon"><img src="${n.icon}" alt="" onerror="this.style.display='none'"></span>
@@ -160,7 +160,7 @@ function renderHome() {
   });
 
   _homeGo(_homeIdx);
-  revealOnScroll(sec);   // 첫 화면 아래쪽 주요 기능·전체 메뉴는 스크롤하면 떠오른다
+  revealOnScroll(sec);   // 첫 화면 아래쪽 추천 기능·전체 기능은 스크롤하면 떠오른다
   clearInterval(_homeTimer);
   // 홈이 보이고, 탭이 앞에 있고, 마우스가 올라가 있지 않을 때만 넘긴다
   _homeTimer = setInterval(() => {

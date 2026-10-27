@@ -2913,6 +2913,16 @@ body::before {
 .home-mine .sb-weekmeso:nth-child(5) { grid-column: 2; }
 .home-mine .sb-weekmeso:nth-child(6) { grid-column: 3; }
 .home-mine .sb-weekmeso__val { font-size: 1.3rem; }
+/* 769~1099px — 메소 칸 둘을 옆으로 놓으면 칸이 좁아 금액이 서너 줄로 쪼개진다.
+   [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익] / [명찰 | 월간 수익]으로 쌓는다 */
+@media (min-width: 769px) and (max-width: 1099px) {
+  .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .home-mine .char-list { grid-row: 2 / span 3; }
+  .home-mine .sb-weekmeso { padding: 10px 16px; }
+  .home-mine .sb-weekmeso:nth-child(5) { grid-column: 2; grid-row: 3; }
+  .home-mine .sb-weekmeso:nth-child(6) { grid-column: 2; grid-row: 4; }
+  .home-mine .sb-weekmeso__val { font-size: 1.15rem; }
+}
 
 /* 내 캐릭터 카드(app.js charHomeCardHtml) — 왼쪽 캐릭터 그림, 오른쪽 이름·직업·레벨·서버·경험치·랭킹·주간 수익 */
 .char-card--home {

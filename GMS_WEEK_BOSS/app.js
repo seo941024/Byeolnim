@@ -101,6 +101,8 @@ function navigateTo(sec, fromHistory = false) {
   // 메뉴를 열 때마다 브라우저 기록을 하나 남겨 마우스 뒤로 버튼, Alt+←, 폰 뒤로 제스처가 직전 메뉴로 돌아가게 한다.
   // 주소는 그대로 두고 기록에 메뉴 이름만 담는다. 지금 메뉴를 다시 누르면 남기지 않는다
   if (!fromHistory && history.state?.sec !== sec) history.pushState({ sec }, '');
+  // 캐릭터 영역은 홈에서는 홈에, 다른 메뉴에서는 사이드바에 둔다. 옮기는 곳은 home.js placeCharArea
+  if (typeof placeCharArea === 'function') placeCharArea(sec);
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
@@ -343,8 +345,8 @@ function renderCharList() {
   const portrait = ch.fetched?.img
     ? `<img src="${ch.fetched.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('char-card__portrait--no')" />`
     : `<img src="images/dailytasks/default.png" alt="" />`;
-  // body.char-home이면 이 목록이 홈으로 옮겨져 있으므로 홈 카드로 그린다
-  if (document.body.classList.contains('char-home')) {
+  // 이 목록이 홈으로 옮겨져 있으면 홈 카드로 그린다. 옮기는 곳은 home.js placeCharArea
+  if (ul.closest('#homeMine')) {
     li.classList.add('char-card--home');
     li.innerHTML = charHomeCardHtml(ch, i, portrait);
   } else {

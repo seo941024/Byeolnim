@@ -126,13 +126,8 @@ function renderHome() {
   document.getElementById('homeArrow').addEventListener('click', () =>
     document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
-  /* body.char-home이면 사이드바의 캐릭터 영역을 통째로 여기로 옮긴다. 사이드바에는 메뉴만 남는다.
-     요소를 옮기는 것이라 id와 클릭 동작이 그대로 살아 있고, app.js가 그리던 그대로 갱신된다.
-     body에서 char-home을 빼면 옮기지 않으므로 캐릭터 영역은 사이드바로 돌아가고 내 캐릭터 칸은 숨는다 */
-  const mine = document.getElementById('homeMine');
-  const charArea = document.querySelector('.sb-char-area');
-  if (document.body.classList.contains('char-home') && charArea) mine.appendChild(charArea);
-  else mine.hidden = true;
+  if (document.body.classList.contains('char-home')) placeCharArea(document.querySelector('.sec.active')?.id.slice(4));
+  else document.getElementById('homeMine').hidden = true;
 
   const car = document.getElementById('homeCar');
   const slides = [...car.querySelectorAll('.home-slide')];
@@ -167,6 +162,17 @@ function renderHome() {
     if (_homeHold || document.hidden || !sec.classList.contains('active')) return;
     _homeGo(_homeIdx + 1);
   }, HOME_AUTO_MS);
+}
+
+/* 캐릭터 영역 자리 — body.char-home이면 홈에서는 홈 머리 영역, 다른 메뉴에서는 사이드바 맨 위.
+   한 화면에 한 번만 보이도록 요소 하나를 옮겨 다닌다. 요소를 옮기는 것이라 id와 클릭 동작이 그대로 살아 있고,
+   자리마다 카드 모양이 달라서 옮긴 뒤 다시 그린다. body에서 char-home을 빼면 늘 사이드바에 있고 내 캐릭터 칸은 숨는다 */
+function placeCharArea(sec) {
+  const area = document.querySelector('.sb-char-area');
+  const target = sec === 'home' ? document.getElementById('homeMine') : document.querySelector('.sidebar');
+  if (!area || !target || !document.body.classList.contains('char-home') || area.parentElement === target) return;
+  if (sec === 'home') target.appendChild(area); else target.prepend(area);
+  renderCharList();
 }
 
 /* 가운데·왼쪽·오른쪽 자리만 정해 준다. 움직임은 CSS transition */

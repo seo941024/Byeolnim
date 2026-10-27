@@ -269,8 +269,8 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
    - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다. */
 :root {
-  --cur-default: url('images/icons/cursor.png?v=20261027d') 1 1, default;
-  --cur-pointer: url('images/icons/cursor.png?v=20261027d') 1 1, pointer;
+  --cur-default: url('images/icons/cursor.png?v=20261027e') 1 1, default;
+  --cur-pointer: url('images/icons/cursor.png?v=20261027e') 1 1, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }

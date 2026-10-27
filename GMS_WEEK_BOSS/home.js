@@ -1,7 +1,7 @@
 /* =============================================
    home.js — 첫 화면(홈)
-   뮤즈대시 첫 화면처럼 모눈종이 머리 영역(떠다니는 별·님·앱 스티커 글자, 그 아래 내 캐릭터 카드·결정석·수익,
-   아래 화살표), 가운데 카드가 앞으로 나오는 추천 기능 슬라이드,
+   뮤즈대시 첫 화면처럼 떠다니는 별·님·앱 스티커 글자와 소개 문구, 그 아래 캐릭터 정보 칸,
+   가운데 카드가 앞으로 나오는 추천 기능 슬라이드,
    사이드바와 같은 전체 기능 바둑판으로 짠다.
    움직임은 style.css "홈" 구역에 있고, 여기서는 그리기와 슬라이드 넘기기만 한다.
    ============================================= */
@@ -118,7 +118,6 @@ function renderHome() {
         `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
       ${_homeTaglineHtml()}
-      <button class="home-hero__arrow" id="homeArrow" type="button" aria-label="추천 기능으로 내려가기"><span></span></button>
     </div>
 
     <div class="home-block home-block--mine" id="homeMineBlock">
@@ -126,7 +125,7 @@ function renderHome() {
       <div class="home-mine" id="homeMine"></div>
     </div>
 
-    <div class="home-block" id="homeFeatures">
+    <div class="home-block">
       <h2 class="home-h">추천 기능</h2>
       <div class="home-car" id="homeCar">
         <div class="home-car__track">${feats.map((f, i) => _homeSlideHtml(f, i, icons)).join('')}</div>
@@ -147,8 +146,6 @@ function renderHome() {
     </div>`;
 
   sec.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => navigateTo(b.dataset.go)));
-  document.getElementById('homeArrow').addEventListener('click', () =>
-    document.getElementById('homeFeatures').scrollIntoView({ behavior: 'smooth', block: 'start' }));
 
   if (document.body.classList.contains('char-home')) mountHomeCharArea();
   else document.getElementById('homeMineBlock').hidden = true;

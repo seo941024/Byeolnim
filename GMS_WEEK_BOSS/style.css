@@ -2758,7 +2758,7 @@ body::before {
 }
 
 /* ── 홈 (home.js) ──
-   뮤즈대시 첫 화면 구성: 머리 영역에 떠다니는 별·님·앱 스티커 글자와 아래로 내려가라는 화살표,
+   뮤즈대시 첫 화면 구성: 머리 영역에 떠다니는 별·님·앱 스티커 글자와 소개 문구,
    그 아래 따로 선 내 캐릭터 칸, 가운데 카드가 앞으로 나오는 슬라이드. 움직임은 transform·opacity만 쓴다.
    모눈 무늬는 맨 뒷배경 body와 로딩 화면에만 쓴다 */
 #sec-home { gap: 30px; }
@@ -2767,7 +2767,7 @@ body::before {
 .home-hero {
   position: relative; overflow: hidden; isolation: isolate;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
-  padding: 44px 24px 76px; text-align: center;
+  padding: 44px 24px 16px; text-align: center;
 }
 .home-hero__spark { position: absolute; color: rgb(var(--star)); line-height: 1; text-shadow: 0 0 12px rgba(var(--star),.8); }
 /* 머리 영역 좌우 메이플 아이콘 스티커 — 숨기지 않고, 화면이 좁아지면 좌우 %자리라 안쪽으로 모인다. 조금 겹치는 것은 괜찮다는 지수 의견.
@@ -2883,13 +2883,6 @@ body::before {
 .home-tagline__w--6 { rotate: 2deg;  translate: 0 -2px; }
 /* 좁은 폰에서는 오른쪽 반짝이들이 머리 영역 밖으로 잘리므로 제목 묶음을 조금 왼쪽으로 옮긴다 */
 @media (max-width: 480px) { .home-title { translate: calc(var(--st-h) * -.42) 0; } }
-/* 아래로 내려가라는 화살표 — 뮤즈대시처럼 위에서 나타나 내려가며 사라진다 */
-.home-hero__arrow { position: absolute; left: 50%; bottom: 18px; width: 40px; height: 44px; margin-left: -20px; }
-.home-hero__arrow span {
-  position: absolute; left: 50%; top: 8px; width: 16px; height: 16px; margin-left: -8px;
-  border-right: 3px solid rgb(var(--star)); border-bottom: 3px solid rgb(var(--star)); border-radius: 2px;
-  transform: rotate(45deg);
-}
 
 .home-block { display: flex; flex-direction: column; gap: 16px; }
 .home-block[hidden] { display: none; }   /* char-home이 아니면 캐릭터 정보 칸을 통째로 숨긴다 */
@@ -3053,7 +3046,7 @@ body::before {
 .home-tile__name { font-size: .82rem; font-weight: 800; text-align: center; color: var(--text); }
 
 @media (max-width: 768px) {
-  .home-hero { padding: 32px 12px 68px; }
+  .home-hero { padding: 32px 12px 16px; }
   .home-hero__char { width: 186px; height: 162px; }   /* 원본의 3배 */
   .home-car { height: 424px; }
   .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
@@ -3084,7 +3077,6 @@ body::before {
   .home-tagline__w--4 svg { animation-duration: 2.7s; animation-delay: -1.9s; }
   .home-tagline__w--5 svg { animation-duration: 2.3s; animation-delay: -.9s; }
   .home-tagline__w--6 svg { animation-duration: 2.5s; animation-delay: -1.6s; }
-  .home-hero__arrow span { animation: heroArrow 2s ease-in-out infinite; }
   /* 스티커마다 박자를 달리해 천천히 둥실 */
   .home-deco__s { animation: decoFloat 3.2s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
   .home-deco__s--2 { animation-duration: 2.7s; animation-delay: -1.1s; }
@@ -3100,11 +3092,6 @@ body::before {
 @keyframes stickerFloat { from { transform: translateY(3px); } to { transform: translateY(-9px); } }
 @keyframes tagFloat { from { transform: translateY(2px); } to { transform: translateY(-5px); } }
 @keyframes sparkFloat { from { transform: translateY(2px) rotate(-8deg); } to { transform: translateY(-11px) rotate(8deg); } }
-@keyframes heroArrow {
-  0%, 30% { opacity: 0; transform: translateY(-14px) rotate(45deg); }
-  60%     { opacity: 1; transform: translateY(0) rotate(45deg); }
-  100%    { opacity: 0; transform: translateY(16px) rotate(45deg); }
-}
 @keyframes decoFloat { from { transform: translateY(4px) rotate(-3deg); } to { transform: translateY(-10px) rotate(3deg); } }
 @keyframes heroIconFloat { from { transform: translateY(4px); } to { transform: translateY(-6px); } }
 

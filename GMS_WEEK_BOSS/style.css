@@ -376,6 +376,8 @@ textarea, [contenteditable="true"] { cursor: text; }
 /* 닉네임은 12자까지라 데스크톱에선 22em이면 배지까지 넣어도 안 잘린다.
    좁은 화면에선 햄버거·로고를 뺀 나머지가 한계라, 둘 중 작은 쪽을 쓴다. */
 #headerBtnAuth { max-width: min(22em, calc(100vw - 140px)); display: inline-flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; }
+/* 헤더 오른쪽 버튼은 로그인 뒤 명찰과 같은 높이로 맞춘다. 명찰은 ADMIN 배지가 들어가 안쪽 여백이 달라서 높이를 박아 둔다 */
+#headerBtnAuth, #headerBtnSettings { height: 32px; padding-top: 0; padding-bottom: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hbtn__name { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .admin-badge {
   flex: none; position: relative; overflow: hidden;
@@ -409,8 +411,9 @@ textarea, [contenteditable="true"] { cursor: text; }
 #headerBtnAuth.hbtn--on .hbtn__name { font-weight: 900; letter-spacing: .5px; }
 :root:not([data-theme="light"]) .hbtn--on { color: var(--accent); }
 /* 라이트 테마의 .hbtn 규칙이 명세도(0,3,0)로 더 높아 위 테두리를 덮는다 → 같은 급으로 다시 건다 */
-:root[data-theme="light"] .hbtn--on { border-color: rgba(154,111,18,.85); }
-:root[data-theme="light"] #headerBtnAuth.hbtn--on { border-color: #b8860b; box-shadow: inset 0 0 0 1px rgba(184,134,11,.3); }
+:root[data-theme="light"] .hbtn--on { border-color: #f0b72a; }
+/* 라이트 명찰 테두리는 황토색 골드 대신 밝은 노랑 */
+:root[data-theme="light"] #headerBtnAuth.hbtn--on { border-color: #f0b72a; box-shadow: inset 0 0 0 1px rgba(var(--star),.4); }
 .hbtn:hover {
   background: rgba(var(--hue-d),.15);
   border-color: var(--primary);
@@ -545,7 +548,12 @@ textarea, [contenteditable="true"] { cursor: text; }
 }
 /* 이름 줄 오른쪽 직업 아이콘, 아래쪽 랭킹·주간 수익 — 캐릭터 목록 카드와 같은 정보 */
 .char-card__top { display: flex; align-items: flex-start; justify-content: space-between; gap: 6px; min-width: 0; }
-.char-card__top .char-card__name { min-width: 0; }
+.char-card__id { min-width: 0; }
+/* 레벨·서버 한 줄, 오른쪽 끝에 수정·삭제 */
+.char-card__meta { display: flex; align-items: center; gap: 6px; min-width: 0; margin-top: 3px; }
+.char-card__meta .char-card__world-line { min-width: 0; overflow: hidden; white-space: nowrap; }
+.char-card__meta .char-card__btns { flex-shrink: 0; margin: 0 0 0 auto; padding: 0; gap: 4px; }
+.char-card__meta .ccbtn { padding: 2px 7px; }
 .char-card__jobicon { flex-shrink: 0; width: 28px; height: 28px; object-fit: contain; margin: -3px -2px -4px 0; }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .char-card__stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .68rem; }

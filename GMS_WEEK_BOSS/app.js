@@ -357,21 +357,27 @@ function renderCharListInto(ul) {
     const sIconHtml = sIcon ? `<img src="${sIcon}" onerror="this.style.display='none'" />` : '';
     const headSrc = charJobHeadSrc(ch);
     const rank = ch.fetched?.rank;
+    const region = charRegion(ch);
+    // 캐릭터 목록 카드와 같은 배치 — 이름 아래 직업, 레벨 옆 서버. 수정·삭제는 레벨·서버 줄 오른쪽 빈자리에 둔다
     li.innerHTML = `
     <div class="char-card__inner">
       <div class="char-card__txt">
         <div class="char-card__top">
-          <div class="char-card__name">${escHtml(ch.name)}</div>
+          <div class="char-card__id">
+            <div class="char-card__name">${escHtml(ch.name)}</div>
+            ${jn ? `<div class="char-card__job-line">${escHtml(jn)}</div>` : ''}
+          </div>
           ${headSrc ? `<img class="char-card__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
         </div>
-        <div class="char-card__lv">Lv.${ch.level}</div>
-        ${world ? `<div class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(world)}</span></div>` : ''}
-        ${jn ? `<div class="char-card__job-line">${jn}</div>` : ''}
+        <div class="char-card__meta">
+          <span class="char-card__lv">Lv.${ch.level}</span>
+          ${world ? `<span class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
+          ${charCardBtnsHtml(i)}
+        </div>
         <div class="char-card__stats">
-          ${rank ? `<div class="char-card__stat"><span>${escHtml(charRegion(ch))} 랭킹</span><b>#${rank.toLocaleString()}</b></div>` : ''}
+          ${rank ? `<div class="char-card__stat"><span>${escHtml(region)} 랭킹</span><b>#${rank.toLocaleString()}</b></div>` : ''}
           <div class="char-card__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
         </div>
-        ${charCardBtnsHtml(i)}
       </div>
       <div class="char-card__portrait${ch.fetched?.img ? '' : ' char-card__portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
     </div>`;

@@ -272,11 +272,11 @@ button { cursor: var(--cur-pointer); border: none; background: none; font: inher
      핫스팟 1 1은 왼쪽 위 화살표 끝이다. 예전 cursor32.png는 원본을 32×30으로 줄여 그림이 뭉개졌었다.
    - gif는 커서로 쓰면 첫 프레임만 나온다. 움직이게 하려고 JS로 그림을 마우스에 붙이면 mousemove마다 다시 그려 렉이 생긴다.
    - 끝의 default·pointer 폴백을 빼면 규칙 자체가 무효가 된다.
-   - 크롬은 32px보다 큰 커서를 그림 전체가 화면 안에 들어올 때만 그린다. 화면 오른쪽·아래 끝에서는 큰 그림을 못 쓰고
-     목록의 다음 그림으로 넘어가므로, 32px 안으로 줄인 cursor_small.png를 둘째로 적어 시스템 손 모양 대신 이 그림이 나오게 한다 */
+   - 크롬은 32px보다 큰 커서를 그림 전체가 화면 안에 들어올 때만 그리고, 화면 오른쪽·아래 끝에서는 기본 커서로 바꾼다.
+     그래서 지수가 고친 cursor.png를 32px 안으로 줄인 cursor_small.png 한 장만 쓴다. cursor.png를 고치면 이것도 다시 줄여 만든다 */
 :root {
-  --cur-default: url('images/icons/cursor.png?v=20261027e') 1 1, url('images/icons/cursor_small.png?v=20261028a') 0 0, default;
-  --cur-pointer: url('images/icons/cursor.png?v=20261027e') 1 1, url('images/icons/cursor_small.png?v=20261028a') 0 0, pointer;
+  --cur-default: url('images/icons/cursor_small.png?v=20261028a') 0 0, default;
+  --cur-pointer: url('images/icons/cursor_small.png?v=20261028a') 0 0, pointer;
 }
 body { cursor: var(--cur-default); }
 a:any-link { cursor: var(--cur-pointer); }
@@ -2621,8 +2621,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .sec--enter :is(.card, .cg-card, .bhp-card, .dt-card):nth-child(n+5) { animation-delay: .24s; }
 @keyframes riseIn { from { opacity: 0; transform: translateY(18px); } }
 /* 스크롤하면 떠오르기 — common.js revealOnScroll. transform을 쓰는 카드 hover와 겹치지 않게 translate로 움직인다 */
-.rv { opacity: 0; translate: 0 24px; }
-.rv.rv-in { opacity: 1; translate: 0 0; transition: opacity .5s ease, translate .6s cubic-bezier(.2,.8,.2,1); }
+/* 이름 앞에 fx-를 붙인다. .rv는 헥사 계산기 결과 숫자 칸이 이미 쓰는 이름이라 겹쳐서 숫자가 숨었었다 */
+.fx-rise { opacity: 0; translate: 0 24px; }
+.fx-rise.fx-rise-in { opacity: 1; translate: 0 0; transition: opacity .5s ease, translate .6s cubic-bezier(.2,.8,.2,1); }
 /* 제목 밑에 금빛 선이 그어진다 */
 .sec-head { position: relative; }
 .sec-head::after {

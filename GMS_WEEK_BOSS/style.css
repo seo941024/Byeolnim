@@ -2804,7 +2804,7 @@ body::before {
 :root[data-theme="light"] .home-h::after { color: #c9971a; -webkit-text-fill-color: #c9971a; }
 
 /* 내 캐릭터 — 머리 영역의 별님앱 글자 아래. 사이드바에서 옮겨 온 .sb-char-area를 홈 폭에 맞게 다시 배치한다.
-   [캐릭터 + 추가] / [명찰 | 결정석 막대] / [명찰 | 주간 수익 | 월간 수익] */
+   [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익 | 월간 수익] */
 .home-mine { width: min(1120px, 100%); text-align: left; }
 .home-mine .sb-char-area {
   display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr) minmax(0, 1fr); gap: 12px 16px; align-items: stretch;
@@ -2812,13 +2812,16 @@ body::before {
   background: var(--panel-veil); box-shadow: 0 10px 30px rgba(0,0,0,.35);
 }
 :root[data-theme="light"] .home-mine .sb-char-area { background: #fff; box-shadow: 0 12px 30px rgba(150,110,20,.12); }
-.home-mine .sb-char-head { grid-column: 1 / -1; padding: 0; }
+.home-mine .sb-char-head { grid-column: 1; padding: 0; }
+/* 결정석·수익 칸 위 제목. 사이드바에서는 숨기고 홈에서만 캐릭터 제목과 같은 글자로 보인다 */
+.sb-income-label { display: none; }
+.home-mine .sb-income-label { display: block; grid-column: 2 / -1; grid-row: 1; align-self: center; max-width: none; }
 .home-mine .sb-pin, .home-mine #sbBtnSettings { display: none; }
 .home-mine .char-list { grid-column: 1; grid-row: 2 / span 2; padding: 0; }
 .home-mine .crystal-bar { grid-column: 2 / -1; grid-row: 2; align-self: center; padding: 4px 2px; }
 .home-mine .sb-weekmeso { grid-row: 3; margin: 0; justify-content: center; padding: 14px 18px; }
-.home-mine .sb-weekmeso:nth-child(4) { grid-column: 2; }
-.home-mine .sb-weekmeso:nth-child(5) { grid-column: 3; }
+.home-mine .sb-weekmeso:nth-child(5) { grid-column: 2; }
+.home-mine .sb-weekmeso:nth-child(6) { grid-column: 3; }
 .home-mine .sb-weekmeso__val { font-size: 1.3rem; }
 
 /* 내 캐릭터 카드(app.js charHomeCardHtml) — 왼쪽 캐릭터 그림, 오른쪽 이름·직업·레벨·서버·경험치·랭킹·주간 수익 */
@@ -2847,11 +2850,7 @@ body::before {
 .hc__job { font-size: .76rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hc__jobicon { flex-shrink: 0; width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
 .hc__meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
-.hc__lv {
-  flex-shrink: 0; padding: 2px 8px; border-radius: 4px;
-  font-size: .78rem; font-weight: 900; color: #2a1a00;
-  background: linear-gradient(180deg, #ffe9a0, rgb(var(--star))); box-shadow: inset 0 -1px 0 rgba(0,0,0,.15);
-}
+.hc__lv { flex-shrink: 0; font-size: .86rem; font-weight: 900; color: var(--accent); }
 .hc__server { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: .76rem; font-weight: 700; color: var(--text-sub); }
 .hc__server img { flex-shrink: 0; width: 20px; height: 20px; object-fit: contain; }
 .hc__exp { display: flex; align-items: center; gap: 8px; }
@@ -2872,7 +2871,6 @@ body::before {
     radial-gradient(circle at 50% 60%, rgba(var(--star),.35), transparent 70%);
 }
 :root[data-theme="light"] .hc__stat { background: rgba(214,160,20,.07); border-color: rgba(184,134,11,.2); }
-:root[data-theme="light"] .hc__lv { background: linear-gradient(180deg, #ffe48a, #f0b622); }
 
 /* 주요 기능 슬라이드 — 가운데 카드는 앞으로, 양옆은 작고 흐리게 뒤로(뮤즈대시 카드 슬라이드) */
 .home-car { position: relative; height: 344px; overflow: hidden; touch-action: pan-y; border-radius: 12px; }
@@ -2960,7 +2958,7 @@ body::before {
   .home-hero__char { width: 186px; height: 162px; }   /* 원본의 3배 */
   .home-car { height: 424px; }
   .home-mine .sb-char-area { grid-template-columns: minmax(0, 1fr); }
-  .home-mine :is(.char-list, .crystal-bar, .sb-weekmeso:nth-child(4), .sb-weekmeso:nth-child(5)) { grid-column: 1; grid-row: auto; }
+  .home-mine :is(.char-list, .sb-income-label, .crystal-bar, .sb-weekmeso:nth-child(5), .sb-weekmeso:nth-child(6)) { grid-column: 1; grid-row: auto; }
   .hc { grid-template-columns: 104px minmax(0, 1fr); }
   .home-slide { width: 84%; grid-template-columns: 1fr; grid-template-rows: 170px 1fr; }
   .home-slide.is-prev { transform: translateX(-128%) scale(.82); }

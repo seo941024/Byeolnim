@@ -1,0 +1,6 @@
+
+# 작업용 파일 (PC에만 보관)
+.claude/
+.vscode/
+HANDOFF*.md
+NODE.txt

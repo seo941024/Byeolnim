@@ -215,3 +215,33 @@ function revealOnScroll(root) {
     _revealIO.observe(el);
   });
 }
+
+/* 커서 별 꼬리 — 마우스를 움직이면 커서 끝에서 작은 ✦가 떨어지며 사라진다. 그림과 색은 style.css .fx-trail.
+   마우스일 때만 만들고, 터치·펜과 움직임 줄이기 설정에서는 만들지 않는다.
+   예전에 커서 그림을 JS로 마우스에 붙였다가 mousemove마다 다시 그려 렉이 생겼다. 그래서 별은 40ms에 하나,
+   6px 넘게 움직였을 때만 만들고, 떠 있는 별은 24개까지. 떨어지는 움직임은 CSS 애니메이션의 transform·투명도만 쓴다.
+   별은 TRAIL_LIFE_MS 뒤 타이머로 지운다. 애니메이션 끝 신호에 맡기면 화면 그리기가 멈춘 동안 별이 지워지지 않고 24개에서 막힌다 */
+const TRAIL_GAP_MS = 40, TRAIL_MIN_PX = 6, TRAIL_MAX = 24, TRAIL_COLORS = 4, TRAIL_LIFE_MS = 700;
+(function cursorTrail() {
+  const fine = window.matchMedia?.('(hover: hover) and (pointer: fine)');
+  if (!fine) return;
+  let layer = null, live = 0, last = 0, lx = 0, ly = 0;
+  addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse' || !fine.matches || _motionOff?.matches) return;
+    const x = e.clientX, y = e.clientY;
+    if (e.timeStamp - last < TRAIL_GAP_MS || live >= TRAIL_MAX || Math.hypot(x - lx, y - ly) < TRAIL_MIN_PX) return;
+    last = e.timeStamp; lx = x; ly = y;
+    if (!layer) {
+      layer = document.createElement('div');
+      layer.className = 'fx-trail';
+      layer.setAttribute('aria-hidden', 'true');
+      document.body.appendChild(layer);
+    }
+    const s = document.createElement('i');
+    s.style.cssText = `--x:${x}px;--y:${y}px;--s:${(6 + Math.random() * 6).toFixed(1)}px;--dx:${(Math.random() * 16 - 8).toFixed(1)}px;`
+      + `--c:var(--trail-${1 + Math.floor(Math.random() * TRAIL_COLORS)});animation-duration:${TRAIL_LIFE_MS}ms`;
+    layer.appendChild(s);
+    setTimeout(() => { s.remove(); live--; }, TRAIL_LIFE_MS);
+    live++;
+  }, { passive: true });
+})();

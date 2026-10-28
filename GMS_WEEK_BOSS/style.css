@@ -2802,19 +2802,24 @@ body::before {
   top: calc(var(--hero-pt) + var(--st-h) * var(--cy) - var(--st-h) * var(--ds) / 2);
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
-.home-deco__s--1 { left: 6%;   --cy: .23;  rotate: -12deg; }
-.home-deco__s--2 { left: 19%;  --cy: .76;  rotate: 9deg; }
-.home-deco__s--3 { left: 8%;   --cy: 1.13; rotate: -4deg; }
-.home-deco__s--4 { right: 6%;  --cy: .21;  rotate: 14deg; }
-.home-deco__s--5 { right: 17%; --cy: .34;  rotate: -9deg; }
-.home-deco__s--6 { right: 8%;  --cy: 1.08; rotate: 6deg; }
+.home-deco__s--1 { left: 5%;   --cy: .25;  rotate: -12deg; }
+.home-deco__s--2 { left: 18%;  --cy: .95;  rotate: 9deg; }
+.home-deco__s--3 { left: 9%;   --cy: 1.74; rotate: -4deg; }
+.home-deco__s--4 { right: 12%; --cy: .22;  rotate: 14deg; }
+.home-deco__s--5 { right: 3%;  --cy: .95;  rotate: -9deg; }
+.home-deco__s--6 { right: 10%; --cy: 1.72; rotate: 6deg; }
 .home-hero .home-title { position: relative; z-index: 1; margin-bottom: calc(var(--st-h) * .14); }
 @media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
-/* 폰은 자리가 좁아 크기만 줄인다. 가운데 자리는 그대로라 위아래로 움직이지 않는다 */
-@media (max-width: 600px) { .home-deco { --ds: .55; } }
-.home-hero__spark--1 { top: 18%; right: 14%; font-size: 22px; }
-.home-hero__spark--2 { bottom: 24%; left: 12%; font-size: 16px; color: #e4dcff; text-shadow: 0 0 12px rgba(214,200,255,.9); }
-.home-hero__spark--3 { top: 30%; left: 20%; font-size: 12px; }
+/* 폰은 자리가 좁아 크기를 줄인다 */
+@media (max-width: 600px) {
+  .home-deco { --ds: .55; }
+  /* 폰에서는 제목이 화면을 거의 다 차지해 오른쪽 가운데가 제목 반짝이 자리와 겹친다. 오른쪽 둘은 반짝이 위아래로 비킨다 */
+  .home-deco__s--5 { --cy: .85; }
+  .home-deco__s--6 { --cy: 1.95; }
+}
+.home-hero__spark--1 { top: 10%; right: 5%; font-size: 22px; }
+.home-hero__spark--2 { top: 52%; left: 3%; font-size: 16px; color: #e4dcff; text-shadow: 0 0 12px rgba(214,200,255,.9); }
+.home-hero__spark--3 { top: 12%; left: 24%; font-size: 12px; }
 :root[data-theme="light"] .home-hero__spark--2 { color: #9b7be6; }
 /* 로고 캐릭터 — 원본의 정확히 4배라 도트가 고르다. 가만히 있고, 올리면 웃는다 */
 .home-hero__char { position: relative; width: 248px; height: 216px; }
@@ -2877,28 +2882,23 @@ body::before {
 .home-title__mini svg { height: calc(var(--st-h) * .506); }
 .home-title__mini .home-title__ring  { stroke-width: 104px; }
 .home-title__mini .home-title__white { stroke-width: 74px; }
-/* 별님앱 아래 두 줄 소개 문구 — 제목과 같은 스티커 글자를 낱말 단위로 묶고, 낱말마다 따로 기울이고 띄운다.
-   줄마다 세 낱말이 제목과 같은 금색→연보라 그라데이션을 나눠 이어 칠한다. 크기는 제목의 0.4배이고,
-   작은 글자에서 테두리가 가늘어 보이지 않게 제목보다 조금 굵게 준다.
+/* 별님앱 아래 두 줄 소개 문구 — 제목과 같은 스티커 글자를 두 줄 한 덩어리로 그린다. 움직이지 않는다. 자리 계산은 home.js _homeTaglineHtml.
+   줄마다 세 낱말이 제목과 같은 금색→연보라 그라데이션을 나눠 이어 칠한다. 글자 크기는 제목의 0.4배이고,
+   작은 글자에서 테두리가 가늘어 보이지 않게 제목보다 조금 굵게 준다. --st-h는 한 줄 높이, --tag-k는 그림 높이가 한 줄의 몇 배인지.
    반짝이들은 제목 오른쪽 끝 바깥에 있어 가운데 문구와 겹치지 않는다 */
 .home-tagline {
   --st-h: clamp(31px, 4.8vw, 50px);
   --st-shadow: drop-shadow(0 3px 0 rgba(30,14,60,.45)) drop-shadow(0 6px 10px rgba(0,0,0,.3));
-  position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; line-height: 0;
+  position: relative; z-index: 1; display: flex; justify-content: center; line-height: 0;
 }
 :root[data-theme="light"] .home-tagline { --st-shadow: drop-shadow(0 3px 0 rgba(150,110,20,.22)) drop-shadow(0 6px 10px rgba(150,110,20,.16)); }
-.home-tagline__line { display: flex; justify-content: center; gap: 2px; }
+/* 같은 스티커 틀이라 제목 글자에 거는 둥실 움직임 .home-title__ch svg가 함께 걸리므로 끈다 */
+.home-tagline .home-title__ch svg { height: calc(var(--st-h) * var(--tag-k)); animation: none; }
 .home-tagline .home-title__ring  { stroke-width: 36px; }
 .home-tagline .home-title__white { stroke-width: 26px; }
-.home-tagline__line > :nth-child(1) .home-title__fill { fill: url(#homeTitleFill1); }
-.home-tagline__line > :nth-child(2) .home-title__fill { fill: url(#homeTitleFill2); }
-.home-tagline__line > :nth-child(3) .home-title__fill { fill: url(#homeTitleFill3); }
-.home-tagline__w--1 { rotate: -5deg; translate: 0 2px; }
-.home-tagline__w--2 { rotate: 3deg;  translate: 0 -3px; }
-.home-tagline__w--3 { rotate: -2deg; translate: 0 2px; }
-.home-tagline__w--4 { rotate: 4deg;  translate: 0 -1px; }
-.home-tagline__w--5 { rotate: -3deg; translate: 0 3px; }
-.home-tagline__w--6 { rotate: 2deg;  translate: 0 -2px; }
+.home-tagline__f--1 { fill: url(#homeTitleFill1); }
+.home-tagline__f--2 { fill: url(#homeTitleFill2); }
+.home-tagline__f--3 { fill: url(#homeTitleFill3); }
 /* 좁은 폰에서는 오른쪽 반짝이들이 머리 영역 밖으로 잘리므로 제목 묶음을 조금 왼쪽으로 옮긴다 */
 @media (max-width: 480px) { .home-title { translate: calc(var(--st-h) * -.42) 0; } }
 
@@ -3088,13 +3088,6 @@ body::before {
   .home-title__ch--3 svg { animation-duration: 2.3s; animation-delay: -1.5s; }
   .home-title__spark svg { animation: sparkFloat 1.9s cubic-bezier(.45,.05,.55,.95) infinite alternate; animation-delay: -.4s; }
   .home-title__mini svg { animation-duration: 1.5s; animation-delay: -1.1s; }
-  /* 소개 문구 낱말도 하나씩 박자를 달리해 둥실. 글자가 작아 오르내리는 폭은 제목보다 좁다 */
-  .home-tagline__w svg { animation-name: tagFloat; }
-  .home-tagline__w--2 svg { animation-duration: 2.6s; animation-delay: -1.3s; }
-  .home-tagline__w--3 svg { animation-duration: 2.4s; animation-delay: -.5s; }
-  .home-tagline__w--4 svg { animation-duration: 2.7s; animation-delay: -1.9s; }
-  .home-tagline__w--5 svg { animation-duration: 2.3s; animation-delay: -.9s; }
-  .home-tagline__w--6 svg { animation-duration: 2.5s; animation-delay: -1.6s; }
   /* 스티커마다 박자를 달리해 천천히 둥실 */
   .home-deco__s { animation: decoFloat 3.2s cubic-bezier(.45,.05,.55,.95) infinite alternate; }
   .home-deco__s--2 { animation-duration: 2.7s; animation-delay: -1.1s; }
@@ -3108,7 +3101,6 @@ body::before {
   .sec--enter .home-block--mine { animation-delay: .08s; }
 }
 @keyframes stickerFloat { from { transform: translateY(3px); } to { transform: translateY(-9px); } }
-@keyframes tagFloat { from { transform: translateY(2px); } to { transform: translateY(-5px); } }
 @keyframes sparkFloat { from { transform: translateY(2px) rotate(-8deg); } to { transform: translateY(-11px) rotate(8deg); } }
 @keyframes decoFloat { from { transform: translateY(4px) rotate(-3deg); } to { transform: translateY(-10px) rotate(3deg); } }
 @keyframes heroIconFloat { from { transform: translateY(4px); } to { transform: translateY(-6px); } }

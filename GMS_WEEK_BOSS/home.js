@@ -29,13 +29,15 @@ const HOME_TITLE_CHARS = [
   { ch: '님', vb: '-10 -90.6 105.6 122.4' },
   { ch: '앱', vb: '-12.6 -90.6 117.7 122.4' },
 ];
-/* 별님앱 아래 두 줄 소개 문구. 제목과 같은 스티커 글자를 낱말 단위로 묶어 낱말마다 따로 띄운다.
-   vb는 글꼴 크기 100에서 낱말 윤곽에 테두리 20만큼을 더한 가로 범위이고,
-   세로는 여섯 낱말이 같은 줄에 서도록 모두 -99.2부터 141.1로 맞췄다 */
+/* 별님앱 아래 두 줄 소개 문구. 두 줄을 그림 하나에 그려 테두리가 하나로 이어진 스티커 한 덩어리로 만든다. 움직이지 않는다.
+   vb는 글꼴 크기 100에서 낱말 윤곽에 테두리 TAG_PAD만큼을 더한 가로 범위이고,
+   세로는 여섯 낱말이 같은 줄에 서도록 모두 -99.2부터 141.1로 맞췄다. 낱말 자리는 이 값으로 계산한다 */
 const HOME_TAGLINE = [
   [{ w: '글로벌', vb: '-17 -99.2 278.7 141.1' }, { w: '메이플', vb: '-16.6 -99.2 292.1 141.1' }, { w: '스토리', vb: '-20 -99.2 278.7 141.1' }],
   [{ w: '종합', vb: '-17 -99.2 206.7 141.1' }, { w: '유틸', vb: '-14.8 -99.2 195.9 141.1' }, { w: '사이트', vb: '-18.6 -99.2 290 141.1' }],
 ];
+// 낱말 윤곽 사이 간격과 줄 간격. 흰 테두리가 양쪽에서 13씩 나와 26보다 좁으면 이웃 낱말의 흰 테두리가 붙는다
+const TAG_PAD = 20, TAG_GAP = 24, TAG_PITCH = 123;
 /* 머리 영역 좌우에 떠다니는 메이플 아이콘 스티커. 흰·노랑 테두리는 그림 파일에 미리 그려 두었다.
    앞의 셋은 왼쪽, 뒤의 셋은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호 */
 const HOME_DECO = ['cube', 'crystal', 'coin', 'hammer', 'card', 'soul'];
@@ -70,12 +72,26 @@ function _homeTitleHtml() {
     </h1>`;
 }
 
-// 채움 그라데이션은 제목 것을 줄마다 첫째·둘째·셋째 낱말에 나눠 쓴다. style.css .home-tagline__line
+// 낱말 윤곽이 TAG_GAP씩 떨어지도록 줄마다 왼쪽부터 놓고, 짧은 둘째 줄은 가운데로 옮긴다.
+// 테두리·흰 테두리·채움을 각각 여섯 낱말 모두 그린 뒤 다음 겹을 그려서 낱말 사이 테두리가 하나로 이어진다.
+// 채움 그라데이션은 제목 것을 줄마다 첫째·둘째·셋째 낱말에 나눠 쓴다. style.css .home-tagline__f--번호
 function _homeTaglineHtml() {
-  let n = 0;
-  return `<p class="home-tagline" aria-label="글로벌 메이플스토리 종합 유틸 사이트">${HOME_TAGLINE.map(line =>
-    `<span class="home-tagline__line">${line.map(({ w, vb }) =>
-      _homeSticker(cls => `<text class="${cls}">${w}</text>`, vb, `home-tagline__w home-tagline__w--${++n}`)).join('')}</span>`).join('')}</p>`;
+  const lines = HOME_TAGLINE.map(line => {
+    let x = 0;
+    const words = line.map(({ w, vb }, k) => {
+      const [minX, , width] = vb.split(' ').map(Number);
+      const at = x - minX - TAG_PAD;
+      x += width - 2 * TAG_PAD + TAG_GAP;
+      return { w, at, k };
+    });
+    return { words, width: x - TAG_GAP };
+  });
+  const full = Math.max(...lines.map(l => l.width));
+  const vbH = TAG_PITCH * (lines.length - 1) + 141.1;
+  const shape = cls => lines.map((l, row) => l.words.map(({ w, at, k }) =>
+    `<text class="${cls}${cls.endsWith('fill') ? ` home-tagline__f--${k + 1}` : ''}" x="${(at + (full - l.width) / 2).toFixed(1)}" y="${row * TAG_PITCH}">${w}</text>`).join('')).join('');
+  return `<p class="home-tagline" aria-label="글로벌 메이플스토리 종합 유틸 사이트" style="--tag-k:${(vbH / 141.1).toFixed(4)}">${
+    _homeSticker(shape, `${-TAG_PAD} -99.2 ${(full + 2 * TAG_PAD).toFixed(1)} ${vbH}`, 'home-tagline__sticker')}</p>`;
 }
 
 let _homeIdx = 0, _homeTimer = null, _homeHold = false;

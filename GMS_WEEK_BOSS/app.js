@@ -627,9 +627,9 @@ const RENTAL_ITEMS = [
   { id:'belt',    img:'images/icons/Red_Beryl_Belt.png',             cost: 300_000_000 },
   { id:'ror',     img:'images/icons/Finite_Red_Beryl_Ring(RoR).png', cost: 100_000_000 },
   { id:'cr',      img:'images/icons/Finite_Red_Beryl_Ring(CR).png',  cost: 100_000_000 },
-  { id:'arthur',  img:'images/icons/Arthur_Totem.png',               cost: 100_000_000 },
-  { id:'flash',   img:'images/icons/Flash_Totem.png',                cost: 100_000_000 },
-  { id:'beryl',   img:'images/icons/Red_Beryl_Totem.png',            cost: 100_000_000 },
+  { id:'arthur',  img:'images/icons/Arthur_Totem.png',               cost: 200_000_000 },
+  { id:'flash',   img:'images/icons/Flash_Totem.png',                cost: 200_000_000 },
+  { id:'beryl',   img:'images/icons/Red_Beryl_Totem.png',            cost: 200_000_000 },
 ];
 
 // 대여는 캐릭터별로 저장 (ch.rental). 인자 없으면 활성 캐릭터 기준.

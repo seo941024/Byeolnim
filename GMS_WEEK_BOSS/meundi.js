@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════
-   메운디 (메이플운빨디펜스) — Night Troupe 2026 Go Go Sidekick 치트시트 한국어판
+   고!고! 사이드킥, 예전 메뉴 이름 메이플 운빨 디펜스 — Night Troupe 2026 Go Go Sidekick 치트시트 한국어판
 
    원본: https://nighttroupe.netlify.app/ (2026-09-30 갱신본)
    스쿼드 표기 "S10"은 랭크 S, 올릴 레벨 10. "?"는 레벨 미기록. 끝에 "*"가
@@ -247,7 +247,7 @@ function initMeundi() {
   if (!sec || sec.dataset.inited) return;
   sec.dataset.inited = '1';
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">메이플 운빨 디펜스 공략</h2></div>
+    <div class="sec-head"><h2 class="sec-title">고!고! 사이드킥 공략</h2></div>
     <div class="sf-tabs">
       <button class="sf-tab active" data-mutab="sheet">치트시트</button>
       <button class="sf-tab" data-mutab="guide">가이드</button>

@@ -84,7 +84,7 @@ document.querySelectorAll('.region-toggle__btn').forEach(btn => {
 // 사이드바 메뉴는 전부 이 함수 하나를 거치므로, 어떤 메뉴가 몇 번 클릭됐는지
 // Vercel Analytics 커스텀 이벤트로 여기 한 곳에서만 보내면 된다.
 const NAV_LABELS = {
-  home: '홈', meundi: '메이플 운빨 디펜스', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
+  home: '홈', meundi: '고!고! 사이드킥', victorypose: '승리 포즈 연습', wantchannel: '오늘의 채널 추천', charinfo: '캐릭터 목록', mcalendar: '메이플 캘린더',
   boss: '보스 수익 계산기', dailytasks: '숙제 트래커', hexa: '헥사 계산기',
   // gearcompare: '장비 교체 비교',   // 사용자 요청으로 내림 — index.html 사이드바의 NAV 관련 주석 참고
   // hyperstat: '하이퍼스탯 최적화',   // 데이터 검증 전까지 내림 — index.html 사이드바의 NAV 관련 주석 참고
@@ -104,7 +104,7 @@ function navigateTo(sec, fromHistory = false) {
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
-  // 시뮬레이터 그룹 안의 메뉴가 열리면 그룹도 펼치고 머리를 강조한다
+  // 시뮬레이터·이벤트 게임 공략 묶음 안의 메뉴가 열리면 묶음도 펼치고 머리를 강조한다
   const grp = btn?.closest('.sb-group');
   setActive(document.querySelectorAll('.sb-group'), grp, 'has-active');
   grp?.classList.add('open');
@@ -126,6 +126,7 @@ function navigateTo(sec, fromHistory = false) {
   if (sec === 'mixdye' && typeof ensureMixdyeReady === 'function') ensureMixdyeReady();
   if (sec === 'frontier' && typeof initFrontier === 'function') initFrontier();
   if (sec === 'meundi' && typeof initMeundi === 'function') initMeundi();
+  if (sec === 'victorypose' && typeof initVictoryPose === 'function') initVictoryPose();
   if (sec === 'hexa')      renderAllHexaLists();
   // 들어올 때 제목·카드가 차례로 떠오르게 0.9초만 표시를 붙인다(style.css .sec--enter).
   // 그려진 뒤에 붙여야 방금 그린 카드도 같이 움직이고, 떼고 나면 결과를 다시 그려도 움직이지 않는다

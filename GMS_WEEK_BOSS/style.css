@@ -3694,8 +3694,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-keys { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
 .mu-chip { font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.5; word-break: keep-all; }
 .mu-panel-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-.mu-pip { padding: 4px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: .95rem; font-weight: 800; cursor: var(--cur-pointer); }
-.mu-pip:hover { filter: brightness(1.08); }
+:is(.mu-pip, .vp-pip) { padding: 4px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: .95rem; font-weight: 800; cursor: var(--cur-pointer); }
+:is(.mu-pip, .vp-pip):hover { filter: brightness(1.08); }
 .mu-pay { margin-left: auto; font-size: .85rem; font-weight: 800; color: var(--accent); }
 .mu-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
 .mu-head { flex: 0 0 104px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
@@ -3733,7 +3733,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .ci-looks__item span { font-size: .82rem; font-weight: 700; color: var(--text-sub); }
 @media (max-width: 760px) { .ci-exp__row { grid-template-columns: 1fr; } }
 
-/* ── 사이드바 시뮬레이터 그룹 ── */
+/* ── 사이드바 묶음 메뉴: 시뮬레이터·이벤트 게임 공략 ── */
 .sb-group__head { width: 100%; }
 .sb-group.has-active .sb-group__head { color: var(--text); }
 .sb-group.open .sb-group__head {
@@ -3747,6 +3747,48 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .sb-group.open .sb-group__list { display: flex; }
 .mu-ref { margin-top: 10px; font-size: .84rem; color: var(--text-sub); word-break: break-all; }
 .mu-ref a { color: var(--primary); text-decoration: underline; }
+
+/* ── 승리 포즈 연습 (victorypose.js) ──
+   판은 지수가 고른 사이드킥 승리 포즈 그림에 어두운 막을 씌우고, 가운데에 적은 방향키, 아래에 누를 버튼을 둔다.
+   크기는 판을 기준으로 한 cqw·cqh로 정해서 이 화면과 PIP 창 어느 크기에서도 같은 비율로 보인다.
+   --vp-key·--vp-btn은 판 안의 요소에서 풀리므로 판 크기를 따른다. 판 자신의 속성에는 cq 단위를 쓰지 않는다 */
+.vp-board {
+  --vp-key: min(11cqw, 33cqh);
+  --vp-btn: min(7.4cqw, 21cqh);
+  container-type: size; position: relative; width: 100%; max-width: 720px; aspect-ratio: 598 / 229;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 10px; overflow: hidden; user-select: none;
+  background: linear-gradient(rgba(12,8,24,.52), rgba(12,8,24,.52)), url('images/victorypose/bg.webp?v=20261029a') center / cover;
+}
+.vp-seq { display: flex; justify-content: center; gap: 1.6cqw; height: var(--vp-key); }
+.vp-key {
+  display: grid; place-items: center; width: var(--vp-key); height: var(--vp-key); box-sizing: border-box;
+  border: calc(var(--vp-key) * .08) solid rgb(var(--star)); border-radius: 24%; background: #fff;
+  box-shadow: 0 calc(var(--vp-key) * .08) 0 #9a6f12, 0 calc(var(--vp-key) * .14) calc(var(--vp-key) * .2) rgba(0,0,0,.45);
+}
+.vp-key svg, .vp-btn svg { width: 62%; height: 62%; fill: #5b3fb0; }
+.vp-btn svg { fill: #fff; }
+.vp-key--down svg, .vp-btn--down svg { rotate: 180deg; }
+.vp-key--left svg, .vp-btn--left svg { rotate: -90deg; }
+.vp-key--right svg, .vp-btn--right svg { rotate: 90deg; }
+.vp-pad { display: flex; align-items: center; gap: 1.4cqw; margin-top: 7cqh; }
+.vp-btn, .vp-reset {
+  height: var(--vp-btn); background: rgba(14,10,28,.6); border: 2px solid rgba(255,255,255,.45); color: #fff;
+  transition: background .12s, border-color .12s;
+}
+.vp-btn { display: grid; place-items: center; width: var(--vp-btn); border-radius: 22%; }
+.vp-reset {
+  display: inline-flex; align-items: center; gap: .8cqw; margin-left: 1.6cqw; padding: 0 2cqw; border-radius: 999px;
+  font-size: calc(var(--vp-btn) * .36); font-weight: 800;
+}
+.vp-reset kbd { font: inherit; font-size: .8em; padding: .1em .45em; border-radius: 4px; background: rgba(255,255,255,.18); }
+:is(.vp-btn, .vp-reset):hover { background: rgba(var(--star),.35); border-color: rgb(var(--star)); }
+:is(.vp-btn, .vp-reset):active { scale: .92; }
+/* PIP 창 — 판이 창 전체를 덮는다. 창 body에도 이 스타일시트가 걸려 모눈 배경과 장식이 있어 그 위를 덮는다 */
+.vp-pip-body { margin: 0; overflow: hidden; background: #0c0818; }
+.vp-board--pip { position: fixed; inset: 0; z-index: 1; width: auto; max-width: none; aspect-ratio: auto; border-radius: 0; }
+@media (prefers-reduced-motion: no-preference) { .vp-key--new { animation: vpPop .18s cubic-bezier(.3,1.6,.5,1); } }
+@keyframes vpPop { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 
 /* ── 믹스염색 시뮬레이터 (mixdye.js) ──
    왼쪽 목록 카드, 오른쪽 조절 카드 + 기준 원본·믹스 결과·믹스 원본 3칸 비교.

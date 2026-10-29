@@ -190,6 +190,10 @@ async function _vpPip() {
   d.head.innerHTML = '<meta charset="utf-8">' + [...document.styleSheets].filter(ss => ss.href).map(ss => `<link rel="stylesheet" href="${ss.href}">`).join('');
   const theme = document.documentElement.getAttribute('data-theme');
   if (theme) d.documentElement.setAttribute('data-theme', theme);
+  // 설정에서 고른 글꼴과 글자 크기는 settings.js가 html·body에 직접 적어서 스타일시트만으로는 따라오지 않는다
+  d.documentElement.style.fontSize = document.documentElement.style.fontSize;
+  d.body.style.fontFamily = document.body.style.fontFamily;
+  if (document.body.dataset.font) d.body.dataset.font = document.body.dataset.font;
   d.body.className = 'vp-pip-body';
   d.body.innerHTML = _vpBoardHtml(true);
   d.body.addEventListener('click', _vpOnClick);

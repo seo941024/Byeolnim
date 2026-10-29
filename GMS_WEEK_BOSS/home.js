@@ -96,72 +96,13 @@ function _homeTaglineHtml() {
 
 let _homeIdx = 0, _homeTimer = null, _homeHold = false;
 
-/* 사이드바 메뉴 버튼에서 아이콘·이름을 읽는다 — 메뉴가 늘거나 바뀌어도 홈을 따로 고칠 필요가 없게 */
+/* 사이드바 메뉴 버튼에서 아이콘·이름을 읽는다 — 메뉴가 늘거나 바뀌어도 홈을 따로 고칠 필요가 없게.
+   전체 기능은 사이드바 묶음을 풀어 모든 메뉴를 사이드바 순서대로 늘어놓는다. 묶음 카드로 접었더니 칸이 휑하다는 지수 의견 */
 function _homeNavItems() {
   return [...document.querySelectorAll('.sb-nav .sb-nav__item[data-sec]')]
     .filter(b => b.dataset.sec !== 'home')
     .map(b => ({ sec: b.dataset.sec, icon: b.querySelector('.sb-nav__icon')?.getAttribute('src') || '', name: b.textContent.trim() }));
 }
-
-/* 전체 기능 칸 — 사이드바 순서를 그대로 따르고, 사이드바 묶음 메뉴는 묶음 카드 하나가 된다 */
-function _homeNavTree() {
-  const read = b => ({ sec: b.dataset.sec, icon: b.querySelector('.sb-nav__icon')?.getAttribute('src') || '', name: b.textContent.trim() });
-  return [...document.querySelectorAll('.sb-nav > .sb-nav__item[data-sec], .sb-nav > .sb-group')]
-    .filter(el => el.dataset.sec !== 'home')
-    .map(el => el.classList.contains('sb-group')
-      ? { ...read(el.querySelector('.sb-group__head')), group: el.id, items: [...el.querySelectorAll('.sb-group__list .sb-nav__item[data-sec]')].map(read) }
-      : read(el));
-}
-
-function _homeTileInner(n) {
-  return `<span class="home-tile__icon"><img src="${n.icon}" alt="" onerror="this.style.display='none'"></span>
-          <span class="home-tile__name">${escHtml(n.name)}</span>`;
-}
-
-// 묶음 카드는 오른쪽 위에 안쪽 메뉴 개수를 단다
-function _homeTileHtml(n) {
-  return n.items
-    ? `<button class="home-tile home-tile--group" data-group="${n.group}" type="button" aria-expanded="false">
-          ${_homeTileInner(n)}<span class="home-tile__count">${n.items.length}</span>
-        </button>`
-    : `<button class="home-tile" data-go="${n.sec}" type="button">${_homeTileInner(n)}</button>`;
-}
-
-/* 묶음 카드를 누르면 그 카드 바로 위에 안쪽 메뉴 카드들이 떠오른다. 아래 꼬리는 누른 카드 가운데를 가리킨다.
-   같은 카드를 다시 누르거나, 바깥을 누르거나, Esc를 누르거나, 창 폭이 바뀌면 닫는다.
-   폰은 스크롤할 때 주소창이 접히며 창 높이만 바뀌므로 높이 변화로는 닫지 않는다 */
-function _homeGroupToggle(tile, tree) {
-  const was = document.querySelector('.home-pop')?.dataset.group;
-  _homeGroupClose();
-  if (was === tile.dataset.group) return;
-  const g = tree.find(n => n.group === tile.dataset.group);
-  const wrap = tile.closest('.home-grid-wrap');
-  const pop = document.createElement('div');
-  pop.className = 'home-pop';
-  pop.dataset.group = g.group;
-  pop.setAttribute('role', 'group');
-  pop.setAttribute('aria-label', g.name);
-  pop.innerHTML = g.items.map((n, i) => `<button class="home-pop__tile" data-go="${n.sec}" type="button" style="--i:${i}">${_homeTileInner(n)}</button>`).join('');
-  wrap.appendChild(pop);
-  const wr = wrap.getBoundingClientRect(), tr = tile.getBoundingClientRect();
-  const mid = tr.left - wr.left + tr.width / 2;
-  const left = Math.min(Math.max(0, mid - pop.offsetWidth / 2), Math.max(0, wrap.clientWidth - pop.offsetWidth));
-  pop.style.left = left + 'px';
-  pop.style.top = (tr.top - wr.top - pop.offsetHeight - 12) + 'px';
-  pop.style.setProperty('--ox', (mid - left) + 'px');
-  tile.classList.add('is-open');
-  tile.setAttribute('aria-expanded', 'true');
-  if (pop.getBoundingClientRect().top < 70) pop.scrollIntoView({ block: 'center', behavior: _motionOff?.matches ? 'auto' : 'smooth' });
-}
-
-function _homeGroupClose() {
-  document.querySelectorAll('.home-pop').forEach(p => p.remove());
-  document.querySelectorAll('.home-tile--group.is-open').forEach(t => { t.classList.remove('is-open'); t.setAttribute('aria-expanded', 'false'); });
-}
-document.addEventListener('click', e => { if (!e.target.closest('.home-pop, .home-tile--group')) _homeGroupClose(); });
-document.addEventListener('keydown', e => { if (e.key === 'Escape') _homeGroupClose(); });
-let _homePopW = innerWidth;
-addEventListener('resize', () => { if (innerWidth !== _homePopW) { _homePopW = innerWidth; _homeGroupClose(); } });
 
 function _homeSlideHtml(f, i, icons) {
   return `<button class="home-slide" data-i="${i}" data-sec="${f.sec}" type="button">
@@ -177,7 +118,7 @@ function _homeSlideHtml(f, i, icons) {
 function renderHome() {
   const sec = document.getElementById('sec-home');
   if (!sec) return;
-  const nav = _homeNavItems(), tree = _homeNavTree();
+  const nav = _homeNavItems();
   const icons = Object.fromEntries(nav.map(n => [n.sec, n.icon]));
   const feats = HOME_FEATURES.filter(f => icons[f.sec] !== undefined);
   sec.innerHTML = `
@@ -213,17 +154,15 @@ function renderHome() {
 
     <div class="home-block">
       <h2 class="home-h">전체 기능</h2>
-      <div class="home-grid-wrap">
-        <div class="home-grid">${tree.map(_homeTileHtml).join('')}</div>
+      <div class="home-grid">${nav.map(n => `
+        <button class="home-tile" data-go="${n.sec}" type="button">
+          <span class="home-tile__icon"><img src="${n.icon}" alt="" onerror="this.style.display='none'"></span>
+          <span class="home-tile__name">${escHtml(n.name)}</span>
+        </button>`).join('')}
       </div>
     </div>`;
 
-  // 전체 기능 카드와 떠오른 묶음 안 카드. 묶음 안 카드는 누를 때 새로 만들어서 판에 한 번만 건다
-  sec.querySelector('.home-grid-wrap').addEventListener('click', e => {
-    const go = e.target.closest('[data-go]'), grp = e.target.closest('[data-group]');
-    if (go) { _homeGroupClose(); navigateTo(go.dataset.go); }
-    else if (grp) _homeGroupToggle(grp, tree);
-  });
+  sec.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => navigateTo(b.dataset.go)));
 
   if (document.body.classList.contains('char-home')) mountHomeCharArea();
   else document.getElementById('homeMineBlock').hidden = true;

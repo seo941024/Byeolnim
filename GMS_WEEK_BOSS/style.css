@@ -3062,37 +3062,6 @@ body::before {
 .home-tile__icon img { max-width: 44px; max-height: 44px; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
 .home-tile:hover .home-tile__icon img { transform: scale(1.18) rotate(-6deg); }
 .home-tile__name { font-size: .82rem; font-weight: 800; text-align: center; color: var(--text); }
-/* 전체 기능 묶음 카드 — 오른쪽 위 숫자는 안쪽 메뉴 개수. 누르면 바로 위에 안쪽 메뉴 카드가 떠오른다. home.js _homeGroupToggle */
-.home-grid-wrap { position: relative; }
-.home-tile--group { position: relative; }
-.home-tile__count {
-  position: absolute; top: 8px; right: 8px; min-width: 22px; height: 22px; padding: 0 6px; border-radius: var(--radius-pill);
-  display: grid; place-items: center; background: rgb(var(--star)); color: #2a1d05; font-size: .72rem; font-weight: 900;
-}
-.home-tile--group.is-open { border-color: rgb(var(--star)); box-shadow: 0 0 0 2px rgba(var(--star),.35); }
-.home-pop {
-  position: absolute; z-index: 30; display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; width: max-content; max-width: 100%;
-  padding: 12px; border-radius: 14px; background: var(--bg2); border: 1px solid rgba(var(--star),.5); box-shadow: 0 18px 40px rgba(0,0,0,.5);
-}
-:root[data-theme="light"] .home-pop { background: #fff; box-shadow: 0 18px 40px rgba(150,110,20,.2); }
-.home-pop::after {
-  content: ''; position: absolute; top: 100%; left: var(--ox); width: 14px; height: 14px; margin: -7px 0 0 -7px; rotate: 45deg;
-  background: inherit; border-right: 1px solid rgba(var(--star),.5); border-bottom: 1px solid rgba(var(--star),.5);
-}
-.home-pop__tile {
-  width: 116px; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 12px; border-radius: 10px;
-  background: var(--panel-veil); border: 1px solid rgba(var(--hue),.22); transition: transform .2s cubic-bezier(.2,.8,.2,1), border-color .2s;
-}
-:root[data-theme="light"] .home-pop__tile { background: #fffbea; }
-.home-pop__tile:hover { transform: translateY(-3px); border-color: rgba(var(--star),.55); }
-.home-pop__tile .home-tile__icon { width: 50px; height: 50px; }
-.home-pop__tile .home-tile__icon img { max-width: 40px; max-height: 40px; }
-.home-pop__tile .home-tile__name { font-size: .76rem; }
-@media (max-width: 600px) { .home-pop__tile { width: 96px; } }
-@media (prefers-reduced-motion: no-preference) {
-  .home-pop__tile { animation: homePopIn .32s cubic-bezier(.2,.9,.3,1.2) backwards; animation-delay: calc(var(--i) * 35ms); }
-}
-@keyframes homePopIn { from { opacity: 0; transform: translateY(16px) scale(.8); } }
 
 @media (max-width: 768px) {
   .home-hero { padding: 32px 12px 16px; }

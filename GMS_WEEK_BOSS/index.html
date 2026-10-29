@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261029u" />
+  <link rel="stylesheet" href="style.css?v=20261029v" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
@@ -105,7 +105,7 @@
     <nav class="sb-nav">
       <!-- 순서는 지수가 정한 것: 홈, 캐릭터 목록, 오늘의 채널 추천, 메이플 캘린더, 숙제 트래커, 계산기, 시뮬레이터,
            이벤트 게임 공략, 보스 정보, 커뮤니티, 서버 상태. 묶음 메뉴는 가운데 아래쪽에 모은다.
-           홈 전체 기능도 home.js _homeNavTree가 이 순서와 묶음을 그대로 따른다 -->
+           홈 전체 기능도 묶음을 풀어 이 순서 그대로 늘어놓는다 -->
       <button class="sb-nav__item active" data-sec="home">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/etc/MapleStory_logo.png" alt="" onerror="this.style.display='none'"></span><span>홈</span>
       </button>
@@ -925,7 +925,7 @@
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->
 <script src="cloudsave.js?v=20261027d"></script>
 <!-- 첫 화면 — 사이드바 메뉴를 읽어 전체 메뉴 바둑판을 만들므로 맨 뒤에 둔다 -->
-<script src="home.js?v=20261029m"></script>
+<script src="home.js?v=20261029n"></script>
 
 <!-- 첫 로딩 화면 걷기 — 위 스크립트가 모두 돈 뒤다. 글꼴을 기다리되 1.5초를 넘기지 않는다.
      앞쪽 스크립트에서 오류가 나도 이 블록은 따로 돌아서 화면이 가린 채로 남지 않는다 -->

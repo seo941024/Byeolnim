@@ -21,7 +21,7 @@ const VP_DIR_NAME = { up: '위', down: '아래', left: '왼쪽', right: '오른�
    키 틀은 18×19칸. # 외곽선, H 윗면 밝은 테, F 윗면, S 옆면, D 옆면 아래 그늘.
    그 위 왼쪽 3칸·위 2칸 자리부터 12×12칸에 화살표나 R을 찍고, 글자 바로 아래 한 칸에 그림자를 둔다.
    눌린 그림은 윗면을 옆면 두 칸만큼 내리고 옆면을 없앤 틀이다.
-   메뉴 아이콘 images/victorypose/icon.png는 지수가 준 빨강 사이드킥 얼굴이다 */
+   메뉴 아이콘 images/victorypose/icon.png는 지수가 준 victorypose.png다 */
 const VP_CAP = [
   '..##############..',
   '.#HHHHHHHHHHHHHH#.',

@@ -3750,40 +3750,38 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* ── 승리 포즈 연습 (victorypose.js) ──
    판은 지수가 고른 사이드킥 승리 포즈 그림에 어두운 막을 씌우고, 가운데에 적은 방향키, 아래에 누를 버튼을 둔다.
-   크기는 판을 기준으로 한 cqw·cqh로 정해서 이 화면과 PIP 창 어느 크기에서도 같은 비율로 보인다.
-   --vp-key·--vp-btn은 판 안의 요소에서 풀리므로 판 크기를 따른다. 판 자신의 속성에는 cq 단위를 쓰지 않는다 */
+   키는 뒤 그림처럼 도트 그림이고 18×19칸이다. --vp-u는 적은 키의 한 칸, --vp-bu는 버튼의 한 칸 크기.
+   판을 기준으로 한 cqw·cqh로 정해 이 화면과 PIP 창 어느 크기에서도 같은 비율로 보이고,
+   round()를 쓰는 브라우저에서는 한 칸을 1px 단위로 맞춰 도트가 고르게 찍힌다.
+   두 변수는 판 안의 요소에서 풀리므로 판 크기를 따른다. 판 자신의 속성에는 cq 단위를 쓰지 않는다 */
+.vp-tools { display: flex; margin-bottom: 10px; }
 .vp-board {
-  --vp-key: min(11cqw, 33cqh);
-  --vp-btn: min(7.4cqw, 21cqh);
+  --vp-u: calc(min(11cqw, 33cqh) / 18);
+  --vp-bu: calc(min(9cqw, 26cqh) / 18);
   container-type: size; position: relative; width: 100%; max-width: 720px; aspect-ratio: 598 / 229;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   border-radius: 10px; overflow: hidden; user-select: none;
   background: linear-gradient(rgba(12,8,24,.52), rgba(12,8,24,.52)), url('images/victorypose/bg.webp?v=20261029a') center / cover;
 }
-.vp-seq { display: flex; justify-content: center; gap: 1.6cqw; height: var(--vp-key); }
-.vp-key {
-  display: grid; place-items: center; width: var(--vp-key); height: var(--vp-key); box-sizing: border-box;
-  border: calc(var(--vp-key) * .08) solid rgb(var(--star)); border-radius: 24%; background: #fff;
-  box-shadow: 0 calc(var(--vp-key) * .08) 0 #9a6f12, 0 calc(var(--vp-key) * .14) calc(var(--vp-key) * .2) rgba(0,0,0,.45);
+@supports (width: round(1.5px, 1px)) {
+  .vp-board { --vp-u: max(1px, round(calc(min(11cqw, 33cqh) / 18), 1px)); --vp-bu: max(1px, round(calc(min(9cqw, 26cqh) / 18), 1px)); }
 }
-.vp-key svg, .vp-btn svg { width: 62%; height: 62%; fill: #5b3fb0; }
-.vp-btn svg { fill: #fff; }
-.vp-key--down svg, .vp-btn--down svg { rotate: 180deg; }
-.vp-key--left svg, .vp-btn--left svg { rotate: -90deg; }
-.vp-key--right svg, .vp-btn--right svg { rotate: 90deg; }
+.vp-seq { display: flex; justify-content: center; gap: 1.6cqw; height: calc(var(--vp-u) * 19); }
+.vp-key { display: block; width: calc(var(--vp-u) * 18); height: calc(var(--vp-u) * 19); filter: drop-shadow(0 calc(var(--vp-u) * 2) 0 rgba(0,0,0,.35)); }
+.vp-t { display: block; width: 100%; height: 100%; }
 .vp-pad { display: flex; align-items: center; gap: 1.4cqw; margin-top: 7cqh; }
-.vp-btn, .vp-reset {
-  height: var(--vp-btn); background: rgba(14,10,28,.6); border: 2px solid rgba(255,255,255,.45); color: #fff;
-  transition: background .12s, border-color .12s;
+.vp-btn { display: block; width: calc(var(--vp-bu) * 18); height: calc(var(--vp-bu) * 19); }
+.vp-btn:hover .vp-t { filter: brightness(1.2); }
+/* 누르면 윗면이 내려가고 밝아진 그림으로 바꾼다. 마우스를 누르고 있는 동안과, 클릭·키 입력 뒤 잠깐 붙는 .is-press 동안 */
+.vp-btn .vp-t--down,
+:is(.vp-btn:active, .vp-btn.is-press) .vp-t:not(.vp-t--down) { display: none; }
+:is(.vp-btn:active, .vp-btn.is-press) .vp-t--down { display: block; }
+.vp-reset { display: inline-flex; align-items: center; gap: 1cqw; width: auto; margin-left: 1.6cqw; }
+.vp-reset .vp-t { width: calc(var(--vp-bu) * 18); height: calc(var(--vp-bu) * 19); flex: none; }
+.vp-reset span {
+  color: #fff; font-size: calc(var(--vp-bu) * 7); font-weight: 900; line-height: 1;
+  text-shadow: 2px 0 0 #3a0b12, -2px 0 0 #3a0b12, 0 2px 0 #3a0b12, 0 -2px 0 #3a0b12, 0 3px 4px rgba(0,0,0,.6);
 }
-.vp-btn { display: grid; place-items: center; width: var(--vp-btn); border-radius: 22%; }
-.vp-reset {
-  display: inline-flex; align-items: center; gap: .8cqw; margin-left: 1.6cqw; padding: 0 2cqw; border-radius: 999px;
-  font-size: calc(var(--vp-btn) * .36); font-weight: 800;
-}
-.vp-reset kbd { font: inherit; font-size: .8em; padding: .1em .45em; border-radius: 4px; background: rgba(255,255,255,.18); }
-:is(.vp-btn, .vp-reset):hover { background: rgba(var(--star),.35); border-color: rgb(var(--star)); }
-:is(.vp-btn, .vp-reset):active { scale: .92; }
 /* PIP 창 — 판이 창 전체를 덮는다. 창 body에도 이 스타일시트가 걸려 모눈 배경과 장식이 있어 그 위를 덮는다 */
 .vp-pip-body { margin: 0; overflow: hidden; background: #0c0818; }
 .vp-board--pip { position: fixed; inset: 0; z-index: 1; width: auto; max-width: none; aspect-ratio: auto; border-radius: 0; }

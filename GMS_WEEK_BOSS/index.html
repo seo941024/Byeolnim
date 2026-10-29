@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261029t" />
+  <link rel="stylesheet" href="style.css?v=20261029u" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
@@ -103,62 +103,53 @@
 
     <!-- 네비게이션 -->
     <nav class="sb-nav">
+      <!-- 순서는 지수가 정한 것: 홈, 캐릭터 목록, 오늘의 채널 추천, 메이플 캘린더, 숙제 트래커, 계산기, 시뮬레이터,
+           이벤트 게임 공략, 보스 정보, 커뮤니티, 서버 상태. 묶음 메뉴는 가운데 아래쪽에 모은다.
+           홈 전체 기능도 home.js _homeNavTree가 이 순서와 묶음을 그대로 따른다 -->
       <button class="sb-nav__item active" data-sec="home">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/etc/MapleStory_logo.png" alt="" onerror="this.style.display='none'"></span><span>홈</span>
-      </button>
-      <div class="sb-group" id="sbEventGroup">
-        <button class="sb-nav__item sb-group__head" type="button">
-          <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/event_game.png" alt="" onerror="this.style.display='none'"></span><span>이벤트 게임 공략</span>
-        </button>
-        <div class="sb-group__list">
-          <button class="sb-nav__item" data-sec="frontier">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>미스틱 프론티어 계산기</span>
-      </button>
-          <button class="sb-nav__item" data-sec="meundi">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meet-and-greet-assigned-seating-ticket.png" alt="" onerror="this.style.display='none'"></span><span>고!고! 사이드킥</span>
-      </button>
-          <button class="sb-nav__item" data-sec="victorypose">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/victorypose/icon.png?v=20261029c" alt="" onerror="this.style.display='none'"></span><span>승리 포즈 연습</span>
-      </button>
-          <button class="sb-nav__item" data-sec="mysticseal">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/mysticseal/icon.png" alt="" onerror="this.style.display='none'"></span><span>의문의 결계 시뮬레이터</span>
-      </button>
-        </div>
-      </div>
-      <button class="sb-nav__item" data-sec="wantchannel">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Quick_Move_-_Auction_House.png?v=20261027a" alt="" onerror="this.style.display='none'"></span><span>오늘의 채널 추천</span>
       </button>
       <button class="sb-nav__item" data-sec="charinfo">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Leafre_Guidebook.png" alt="" onerror="this.style.display='none'"></span><span>캐릭터 목록</span>
       </button>
+      <button class="sb-nav__item" data-sec="wantchannel">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Quick_Move_-_Auction_House.png?v=20261027a" alt="" onerror="this.style.display='none'"></span><span>오늘의 채널 추천</span>
+      </button>
       <button class="sb-nav__item" data-sec="mcalendar">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Alliance_Report.png" alt="" onerror="this.style.display='none'"></span><span>메이플 캘린더</span>
-      </button>
-      <button class="sb-nav__item" data-sec="boss">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/daily.webp" alt=""></span><span>보스 수익 계산기</span>
       </button>
       <button class="sb-nav__item" data-sec="dailytasks">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/dailytasks/Etc_Gold_Maple_Coin.png" alt="" onerror="this.style.display='none'"></span><span>숙제 트래커</span>
       </button>
-      <button class="sb-nav__item" data-sec="hexa">
+      <div class="sb-group" id="sbCalcGroup">
+        <button class="sb-nav__item sb-group__head" type="button">
+          <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meso.webp" alt="" onerror="this.style.display='none'"></span><span>계산기</span>
+        </button>
+        <div class="sb-group__list">
+          <button class="sb-nav__item" data-sec="boss">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/daily.webp" alt=""></span><span>보스 수익 계산기</span>
+      </button>
+          <button class="sb-nav__item" data-sec="hexa">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" alt=""></span><span>헥사 계산기</span>
       </button>
-      <!-- 장비 교체 비교 — 2026-09-17 사용자 요청으로 내림. gearcompare.js/
-           data_gearcompare.js 파일은 남겨뒀으니 다시 켜려면 이 주석만 풀면 됨.
-      <button class="sb-nav__item" data-sec="gearcompare">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Genesis_Dual_Bowguns.png" alt="" onerror="this.style.display='none'"></span><span>장비 교체 비교</span>
-      </button>
-      -->
-      <!-- 하이퍼스탯 최적화 — 2026-09-01 배포했다가 레벨당 증가량이 검증 안 된
-           추정치라 바로 내림(사용자 지적). hyperstat.js 파일은 남겨뒀으니 데이터
-           검증되면 이 주석만 풀면 됨.
-      <button class="sb-nav__item" data-sec="hyperstat">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Use_Mysterious_Star_Speck_Box.png" alt="" onerror="this.style.display='none'"></span><span>하이퍼스탯 최적화</span>
-      </button>
-      -->
-      <button class="sb-nav__item" data-sec="liberation">
+          <!-- 장비 교체 비교 — 2026-09-17 사용자 요청으로 내림. gearcompare.js/
+               data_gearcompare.js 파일은 남겨뒀으니 다시 켜려면 이 주석만 풀면 됨.
+          <button class="sb-nav__item" data-sec="gearcompare">
+            <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Genesis_Dual_Bowguns.png" alt="" onerror="this.style.display='none'"></span><span>장비 교체 비교</span>
+          </button>
+          -->
+          <!-- 하이퍼스탯 최적화 — 2026-09-01 배포했다가 레벨당 증가량이 검증 안 된
+               추정치라 바로 내림(사용자 지적). hyperstat.js 파일은 남겨뒀으니 데이터
+               검증되면 이 주석만 풀면 됨.
+          <button class="sb-nav__item" data-sec="hyperstat">
+            <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Use_Mysterious_Star_Speck_Box.png" alt="" onerror="this.style.display='none'"></span><span>하이퍼스탯 최적화</span>
+          </button>
+          -->
+          <button class="sb-nav__item" data-sec="liberation">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Destiny_Dual_Bowguns_(Stage_2).png" alt="" onerror="this.style.display='none'"></span><span>해방 계산기</span>
       </button>
+        </div>
+      </div>
       <div class="sb-group" id="sbSimGroup">
         <button class="sb-nav__item sb-group__head" type="button">
           <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Magic_Whetstone.png" alt="" onerror="this.style.display='none'"></span><span>시뮬레이터</span>
@@ -184,6 +175,25 @@
       </button>
           <button class="sb-nav__item" data-sec="polish">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/WANT/Use_Grindstone_of_Life.png" alt="" onerror="this.style.display='none'"></span><span>연마석 시뮬레이터</span>
+      </button>
+        </div>
+      </div>
+      <div class="sb-group" id="sbEventGroup">
+        <button class="sb-nav__item sb-group__head" type="button">
+          <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/event_game.png" alt="" onerror="this.style.display='none'"></span><span>이벤트 게임 공략</span>
+        </button>
+        <div class="sb-group__list">
+          <button class="sb-nav__item" data-sec="frontier">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Eqp_Roro_the_Familiar_Manager.png" alt="" onerror="this.style.display='none'"></span><span>미스틱 프론티어 계산기</span>
+      </button>
+          <button class="sb-nav__item" data-sec="meundi">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/meet-and-greet-assigned-seating-ticket.png" alt="" onerror="this.style.display='none'"></span><span>고!고! 사이드킥</span>
+      </button>
+          <button class="sb-nav__item" data-sec="victorypose">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/victorypose/icon.png?v=20261029c" alt="" onerror="this.style.display='none'"></span><span>승리 포즈 연습</span>
+      </button>
+          <button class="sb-nav__item" data-sec="mysticseal">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/mysticseal/icon.png" alt="" onerror="this.style.display='none'"></span><span>의문의 결계 시뮬레이터</span>
       </button>
         </div>
       </div>
@@ -915,7 +925,7 @@
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->
 <script src="cloudsave.js?v=20261027d"></script>
 <!-- 첫 화면 — 사이드바 메뉴를 읽어 전체 메뉴 바둑판을 만들므로 맨 뒤에 둔다 -->
-<script src="home.js?v=20261029k"></script>
+<script src="home.js?v=20261029m"></script>
 
 <!-- 첫 로딩 화면 걷기 — 위 스크립트가 모두 돈 뒤다. 글꼴을 기다리되 1.5초를 넘기지 않는다.
      앞쪽 스크립트에서 오류가 나도 이 블록은 따로 돌아서 화면이 가린 채로 남지 않는다 -->

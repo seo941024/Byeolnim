@@ -7,7 +7,7 @@
    - 확률·비용 표 탭: 아래 표를 그대로 보여 준다
 
    출처
-   - 결계 단계별 핵 확률, 강화 성공 확률과 1회 에너지, 추출 에너지: 넥슨 공지 클라이언트 1.2.410 업데이트 안내 이벤트,
+   - 결계 단계별 핵 확률, 강화 성공 확률과 에너지 소모량, 추출 에너지: 넥슨 공지 클라이언트 1.2.410 업데이트 안내 이벤트,
      2025-12-18. 테스트월드 업데이트 144, 메애기 표와 같다
    - 레전드리 추출은 공지에 1단계 값만 있다. 더 높은 희귀도가 없어 강화한 레전드리가 추출될 일이 없기 때문이다
    - 핵 능력치: 메애기 의문의 결계 시뮬레이터 표. 공식 공지에는 수치가 없다
@@ -22,17 +22,19 @@ const MS_CORES = [
   { name: '찬란한', grade: '유니크' },
   { name: '심연의', grade: '레전드리' },
 ];
-// 챌린저스 티어 → 해제하는 결계. prob은 노멀부터 레전드리까지, 합 100000
+/* 챌린저스 티어 → 해제하는 결계. prob은 노멀부터 레전드리까지, 합 100000.
+   공지의 해제 조건은 골드 미만·골드 이상·에메랄드 이상·다이아몬드 이상·마스터 이상이다. 화면에는 지수 요청으로
+   미만·이상을 빼고 배지 그림의 티어 이름만 적고, 조건은 버튼에 마우스를 올리면 나오는 title에 둔다 */
 const MS_TIERS = [
-  { label: '골드 미만',       barrier: '1단계 초소형', badge: 'tier1', prob: [67490, 30450, 2030, 23, 7] },
-  { label: '골드 이상',       barrier: '2단계 소형',   badge: 'tier3', prob: [52600, 31400, 15700, 250, 50] },
-  { label: '에메랄드 이상',   barrier: '3단계 중형',   badge: 'tier5', prob: [49950, 29950, 14950, 5050, 100] },
-  { label: '다이아몬드 이상', barrier: '4단계 대형',   badge: 'tier6', prob: [0, 29950, 62880, 6650, 520] },
-  { label: '마스터 이상',     barrier: '5단계 초대형', badge: 'tier7', prob: [0, 0, 91850, 7100, 1050] },
+  { label: '브론즈',     cond: '골드 미만',       barrier: '1단계 초소형', badge: 'tier1', prob: [67490, 30450, 2030, 23, 7] },
+  { label: '골드',       cond: '골드 이상',       barrier: '2단계 소형',   badge: 'tier3', prob: [52600, 31400, 15700, 250, 50] },
+  { label: '에메랄드',   cond: '에메랄드 이상',   barrier: '3단계 중형',   badge: 'tier5', prob: [49950, 29950, 14950, 5050, 100] },
+  { label: '다이아몬드', cond: '다이아몬드 이상', barrier: '4단계 대형',   badge: 'tier6', prob: [0, 29950, 62880, 6650, 520] },
+  { label: '마스터',     cond: '마스터 이상',     barrier: '5단계 초대형', badge: 'tier7', prob: [0, 0, 91850, 7100, 1050] },
 ];
 // 강화 Lv.n → n+1 성공 확률. 모든 희귀도가 같다
 const MS_SUCC = [1000, 900, 800, 750, 500, 200, 100, 60, 40, 20, 7];
-// 강화 Lv.n → n+1 1회 에너지, 희귀도별
+// 강화 Lv.n → n+1 한 번 시도할 때 에너지 소모량, 희귀도별
 const MS_COST = [
   [2, 3, 3, 4, 5, 10, 14, 18, 22, 26, 30],
   [4, 5, 6, 8, 10, 20, 28, 36, 44, 52, 60],
@@ -50,7 +52,9 @@ const MS_EXTRACT = [
 ];
 /* 핵 능력치. 희귀도가 하나 오를 때마다 6단계씩 올라간 자리에서 이어져서, 희귀도 r의 Lv.n은 6r + n번째 줄이다.
    예를 들어 희미한 Lv.7과 안정된 Lv.1이 같은 줄이다.
-   줄마다 주스탯, 제논 주스탯, 데몬어벤져 주스탯, 부스탯, 공격력·마력, 주스탯 %, 제논 주스탯 % */
+   줄마다 주스탯, 제논 주스탯, 데몬어벤져 주스탯, 부스탯, 공격력·마력, 주스탯 %, 제논 주스탯 %.
+   부스탯과 공격력·마력은 메애기 표와 나무위키 모두 직업 구분 없이 한 값이라 모든 직업에 같이 적는다.
+   제논은 세 스탯이 모두 주스탯이라 부스탯이 없고, 데몬어벤져 주스탯 %는 값이 없어 -로 적는다 */
 const MS_STATS = [
   [24, 16, 1200, 20, 2, 2, 2],    [26, 17, 1300, 22, 2, 2, 2],    [28, 19, 1400, 24, 2, 2, 2],
   [30, 20, 1500, 24, 2, 2, 2],    [32, 21, 1600, 26, 2, 2, 2],    [34, 22, 1700, 26, 2, 4, 4],
@@ -141,7 +145,7 @@ function _msDrawHtml() {
       <div class="card">
         <div class="card__title">챌린저스 티어</div>
         <div class="ms-tiers">${MS_TIERS.map((x, i) => `
-          <button class="ms-tier${i === _msTier ? ' active' : ''}" type="button" data-ms-tier="${i}">
+          <button class="ms-tier${i === _msTier ? ' active' : ''}" type="button" data-ms-tier="${i}" title="${x.cond}">
             <img src="${_msImg(x.badge)}" alt=""><span>${x.label}</span>
           </button>`).join('')}</div>
         <div class="sf-res-item mt16"><span class="sf-res-label">해제할 결계</span><span class="sf-res-val">${t.barrier} 결계</span></div>
@@ -180,9 +184,9 @@ function _msEffectHtml(core, lv) {
       <thead><tr><th></th><th>일반</th><th>제논</th><th>데몬어벤져</th></tr></thead>
       <tbody>
         <tr><td class="flame-opt-lbl">주스탯</td><td>+${main}</td><td>+${xenon}</td><td>+${da.toLocaleString()}</td></tr>
-        <tr><td class="flame-opt-lbl">부스탯</td><td>+${sub}</td><td></td><td></td></tr>
-        <tr><td class="flame-opt-lbl">공격력·마력</td><td>+${att}</td><td></td><td></td></tr>
-        <tr><td class="flame-opt-lbl">주스탯 %</td><td>+${pct}%</td><td>+${xenonPct}%</td><td></td></tr>
+        <tr><td class="flame-opt-lbl">부스탯</td><td>+${sub}</td><td>-</td><td>+${sub}</td></tr>
+        <tr><td class="flame-opt-lbl">공격력·마력</td><td>+${att}</td><td>+${att}</td><td>+${att}</td></tr>
+        <tr><td class="flame-opt-lbl">주스탯 %</td><td>+${pct}%</td><td>+${xenonPct}%</td><td>-</td></tr>
       </tbody>
     </table>`;
 }
@@ -199,7 +203,7 @@ function _msEnhHtml() {
           <button class="${r === e.core ? 'active' : ''}" type="button" data-ms-core="${r}">${_msCoreImg(r)}<span class="ms-g" data-g="${r}">${c.grade}</span></button>`).join('')}</div>
         <div class="ms-now mt16">${_msCoreImg(e.core, 'ms-now__img')}<div>${_msCoreName(e.core)}<b>Lv.${e.lv}</b></div></div>
         <div class="sf-res-item mt8"><span class="sf-res-label">성공 확률</span><span class="sf-res-val">${top ? '최대 단계' : _msSuccPct(MS_SUCC[e.lv - 1])}</span></div>
-        <div class="sf-res-item"><span class="sf-res-label">1회 에너지</span><span class="sf-res-val">${top ? '-' : _msEnergy(MS_COST[e.core][e.lv - 1])}</span></div>
+        <div class="sf-res-item"><span class="sf-res-label">에너지 소모량</span><span class="sf-res-val">${top ? '-' : _msEnergy(MS_COST[e.core][e.lv - 1])}</span></div>
         <div class="cube-btns mt16"><button class="sbtn sbtn--primary cube-btn-full" type="button" data-ms="enh1"${top ? ' disabled' : ''}>강화 [S]</button></div>
         <div class="ms-row mt8">
           <select class="sel" data-ms-target>${targets.join('')}</select>
@@ -239,7 +243,7 @@ function _msTableHtml() {
       </table></div>
     </div>
     <div class="card mt16">
-      <div class="card__title">강화 성공 확률과 1회 에너지</div>
+      <div class="card__title">강화 성공 확률과 에너지 소모량</div>
       <div class="ms-tbl-wrap"><table class="flame-tbl ms-tbl">
         <thead><tr><th>강화</th><th>성공 확률</th>${head}</tr></thead>
         <tbody>${lvs.slice(0, MS_MAX_LV - 1).map(i => `<tr>

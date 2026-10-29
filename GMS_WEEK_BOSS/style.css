@@ -3792,6 +3792,42 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 @media (prefers-reduced-motion: no-preference) { .vp-key--new { animation: vpPop .18s cubic-bezier(.3,1.6,.5,1); } }
 @keyframes vpPop { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 
+/* ── 의문의 결계 시뮬레이터 (mysticseal.js) ──
+   핵 그림은 도트라 키울 때 픽셀을 그대로 키운다. 희귀도 글자색은 잠재능력 등급색 --gt-*를 쓴다 */
+.ms-tiers, .ms-cores, .ms-pick { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.ms-tiers, .ms-pick { margin-top: 8px; }
+.ms-tier, .ms-pick button {
+  display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 2px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: var(--bg2); color: var(--text-sub); font-size: .74rem; font-weight: 700;
+}
+.ms-tier img { width: 33px; height: 34px; object-fit: contain; }
+:is(.ms-tier, .ms-pick button):hover { border-color: rgba(var(--star),.5); }
+:is(.ms-tier, .ms-pick button).active { border-color: rgb(var(--star)); background: rgba(var(--star),.12); color: var(--text); }
+.ms-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 2px; border-radius: 8px; background: var(--bg2); }
+.ms-chip.is-zero { opacity: .4; }
+.ms-chip small { font-size: .72rem; font-weight: 700; color: var(--text-sub); }
+.ms-chip b { font-size: .9rem; font-weight: 900; color: var(--text); font-variant-numeric: tabular-nums; }
+.ms-core { width: 34px; height: 35px; object-fit: contain; }
+.ms-ico { display: inline-block; width: 16px; height: 16px; margin-right: 4px; vertical-align: -3px; object-fit: contain; image-rendering: pixelated; }
+.ms-g { font-size: .78rem; font-weight: 800; color: var(--text-sub); }
+.ms-g[data-g="1"] { color: var(--gt-rare); }
+.ms-g[data-g="2"] { color: var(--gt-epic); }
+.ms-g[data-g="3"] { color: var(--gt-unique); }
+.ms-g[data-g="4"] { color: var(--gt-legendary); }
+.ms-row { display: flex; gap: 8px; }
+.ms-row .sel { flex: 1; width: auto; min-width: 0; }
+.ms-row .sbtn { flex: 1; white-space: nowrap; }
+.ms-now { display: flex; align-items: center; gap: 14px; padding: 12px 14px; border-radius: 10px; background: var(--bg2); }
+.ms-now__img { width: 68px; height: 70px; object-fit: contain; image-rendering: pixelated; }
+.ms-now .ms-g { display: block; font-size: .95rem; }
+.ms-now b { font-size: 1.5rem; font-weight: 900; color: var(--accent); }
+.ms-eff { margin-top: 8px; }
+.ms-tbl-wrap { overflow-x: auto; margin-top: 8px; }
+.ms-tbl { table-layout: auto; min-width: 560px; }
+.ms-tbl th:first-child { width: auto; }
+.ms-th-img { display: block; width: 28px; height: 28px; margin: 0 auto 2px; object-fit: contain; }
+.ms-badge { display: inline-block; width: 22px; height: 22px; margin-right: 6px; vertical-align: middle; object-fit: contain; }
+
 /* ── 믹스염색 시뮬레이터 (mixdye.js) ──
    왼쪽 목록 카드, 오른쪽 조절 카드 + 기준 원본·믹스 결과·믹스 원본 3칸 비교.
    캐릭터 그림은 96×96 도트라 정수 배율 + pixelated로만 키운다(흐려지지 않게). */

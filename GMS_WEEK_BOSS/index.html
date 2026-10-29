@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261029r" />
+  <link rel="stylesheet" href="style.css?v=20261029t" />
   <link rel="stylesheet" href="vendor/quill/quill.snow.css?v=1.3.7" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
@@ -119,6 +119,9 @@
       </button>
           <button class="sb-nav__item" data-sec="victorypose">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/victorypose/icon.png?v=20261029c" alt="" onerror="this.style.display='none'"></span><span>승리 포즈 연습</span>
+      </button>
+          <button class="sb-nav__item" data-sec="mysticseal">
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/mysticseal/icon.png" alt="" onerror="this.style.display='none'"></span><span>의문의 결계 시뮬레이터</span>
       </button>
         </div>
       </div>
@@ -631,6 +634,8 @@
     <section class="sec" id="sec-meundi"></section>
     <!-- ══════ 승리 포즈 연습 ══════ (victorypose.js가 채운다) -->
     <section class="sec" id="sec-victorypose"></section>
+    <!-- ══════ 의문의 결계 시뮬레이터 ══════ (mysticseal.js가 채운다) -->
+    <section class="sec" id="sec-mysticseal"></section>
 
     <!-- ══════ 커뮤니티 · 서버 상태 ══════ -->
     <section class="sec" id="sec-community"></section>
@@ -886,7 +891,7 @@
 <script src="data_liberation.js?v=20261027f"></script>
 <script src="starforce.js?v=20261027b"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261029a"></script>
+<script src="app.js?v=20261029b"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261028s"></script>
 <script src="character.js?v=20261027w"></script>
@@ -896,7 +901,7 @@
 <!-- <script src="hyperstat.js?v=20260901a"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20261027f"></script>
 <script src="starforce_sim.js?v=20261027b"></script>
-<script src="cube.js?v=20261027f"></script><script src="familiar.js?v=20261027b"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261027b"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261028p"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261027b"></script><script src="meundi.js?v=20261029a"></script><script src="victorypose.js?v=20261029d"></script>
+<script src="cube.js?v=20261027f"></script><script src="familiar.js?v=20261027b"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261027b"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261028p"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261027b"></script><script src="meundi.js?v=20261029a"></script><script src="victorypose.js?v=20261029d"></script><script src="mysticseal.js?v=20261029a"></script>
 <script src="addoption.js?v=20261027n"></script><script src="bosshp.js?v=20261027b"></script>
 <script src="serverstatus.js?v=20261027b"></script><script src="vendor/quill/quill.min.js?v=1.3.7"></script><script src="community.js?v=20261027j"></script>
 <script src="dailytasks.js?v=20261027t"></script>

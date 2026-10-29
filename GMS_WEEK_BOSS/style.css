@@ -3760,7 +3760,11 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   --vp-bu: calc(min(9cqw, 26cqh) / 18);
   container-type: size; position: relative; width: 100%; max-width: 720px; aspect-ratio: 598 / 229;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
-  border-radius: 10px; overflow: hidden; user-select: none;
+  border-radius: 10px; overflow: hidden; user-select: none; isolation: isolate;
+}
+/* 그림 색이 진하다는 지수 의견으로 채도를 낮춘다. 그림에만 거르개를 걸려고 판 자체가 아닌 뒤 층에 깐다 */
+.vp-board::before {
+  content: ''; position: absolute; inset: 0; z-index: -1; filter: saturate(.62);
   background: linear-gradient(rgba(12,8,24,.52), rgba(12,8,24,.52)), url('images/victorypose/bg.webp?v=20261029a') center / cover;
 }
 @supports (width: round(1.5px, 1px)) {
@@ -3780,7 +3784,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .vp-reset .vp-t { width: calc(var(--vp-bu) * 18); height: calc(var(--vp-bu) * 19); flex: none; }
 .vp-reset span {
   color: #fff; font-size: calc(var(--vp-bu) * 7); font-weight: 900; line-height: 1;
-  text-shadow: 2px 0 0 #3a0b12, -2px 0 0 #3a0b12, 0 2px 0 #3a0b12, 0 -2px 0 #3a0b12, 0 3px 4px rgba(0,0,0,.6);
+  text-shadow: 2px 0 0 #3a1418, -2px 0 0 #3a1418, 0 2px 0 #3a1418, 0 -2px 0 #3a1418, 0 3px 4px rgba(0,0,0,.6);
 }
 /* PIP 창 — 판이 창 전체를 덮는다. 창 body에도 이 스타일시트가 걸려 모눈 배경과 장식이 있어 그 위를 덮는다 */
 .vp-pip-body { margin: 0; overflow: hidden; background: #0c0818; }

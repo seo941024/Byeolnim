@@ -10,6 +10,13 @@
    층 데이터가 없는 헤어·성형 색과 코디 아이템은 "데이터 없음"으로 표시하고 고를 수 없게 한다.
 
    성별마다 헤어·성형·피부·코디 선택을 따로 기억한다(_mxState.chars.f / .m).
+
+   메애기 드레스룸을 보고 더한 편의 기능. 새 데이터 없이 받아 둔 그림만으로 한다
+   - 결과 그림 배율 ×2·×3·×4, 좌우 반전
+   - 되돌리기·다시 하기: 모습이 바뀔 때마다 두 성별 상태를 적어 둔다. Ctrl+Z, Ctrl+Y
+   - 프리셋 5칸: 지금 모습과 작은 그림을 저장해 두고 눌러서 불러온다
+   - 공유 링크: 지금 성별 캐릭터의 모습을 주소 ?coordi= 뒤에 담는다
+   - 랜덤 코디, 목록의 찜과 최근 고른 아이템
    ═══════════════════════════════════════════════════════════ */
 
 const MX_DEFAULT_SKIN = 12018;          // 뽀송 라벤더 피부. 몸 ID는 머리 ID - 10000
@@ -25,6 +32,10 @@ const MX_COORDI_DATA = 'data_coordi.js?v=20261021a';
 const MX_MATTE_BASE = [77, 84, 89];
 const MX_MATTE_ALPHA = 238 / 255;
 const MX_SEX = { f: { name: '여자', digit: 1 }, m: { name: '남자', digit: 0 } };   // digit: 아이템 ID 천의 자리 성별 값
+const MX_ZOOMS = [2, 3, 4];             // 결과 그림 배율
+const MX_PRESETS = 'gms_mixdye_presets_v1', MX_PRESET_N = 5;
+const MX_FAV = 'gms_mixdye_fav_v1', MX_RECENT = 'gms_mixdye_recent_v1', MX_RECENT_N = 30;
+const MX_SHARE_Q = 'coordi';            // 공유 링크 주소의 쿼리 이름
 
 // 기본 상하의 — 한벌옷을 입으면 빠지고, 벗으면 돌아온다. 여자 기본 옷은 캐시 아이템이 아니라 코디 목록에 없어 이름을 여기 둔다
 const MX_BASIC = {
@@ -70,6 +81,7 @@ let _mxState = {
   chars: { f: _mxChar('f'), m: _mxChar('m') },
   coordi: { slot: 'hat', other: false },
   q: '',
+  zoom: 3, flip: false, show: 'all',    // 결과 그림 배율, 좌우 반전, 목록 보기 전체·찜·최근
 };
 // 헤어·성형 상태는 지금 고른 성별의 것을 가리킨다
 Object.defineProperty(_mxState, 'hair', { get() { return this.chars[this.g].hair; } });
@@ -105,16 +117,46 @@ function _mxEffectiveWorn() {
 }
 const _mxIsBasic = (slot, id) => { const b = MX_BASIC[_mxState.g][slot]; return !!b && b[0] === id && _mxWorn()[slot] !== id; };
 
+// 캐릭터 한 명을 저장할 모양으로. 저장값·프리셋·공유 링크가 같이 쓴다
+function _mxCharOut(c) {
+  const pick = v => ({ id: v.id, base: v.base, mix: v.mix, ratio: v.ratio });
+  return { hair: pick(c.hair), face: pick(c.face), worn: { ...c.worn }, skin: { ...c.skin } };
+}
+
 function _mxSave() {
   try {
-    const pick = v => ({ id: v.id, base: v.base, mix: v.mix, ratio: v.ratio });
     const chars = {};
-    for (const g of Object.keys(MX_SEX)) { const c = _mxState.chars[g]; chars[g] = { hair: pick(c.hair), face: pick(c.face), worn: c.worn, skin: c.skin }; }
+    for (const g of Object.keys(MX_SEX)) chars[g] = _mxCharOut(_mxState.chars[g]);
     localStorage.setItem(MX_STORE, JSON.stringify({
       v: 2, part: _mxState.part, view: _mxState.view, g: _mxState.g, chars,
       coordi: { slot: _mxState.coordi.slot, other: _mxState.coordi.other },
+      zoom: _mxState.zoom, flip: _mxState.flip, show: _mxState.show,
     }));
   } catch (e) {}
+}
+
+// 저장값·프리셋·공유 링크에서 읽은 캐릭터 한 명을 dst에 옮긴다. 목록에 없는 값은 버린다.
+// 코디 아이템 ID는 목록을 받은 뒤 _mxCoordiReady에서, 층 데이터는 _mxDropMissing에서 다시 확인한다
+function _mxCharFrom(g, src, dst) {
+  for (const p of Object.values(MX_PARTS)) {
+    const v = src[p.key]; if (!v) continue;
+    const ok = n => Number.isInteger(n) && n >= 0 && n < p.colors.length;
+    const st = dst[p.key];
+    if (p.byIdBy[g].has(v.id)) st.id = v.id;
+    if (ok(v.base)) st.base = v.base;
+    if (ok(v.mix) || v.mix === -1) st.mix = v.mix;
+    if (v.ratio >= 1 && v.ratio <= 99) st.ratio = v.ratio;
+  }
+  if (src.worn && typeof src.worn === 'object') {
+    dst.worn = {};
+    for (const [k, v] of Object.entries(src.worn)) if (Number.isInteger(v)) dst.worn[k] = v;
+  }
+  const sk = src.skin;
+  if (sk && _mxSkinRow(sk.id)) {
+    const n = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi ? v : 0;
+    dst.skin = { id: sk.id, tone: n(sk.tone, 0, 359), chroma: n(sk.chroma, -99, 99), bright: n(sk.bright, -99, 99) };
+  }
+  return dst;
 }
 function _mxLoad() {
   try {
@@ -126,31 +168,18 @@ function _mxLoad() {
     // 성별 기능 전에 저장된 값(v 없음)은 여자 캐릭터 것으로 옮긴다
     const chars = s.v === 2 ? s.chars : { f: { hair: s.hair, face: s.face, worn: s.coordi && s.coordi.worn } };
     for (const g of Object.keys(MX_SEX)) {
-      const src = chars && chars[g]; if (!src) continue;
-      const dst = _mxState.chars[g];
-      for (const p of Object.values(MX_PARTS)) {
-        const v = src[p.key]; if (!v) continue;
-        const ok = n => Number.isInteger(n) && n >= 0 && n < p.colors.length;
-        const st = dst[p.key];
-        if (p.byIdBy[g].has(v.id)) st.id = v.id;
-        if (ok(v.base)) st.base = v.base;
-        if (ok(v.mix) || v.mix === -1) st.mix = v.mix;
-        if (v.ratio >= 1 && v.ratio <= 99) st.ratio = v.ratio;
-      }
-      // 코디 아이템 ID는 목록을 받은 뒤 _mxCoordiReady에서 다시 확인한다
-      if (src.worn && typeof src.worn === 'object') {
-        dst.worn = {};
-        for (const [k, v] of Object.entries(src.worn)) if (Number.isInteger(v)) dst.worn[k] = v;
-      }
-      const sk = src.skin;
-      if (sk && _mxSkinRow(sk.id)) {
-        const n = (v, lo, hi) => Number.isInteger(v) && v >= lo && v <= hi ? v : 0;
-        dst.skin = { id: sk.id, tone: n(sk.tone, 0, 359), chroma: n(sk.chroma, -99, 99), bright: n(sk.bright, -99, 99) };
-      }
+      const src = chars && chars[g];
+      if (src) _mxCharFrom(g, src, _mxState.chars[g]);
     }
     if (s.coordi && typeof s.coordi.slot === 'string') _mxState.coordi.slot = s.coordi.slot;
     _mxState.coordi.other = !!(s.coordi && (s.coordi.other || s.coordi.male));
+    if (MX_ZOOMS.includes(s.zoom)) _mxState.zoom = s.zoom;
+    _mxState.flip = !!s.flip;
+    if (['all', 'fav', 'recent'].includes(s.show)) _mxState.show = s.show;
   } catch (e) {}
+  try { _mxFav = JSON.parse(localStorage.getItem(MX_FAV) || '{}') || {}; } catch (e) {}
+  try { _mxRecent = JSON.parse(localStorage.getItem(MX_RECENT) || '{}') || {}; } catch (e) {}
+  try { const ps = JSON.parse(localStorage.getItem(MX_PRESETS) || '[]'); if (Array.isArray(ps)) _mxPresets = ps.slice(0, MX_PRESET_N); } catch (e) {}
 }
 
 // 아이템마다 없는 색이 있어서 고를 수 있는 색으로 맞춘다
@@ -331,7 +360,7 @@ function _mxDrawCards() {
   const g = _mxCur.g;
   const tH = _mxMixOn(MX_PARTS.hair) ? _mxState.hair.ratio / 100 : 0;
   const tF = _mxMixOn(MX_PARTS.face) ? _mxState.face.ratio / 100 : 0;
-  _mxPaint('mxCvResult', _mxCompose(g, tH, tF, _mxMatte()), 3);
+  _mxPaint('mxCvResult', _mxCompose(g, tH, tF, _mxMatte()), _mxState.zoom);
   if (_mxState.part === 'coordi' || _mxState.part === 'skin') return;
   const onHair = _mxState.part === 'hair';
   const mixOn = _mxMixOn(MX_PARTS[_mxState.part]) ? 1 : 0;
@@ -394,11 +423,18 @@ function _mxMakeList(key, rows, item) {
     b.className = 'mx-item' + (off ? ' is-off' : '');
     b.disabled = off;
     b.innerHTML = `<img class="mx-item__icon" loading="lazy" alt="" onerror="this.style.visibility='hidden'">
-    <span class="mx-item__text"><span class="mx-item__en"></span><span class="mx-item__ko"></span></span>`;
+    <span class="mx-item__text"><span class="mx-item__en"></span><span class="mx-item__ko"></span></span>
+    <span class="mx-item__fav" title="찜">★</span>`;
+    b.classList.toggle('is-fav', (_mxFav[key] || []).includes(r[0]));
     _mxPutIcon(b.querySelector('img'), key, r[0], 36);
     b.querySelector('.mx-item__en').textContent = en;
     b.querySelector('.mx-item__ko').textContent = [r[2], `ID ${r[0]}`, tag, off ? '데이터 없음' : ''].filter(Boolean).join(' · ');
-    if (!off) b.addEventListener('click', pick);
+    // 별표를 누르면 찜만 바꾸고 입히지는 않는다
+    if (!off) b.addEventListener('click', e => {
+      if (e.target.closest('.mx-item__fav')) { _mxToggleFav(key, r[0], b); return; }
+      _mxNoteRecent(key, r[0]);
+      pick();
+    });
     box.appendChild(b);
     L.items.push({ el: b, id: r[0], hide, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
@@ -438,14 +474,37 @@ function _mxFilter() {
   const q = _mxState.q.trim().toLowerCase().replace(/^colorblend\s*/, ''), q2 = q.replace(/\s+/g, '');
   // 성별 미확인 헤어·성형은 항상 보이고, 코디만 반대 성별 아이템을 체크박스로 켠다
   const showHidden = _mxState.part !== 'coordi' || _mxState.coordi.other;
+  // 찜은 목록 순서 그대로, 최근은 고른 차례대로 위에서부터 보인다
+  const key = _mxCurrentListKey(), mode = _mxState.show;
+  const fav = new Set(_mxFav[key] || []), rec = _mxRecent[key] || [];
   let shown = 0;
   for (const it of L.items) {
-    const ok = (showHidden || !it.hide()) && (!q || it.key.includes(q) || it.key.includes(q2));
+    const inMode = mode === 'all' || (mode === 'fav' ? fav.has(it.id) : rec.includes(it.id));
+    const ok = inMode && (showHidden || !it.hide()) && (!q || it.key.includes(q) || it.key.includes(q2));
     it.el.style.display = ok ? '' : 'none';
+    it.el.style.order = mode === 'recent' && ok ? rec.indexOf(it.id) : '';
     if (ok) shown++;
   }
+  L.empty.textContent = mode === 'fav' && !q ? '찜한 아이템이 없습니다' : mode === 'recent' && !q ? '최근 고른 아이템이 없습니다' : '검색 결과가 없습니다';
   L.empty.style.display = shown ? 'none' : '';
+  document.querySelectorAll('#sec-mixdye .mx-show').forEach(b => b.classList.toggle('active', b.dataset.mxshow === mode));
   document.getElementById('mxCount').textContent = q ? `검색 결과 ${shown.toLocaleString()}종` : `${shown.toLocaleString()}종`;
+}
+
+/* ── 찜·최근 ── 목록마다 따로 적는다. 헤어·성형은 성별 목록마다, 코디는 부위마다 */
+let _mxFav = {}, _mxRecent = {};
+function _mxToggleFav(key, id, el) {
+  const a = _mxFav[key] || (_mxFav[key] = []), i = a.indexOf(id);
+  if (i >= 0) a.splice(i, 1); else a.push(id);
+  el.classList.toggle('is-fav', i < 0);
+  try { localStorage.setItem(MX_FAV, JSON.stringify(_mxFav)); } catch (e) {}
+  if (_mxState.show === 'fav') _mxFilter();
+}
+function _mxNoteRecent(key, id) {
+  const a = (_mxRecent[key] || []).filter(x => x !== id);
+  a.unshift(id);
+  _mxRecent[key] = a.slice(0, MX_RECENT_N);
+  try { localStorage.setItem(MX_RECENT, JSON.stringify(_mxRecent)); } catch (e) {}
 }
 
 function _mxScrollToSelected() {
@@ -704,9 +763,159 @@ function _mxRender() {
 
   document.querySelectorAll('#sec-mixdye .mx-view').forEach(b => b.classList.toggle('active', b.dataset.mxview === _mxState.view));
   document.getElementById('mxViewNote').style.display = _mxState.part === 'face' && _mxState.view === 'ladder' ? '' : 'none';
+  document.querySelectorAll('#sec-mixdye .mx-zoom').forEach(b => b.classList.toggle('active', +b.dataset.mxzoom === _mxState.zoom));
+  const flip = document.querySelector('#sec-mixdye .mx-flip');
+  flip.classList.toggle('active', _mxState.flip);
+  flip.setAttribute('aria-pressed', String(_mxState.flip));
+  document.getElementById('sec-mixdye').classList.toggle('is-flip', _mxState.flip);
 
   _mxDraw();
   _mxSave();
+  _mxHistNote();
+}
+
+/* ── 되돌리기 ── 모습이 바뀔 때마다 두 성별 상태를 통째로 적어 둔다. 탭·보기·배율 전환은 적지 않는다.
+   슬라이더를 끄는 것처럼 0.35초 안에 이어진 변화는 하나로 합친다 */
+const MX_HIST_MAX = 100, MX_HIST_MERGE_MS = 350;
+let _mxHist = [], _mxHistAt = -1, _mxHistT = 0, _mxHistLock = false;
+const _mxHistSnap = () => JSON.stringify({ g: _mxState.g, chars: _mxState.chars });
+
+function _mxHistNote() {
+  if (_mxHistLock) return;
+  const snap = _mxHistSnap();
+  if (snap === _mxHist[_mxHistAt]) return;
+  const now = performance.now();
+  if (_mxHistAt > 0 && _mxHistAt === _mxHist.length - 1 && now - _mxHistT < MX_HIST_MERGE_MS) _mxHist[_mxHistAt] = snap;
+  else {
+    _mxHist.length = _mxHistAt + 1;
+    _mxHist.push(snap);
+    if (_mxHist.length > MX_HIST_MAX) _mxHist.shift();
+    _mxHistAt = _mxHist.length - 1;
+  }
+  _mxHistT = now;
+  _mxHistButtons();
+}
+
+function _mxHistButtons() {
+  const [u, r] = ['undo', 'redo'].map(k => document.querySelector(`#sec-mixdye [data-mxhist="${k}"]`));
+  if (u) u.disabled = _mxHistAt <= 0;
+  if (r) r.disabled = _mxHistAt >= _mxHist.length - 1;
+}
+
+function _mxHistGo(step) {
+  const at = _mxHistAt + step;
+  if (_mxHistLock || at < 0 || at >= _mxHist.length) return;
+  _mxHistAt = at;
+  const snap = JSON.parse(_mxHist[at]);
+  _mxHistLock = true;
+  _mxState.g = snap.g;
+  _mxState.chars = snap.chars;
+  _mxShowPart().finally(() => { _mxHistLock = false; _mxHistT = 0; _mxHistButtons(); });
+}
+
+/* ── 프리셋 ── 5칸. 칸을 누르면 고르고, 저장된 칸이면 그 모습을 불러온다. 저장할 때 결과 그림을 작게 같이 담는다 */
+let _mxPresets = [], _mxPresetAt = 0;
+
+function _mxRenderPresets() {
+  const box = document.getElementById('mxPresetSlots');
+  if (!box) return;
+  box.innerHTML = Array.from({ length: MX_PRESET_N }, (_, i) => {
+    const p = _mxPresets[i];
+    return `<button type="button" class="mx-preset${i === _mxPresetAt ? ' active' : ''}${p ? '' : ' is-empty'}" data-mxpreset="${i}" aria-label="프리셋 ${i + 1}">
+      ${p ? `<img class="mx-preset__img" src="${p.img}" alt="">` : '<span class="mx-preset__plus">+</span>'}<span class="mx-preset__n">${i + 1}</span></button>`;
+  }).join('');
+  document.querySelector('#sec-mixdye [data-mxpre="clear"]').disabled = !_mxPresets[_mxPresetAt];
+}
+
+function _mxPresetsSave() {
+  try { localStorage.setItem(MX_PRESETS, JSON.stringify(_mxPresets)); return true; }
+  catch (e) { showToast('브라우저 저장 공간이 부족해 프리셋을 저장하지 못했습니다'); return false; }
+}
+
+// 공유 링크와 프리셋을 지금 캐릭터로 불러온다. 성별이 다르면 그 성별로 바꾼다
+function _mxApplyLook(look) {
+  if (!look || !MX_SEX[look.g]) return false;
+  _mxState.g = look.g;
+  _mxState.chars[look.g] = _mxCharFrom(look.g, look, _mxChar(look.g));
+  if (window.COORDI_DATA) _mxCoordiReady();
+  if (_mxIcons) _mxDropMissing();
+  _mxShowPart();
+  return true;
+}
+
+function _mxPresetAct(act, i) {
+  if (act === 'pick') {
+    _mxPresetAt = i;
+    if (_mxPresets[i]) _mxApplyLook(_mxPresets[i].look);
+    _mxRenderPresets();
+  } else if (act === 'save') {
+    const cv = document.getElementById('mxCvResult');
+    const look = { g: _mxState.g, ..._mxCharOut(_mxState.chars[_mxState.g]) };
+    const was = _mxPresets[_mxPresetAt];
+    _mxPresets[_mxPresetAt] = { look, img: cv && cv.width ? cv.toDataURL() : '' };
+    if (!_mxPresetsSave()) _mxPresets[_mxPresetAt] = was;
+    else showToast(`프리셋 ${_mxPresetAt + 1}에 저장했습니다`);
+    _mxRenderPresets();
+  } else if (act === 'clear') {
+    _mxPresets[_mxPresetAt] = null;
+    _mxPresetsSave();
+    _mxRenderPresets();
+  }
+}
+
+/* ── 공유 링크 ── 지금 성별 캐릭터의 모습을 JSON으로 적어 base64url로 주소에 담는다.
+   링크로 들어오면 window load에서 코디 시뮬레이터를 열고, 처음 그린 뒤에 그 모습을 덮어 그려서 되돌리기로 원래 모습에 돌아갈 수 있다 */
+let _mxShared = null;
+function _mxShareUrl() {
+  const look = { g: _mxState.g, ..._mxCharOut(_mxState.chars[_mxState.g]) };
+  const code = btoa(JSON.stringify(look)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${location.origin}${location.pathname}?${MX_SHARE_Q}=${code}`;
+}
+function _mxShareRead(code) {
+  try {
+    const b = code.replace(/-/g, '+').replace(/_/g, '/');
+    return JSON.parse(atob(b + '='.repeat((4 - b.length % 4) % 4)));
+  } catch (e) { return null; }
+}
+async function _mxShare() {
+  const url = _mxShareUrl();
+  try { await navigator.clipboard.writeText(url); showToast('공유 링크를 복사했습니다'); }
+  catch (e) { window.prompt('이 링크를 복사해 주세요', url); }
+}
+window.addEventListener('load', () => {
+  const code = new URLSearchParams(location.search).get(MX_SHARE_Q);
+  if (!code || typeof navigateTo !== 'function') return;
+  history.replaceState(history.state, '', location.pathname);
+  _mxShared = _mxShareRead(code);
+  if (_mxShared) navigateTo('mixdye');
+  else showToast('공유 링크를 읽지 못했습니다');
+});
+
+/* ── 랜덤 코디 ── 지금 성별로 헤어·성형을 아무 모양·색으로, 코디는 부위마다 아무거나 입힌다. 믹스와 피부는 그대로.
+   한벌옷과 상의·하의는 반반, 얼굴장식·눈장식·귀걸이는 너무 어지럽지 않게 3분의 1만 입힌다 */
+const MX_RANDOM_SOMETIMES = ['faceacc', 'eyeacc', 'earrings'];
+async function _mxRandom() {
+  if (!window.COORDI_DATA) {
+    try { await loadScriptOnce(MX_COORDI_DATA); _mxCoordiReady(); }
+    catch (e) { showToast('코디 목록을 불러오지 못했습니다'); return; }
+  }
+  const g = _mxState.g, ch = _mxState.chars[g], one = a => a[Math.floor(Math.random() * a.length)];
+  for (const p of Object.values(MX_PARTS)) {
+    const r = one(p.rowsBy[g].filter(r => _mxColorsOf(p, r, g).length));
+    if (!r) continue;
+    Object.assign(ch[p.key], { id: r[0], base: one(_mxColorsOf(p, r, g)), mix: -1 });
+  }
+  const D = _mxCD(), digit = MX_SEX[g].digit;
+  const pool = slot => (D.items[slot] || []).filter(r => (r[3] === 2 || r[3] === digit) && _mxAvail(`coordi-${slot}`, r[0]));
+  const wear = Math.random() < 0.5 ? ['overall'] : ['top', 'bottom'];
+  ch.worn = {};
+  for (const { key } of D.parts) {
+    if ((key === 'overall' || key === 'top' || key === 'bottom') && !wear.includes(key)) continue;
+    if (MX_RANDOM_SOMETIMES.includes(key) && Math.random() >= 1 / 3) continue;
+    const r = one(pool(key));
+    if (r) ch.worn[key] = r[0];
+  }
+  _mxShowPart();
 }
 
 function initMixdye() {
@@ -755,6 +964,11 @@ function initMixdye() {
         <div class="mx-slots mx-only-coordi" id="mxSlots"></div>
         <input class="inp" id="mxSearch" type="search" autocomplete="off" />
         <div class="mx-filter">
+          <div class="mx-showtabs">
+            <button type="button" class="mx-show" data-mxshow="all">전체</button>
+            <button type="button" class="mx-show" data-mxshow="fav">찜</button>
+            <button type="button" class="mx-show" data-mxshow="recent">최근</button>
+          </div>
           <label class="mx-check mx-only-coordi"><input type="checkbox" id="mxMixed" /><span id="mxMixedLabel"></span></label>
           <span id="mxCount"></span>
         </div>
@@ -805,6 +1019,14 @@ function initMixdye() {
             <button class="sf-tab mx-view" data-mxview="stand1">앞모습</button>
             <button class="sf-tab mx-view" data-mxview="ladder">뒷모습</button>
           </div>
+          <div class="sf-tabs mx-viewtabs" aria-label="결과 그림 배율">
+            ${MX_ZOOMS.map(z => `<button class="sf-tab mx-zoom" data-mxzoom="${z}">×${z}</button>`).join('')}
+          </div>
+          <button class="sbtn sbtn--ghost sbtn--sm mx-flip" type="button" aria-pressed="false">좌우 반전</button>
+          <div class="mx-histbtns">
+            <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxhist="undo" title="Ctrl+Z" disabled>되돌리기</button>
+            <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxhist="redo" title="Ctrl+Y" disabled>다시 하기</button>
+          </div>
           <span class="mx-viewnote" id="mxViewNote">뒷모습은 얼굴이 보이지 않습니다</span>
         </div>
 
@@ -823,10 +1045,25 @@ function initMixdye() {
           </div>
         </div>
 
+        <div class="card mx-presets">
+          <div class="mx-combo__head">
+            <div class="card__title">프리셋</div>
+            <div class="mx-combo__acts">
+              <button type="button" class="sbtn sbtn--ghost" data-mxpre="save">지금 모습 저장</button>
+              <button type="button" class="sbtn sbtn--ghost" data-mxpre="clear">비우기</button>
+            </div>
+          </div>
+          <div class="mx-preset-slots" id="mxPresetSlots"></div>
+        </div>
+
         <div class="card mx-combo">
           <div class="mx-combo__head">
             <div class="card__title">현재 조합</div>
-            <button type="button" class="sbtn sbtn--ghost mx-reset" title="지금 성별 캐릭터의 헤어·성형·코디를 기본으로 되돌립니다">초기화</button>
+            <div class="mx-combo__acts">
+              <button type="button" class="sbtn sbtn--ghost mx-random">랜덤 코디</button>
+              <button type="button" class="sbtn sbtn--ghost mx-share">공유</button>
+              <button type="button" class="sbtn sbtn--ghost mx-reset" title="지금 성별 캐릭터의 헤어·성형·코디를 기본으로 되돌립니다">초기화</button>
+            </div>
           </div>
           <div id="mxCombo"></div>
         </div>
@@ -889,10 +1126,50 @@ function initMixdye() {
     _mxState.view = b.dataset.mxview;
     _mxRender();
   }));
+  sec.querySelectorAll('.mx-zoom').forEach(b => b.addEventListener('click', () => {
+    _mxState.zoom = +b.dataset.mxzoom;
+    _mxRender();
+  }));
+  sec.querySelector('.mx-flip').addEventListener('click', () => { _mxState.flip = !_mxState.flip; _mxRender(); });
+  sec.querySelectorAll('[data-mxhist]').forEach(b => b.addEventListener('click', () => _mxHistGo(b.dataset.mxhist === 'undo' ? -1 : 1)));
+  sec.querySelectorAll('.mx-show').forEach(b => b.addEventListener('click', () => {
+    _mxState.show = b.dataset.mxshow;
+    _mxFilter();
+    _mxSave();
+  }));
+  sec.querySelector('.mx-presets').addEventListener('click', e => {
+    const slot = e.target.closest('[data-mxpreset]'), act = e.target.closest('[data-mxpre]');
+    if (slot) _mxPresetAct('pick', +slot.dataset.mxpreset);
+    else if (act && !act.disabled) _mxPresetAct(act.dataset.mxpre);
+  });
+  sec.querySelector('.mx-random').addEventListener('click', _mxRandom);
+  sec.querySelector('.mx-share').addEventListener('click', _mxShare);
+  // Ctrl+Z 되돌리기, Ctrl+Y·Ctrl+Shift+Z 다시 하기. 검색칸에서는 글자 되돌리기를 그대로 쓴다
+  document.addEventListener('keydown', e => {
+    if (!(e.ctrlKey || e.metaKey) || e.altKey || !sec.classList.contains('active')) return;
+    if (e.target.matches?.('input[type="search"], input[type="text"], textarea, [contenteditable="true"]')) return;
+    const step = e.code === 'KeyZ' ? (e.shiftKey ? 1 : -1) : e.code === 'KeyY' ? 1 : 0;
+    if (!step) return;
+    e.preventDefault();
+    _mxHistGo(step);
+  });
 
   // 코디 목록은 코디 탭을 처음 열 때 받지만, 저장된 착용 아이템 이름을 보여 주려고 뒤에서 미리 받아 둔다
   loadScriptOnce(MX_COORDI_DATA).then(() => { _mxCoordiReady(); if (_mxState.part !== 'coordi') _mxRenderCombo(); }).catch(() => {});
-  _mxShowPart();
+  _mxRenderPresets();
+  // 공유 링크로 들어왔으면 원래 모습을 한 번 그린 뒤 덮어 그린다
+  _mxShowPart().then(() => {
+    if (!_mxShared) return;
+    if (_mxApplyLook(_mxShared)) showToast('공유받은 코디를 불러왔습니다');
+    _mxShared = null;
+  });
+}
+
+// 이미 열어 둔 뒤에 공유 링크가 오는 일은 없지만, 연 상태에서 load가 늦게 오면 바로 덮어 그린다
+function _mxTakeShared() {
+  if (!_mxShared || !document.getElementById('mxPresetSlots')) return;
+  if (_mxApplyLook(_mxShared)) showToast('공유받은 코디를 불러왔습니다');
+  _mxShared = null;
 }
 
 // 다시 열 때는 고른 아이템이 보이게 목록을 옮긴다
@@ -900,7 +1177,7 @@ const _mxReady = lazySection({
   isReady: () => !!window.MIXDYE_DATA,
   src: 'data_mixdye.js?v=20261021d',
   init: initMixdye,
-  onReopen: () => requestAnimationFrame(_mxScrollToSelected),
+  onReopen: () => { _mxTakeShared(); requestAnimationFrame(_mxScrollToSelected); },
   secId: 'sec-mixdye',
 });
 function ensureMixdyeReady(cb) { _mxReady(cb); }

@@ -2932,6 +2932,9 @@ body::before {
 .home-mine .sb-weekmeso:nth-child(5) { grid-column: 2; }
 .home-mine .sb-weekmeso:nth-child(6) { grid-column: 3; }
 .home-mine .sb-weekmeso__val { font-size: 1.3rem; }
+/* 홈 결정석 줄의 일간·월간 결정석 그림은 사이드바보다 조금 크게. 너무 작다는 지수 의견, 사이드바는 그대로 */
+.home-mine .crystal-bar__type { gap: 6px; font-size: .86rem; }
+.home-mine .crystal-icon { width: 2rem; height: 2rem; }
 /* 769~1099px — 메소 칸 둘을 옆으로 놓으면 칸이 좁아 금액이 서너 줄로 쪼개진다.
    [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익] / [명찰 | 월간 수익]으로 쌓는다 */
 @media (min-width: 769px) and (max-width: 1099px) {
@@ -3994,3 +3997,35 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* 피부 미리보기: 96×96 맨몸 그림에서 머리 부분만 원본 크기로 */
 .mx-item__icon.mx-skin-icon { object-fit: none; object-position: -30px -22px; }
 .mx-sel__icon.mx-skin-icon { object-fit: none; object-position: -26px -18px; }
+
+/* ── 코디 시뮬레이터 편의 기능: 배율·좌우 반전·되돌리기·프리셋·찜 ── */
+#sec-mixdye.is-flip .mx-stage canvas { transform: scaleX(-1); }
+.mx-flip.active { border-color: rgb(var(--star)); color: var(--accent); }
+.mx-histbtns { display: flex; gap: 6px; }
+.mx-combo__acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
+.mx-preset-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }
+.mx-preset {
+  position: relative; display: grid; place-items: center; aspect-ratio: 1; border-radius: 10px;
+  border: 1.5px solid var(--border); background: rgba(255,255,255,.04); overflow: hidden;
+}
+.mx-preset:hover { border-color: rgba(var(--star),.5); }
+.mx-preset.active { border-color: rgb(var(--star)); box-shadow: 0 0 0 2px rgba(var(--star),.25); }
+.mx-preset__img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
+.mx-preset__plus { font-size: 1.4rem; font-weight: 300; color: var(--text-sub); }
+.mx-preset__n {
+  position: absolute; left: 6px; top: 5px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: var(--radius-pill);
+  display: grid; place-items: center; background: var(--bg3); color: var(--text-sub); font-size: .68rem; font-weight: 900;
+}
+.mx-preset.active .mx-preset__n { background: rgb(var(--star)); color: #2a1d05; }
+.mx-showtabs { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.mx-show { padding: 4px 10px; font-size: .76rem; font-weight: 700; color: var(--text-sub); }
+.mx-show + .mx-show { border-left: 1px solid var(--border); }
+.mx-show.active { background: var(--primary-l); color: var(--text); }
+/* 최근 보기는 고른 차례로 줄을 세우려고 order를 쓴다 */
+.mx-list { display: flex; flex-direction: column; }
+.mx-list .mx-empty { order: 99999; }
+.mx-item { grid-template-columns: 36px minmax(0,1fr) auto; }
+.mx-item__fav { font-size: .95rem; line-height: 1; padding: 4px; color: var(--text-sub); opacity: .35; transition: opacity .15s, color .15s, transform .15s; }
+.mx-item:hover .mx-item__fav { opacity: .7; }
+.mx-item__fav:hover { transform: scale(1.2); }
+.mx-item.is-fav .mx-item__fav { color: rgb(var(--star)); opacity: 1; }

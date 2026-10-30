@@ -2,6 +2,7 @@
    추옵(환생의 불꽃) 시뮬레이터
 ═══════════════════════════════════════════════ */
 
+/* 강력한·영원한 불꽃 등급 확률은 GMS 공지 2021-02-24 기준. 옵션 19종은 모두 같은 확률로 뜨고 같은 줄이 두 번 뜨지 않는다 */
 const FLAME_TYPES = {
   POWERFUL: { label: '강력한 환생의 불꽃', img: 'images/icons/Powerful_Rebirth_Flame.png', prob: [0.20, 0.30, 0.36, 0.14, 0.00] },
   ETERNAL:  { label: '영원한 환생의 불꽃', img: 'images/icons/Eternal_Rebirth_Flame.png',  prob: [0.00, 0.29, 0.45, 0.25, 0.01] },
@@ -25,45 +26,60 @@ const FLAME_OPTION_LABELS = {
   'ALL%':'올스탯%', '보공%':'보스데미지%', '데미지%':'데미지%',
 };
 
-/* 무기 종류별 공격력/마력 추가옵션 값 — 제네시스 무기 기준
-   (나무위키 "메이플스토리/시스템/추가옵션" 문서, 제네시스 표를 그대로 옮긴 것).
-   5개 값은 "3단계(5추옵) ~ 7단계(1추옵)" 순서. 블레이드는 표에서 뺐다. */
-const FLAME_WEAPON_ATT_GENESIS = {
-  '아대':[31,46,63,83,106], '건':[45,66,91,120,154], '에너지소드':[46,68,93,123,157],
-  '너클':[46,68,93,123,157], '건틀렛 리볼버':[46,68,93,123,157], '소울슈터':[46,68,93,123,157],
-  '폴암':[55,81,111,146,187], '에인션트 보우':[58,84,116,153,196], '부채':[58,84,116,153,196],
-  '활':[58,84,116,153,196], '브레스 슈터':[58,84,116,153,196], '듀얼보우건':[58,84,116,153,196],
-  '단검':[58,84,116,153,196], '체인':[58,84,116,153,196],
-  '한손검':[59,87,119,157,201], '한손도끼':[59,87,119,157,201], '한손둔기':[59,87,119,157,201],
-  '케인':[59,87,119,157,201], '석궁':[59,87,119,157,201],
-  '대검':[21,46,75,110,151], '태도':[21,46,75,110,151],
-  '튜너':[62,90,124,164,210], '장검':[62,90,124,164,210], '창':[62,90,124,164,210],
-  '두손검':[62,90,124,164,210], '두손도끼':[62,90,124,164,210], '두손둔기':[62,90,124,164,210],
-  '데스페라도':[62,90,124,164,210], '핸드캐논':[63,92,127,167,214],
-  '완드':[72,106,146,192,246], '샤이닝로드':[72,106,146,192,246], 'ESP리미터':[72,106,146,192,246],
-  '매직 건틀렛':[72,106,146,192,246], '스태프':[74,108,148,195,250],
+/* 무기 공격력·마력 추옵은 무기의 기본 공격력·마력에 비례한다. GMS 위키 Bonus Stats 표와 StrategyWiki 기준.
+   값 = 올림(기본 수치 × (무기 레벨 / 40 내림 + 1) × 단계 × 1.1^(등급 - 1) / 100)
+   등급은 1~5이고 단계는 보스 장비면 등급 + 2, 아니면 등급과 같다.
+   공격력 줄은 마법 무기여도 기본 공격력으로 계산하고, 마력 줄은 기본 마력으로 계산하되 기본 마력이 없으면 기본 공격력을 쓴다.
+   아래는 제네시스 무기의 [기본 공격력, 기본 마력]으로 GMS 270 아이템 데이터에서 옮겼다. 블레이드는 뺐고,
+   KMS에 없는 무기는 GMS 영문 이름으로 적었다. 제로 무기는 보스 장비가 아닌 무기로 치고 라피스 기본 공격력으로 계산한다. */
+const FLAME_WEAPON_BASE_GENESIS = {
+  '아대':[172,0], '건':[249,0],
+  '에너지소드':[255,0], '너클':[255,0], '건틀렛 리볼버':[255,0], '소울슈터':[255,0], 'Martial Brace':[255,0],
+  '폴암':[304,0],
+  '에인션트 보우':[318,0], '부채':[318,0], '활':[318,0], '브레스 슈터':[318,0], '듀얼보우건':[318,0],
+  '단검':[318,0], '체인':[318,0], 'Eclipse':[318,0],
+  '한손검':[326,0], '한손도끼':[326,0], '한손둔기':[326,0], '케인':[326,0], '석궁':[326,0], 'Katana':[326,0],
+  '대검':[342,0], '태도':[342,0],
+  '튜너':[340,0], '장검':[340,0], '창':[340,0], '두손검':[340,0], '두손도끼':[340,0], '두손둔기':[340,0],
+  '데스페라도':[340,0], 'Gram':[340,0], '핸드캐논':[348,0],
+  '완드':[237,400], '샤이닝로드':[237,400], 'ESP리미터':[237,400], '매직 건틀렛':[237,400],
+  'Fan':[237,400], 'Memorial Staff':[237,400], '스태프':[251,406],
 };
-/* 목록에 나올 순서. 나무위키 표와 같은 순서로 둔다(무게/공격형 계열 → 마법형 계열). */
-const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_ATT_GENESIS);
+const FLAME_ZERO_WEAPONS = ['대검', '태도'];
+/* 목록에 나올 순서. 기본 공격력이 낮은 무기부터, 마법 무기는 끝에 둔다. */
+const FLAME_WEAPON_SUBTYPES = Object.keys(FLAME_WEAPON_BASE_GENESIS);
+
+/* 레벨 배수 — GMS 위키 Bonus Stats 표 기준. 단일 스탯·방어력, 두 스탯, HP·MP 순 */
+const _flameSingleMul = lv => lv < 200 ? Math.floor(lv / 20) + 1 : lv < 230 ? 11 : 12;
+const _flameDoubleMul = lv => lv < 200 ? Math.floor(lv / 40) + 1 : lv < 250 ? 6 : 7;
+const _flameHpMul     = lv => lv < 210 ? Math.floor(lv / 10) * 30 : lv < 250 ? 600 + (Math.floor(lv / 10) - 20) * 20 : 700;
+
+/* 무기 공격력·마력 한 줄. 1.1^(등급 - 1)을 11^(등급 - 1) / 10^(등급 - 1)로 바꿔 정수로만 나눠서,
+   딱 떨어지는 값이 소수 오차로 한 칸 올림되지 않게 한다. */
+function _flameWeaponAtt(option, tier, level, isBoss, weaponSubtype) {
+  const [att, matt] = FLAME_WEAPON_BASE_GENESIS[weaponSubtype];
+  const base  = option === 'MAGIC ATK' && matt ? matt : att;
+  const stage = tier + (isBoss ? 2 : 0);
+  const num = base * (Math.floor(level / 40) + 1) * stage * 11 ** (tier - 1);
+  const den = 100 * 10 ** (tier - 1);
+  const rem = num % den;
+  return (num - rem) / den + (rem ? 1 : 0);
+}
 
 function flameStatValue(option, tier, level, isBoss, weaponSubtype) {
   const stage = tier + (isBoss ? 2 : 0);   // tier 1~5, 보스 장비면 +2
-  if (['ATTACK','MAGIC ATK'].includes(option) && weaponSubtype) {
-    const table = FLAME_WEAPON_ATT_GENESIS[weaponSubtype];
-    // 표는 단계 3~7만 있다. 논보스 1·2단계처럼 표 밖이면 기존 공식으로 대체한다.
-    if (table && stage >= 3 && stage <= 7) return table[stage - 3];
-  }
-  // mesu.live 기준: 레벨 250 이상은 배수 캡 (단일스탯 12, HP 700)
+  if (['ATTACK','MAGIC ATK'].includes(option) && FLAME_WEAPON_BASE_GENESIS[weaponSubtype])
+    return _flameWeaponAtt(option, tier, level, isBoss, weaponSubtype);
   if (['STR','DEX','INT','LUK','방어력'].includes(option))
-    return (level < 250 ? Math.floor(level / 20) + 1 : 12) * stage;
+    return _flameSingleMul(level) * stage;
   if (['STR+DEX','STR+INT','STR+LUK','DEX+INT','DEX+LUK','INT+LUK'].includes(option))
-    return (Math.floor(level / 40) + 1) * stage;
-  if (['ALL%','ATTACK','MAGIC ATK','데미지%'].includes(option))
+    return _flameDoubleMul(level) * stage;
+  if (['ALL%','ATTACK','MAGIC ATK','데미지%','이동속도','점프력'].includes(option))
     return stage;
   if (option === '보공%')
     return stage * 2;
   if (['HP','MP'].includes(option))
-    return (level < 250 ? Math.floor(level / 10) * 30 : 700) * stage;
+    return _flameHpMul(level) * stage;
   if (option === '착용레벨감소')
     return -(stage * 5);
   return 0;
@@ -81,12 +97,16 @@ function rollTier(prob) {
   return prob.length;
 }
 
-/* 불꽃 1회 굴리기: 4라인, 중복 없이 */
+/* 줄 수 — 보스 장비는 늘 4줄, 아니면 1·2·3·4줄이 40·40·16·4%. StrategyWiki의 환생의 불꽃 기준 */
+const FLAME_LINE_PROB = [0.40, 0.40, 0.16, 0.04];
+
+/* 불꽃 1회 굴리기: 줄 수만큼 중복 없이. rollTier는 확률 배열의 자리 + 1을 돌려주므로 줄 수 뽑기에도 쓴다 */
 function rollFlame(flameKey, level, isBoss, isWeapon, weaponSubtype) {
   const { prob } = FLAME_TYPES[flameKey];
   const pool = isWeapon ? [...FLAME_OPTIONS_WEAPON] : [...FLAME_OPTIONS_ARMOR];
   const lines = [];
-  for (let i = 0; i < 4; i++) {
+  const n = isBoss ? 4 : rollTier(FLAME_LINE_PROB);
+  for (let i = 0; i < n; i++) {
     const idx = Math.floor(Math.random() * pool.length);
     const opt = pool.splice(idx, 1)[0];
     const tier = rollTier(prob);
@@ -329,15 +349,17 @@ function flameBuildStatTable() {
 }
 
 /* 목표 달성 확률 정확 계산 (조합 기반)
-   추옵 4줄은 풀(M개)에서 중복 없이 뽑고, 각 줄의 티어는 독립.
-   P = P(목표 옵션 G개가 4줄 안에 모두 존재) × ∏ P(각 목표 티어 조건) */
-function _flameExactProb(flameKey, goals, isWeapon) {
+   추옵 n줄은 풀(M개)에서 중복 없이 뽑고, 각 줄의 티어는 독립. n은 보스 장비면 4, 아니면 FLAME_LINE_PROB를 따른다.
+   P = Σ P(n줄) × P(목표 옵션 G개가 n줄 안에 모두 존재) × ∏ P(각 목표 티어 조건) */
+function _flameExactProb(flameKey, goals, isWeapon, isBoss) {
   const { prob } = FLAME_TYPES[flameKey];
   const M = (isWeapon ? FLAME_OPTIONS_WEAPON : FLAME_OPTIONS_ARMOR).length;
   const G = goals.length;
   if (G === 0 || G > 4) return 0;
   const comb = (n, k) => { if (k < 0 || k > n) return 0; let r = 1; for (let i = 0; i < k; i++) r = r * (n - i) / (i + 1); return r; };
-  const pPresent = comb(M - G, 4 - G) / comb(M, 4); // G개가 모두 뽑힐 확률
+  // G개가 모두 뽑힐 확률. 줄 수가 G보다 적으면 comb가 0을 돌려준다
+  const lineProb = isBoss ? [0, 0, 0, 1] : FLAME_LINE_PROB;
+  const pPresent = lineProb.reduce((s, p, i) => s + p * comb(M - G, i + 1 - G) / comb(M, i + 1), 0);
   let pTier = 1;
   for (const g of goals) {
     const th = 6 - g.minTier;             // tier >= th (_flameHandGoalsMet과 동일)
@@ -380,7 +402,7 @@ function flameSimulate() {
   }
 
   // 확률 정확 계산 (조합 기반, 시뮬레이션 노이즈 없음)
-  const p = _flameExactProb(flameKey, goals, isWeapon);
+  const p = _flameExactProb(flameKey, goals, isWeapon, _flameGetIsBoss());
 
   if (p <= 0) {
     resEl.innerHTML = `<p class="empty" style="color:var(--danger)">목표 달성 확률이 너무 낮아 계산이 불가합니다.</p>`;
@@ -425,7 +447,7 @@ const FLAME_TIER_MAX = 5;
 function flameTierRank(tier) { return FLAME_TIER_MAX - tier + 1; }   // tier5 → 1추
 
 /* 한 줄 점수 — 1추 7점부터 한 단계 내려갈 때마다 1점씩 깎는다.
-   1추 7 / 2추 6 / 3추 5 / 4추 4 / 5추 3. 네 줄이라 최대 28점. */
+   1추 7 / 2추 6 / 3추 5 / 4추 4 / 5추 3. 많아야 네 줄이라 최대 28점. */
 function flameLineScore(tier) { return 8 - flameTierRank(tier); }
 
 /* 불꽃 한 번의 총점 — 어떤 옵션이 떴는지와 무관하게 등급만 본다 */
@@ -515,7 +537,7 @@ function _flameRenderHand() {
                   <span class="flame-line__opt">${_flameLineText(l)}</span>
                   <span class="flame-line__pt">${flameLineScore(l.tier)}점</span>
                 </div>`;
-      }).join('')
+      }).join('') + '<div class="pot-line pot-line--empty">-</div>'.repeat(4 - cur.lines.length)
     : '<div class="pot-line pot-line--empty">-</div>'.repeat(4);
 
   for (const k of Object.keys(FLAME_TYPES)) {
@@ -712,8 +734,16 @@ function initAddOption() {
     if (tab === 'sim') { if (flameGetGoals().length) flameSimulate(); }
     else if (tab === 'score') { if ((parseInt(document.getElementById('flameScoreTarget')?.value) || 0) > 0) flameScoreSim(); }
   };
+  // 제로 무기는 보스 장비가 아닌 무기로 계산하므로, 고르면 보스 장비 칸을 끄고 잠근다. 다른 무기로 바꾸면 원래 값으로 돌려놓는다
+  const syncZeroBoss = zero => {
+    const boss = document.getElementById('flameBoss');
+    if (!boss || boss.disabled === zero) return;
+    if (zero) { boss.dataset.was = boss.checked ? '1' : ''; boss.checked = false; }
+    else boss.checked = boss.dataset.was === '1';
+    boss.disabled = zero;
+  };
   // 무기 종류 칸은 "무기"를 골랐을 때만 보인다.
-  // 무기 값은 제네시스 표를 그대로 쓰므로 레벨은 못 바꾸게 막는다.
+  // 무기 값은 제네시스 200제 기본 수치로 계산하므로 레벨은 못 바꾸게 막는다.
   const syncWeaponSubtypeVisibility = () => {
     const wrap = document.getElementById('flameWeaponSubtypeWrap');
     const isWeapon = _flameGetIsWeapon();
@@ -723,6 +753,7 @@ function initAddOption() {
       lv.disabled = isWeapon;
       if (isWeapon) lv.value = 200;
     }
+    syncZeroBoss(isWeapon && FLAME_ZERO_WEAPONS.includes(_flameGetWeaponSubtype()));
   };
   const refresh = () => { syncWeaponSubtypeVisibility(); flameBuildStatTable(); flameRefreshOptionSelects(); _flameAutoCalc(); };
 
@@ -800,6 +831,7 @@ function initAddOption() {
       if (isScore) {
         document.getElementById('flameWeaponSubtypeWrap').style.display = 'none';
         document.getElementById('flameLevel').disabled = false;
+        syncZeroBoss(false);
       } else syncWeaponSubtypeVisibility();
       if (isHand) _flameRenderHand();
       else _flameAutoCalc(); // 탭 전환 시 해당 탭 결과 자동 표시

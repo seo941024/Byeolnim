@@ -19,19 +19,24 @@ const CUBE_PARTS = ["무기","엠블렘","보조무기(포스실드, 소울링 �
 const _CUBE_KEY  = { red:'RED', black:'POTENTIAL' };
 const _GRADE_ORDER = ['RARE','EPIC','UNIQUE','LEGENDARY'];
 const _GRADE_KR    = { RARE:'레어', EPIC:'에픽', UNIQUE:'유니크', LEGENDARY:'레전드리' };
-/* GMS 160제 +1 보정에서 빠지는 항목. type별로 따로 둔다 — 같은 이름이라도
-   %(pct)과 순수 수치(flat)는 다른 옵션이라 보정 여부가 갈릴 수 있다.
-   실측 확인: 크리티컬 데미지%는 160제여도 8%가 최댓값(9%로 안 오른다),
-   공격력/마력의 순수 수치(%아닌 쪽)도 32가 최댓값(33으로 안 오른다).
-   같은 이름의 %쪽(공격력%, 마력%)은 정상적으로 +1이 붙는다. */
-const _NO_GMS_ADJ_PCT  = ['보스 몬스터 공격 시 데미지','몬스터 방어율 무시','크리티컬 데미지'];
-const _NO_GMS_ADJ_FLAT = ['공격력','마력'];
+/* GMS 151제 +1 보정에서 빠지는 % 옵션. 크리티컬 데미지%는 160제 이상에서도 8%가 최댓값이라는 실측과
+   StrategyWiki Potential 표 기준으로, 아이템 드롭률·메소 획득량·HP 회복 효율도 GMS 151제 값이 따로 없이 그대로다. */
+const _NO_GMS_ADJ_PCT  = ['보스 몬스터 공격 시 데미지','몬스터 방어율 무시','크리티컬 데미지','아이템 드롭률','메소 획득량','HP 회복 아이템 및 회복 스킬 효율'];
+/* 순수 수치 옵션의 151제 보정. StrategyWiki Potential 표 기준으로 레어 최대 HP·최대 MP·방어력 120은 125가 되고,
+   레어 공격력·마력 12는 13이 된다. 공격력·마력의 다른 수치는 레전드리 32가 160제 이상에서도 32가 최댓값이라는 실측대로 올리지 않는다. */
+const _GMS_FLAT_HP  = ['최대 HP','최대 MP','방어력'];
+const _GMS_FLAT_ATT = ['공격력','마력'];
+function _gmsFlatAdj(p) {
+  if (_GMS_FLAT_HP.includes(p.base) && p.valNum === 120) return 5;
+  if (_GMS_FLAT_ATT.includes(p.base)) return p.valNum === 12 ? 1 : 0;
+  return 1;
+}
 
 /* 큐브 1회당 추가로 드는 잠재능력 재설정 비용 — 아이템 레벨의 제곱에 구간별
-   계수를 곱한다. 30레벨 이하는 들지 않는다. */
+   계수를 곱한다. 30레벨 이하는 들지 않는다. 계수는 StrategyWiki Potential 문서 기준 */
 function cubeRevealCost(lv) {
   if (lv <= 30) return 0;
-  const k = lv <= 70 ? 0.25 : lv <= 120 ? 2.5 : 20;
+  const k = lv <= 70 ? 0.5 : lv <= 120 ? 2.5 : 20;
   return lv * lv * k;
 }
 
@@ -40,9 +45,10 @@ function cubeTotalCost(type, lv) {
   return (CUBE_MESO[type] ?? 0) + cubeRevealCost(lv);
 }
 
-/* 등급업(티어업) 확률 — 넥슨 공식 발표치(maplestory.nexon.com/Guide/OtherProbability/cube/strange)
-   기준이되, 글로잉/브라이트 큐브는 GMS 커뮤니티 실측 확률이 공식치보다 유의하게 높게 나와
-   그쪽 값을 채택. RARE→EPIC, EPIC→UNIQUE, UNIQUE→LEGENDARY 순. */
+/* 등급업(티어업) 확률 — GMS는 공식 수치를 내지 않아 예전 레드·블랙 큐브의 커뮤니티 실측치를 쓴다.
+   v.244 패치에서 글로잉·브라이트 큐브 등급업 확률을 올렸지만 수치는 공개되지 않았고,
+   v.239부터 한 번에 두 등급까지 오를 수 있게 된 것도 아직 반영하지 않았다.
+   RARE→EPIC, EPIC→UNIQUE, UNIQUE→LEGENDARY 순. */
 const CUBE_TIER_RATES = {
   red:   { RARE: 0.14, EPIC: 0.06,  UNIQUE: 0.025 },
   black: { RARE: 0.17, EPIC: 0.11,  UNIQUE: 0.05  },
@@ -73,11 +79,11 @@ function _parse(name) {
 function _extractNum(s) { const m=/(\d+\.?\d*)/.exec(s||''); return m?+m[1]:0; }
 function _extractUnit(s) { const m=/[가-힣a-zA-Z초%]+$/.exec((s||'').trim()); return m?m[0]:''; }
 
-// GMS는 160제 이상이면 잠재옵션 수치가 +1 (KMS는 250제부터, GMS는 250제도 동일하게 +1)
+// GMS는 v.249부터 151제 이상이면 잠재옵션 수치가 +1 (KMS는 250제부터, GMS는 250제도 동일하게 +1)
 function _gmsAdj(p, lv) {
-  if (lv < 160) return 0;
+  if (lv < 151) return 0;
   if (p.type === 'pct')  return _NO_GMS_ADJ_PCT.includes(p.base)  ? 0 : 1;
-  if (p.type === 'flat') return _NO_GMS_ADJ_FLAT.includes(p.base) ? 0 : 1;
+  if (p.type === 'flat') return _gmsFlatAdj(p);
   return 0;
 }
 
@@ -526,7 +532,7 @@ function _hrRollLines(grade) {
 }
 
 /* 해당 카테고리가 특정 등급에서 가질 수 있는 실제 최댓값(GMS 보정 포함).
-   레벨에 따라 표가 구간별로 다르고(160제부터 +1) 160제 미만엔 못 미치므로,
+   레벨에 따라 표가 구간별로 다르고(151제부터 +1) 151제 미만엔 못 미치므로,
    프리셋 숫자를 고정해두지 않고 지금 부위·레벨 기준으로 그때그때 계산한다. */
 function _hrMaxStatValue(cat, grade) {
   const dk = _dataKey(), part = _cubePart(), lv = _cubeLv();

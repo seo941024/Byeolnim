@@ -3961,9 +3961,12 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* 헥사 코어 아이콘은 게임의 32px 그림이다. 원래 크기 그대로 두고, 고해상도 화면에서도 번지지 않게 픽셀 그대로 키운다 */
 .hx-node-name .hx-node-icon { width: 32px; height: 32px; image-rendering: pixelated; }
 
-/* 헥사 코어 이름 한글·영어 스위치 — 헤더 테마 스위치 .theme-toggle과 같은 모양으로 제목 줄 오른쪽에 둔다.
-   헤더 쪽 .theme-toggle-wrap·__label은 모바일에서 숨겨지므로 감싸개와 글자는 따로 둔다. 좁으면 제목 아래로 내려간다 */
-#sec-hexa .sec-head { flex-wrap: wrap; }
+/* 헥사 코어 이름 한글·영어 스위치 — 헤더 테마 스위치 .theme-toggle 모양을 빌려 왼쪽 카드 제목 줄 오른쪽에 둔다.
+   헤더 쪽 .theme-toggle-wrap·__label은 모바일에서 숨겨지므로 감싸개와 글자는 따로 둔다. 모서리는 테마 스위치보다 조금 덜 둥글게 */
+.hx-card-head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.hx-card-head .card__title { margin-bottom: 0; }
+.hx-lang .theme-toggle { border-radius: 7px; }
+.hx-lang .theme-toggle__knob { border-radius: 5px; }
 .hx-lang { display: flex; align-items: center; gap: 7px; margin-left: auto; }
 .hx-lang__label { font-size: .74rem; font-weight: 700; color: var(--text); }
 .hx-lang .theme-toggle.is-ko { background: rgba(var(--hue),.22); }

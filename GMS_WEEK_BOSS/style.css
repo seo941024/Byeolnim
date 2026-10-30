@@ -4052,6 +4052,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .el-bg { left: 0; top: 0; }
 .el-line { opacity: .35; transition: opacity .2s; }
 .el-line.is-on { opacity: 1; }
+.el-line.is-plan { opacity: .8; filter: drop-shadow(0 0 3px rgb(var(--star))); }
 /* 스톤은 크기 0인 단추를 가운데 점에 두고, 그림을 그 점 기준으로 붙인다. 누르는 자리는 ::before 원 */
 .el-st { position: absolute; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: var(--cur-pointer); }
 .el-st::before { content: ''; position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; }

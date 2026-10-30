@@ -324,16 +324,18 @@ function _elBuild() {
   _elFit();
 }
 
-/* 판 위 스톤·길 상태와 옆 칸을 지금 값으로 다시 그린다 */
+/* 판 위 스톤·길 상태와 옆 칸을 지금 값으로 다시 그린다.
+   잠금과 활성 가능 표시는 목표 기준이다. 현재 꺼져 있어도 목표로 켠 스톤 뒤의 스톤은 풀려 보여서,
+   무엇을 찍어야 어디가 열리는지 미리 보고 목표를 이어서 찍을 수 있다 */
 function _elRefresh() {
   const root = document.getElementById('elRoot');
   if (!root || !root.querySelector('.el-layout')) return;
   const D = _elD();
   root.querySelectorAll('.el-st').forEach(btn => {
     const i = +btn.dataset.i, st = _elStone(i), c = _elCur(i), t = _elTgt(i);
-    const can = !st.lk && c === 0 && _elCanActivate(i, _elCur);
+    const can = !st.lk && t === 0 && _elCanActivate(i, _elTgt);
     btn.classList.toggle('is-on', c > 0);
-    btn.classList.toggle('is-lock', !!st.lk || (c === 0 && !can));
+    btn.classList.toggle('is-lock', !!st.lk || (t === 0 && !can));
     btn.classList.toggle('is-act', can && st.c !== 'SHINE');
     btn.classList.toggle('is-plan', t > c);
     btn.classList.toggle('is-sel', _el.sel === i);
@@ -346,7 +348,10 @@ function _elRefresh() {
     }
   });
   root.querySelectorAll('.el-line').forEach(l => {
-    l.classList.toggle('is-on', _elCur(+l.dataset.a) > 0 && _elCur(+l.dataset.b) > 0);
+    const a = +l.dataset.a, b = +l.dataset.b;
+    const on = _elCur(a) > 0 && _elCur(b) > 0;
+    l.classList.toggle('is-on', on);
+    l.classList.toggle('is-plan', !on && _elTgt(a) > 0 && _elTgt(b) > 0);
   });
   _elRenderDetail();
   _elRenderResult();
@@ -409,9 +414,10 @@ function _elRenderDetail() {
   const conds = [];
   if (!isShine && !st.lk) {
     const n = _elNodes()[i];
-    if (n.and.length || n.or.length) conds.push([n.and.length ? '선행 스톤 모두 활성' : '선행 스톤 하나 이상 활성', _elPrevOk(i, _elCur)]);
+    // 목표를 이어서 찍을 수 있는지가 중요해서 충족 여부는 목표 기준으로 적는다
+    if (n.and.length || n.or.length) conds.push([n.and.length ? '선행 스톤 모두 활성' : '선행 스톤 하나 이상 활성', _elPrevOk(i, _elTgt)]);
   }
-  if (isShine) conds.push(..._elShineConds(i, _elCur));
+  if (isShine) conds.push(..._elShineConds(i, _elTgt));
   const reqs = st.req || [];
   if (conds.length || reqs.length) {
     h += `<div class="el-dt__sub">활성화 조건</div><div class="el-conds">`;

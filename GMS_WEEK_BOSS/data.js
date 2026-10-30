@@ -58,7 +58,9 @@ const STORAGE_KEYS = {
   boss:        'gms_boss_v2',
   charHistory: 'gms_char_history',
   font:        'gms_font',
-  theme:       'gms_theme',
+  // 2026-10-30 기본 테마를 화이트로 바꾸며 키를 새로 했다. 예전 키에는 직접 고르지 않은 사람도 dark가 저장돼 있어
+  // 모두 한 번 화이트로 시작하게 한다. 예전 키 gms_theme는 settings.js가 지운다
+  theme:       'gms_theme_v2',
   genesis:     'lib_genesis_v2',
   destiny:     'lib_destiny_v1',
   astra:       'lib_astra_v1',

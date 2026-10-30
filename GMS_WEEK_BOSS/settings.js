@@ -286,5 +286,7 @@ document.querySelectorAll('[data-theme-set]').forEach(btn => {
   btn.addEventListener('click', () => applyTheme(btn.dataset.themeSet));
 });
 
-applyTheme(localStorage.getItem(THEME_KEY) || 'dark');
+// 기본은 화이트 모드. 다크를 고른 사람만 다크로 연다
+try { localStorage.removeItem('gms_theme'); } catch (e) {}
+applyTheme(localStorage.getItem(THEME_KEY) || 'light');
 applyFont(localStorage.getItem(FONT_KEY) || '고딕');

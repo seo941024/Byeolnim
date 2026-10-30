@@ -20,9 +20,9 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="별님앱" />
   <link rel="apple-touch-icon" href="images/pwa/apple-touch-icon.png" />
-  <!-- 저장된 테마를 화면을 그리기 전에 먼저 건다. settings.js가 끝에 읽혀서, 이게 없으면
-       라이트 테마 사용자에게 처음 한순간 다크 화면이 비친다 -->
-  <script>try { if (localStorage.getItem('gms_theme') === 'light') document.documentElement.dataset.theme = 'light'; } catch (e) {}</script>
+  <!-- 테마를 화면을 그리기 전에 먼저 건다. settings.js가 끝에 읽혀서, 이게 없으면 처음 한순간 다른 테마가 비친다.
+       기본은 화이트 모드이고, 다크를 고른 사람만 다크로 연다. 키 이름은 data.js STORAGE_KEYS.theme -->
+  <script>document.documentElement.dataset.theme = 'light'; try { if (localStorage.getItem('gms_theme_v2') === 'dark') document.documentElement.dataset.theme = 'dark'; } catch (e) {}</script>
 </head>
 <body class="char-home">
 
@@ -894,7 +894,7 @@
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
 <script src="common.js?v=20261029f"></script>
-<script src="data.js?v=20260819b"></script>
+<script src="data.js?v=20261030a"></script>
 <script src="data_hexa.js?v=20260819b"></script>
 <script src="data_bosshp.js?v=20261005a"></script>
 <script src="data_itemdesc.js?v=20260924b"></script>
@@ -903,7 +903,7 @@
 <script src="data_exp.js?v=20261002a"></script>
 <script src="app.js?v=20261029b"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
-<script src="settings.js?v=20261028s"></script>
+<script src="settings.js?v=20261030a"></script>
 <script src="character.js?v=20261027w"></script>
 <script src="hexa.js?v=20261027x"></script>
 <!-- <script src="data_gearcompare.js?v=20260916a"></script> 장비 교체 비교 — 내림

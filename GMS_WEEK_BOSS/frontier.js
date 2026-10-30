@@ -57,18 +57,16 @@ function _frLineOf(entry, catalogIdx) {
 
 function _frCardSrc(rank) { return 'images/familiar/mini_' + (rank || 'rare') + '.png'; }
 
-/* 타입 아이콘 — maplehub.app에서 실제로 존재하는 걸 확인한 9장만 받아왔다.
-   속성 아이콘은 아래 FR_ELEMENT_ICON_KEY에서 따로 다룬다. */
+/* 속성·타입 아이콘은 GMS v.270 게임 파일 UI/UIFamiliarChampions.img Common/AttrVariation의 원본 PNG다.
+   글자 없는 판 AttrVariation_NoText가 있는 10종은 그대로 쓰고, 그 판이 없는 Aquatic·Beast·Dark·Fairy·Holy·Human은
+   글자 붙은 판에서 왼쪽 그림만 잘라냈다. 무속성도 게임에 None 그림이 있어 element_none으로 쓴다 */
 /* src=""는 브라우저가 "빈 문자열 = 지금 문서 자체"로 해석해서 페이지를 이미지로 다시 불러오려는
    경우가 있다(엔진에 따라 다름). 그래서 아이콘 없을 땐 빈 문자열 대신 1x1 투명 GIF를 넣는다. */
 const FR_BLANK_ICON = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBTAA7';
-function _frTypeIconSrc(type) { return type ? 'images/frontier/type_' + type.toLowerCase() + '.webp' : FR_BLANK_ICON; }
+function _frTypeIconSrc(type) { return type ? 'images/official/frontier/attr/type_' + type.toLowerCase() + '.png' : FR_BLANK_ICON; }
 
-/* 속성 아이콘 6종 — maplehub.app 콤보박스를 직접 열어서 확인한 실제 경로(elements 복수형,
-   lightning은 light로 저장돼 있었다). Non-elemental은 그 목록에 아이콘이 없었다(선택지 자체가
-   "None"으로 따로 있고 그림 없음) — 없는 걸 지어내지 않고 그냥 아이콘 없이 둔다. */
-const FR_ELEMENT_ICON_KEY = { Fire: 'fire', Poison: 'poison', Lightning: 'lightning', Ice: 'ice', Dark: 'dark', Holy: 'holy' };
-function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/frontier/element_' + FR_ELEMENT_ICON_KEY[el] + '.webp' : FR_BLANK_ICON; }
+const FR_ELEMENT_ICON_KEY = { Fire: 'fire', Poison: 'poison', Lightning: 'lightning', Ice: 'ice', Dark: 'dark', Holy: 'holy', 'Non-elemental': 'none' };
+function _frElementIconSrc(el) { return FR_ELEMENT_ICON_KEY[el] ? 'images/official/frontier/attr/element_' + FR_ELEMENT_ICON_KEY[el] + '.png' : FR_BLANK_ICON; }
 
 /* 라운드마다 클리어 보상으로 보너스 주사위를 하나씩 받는다. 1라운드는 아직 하나도 못 받은
    상태라 0개, 5라운드를 시작할 땐 그동안 4번 클리어했으니 최대 4개까지 쌓인다.
@@ -78,7 +76,8 @@ let _frBonusDice = Array.from({ length: FR_MAX_BONUS_DICE }, () => ({ add: '', m
 
 /* 실제로 받는 보너스 주사위 20종 — 4계열 × 5등급이고 등급 색은 회색<파랑<보라<주황<초록 순이다.
    수치를 직접 적게 하면 아이템을 보고 숫자를 옮겨 적어야 해서, 아이템 자체를 고르게 한다.
-   출처는 maplehub의 미스틱 프론티어 계산기 구현(수치·그림 경로 모두 거기서 확인). */
+   수치 출처는 maplehub의 미스틱 프론티어 계산기 구현이다. 그림은 GMS v.270 게임 파일의 아이템 아이콘 원본 PNG이고,
+   아이템 번호는 계열마다 회색부터 Blessed 3802169~, Swift-Rolling 3802174~, Sharp-Edged 3802179~, Holy Rollers 3802184~다. */
 const FR_DICE_TIERS = [['gray', 'Gray'], ['blue', 'Blue'], ['purple', 'Purple'], ['orange', 'Orange'], ['green', 'Green']];
 const FR_DICE_KINDS = [
   {
@@ -106,7 +105,7 @@ const FR_DICE_KINDS = [
 
 function _frDiceIconSrc(kindKey, tierKey) {
   const k = FR_DICE_KINDS.find(x => x.key === kindKey);
-  return k && tierKey ? `images/frontier/dice/${k.img(tierKey)}.webp` : FR_BLANK_ICON;
+  return k && tierKey ? `images/official/frontier/dice/${k.img(tierKey)}.png` : FR_BLANK_ICON;
 }
 
 function _frDiceEffectLabel(v) {
@@ -195,7 +194,7 @@ function _frAggregate(dice) {
 function _frDiceKindMenuHtml(i) {
   return FR_DICE_KINDS.map(k =>
     `<button type="button" class="fr-dd__item fr-bd-kind" data-bi="${i}" data-kind="${k.key}">
-      <img src="images/frontier/dice/${k.img('gray')}.webp" alt="">
+      <img src="images/official/frontier/dice/${k.img('gray')}.png" alt="">
       <span>${k.label}</span><span class="fr-dd__more">›</span>
     </button>`).join('');
 }
@@ -579,17 +578,13 @@ function _frLineHtml(fi, line) {
 
 /* 속성/타입은 평소엔 접혀 있다가 누르면 그림 목록이 펼쳐지는 드롭다운으로 고른다.
    네이티브 select는 option 안에 이미지를 못 넣어서 직접 만든다. */
-/* 무속성은 게임에도 아이콘 그림이 없다 — 다른 속성만 그림이 붙으면 줄이 안 맞아서
-   금지 표시를 대신 그린다(maplehub도 같은 방식). currentColor라 테마를 따라간다. */
-const FR_NONE_ICON = `<svg class="fr-dd__ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" aria-hidden="true"><circle cx="12" cy="12" r="9"/><line x1="5.6" y1="5.6" x2="18.4" y2="18.4"/></svg>`;
-
 function _frIconHtml(v, iconFn) {
   const src = iconFn(v);
-  return src === FR_BLANK_ICON ? FR_NONE_ICON : `<img src="${src}" alt="">`;
+  return src === FR_BLANK_ICON ? '' : `<img src="${src}" alt="">`;
 }
 
 function _frIconDropdown(prefix, fi, list, iconFn, cur) {
-  // 안 고른 상태(-)는 아이콘 없이 둔다 — 금지 표시는 Non-elemental 전용이라 헷갈린다.
+  // 안 고른 상태(-)는 아이콘 없이 둔다 — 무속성 그림과 헷갈린다.
   const items = [`<button type="button" class="fr-dd__item" data-${prefix}="${fi}" data-val=""><span>-</span></button>`]
     .concat(list.map(v =>
       `<button type="button" class="fr-dd__item${v === cur ? ' active' : ''}" data-${prefix}="${fi}" data-val="${v}">

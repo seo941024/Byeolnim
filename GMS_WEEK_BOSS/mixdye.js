@@ -979,7 +979,7 @@ function initMixdye() {
         <button class="sf-tab mx-tab" data-mxpart="hair"><img class="mx-tab__icon" src="images/icons/Mix_Hair_Color_Coupon.png" alt="" onerror="this.style.display='none'">헤어</button>
         <button class="sf-tab mx-tab" data-mxpart="face"><img class="mx-tab__icon" src="images/icons/Mix_Lens_Coupon.png" alt="" onerror="this.style.display='none'">성형</button>
         <button class="sf-tab mx-tab" data-mxpart="skin"><img class="mx-tab__icon" src="images/icons/Skin_Coupon.png" alt="" onerror="this.style.display='none'">피부</button>
-        <button class="sf-tab mx-tab" data-mxpart="coordi"><img class="mx-tab__icon" src="images/icons/Mannequin.webp" alt="" onerror="this.style.display='none'">코디</button>
+        <button class="sf-tab mx-tab" data-mxpart="coordi"><img class="mx-tab__icon" src="images/official/item/mannequin.png" alt="" onerror="this.style.display='none'">코디</button>
       </div>
     </div>
     <hr class="sec-sep" />

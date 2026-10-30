@@ -565,7 +565,7 @@ function renderBossTable() {
 
     tr.innerHTML = `
       <td><div class="boss-name-cell">
-        <div class="boss-thumb"><img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
+        <div class="boss-thumb${boss.img.startsWith('images/official/') ? ' boss-thumb--icon' : ''}"><img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
         <span class="boss-label">${boss.name}</span>
         ${bmToggleHtml}
       </div></td>
@@ -629,18 +629,20 @@ function renderBossTable() {
   });
 }
 
-/* ── 대여템 ── */
+/* ── 대여템 ──
+   그림은 GMS v.270 게임 파일의 아이템 아이콘 원본 PNG다. 대여 창 UI/UIItemRental.img 목록과 같은 10개이고,
+   ror은 Finite Red Beryl Ring 1113356, cr은 Infinite Red Beryl Ring 1113355다 */
 const RENTAL_ITEMS = [
-  { id:'face',    img:'images/icons/Red_Beryl_Face_Accessory.png',   cost: 200_000_000 },
-  { id:'eye',     img:'images/icons/Red_Beryl_Eye_Accessory.png',    cost: 200_000_000 },
-  { id:'ear',     img:'images/icons/Red_Beryl_Earrings.png',         cost: 300_000_000 },
-  { id:'pendant', img:'images/icons/Red_Beryl_Pendant.png',          cost: 300_000_000 },
-  { id:'belt',    img:'images/icons/Red_Beryl_Belt.png',             cost: 300_000_000 },
-  { id:'ror',     img:'images/icons/Finite_Red_Beryl_Ring(RoR).png', cost: 100_000_000 },
-  { id:'cr',      img:'images/icons/Finite_Red_Beryl_Ring(CR).png',  cost: 100_000_000 },
-  { id:'arthur',  img:'images/icons/Arthur_Totem.png',               cost: 200_000_000 },
-  { id:'flash',   img:'images/icons/Flash_Totem.png',                cost: 200_000_000 },
-  { id:'beryl',   img:'images/icons/Red_Beryl_Totem.png',            cost: 200_000_000 },
+  { id:'face',    img:'images/official/rental/face.png',    cost: 200_000_000 },
+  { id:'eye',     img:'images/official/rental/eye.png',     cost: 200_000_000 },
+  { id:'ear',     img:'images/official/rental/ear.png',     cost: 300_000_000 },
+  { id:'pendant', img:'images/official/rental/pendant.png', cost: 300_000_000 },
+  { id:'belt',    img:'images/official/rental/belt.png',    cost: 300_000_000 },
+  { id:'ror',     img:'images/official/rental/ror.png',     cost: 100_000_000 },
+  { id:'cr',      img:'images/official/rental/cr.png',      cost: 100_000_000 },
+  { id:'arthur',  img:'images/official/rental/arthur.png',  cost: 200_000_000 },
+  { id:'flash',   img:'images/official/rental/flash.png',   cost: 200_000_000 },
+  { id:'beryl',   img:'images/official/rental/beryl.png',   cost: 200_000_000 },
 ];
 
 // 대여는 캐릭터별로 저장 (ch.rental). 인자 없으면 활성 캐릭터 기준.
@@ -777,9 +779,10 @@ const JOB_ASSET_NAMES = {
   'Sia Astelle':'SiaAstelle',
   'Hoyoung':'HoYoung',
 };
-// 파일명 대소문자는 images/server/의 실제 파일과 정확히 일치해야 한다.
+// 월드 그림은 GMS v.270 게임 파일 UI/Login.img 채널 목록 제목 그림에서 월드 문장만 잘라낸 원본 PNG다.
+// 파일명 대소문자는 images/official/world/의 실제 파일과 정확히 일치해야 한다.
 // 로컬 Windows는 대소문자를 안 가리지만 배포(Vercel/리눅스)는 가려서 404가 난다.
-const SERVER_ASSET_EXT = { Bera:'webp', Scania:'webp', Kronos:'webp', Hyperion:'webp', Luna:'webp', Solis:'webp', Challengers:'webp' };
+const SERVER_ASSET_EXT = { Bera:'png', Scania:'png', Kronos:'png', Hyperion:'png', Luna:'png', Solis:'png', Challengers:'png' };
 
 /* 캐릭터 직업명/아이콘 — 전부 영문명 기준 (name 이 곧 아이콘 파일명) */
 function charJobName(ch) {
@@ -796,7 +799,7 @@ function charJobHeadSrc(ch) {
 }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];
-  return ext ? `images/server/${encodeURIComponent(world)}.${ext}` : '';
+  return ext ? `images/official/world/${encodeURIComponent(world)}.${ext}` : '';
 }
 /* 랭킹으로 조회한 캐릭터는 그 지역, 직접 넣은 캐릭터는 지금 고른 서버 토글을 따른다 */
 function charRegion(ch) {

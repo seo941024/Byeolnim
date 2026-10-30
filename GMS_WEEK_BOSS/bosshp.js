@@ -293,9 +293,10 @@ function renderBossHPTable() {
 
     const activeMeta = _bhpDiffMeta(active.diff);
 
+    // 포스 아이콘은 GMS v.270 게임 파일 UI/UIWindow4.img 맵 아케인·어센틱 포스 표시의 원본 PNG다
     const ft = active.ftype === 'auth' ? 'auth' : 'arc';
     const forceEl = active.force
-      ? `<span class="force force-${ft}"><img src="images/icons/${ft}.png" class="force-icon" />${active.force}</span>`
+      ? `<span class="force force-${ft}"><img src="images/official/force/${ft}.png" class="force-icon" />${active.force}</span>`
       : '';
 
     const diffSel = `<select class="bhp-diff-sel" data-boss="${boss.name}">${_bhpDiffOpts(boss, active.diff)}</select>`;

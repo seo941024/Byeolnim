@@ -54,7 +54,8 @@ const BOSS_HP_TABLE = [
   {name:'스우',               diff:'하드',     hp:335_000,      lv:210, pdr:300, force:null, ftype:null},
   {name:'스우',               diff:'익스트림', hp:18_100_000,   lv:285, pdr:380, force:null, ftype:null, nameOverride:'섬멸병기 스우'},
   {name:'파풀라투스',         diff:'카오스',   hp:5_040,        lv:180, pdr:250, force:null, ftype:null},
-  {name:'아케치',             diff:'노말',     hp:3_040,        lv:140, pdr:300, force:null, ftype:null},
+  // 아케치 — GMS 위키 Akechi Mitsuhide 페이즈별 HP=350,000,000,000. 위키 스스로 추정값이라 표기. 2페이즈 합계 7000억
+  {name:'아케치',             diff:'노말',     hp:7_000,        lv:140, pdr:300, force:null, ftype:null},
   {name:'노히메',             diff:'노말',     hp:5_000,        lv:140, pdr:100, force:null, ftype:null},
   {name:'벨룸',               diff:'카오스',   hp:2_000,        lv:180, pdr:200, force:null, ftype:null},
   {name:'블러디퀸',           diff:'카오스',   hp:1_400,        lv:180, pdr:120, force:null, ftype:null},
@@ -62,6 +63,8 @@ const BOSS_HP_TABLE = [
   {name:'반반',               diff:'카오스',   hp:1_000,        lv:180, pdr:100, force:null, ftype:null},
   {name:'매그너스',           diff:'하드',     hp:1_200,        lv:155, pdr:120, force:null, ftype:null},
   {name:'시그너스',           diff:'이지',     hp:105,          lv:140, pdr:100, force:null, ftype:null},
+  // 노말 시그너스 — 20분화 패치 후 값을 미리 쓴다. 지금 GMS 위키는 630억이고, 210억은 예전부터 쓰던 값으로
+  // 위키 값의 정확히 3분의 1이라 패치가 먼저 들어간 KMS 값으로 보인다. 패치가 들어오면 GMS 값으로 다시 확인
   {name:'시그너스',           diff:'노말',     hp:210,          lv:160, pdr:100, force:null, ftype:null},
   {name:'핑크빈',             diff:'카오스',   hp:693,          lv:140, pdr:100, force:null, ftype:null},
   {name:'힐라',               diff:'하드',     hp:168,          lv:120, pdr:100, force:null, ftype:null},
@@ -70,8 +73,8 @@ const BOSS_HP_TABLE = [
 
 const BOSS_HP_PHASES = {
   '아케치_노말': [
-    { label:'Phase 1', hp:'152B' },
-    { label:'Phase 2', hp:'152B' },
+    { label:'Phase 1', hp:'350B' },
+    { label:'Phase 2', hp:'350B' },
   ],
   '파풀라투스_카오스': [
     { label:'Phase 1', hp:'378B' },

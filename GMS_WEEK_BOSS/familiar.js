@@ -179,11 +179,12 @@ function _famRender() {
 /* ═══════════════════════════════════════════════
    등급업 시뮬레이터
    레어 → 에픽 → 유니크. 확률과 필요 포인트는 넥슨 공식 공지 그대로다.
-   천장은 공식에 없는 규칙이라 따로 둔다 — 정해진 횟수만큼 연속 실패하면
-   그 다음 시도는 무조건 성공한다. */
-const FAM_PITY = { RARE: 5, EPIC: 14 };
+   천장은 GMS v.264 패치노트의 Rank-Up Guarantee이고 레어→에픽, 에픽→유니크에 붙는다. 횟수는 공지에 없어
+   maplestorywiki "fails 14 times in a row ... the 15th attempt is guaranteed to succeed"를 따른다.
+   실패하면 포인트가 최대치의 절반으로 남아서, 다시 시도할 때는 필요 포인트의 절반만 더 모으면 된다(같은 위키). */
+const FAM_PITY = { RARE: 14, EPIC: 14 };
 
-const _ruFresh = () => ({ rank: 'RARE', tries: 0, fails: 0, pity: 0, log: [], done: false });
+const _ruFresh = () => ({ rank: 'RARE', tries: 0, fails: 0, pity: 0, spent: 0, log: [], done: false });
 let _ruState = _ruFresh();
 
 function _ruMiniSrc(g) { return 'images/familiar/mini_' + (g || 'rare').toLowerCase() + '.png'; }
@@ -206,6 +207,8 @@ function _ruStep() {
   const forced = cap != null && _ruState.pity >= cap;
   const ok = forced || Math.random() < info.chance;
 
+  // 이 등급에서 바로 앞 시도가 실패했으면 포인트가 절반 남아 있어 절반만 쓴다
+  _ruState.spent += _ruState.pity > 0 ? info.points / 2 : info.points;
   _ruState.tries++;
   _ruState.log.unshift({ n: _ruState.tries, from: cur, ok: ok, forced: forced });
   if (_ruState.log.length > 200) _ruState.log.length = 200;
@@ -245,14 +248,12 @@ function _ruRender() {
   now.textContent = D.RANK_LABEL[_ruState.rank];
   now.dataset.grade = _ruState.rank;
   document.getElementById('ruChance').textContent = info ? Math.round(info.chance * 100) + '%' : '—';
-  document.getElementById('ruPoints').textContent = info ? info.points.toLocaleString() : '—';
+  document.getElementById('ruPoints').textContent = info ? (_ruState.pity > 0 ? info.points / 2 : info.points).toLocaleString() : '—';
   document.getElementById('ruPity').textContent = (info && cap != null) ? (_ruState.pity + ' / ' + cap) : '—';
   document.getElementById('ruTries').textContent = _ruState.tries.toLocaleString();
   document.getElementById('ruFails').textContent = _ruState.fails.toLocaleString();
 
-  let pts = 0;
-  _ruState.log.forEach(function (e) { if (D.RANKUP[e.from]) pts += D.RANKUP[e.from].points; });
-  document.getElementById('ruTotalPoints').textContent = pts.toLocaleString();
+  document.getElementById('ruTotalPoints').textContent = _ruState.spent.toLocaleString();
 
   const btn = document.getElementById('ruRollBtn');
   btn.disabled = _ruState.done; btn.textContent = _ruState.done ? '유니크 달성' : '등급업 [S]';

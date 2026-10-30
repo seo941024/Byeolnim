@@ -20,10 +20,14 @@ const STORAGE_KEY = STORAGE_KEYS.boss;
 
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 
-/* 넥슨 약칭 직업명 → 정식 이름 정규화 (HEXA_JOB_DATA 키와 일치) */
+/* 넥슨 랭킹 API 직업명 → 정식 이름 정규화 (JOB_LIST·HEXA_JOB_DATA 키와 일치).
+   2026-10-30 na·eu 랭킹 jobName 실측: 아래 다섯 개만 우리 이름과 다르다 */
 const JOB_NAME_CANON = {
   'Arch Mage (I/L)': 'Arch Mage (Ice, Lightning)',
   'Arch Mage (F/P)': 'Arch Mage (Fire, Poison)',
+  'Bow Master':      'Bowmaster',
+  'Blade Master':    'Dual Blade',
+  'Cannon Master':   'Cannoneer',
 };
 function canonJobName(name) { return JOB_NAME_CANON[name] || name; }
 
@@ -280,12 +284,21 @@ function thursdaysInMonth() {
   return n;
 }
 
+/* 결정석 1개 가격. BOSS_DATA는 히어로익 월드 값이라 일반 월드 캐릭터는 1/5로 나눈다.
+   GMS 위키 Intense Power Crystal 표의 "these values are quintupled in GMS Heroic Worlds" 기준.
+   월드를 모르는 캐릭터는 지금까지처럼 히어로익 값으로 둔다 */
+const INTERACTIVE_WORLDS = ['Bera', 'Scania', 'Luna'];
+function crystalPrice(ch, boss, diff) {
+  const p = boss.diffs[diff] || 0;
+  return INTERACTIVE_WORLDS.includes(ch?.fetched?.world) ? p / 5 : p;
+}
+
 /* 한 캐릭터의 주간 보스 수익 합 */
 function charWeeklyMeso(ch) {
   let sum = 0;
   forEachCheck(ch, (boss, bossId, diff, v) => {
     if (!boss || !boss.diffs[diff] || boss.monthly) return; // 월간 보스 제외
-    sum += Math.floor(boss.diffs[diff] / (v.party || 1));
+    sum += Math.floor(crystalPrice(ch, boss, diff) / (v.party || 1));
   });
   return sum;
 }
@@ -296,7 +309,7 @@ function charMonthlyMeso(ch) {
   forEachCheck(ch, (boss, bossId, diff, v) => {
     if (!boss || !boss.diffs[diff]) return;
     const count = boss.monthly ? 1 : resets;
-    sum += Math.floor(boss.diffs[diff] / (v.party || 1)) * count;
+    sum += Math.floor(crystalPrice(ch, boss, diff) / (v.party || 1)) * count;
   });
   return sum;
 }
@@ -528,7 +541,7 @@ function renderBossTable() {
 
     const maxP  = activeDiff ? getMaxParty(boss, activeDiff) : 6;
     const party = activeDiff ? (ch.checks[ck(boss.id, activeDiff)]?.party ?? 1) : null;
-    const price = activeDiff ? Math.floor(boss.diffs[activeDiff] / party) : null;
+    const price = activeDiff ? Math.floor(crystalPrice(ch, boss, activeDiff) / party) : null;
 
     const partyHtml = !activeDiff
       ? '<span class="party-dash">-</span>'

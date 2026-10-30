@@ -156,6 +156,6 @@ function initPolish() {
 
 /* 데이터는 이 탭을 처음 열 때만 받는다 */
 const _polEnsure = lazySection({
-  isReady: () => !!window.POLISH_DATA, src: 'data_polish.js?v=20260926a', init: initPolish, secId: 'sec-polish',
+  isReady: () => !!window.POLISH_DATA, src: 'data_polish.js?v=20261030a', init: initPolish, secId: 'sec-polish',
 });
 function ensurePolishReady(cb) { _polEnsure(cb); }

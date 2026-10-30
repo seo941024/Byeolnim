@@ -70,7 +70,8 @@ const DESTINY_QUESTS = [
 ];
 const DESTINY_1ST_TARGET  = 7500;
 const DESTINY_2ND_TARGET  = 45000;
-const DESTINY_RESOLVE_MAX = 50000;
+// GMS v.270 패치노트 "Up to 15,000 Adversary's Determination can be accumulated."
+const DESTINY_RESOLVE_MAX = 15000;
 
 /* =============================================
    아스트라 보조무기 — 조각(일일 퀘스트) + 흔적(주간 보스)
@@ -84,9 +85,12 @@ const ASTRA_TRACE_YIELD = {
   bellona:    { 이지:25, 노말:80, 하드:240 },
   limbo:      { 노말:80, 하드:240 },
   baldrix:    { 노말:80, 하드:240 },
+  jupiter:    { 노말:210, 하드:630 },
 };
-// 아스트라는 유피테르를 세지 않는다(데스티니와 다른 점).
-const ASTRA_BOSS_META = DESTINY_BOSS_META.filter(b => b.id !== 'jupiter');
+// 유피테르 흔적은 GMS v.270 패치노트와 maplestorywiki "Astra Secondary Weapon" 표 기준
+const ASTRA_BOSS_META = DESTINY_BOSS_META;
+// 격전의 흔적은 1,000개까지만 모을 수 있다. maplestorywiki "Up to 1,000 Traces of Battle can be accumulated"
+const ASTRA_TRACE_MAX = 1000;
 
 // 일일 퀘스트 지역 — 높은 지역일수록 하루에 얻는 조각이 많다
 const ASTRA_DAILY_AREAS = [

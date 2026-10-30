@@ -55,21 +55,21 @@ const HEXA_JOB_DATA = {
   'Hero': {
     folder:  'Hero',
     skill:   ['스피릿 칼리버', '사일런트 클리브', '레이지 익스플로젼'],
-    mastery: ['레이징 블로우 VI', '레이지 업라이징 VI', '오라 블레이드 VI', '발할라 VI / 인사이징 VI / 파이널 어택 VI'],
+    mastery: ['레이징 블로우 VI', '레이지 업라이징 VI', '오라 블레이드 VI / 퓨리어스 엣지', '발할라 VI / 인사이징 VI / 파이널 어택 VI'],
     boost:   ['소드 오브 버닝 소울 강화', '콤보 데스폴트 강화', '콤보 인스팅트 강화', '소드 일루전 강화'],
     common:  ['솔 야누스', '솔 헤카테', '블리츠 실드 VI / 블리츠 버스트'],
   },
   'Paladin': {
     folder:  'Paladin',
     skill:   ['세이크리드 바스티온', '도미누스 오브리온', '디바인 컨버전스'],
-    mastery: ['블래스트 VI / 디바인 저지먼트 VI', '디바인 차지 VI / 디바인 스티그마 VI', '생츄어리 VI', '파이널 어택 VI'],
+    mastery: ['블래스트 VI / 디바인 저지먼트 VI', '디바인 차지 VI / 디바인 스티그마 VI / 폴링 저스티스', '생츄어리 VI', '파이널 어택 VI / 라이징 저스티스'],
     boost:   ['홀리 유니티 강화', '블래스드 해머 강화', '그랜드 크로스 강화', '마이티 묠니르 강화'],
     common:  ['솔 야누스', '솔 헤카테', '블리츠 실드 VI / 블리츠 버스트'],
   },
   'Dark Knight': {
     folder:  'DarkNight',
     skill:   ['데드 스페이스', '다크 헬리덤', '다크니스 오브 그레이스'],
-    mastery: ['궁니르 디센트 VI', '다크 임페일 VI / 다크 신서시스 VI', '비홀더스 리벤지 VI / 파이널 어택 VI', '비홀더 쇼크 VI'],
+    mastery: ['궁니르 디센트 VI', '다크 임페일 VI / 다크 바이던트 / 다크 신서시스 VI', '비홀더스 리벤지 VI / 파이널 어택 VI', '비홀더 쇼크 VI'],
     boost:   ['다크 스피어 강화', '비홀더 임팩트 강화', '피어스 사이클론 강화', '다크니스 오라 강화'],
     common:  ['솔 야누스', '솔 헤카테', '블리츠 실드 VI / 블리츠 버스트'],
   },
@@ -83,7 +83,7 @@ const HEXA_JOB_DATA = {
   'Arch Mage (Ice, Lightning)': {
     folder:  'Arch_MageIL',
     skill:   ['프로즌 라이트닝', '파라볼릭 볼트', '서브제로 퍼미네이션'],
-    mastery: ['체인 라이트닝 VI', '프로즌 오브 VI / 블리자드 VI', '라이트닝 스피어 VI', '썬더 스피어 VI / 엘퀴네스 VI'],
+    mastery: ['체인 라이트닝 VI', '프로즌 오브 VI / 블리자드 VI', '라이트닝 스피어 VI / 크라이오 쇼크', '썬더 스피어 VI / 엘퀴네스 VI'],
     boost:   ['프로스트 아크 강화', '썬더 브레이크 강화', '스피릿 오브 스노우 강화', '주피터 썬더 강화'],
     common:  ['솔 야누스', '솔 헤카테', '아르카나 오버라이드 VI'],
   },
@@ -97,7 +97,7 @@ const HEXA_JOB_DATA = {
   'Bowmaster': {
     folder:  'BowMaster',
     skill:   ['어센던트 셰이드', '포인트 제로', '아이 오브 아퀼라'],
-    mastery: ['폭풍의 시 VI', '애로우 플래터 VI / 언카운터블 애로우 VI', '퀴버 카트리지 VI / 피닉스 VI', '플레시 미라주 VI / 윈드 오브 프레이 VI'],
+    mastery: ['폭풍의 시 VI', '애로우 플래터 VI / 언카운터블 애로우 VI', '퀴버 카트리지 VI / 피닉스 VI / 엑스트라 퀴버 카트리지', '플레시 미라주 VI / 윈드 오브 프레이 VI'],
     boost:   ['애로우 레인 강화', '잔영의 시 강화', '퀴버 풀버스트 강화', '실루엣 미라주 강화'],
     common:  ['솔 야누스', '솔 헤카테', '이볼브 VI'],
   },
@@ -111,28 +111,28 @@ const HEXA_JOB_DATA = {
   'Pathfinder': {
     folder:  'PathFinder',
     skill:   ['포세이큰 렐릭', '렐릭 페네트레이션', '마테리얼 버스트'],
-    mastery: ['카디널 블래스트 VI / 에디셔널 블래스트 VI', '카디널 디스차지 VI / 에디셔널 디스차지 VI', '엣지 오브 레조넌스 VI / 카디널 트랜지션 VI / 에인션트 아스트라 VI', '콤보 어썰트 VI / 레이븐 VI'],
+    mastery: ['카디널 블래스트 VI / 에디셔널 블래스트 VI', '카디널 디스차지 VI / 에디셔널 디스차지 VI', '엣지 오브 레조넌스 VI / 에인션트 임팩트 / 카디널 트랜지션 VI / 에인션트 아스트라 VI', '콤보 어썰트 VI / 레이븐 VI / 렐릭 마테리얼라이즈'],
     boost:   ['얼티밋 블래스트 강화', '에인션트 템페스트/프라이멀 템페스트 강화', '옵시디언 배리어 강화', '렐릭 언바운드 강화'],
     common:  ['솔 야누스', '솔 헤카테', '이볼브 VI'],
   },
   'Night Lord': {
     folder:  'NightLord',
     skill:   ['생사여탈', '크루셜 어썰트', '쉐도우 리츄얼'],
-    mastery: ['쿼드러플 스로우 VI', '마크 오브 어쌔신 VI', '쇼다운 챌린지 VI / 다크 플레어 VI', '포 시즌 VI / 써든레이드 VI'],
+    mastery: ['쿼드러플 스로우 VI', '마크 오브 어쌔신 VI', '쇼다운 챌린지 VI / 다크 플레어 VI / 다크니스 슈리켄', '포 시즌 VI / 써든레이드 VI'],
     boost:   ['스프레드 스로우 강화', '풍마수리검 강화', '다크로드의 비전서 강화', '스로우 블래스팅 강화'],
     common:  ['솔 야누스', '솔 헤카테', '얼티밋 다크 사이트 VI'],
   },
   'Shadower': {
     folder:  'Shadower',
     skill:   ['일도양단', '어센틱 다크니스', '무아지경'],
-    mastery: ['암살 VI', '메소 익스플로젼 VI', '다크 플레어 VI / 크루얼 스탭 VI', '써든레이드 VI / 베일 오브 섀도우 VI'],
+    mastery: ['암살 VI / 분쇄 VI', '메소 익스플로젼 VI / 블러디 익스플로젼 VI', '다크 플레어 VI / 크루얼 스탭 VI', '써든레이드 VI / 베일 오브 섀도우 VI / 커버트 쉐도우'],
     boost:   ['쉐도우 어썰트 강화', '절개 강화', '소닉 블로우 강화', '멸귀참영진 강화'],
     common:  ['솔 야누스', '솔 헤카테', '얼티밋 다크 사이트 VI'],
   },
   'Dual Blade': {
     folder:  'DualBlade',
     skill:   ['카르마 블레이드', '야마즈 디크리', '암영난참'],
-    mastery: ['팬텀 블로우 VI', '아수라 VI', '히든 블레이드 VI', '블레이드 퓨리 VI / 써든레이드 VI'],
+    mastery: ['팬텀 블로우 VI', '아수라 VI', '히든 블레이드 VI / 생자필멸', '블레이드 퓨리 VI / 써든레이드 VI'],
     boost:   ['블레이드 스톰 강화', '카르마 퓨리 강화', '블레이드 토네이도 강화', '헌티드 엣지 강화'],
     common:  ['솔 야누스', '솔 헤카테', '얼티밋 다크 사이트 VI'],
   },
@@ -160,7 +160,7 @@ const HEXA_JOB_DATA = {
   'Dawn Warrior': {
     folder:  'SoulMaster',
     skill:   ['아스트랄 블리츠', '토탈리티', '셀레스티얼 클리브'],
-    mastery: ['솔라 슬래시 VI / 루나 디바이드 VI', '코스믹 샤워 VI', '코스믹 버스트 VI', '솔루나 슬래시 VI'],
+    mastery: ['솔라 슬래시 VI / 루나 디바이드 VI', '코스믹 샤워 VI / 솔루나 파워', '코스믹 버스트 VI', '솔루나 슬래시 VI / 솔루나 파워 II'],
     boost:   ['코스모스 강화', '엘리시온 강화', '소울 이클립스 강화', '플레어 슬래시 강화'],
     common:  ['솔 야누스', '솔 헤카테', '시그너스 팔랑크스 VI'],
   },
@@ -181,14 +181,14 @@ const HEXA_JOB_DATA = {
   'Night Walker': {
     folder:  'NightWalker',
     skill:   ['사일런스', '스티지언 커맨드', '싱귤래러티 스로우'],
-    mastery: ['퀸터플 스로우 VI', '쉐도우 배트 VI / 래버너스 배트 VI', '다크니스 오멘 VI', '도미니언 VI'],
+    mastery: ['퀸터플 스로우 VI', '쉐도우 배트 VI / 래버너스 배트 VI', '다크니스 오멘 VI', '도미니언 VI / 어비셜 다크니스'],
     boost:   ['쉐도우 스피어 강화', '쉐도우 서번트 익스텐드 강화', '쉐도우 바이트 강화', '래피드 스로우 강화'],
     common:  ['솔 야누스', '솔 헤카테', '시그너스 팔랑크스 VI'],
   },
   'Thunder Breaker': {
     folder:  'Striker',
     skill:   ['뇌명벽해파', '질도섬멸', '해황폭쇄'],
-    mastery: ['섬멸 VI', '벽력 VI', '태풍 VI / 해신강림 VI', '해파 VI'],
+    mastery: ['섬멸 VI / 낙뢰', '벽력 VI', '태풍 VI / 해신강림 VI', '해파 VI / 해신강체'],
     boost:   ['신뇌합일 강화', '교아탄 강화', '뇌신창격 강화', '창뇌연격 강화'],
     common:  ['솔 야누스', '솔 헤카테', '시그너스 팔랑크스 VI'],
   },
@@ -209,28 +209,28 @@ const HEXA_JOB_DATA = {
   'Evan': {
     folder:  'Evan',
     skill:   ['조디악 버스트', '유니온 드라이브', '드래곤 소어'],
-    mastery: ['서클 오브 마나 VI', '스위프트 / 썬더 VI', '어스 / 다이브 VI', '윈드 VI / 브레스 VI / 마법 잔해 VI / 드래곤 스파킹 VI'],
+    mastery: ['서클 오브 마나 VI', '서클 오브 썬더 VI / 드래곤 스위프트 VI / 스위프트 오브 썬더 VI / 스위프트 오브 윈드 VI', '서클 오브 어스 VI / 드래곤 다이브 VI / 다이브 오브 어스 VI / 다이브 오브 썬더 VI', '서클 오브 윈드 VI / 드래곤 브레스 VI / 브레스 오브 어스 VI / 브레스 오브 윈드 VI / 마법 잔해 VI / 드래곤 스파킹 VI'],
     boost:   ['엘리멘탈 블래스트 강화', '드래곤 브레이크 강화', '조디악 레이 강화', '스파이럴 오브 마나 강화'],
     common:  ['솔 야누스', '솔 헤카테', '프리드의 가호 VI'],
   },
   'Phantom': {
     folder:  'Phantom',
     skill:   ['디파잉 페이트', '문리트 세레나데', '플레슈 르투르'],
-    mastery: ['템페스트 오브 카드 VI', '얼티밋 드라이브 VI', '느와르 카르트 VI', '로즈 카르트 피날레 VI'],
+    mastery: ['템페스트 오브 카드 VI', '얼티밋 드라이브 VI / 페이트 셔플', '느와르 카르트 VI', '로즈 카르트 피날레 VI / 라모르 카르트'],
     boost:   ['조커 강화', '블랙잭 강화', '마크 오브 팬텀 강화', '리프트 브레이크 강화'],
     common:  ['솔 야누스', '솔 헤카테', '프리드의 가호 VI'],
   },
   'Luminous': {
     folder:  'Luminous',
     skill:   ['하모닉 패러독스', '러스트러스 오브', '앱솔루트 스페이스'],
-    mastery: ['앱솔루트 킬 VI', '라이트 리플렉션 VI', '아포칼립스 VI', '트와일라잇 노바 VI'],
+    mastery: ['앱솔루트 킬 VI', '라이트 리플렉션 VI / 엔드리스 다크니스', '아포칼립스 VI / 이터널 라이트니스', '트와일라잇 노바 VI'],
     boost:   ['진리의 문 강화', '퍼니싱 리소네이터 강화', '빛과 어둠의 세례 강화', '리버레이션 오브 강화'],
     common:  ['솔 야누스', '솔 헤카테', '프리드의 가호 VI'],
   },
   'Shade': {
     folder:  'Eunwol',
     skill:   ['호신강림', '영월', '연우격풍'],
-    mastery: ['귀참 VI', '여우령 VI', '폭류권 VI / 사혼 각인 VI', '소혼 장막 VI'],
+    mastery: ['귀참 VI', '여우령 VI', '폭류권 VI / 사혼 각인 VI / 천귀야참', '소혼 장막 VI'],
     boost:   ['환혼요호진 강화', '귀문진 강화', '진 귀참 강화', '파쇄 연권 강화'],
     common:  ['솔 야누스', '솔 헤카테', '프리드의 가호 VI'],
   },
@@ -244,37 +244,37 @@ const HEXA_JOB_DATA = {
   'Wild Hunter': {
     folder:  'WildHunter',
     skill:   ['링크드 임팩트', '기어 스톰', '레조넌스 : 와일드 피어스'],
-    mastery: ['와일드 발칸 : 에이펙스 VI', '어시스트 스킬 VI', '커맨드 스킬 VI', '파이널 어택 VI/트랩 시더 VI/어나더 바이트 VI'],
+    mastery: ['와일드 발칸 : 에이펙스 VI', '어시스트 : 렌드 클로우 VI / 어시스트 : 팽 스냅 VI / 어시스트 : 스컬 배쉬 VI', '커맨드 : 알파 서지 VI / 커맨드 : 타이탄 파운스 VI', '파이널 어택 VI/트랩 시더 VI/어나더 바이트 VI'],
     boost:   ['커맨드 : 프레데터스 아이 강화', '와일드 발칸 : 오버 드라이브 강화', '프라이멀 블룸 강화', '오버바이트 강화'],
     common:  ['솔 야누스', '솔 헤카테', '레지스탕스 라인 인팬트리 VI'],
   },
   'Mechanic': {
     folder:  'Mechanic',
     skill:   ['그라운드 제로', '메탈아머 : 익스터미네이션', '버스터 스테이션'],
-    mastery: ['매시브 파이어 : SPLASH-F VI / IRON-B VI', '호밍 미사일 VI', '디스토션 필드 VI', '로봇 런처 : RM7 VI / 마그네틱 필드 VI / 로봇 팩토리 : RM1 VI'],
+    mastery: ['매시브 파이어 : SPLASH-F VI / IRON-B VI', '호밍 미사일 VI', '디스토션 필드 VI', '로봇 런처 : RM7 VI / 마그네틱 필드 VI / 로봇 팩토리 : RM1 VI / 로봇 트랜지션 : CB-P1'],
     boost:   ['멀티플 옵션 : M-FL 강화', '마이크로 미사일 컨테이너 강화', '메탈아머 전탄발사 강화', '메카 캐리어 강화'],
     common:  ['솔 야누스', '솔 헤카테', '레지스탕스 라인 인팬트리 VI'],
   },
   'Blaster': {
     folder:  'Blaster',
     skill:   ['파이널 디스트로이어', '뱅가드 임팩트', '오버히트 펀치'],
-    mastery: ['매그넘 펀치 VI / 더블 팡 VI', '릴리즈 파일 벙커 VI', '쇼크 웨이브 펀치 VI / 해머 스매시 VI / 리볼빙 캐논 마스터리 VI', '리볼빙 캐논 VI / 허리케인 믹서 VI'],
+    mastery: ['매그넘 펀치 VI / 더블 팡 VI', '릴리즈 파일 벙커 VI / 버스트 파일 벙커', '쇼크 웨이브 펀치 VI / 해머 스매시 VI / 리볼빙 캐논 마스터리 VI', '리볼빙 캐논 VI / 허리케인 믹서 VI'],
     boost:   ['벙커 버스터 강화', '발칸 펀치 강화', '버닝 브레이커 강화', '애프터이미지 쇼크 강화'],
     common:  ['솔 야누스', '솔 헤카테', '레지스탕스 라인 인팬트리 VI'],
   },
   'Demon Slayer': {
     folder:  'DemonSlayer',
     skill:   ['나이트메어', '아메시스틴 인트루젼', '래쓰 오브 세이튼'],
-    mastery: ['데몬 임팩트 VI', '데몬 슬래시 VI / 데몬 익스플로젼 VI', '메타모포시스 VI / 데빌 크라이 VI', '서버러스 VI'],
+    mastery: ['데몬 임팩트 VI', '데몬 슬래시 VI / 데몬 익스플로젼 VI', '메타모포시스 VI / 데빌 크라이 VI', '서버러스 VI / 데모닉 디센트'],
     boost:   ['데몬 어웨이크닝 강화', '요르문간드 강화', '오르트로스 강화', '데몬 베인 강화'],
     common:  ['솔 야누스', '솔 헤카테', '콜 마스테마 VI'],
   },
   'Demon Avenger': {
     folder:  'DemonAvenger',
     skill:   ['레퀴엠', '레이지본 데어데빌', '래비드 카니지'],
-    mastery: ['실드 체이싱 VI', '익시드 : 엑스큐션 VI', '익시드 : 문라이트 슬래시 VI', '사우전드 소드 VI / 인핸스드 익시드 VI'],
+    mastery: ['실드 체이싱 VI', '익시드 : 엑스큐션 VI', '익시드 : 문라이트 슬래시 VI / 오버맥시마이징 익시드', '사우전드 소드 VI / 인핸스드 익시드 VI'],
     boost:   ['데몬 프렌지 강화', '블러드 피스트 강화', '디멘션 소드 강화', '레버넌트 강화'],
-    common:  ['솔 헤카테', '콜 마스테마 VI'],
+    common:  ['솔 야누스', '솔 헤카테', '콜 마스테마 VI'],
   },
   'Xenon': {
     folder:  'Xenon',
@@ -293,21 +293,21 @@ const HEXA_JOB_DATA = {
   'Kain': {
     folder:  'Kain',
     skill:   ['어나일레이션', '맬리셔스 플리커', '[발현] 스트라이크 임팩트'],
-    mastery: ['폴링 더스트 VI / 포이즌 니들 VI', '스트라이크 애로우 VI / 스캐터링 샷 VI / 테어링 나이프 VI / 체인 시클 VI', '샤프트 브레이크 VI / 팬텀 블레이드 VI / 드래곤 팡 VI / 리메인 인센스 VI', '데스 블레싱 VI / 체이싱 샷 VI / 스니키 스나이핑 VI'],
+    mastery: ['폴링 더스트 VI / [발현] 폴링 더스트 VI / [처형] 포이즌 니들 VI', '스트라이크 애로우 VI / [발현] 스트라이크 애로우 VI / 스캐터링 샷 VI / [발현] 스캐터링 샷 VI / [처형] 테어링 나이프 VI / [처형] 체인 시클 VI', '샤프트 브레이크 VI / [발현] 샤프트 브레이크 VI / [처형] 팬텀 블레이드 VI / 드래곤 팡 VI / 리메인 인센스 VI', '데스 블레싱 VI / 체이싱 샷 VI / 스니키 스나이핑 VI / [발현/처형] 스니키 스나이핑 VI'],
     boost:   ['드래곤 버스트 강화', '페이탈 블리츠 강화', '타나토스 디센트 강화', '그립 오브 애거니 강화'],
     common:  ['솔 야누스', '솔 헤카테', '판테온 VI'],
   },
   'Cadena': {
     folder:  'Cadena',
     skill:   ['체인아츠:매서커', '브루탈 래비지', '체인아츠:토렌트'],
-    mastery: ['체인아츠:스트로크 VI', '웨폰 버라이어티 VI', '논체인아츠 VI(1)', '논체인아츠 VI(2)'],
+    mastery: ['체인아츠:스트로크 VI', '웨폰 버라이어티 VI', '서먼 커팅 시미터 VI / 서먼 스크래칭 클로 VI / 서먼 스로잉 윙대거 VI / 서먼 비팅 니들배트 VI / 체인아츠:크러시 VI', '서먼 슈팅 샷건 VI / 서먼 슬래싱 나이프 VI / 서먼 릴리싱 봄 VI / 서먼 스트라이킹 브릭 VI / 체인아츠:테이크다운 VI / 프로페셔널 에이전트 VI'],
     boost:   ['체인아츠:퓨리 강화', 'A.D 오드넌스 강화', '체인아츠:메일스트롬 강화', '웨폰 버라이어티 피날레 강화'],
     common:  ['솔 야누스', '솔 헤카테', '판테온 VI'],
   },
   'Angelic Buster': {
     folder:  'AngelicBuster',
     skill:   ['그랜드 피날레', '제뉴인 앙코르', '팝핑 하트'],
-    mastery: ['트리니티 VI', '소울 시커 VI / 소울 시커 엑스퍼트 VI', '슈퍼 노바 VI', '프라이멀 로어 VI'],
+    mastery: ['트리니티 VI', '소울 시커 VI / 소울 시커 엑스퍼트 VI', '슈퍼 노바 VI', '프라이멀 로어 VI / 다카포 페투치아'],
     boost:   ['에너지 버스트 강화', '스포트라이트 강화', '마스코트 패밀리어 강화', '트리니티 퓨전 강화'],
     common:  ['솔 야누스', '솔 헤카테', '판테온 VI'],
   },
@@ -316,14 +316,14 @@ const HEXA_JOB_DATA = {
     skill:   ['발도격·진', '찰나의 숨결', '3번째 코어'],
     mastery: ['[신속] 무참VI/[신속] 잔영참VI', '[신속] 신월참VI/[신속] 침묵의 궤적VI', '[발도] 잔월참VI', '[발도] 만월의 포효VI'],
     boost:   ['초월의 형 강화', '[신속] 침몰의 만조 강화', '[신속] 질주의 섬광 강화', '[발도] 애호의 천광 강화'],
-    common:  [],
+    common:  ['솔 야누스', '솔 헤카테', 'HEXA Twilight Bloom'],
   },
   'Kanna': {
     folder:  'Kanna',
     skill:   ['[천령] 패왕강림', '[천령] 멸식', '3번째 코어'],
-    mastery: ['파혼부 : 무VI/쇄심부VI', '오니VI', '텐구VI', '오로치VI'],
+    mastery: ['파혼부 : 무VI/쇄심부VI', '오니VI/HEXA [Order] Spinning Strike/HEXA [Order] Pulverizing Strike', '텐구VI/HEXA Shade-Fletched Arrow', '오로치VI/HEXA [Order] Execute'],
     boost:   ['[영혼] 백면금모 십미호 강화', '[영혼] 부분해방 : 연염광인 강화', '[영혼] 부분해방 : 흑익파천 강화', '[영혼] 부분해방 : 절혼독아 강화'],
-    common:  [],
+    common:  ['솔 야누스', '솔 헤카테', 'HEXA Twilight Bloom'],
   },
   'Illium': {
     folder:  'Illium',
@@ -335,7 +335,7 @@ const HEXA_JOB_DATA = {
   'Ark': {
     folder:  'Ark',
     skill:   ['가장 오래된 심연', '절대 심연의 속삭임', '원초의 격류'],
-    mastery: ['차지드라이브 VI', '차지드라이브 변형 인스팅트 아츠 VI', '돌아오는 증오 VI / 황홀한 구속 VI / 끝없는 고통 VI', '잊혀지지 않는 악몽 VI'],
+    mastery: ['플레인 차지드라이브 VI / 스칼렛 차지드라이브 VI / 거스트 차지드라이브 VI / 어비스 차지드라이브 VI / 깨어난 심연', '지워지지 않는 상처 VI / 채워지지 않는 굶주림 VI / 걷잡을 수 없는 혼돈 VI', '돌아오는 증오 VI / 황홀한 구속 VI / 끝없는 고통 VI', '잊혀지지 않는 악몽 VI / 잊혀지지 않는 흉몽 VI'],
     boost:   ['근원의 기억 강화', '인피니티 스펠 강화', '새어 나오는 악몽/새어 나오는 흉몽 강화', '영원히 굶주리는 짐승 강화'],
     common:  ['솔 야누스', '솔 헤카테', '매직 서킷 풀 드라이브 VI'],
   },
@@ -349,28 +349,28 @@ const HEXA_JOB_DATA = {
   'Hoyoung': {
     folder:  'HoYoung',
     skill:   ['선기 : 파천황', '천세휘령', '선기 : 사흉해방 도철'],
-    mastery: ['멸화염 : 천 VI / 지진쇄 : 지 VI / 금고봉 : 인 VI', '파초풍 : 천 VI / 토파류 : 지 VI / 여의선 : 인 VI', '환영 분신부 VI / 추적 귀화부 VI', '권술 : 흡성와류 VI / 권술 : 호접지몽 VI'],
+    mastery: ['멸화염 : 천 VI / 지진쇄 : 지 VI / 금고봉 : 인 VI / 천지만물', '파초풍 : 천 VI / 토파류 : 지 VI / 여의선 : 인 VI', '환영 분신부 VI / 추적 귀화부 VI', '권술 : 흡성와류 VI / 권술 : 호접지몽 VI'],
     boost:   ['선기 : 극대 분신난무 강화', '권술 : 산령소환 강화', '선기 : 강림 괴력난신 강화', '선기 : 천지인 환영 강화'],
     common:  ['솔 야누스', '솔 헤카테', '화중군자 VI'],
   },
   'Lara': {
     folder:  'Lara',
     skill:   ['새록새록 꽃누리', '안다미로', '한아름 아우른 숨결'],
-    mastery: ['정기 뿌리기 VI', '용맥 분출 VI', '용맥 흡수 VI', '잠 깨우기 VI'],
+    mastery: ['정기 뿌리기 VI', '용맥 분출 VI / 분출 : 너울이는 강 VI / 분출 : 돌개바람 VI / 분출 : 해돋이 우물 VI', '용맥 흡수 VI / 흡수 : 강 웅덩이 물벼락 VI / 흡수 : 소소리 바람 VI / 흡수 : 햇빛 맹아리 VI', '잠 깨우기 VI'],
     boost:   ['큰 기지개 강화', '해 강 산 바람 강화', '용솟음치는 정기 강화', '산등성이 굽이굽이 강화'],
     common:  ['솔 야누스', '솔 헤카테', '화중군자 VI'],
   },
   'Ren': {
     folder:  'Ren',
     skill:   ['창룡파천검 : 승천', '창룡파천검 : 일매낙화 천비인적', '창룡파천검 : 만참'],
-    mastery: ['매화검 본초 : 선참 VI', '망혼검 본초 : 영격 VI/망혼검 2초식 : 연참 VI', '망혼강림 VI/망혼검 절기 VI', '매화검 2초식 : 쇄매 VI/매화검 3초식 : 예인 VI/매화검 3초식 : 일격예인 VI'],
+    mastery: ['매화검 본초 : 선참 VI', '망혼검 본초 : 영격 VI/망혼검 2초식 : 연참 VI', '망혼강림 VI/망혼검 절기 : 열지 VI/망혼검 절기 : 망탄 VI/망혼검 절기 : 무량겁 VI', '매화검 2초식 : 쇄매 VI/매화검 3초식 : 예인 VI/매화검 3초식 : 일격예인 VI'],
     boost:   ['매화검 절기 : 만리향 강화', '망혼각성 강화', '매화검 절기 : 섬무 강화', '망혼검 절기 : 심검 강화'],
     common:  ['솔 야누스', '솔 헤카테', '화중군자 VI'],
   },
   'Zero': {
     folder:  'Zero',
     skill:   ['크로노 트리거', '바이템포리스', '타임 어소리티'],
-    mastery: ['윈드 커터 VI / 기가 크래시 VI', '터닝 드라이브 VI / 롤링 커브 VI', '프론트 슬래시 VI / 플래시 어썰터 VI', '어퍼 슬래시 VI / 문 스트라이크 VI / 쉐도우 레인 VI'],
+    mastery: ['기가 크래시 VI / 점핑 크래시 VI / 어스 브레이크 VI / 윈드 커터 VI / 윈드 스트라이크 VI / 스톰 브레이크 VI / 타임 피스', '터닝 드라이브 VI / 휠 윈드 VI / 롤링 커브 VI / 롤링 어썰터 VI', '프론트 슬래시 VI / 스로잉 웨폰 VI / 플래시 어썰터 VI / 스핀 커터 VI', '어퍼 슬래시 VI / 파워 스텀프 VI / 문 스트라이크 VI / 피어스 쓰러스트 VI / 쉐도우 스트라이크 VI / 쉐도우 레인 VI / 인피니트 레조넌스'],
     boost:   ['리미트 브레이크 강화', '조인트 어택 강화', '쉐도우 플래시 강화', '에고 웨폰 강화'],
     common:  ['솔 야누스', '솔 헤카테', '트랜센던트 VI'],
   },
@@ -383,30 +383,41 @@ const HEXA_JOB_DATA = {
   },
   'Lynn': {
     folder:  'Lynn',
-    skill:   ['근원의 흐름', '어센트 스킬', '3번째 코어'],
+    skill:   ['근원의 흐름', 'Wild Hunt', '3번째 코어'],
     mastery: ['스매시 VI', '암습 VI/급습 VI', '쪼기 VI', '[집중] 치유 VI/[집중] 숲의 보호 VI/대자연의 손길 VI'],
     boost:   ['맹수의 분노 강화', '창공의 칼날 강화', '[집중] 각성 강화', '자연의 은혜 강화'],
-    common:  [],
+    common:  ['솔 야누스', '솔 헤카테', 'HEXA Ring of Samsara'],
   },
+  /* Mo Xuan은 KMS에 없는 직업이라 공식 한글명이 없다 → GMS 위키 Mo_Xuan/Skills의 영문 이름을 그대로 쓴다.
+     3번째 스킬 코어는 GMS 미공개, 하야토·칸나·린과 같이 자리만 둔다. 아이콘 폴더 이름은 Moxuan */
+  'Mo Xuan': {
+    folder:  'Moxuan',
+    skill:   ['Soul Art: Jianghu Dragon', 'Soul Art: Where Destiny Falls', '3번째 코어'],
+    mastery: ['HEXA Xuanshan Arts [Tian] / HEXA Xuanshan Arts [Di]', 'HEXA Divine Art: Howling Storm / HEXA Divine Art: Erupting Flame / HEXA Divine Art: Righteous Thunder', 'HEXA Divine Art: Swirling Tide / HEXA Divine Art: Tearing Wind / HEXA Soul Art: Black Wind', 'HEXA Secret Art: Qi Projection'],
+    boost:   ['Soul Art: Beneath Heaven 강화', 'Soul Art: The Conquered Self 강화', 'Soul Art: The Opened Gate 강화', 'Divine Art: Crashing Earth 강화'],
+    common:  ['솔 야누스', '솔 헤카테', 'HEXA Ring of Samsara'],
+  },
+  /* 에렐 라이트 — GMS 위키 Erel_Light/Skills 기준.
+     스킬 코어 2번째 Radiant Spear: GMS는 영문 표기만 존재해 공식 한글명이 없음, 사용자 확인으로 음역 표기 유지.
+     마스터리는 현재 GMS 노드 2개: 1 = SHINE Spear of Lugh, 2 = SHINE Fury of Roan + SHINE Sting of Roan.
+     마스터리 3·4는 GMS 미공개라 넣지 않는다. 아이콘 5 = 스피어 오브 루, 6 = 퓨리 오브 론 */
   'Erel Light': {
     folder:  'ErelLight',
-    /* 스킬 코어 2번째 Radiant Spear — GMS는 영문 표기만 존재해 공식 한글명이 없음.
-       사용자 확인 완료: 음역 표기로 확정한다. */
     skill:   ['폴 오브 멜린', '레디언트 스피어'],
-    /* 마스터리는 위키상 하나로 합쳐 적혀 있었으나 실제로는 개별 노드 3개(아이콘도 각각 별도) */
-    mastery: ['스피어 오브 루 VI', '퓨리 오브 론 VI', '스팅 오브 론 VI'],
+    mastery: ['스피어 오브 루 VI', '퓨리 오브 론 VI / 스팅 오브 론 VI'],
     boost:   ['센티널 라이즈 강화', '이터널 가디언 강화', '디스트럭션 오브 론 강화', '이터널 라이트 강화'],
-    common:  ['솔 야누스', '솔 헤카테'],
+    common:  ['솔 야누스', '솔 헤카테', 'SHINE Tree of Stars'],
   },
-  /* 시아 아스텔은 HEXA가 아닌 Erda Link 체계 → maplehub 구조를 그대로 모방
-     (스킬 2 / 마스터리 1 / 강화 4 / 공용 2) */
+  /* 시아 아스텔은 HEXA가 아닌 Erda Link 체계. GMS 위키 Sia_Astelle/Skills 기준
+     스킬 2 / 마스터리 2 / 강화 4 / 공용 3. 마스터리 3·4는 GMS 미공개.
+     Erda Link 비용표는 GMS 출처를 찾지 못해 기존 비용 처리를 유지한다 */
   'Sia Astelle': {
     folder:  'SiaAstelle',
     skillCost: 'common',   // 오리진 외 스킬 코어도 공용 코어 비용(208/6,268) — maplehub 기준
     skill:   ['셀레스티얼 디자인', '스탈릿 코스모스'],
-    mastery: ['샤인 레이'],
-    boost:   ['샤인 강화', '스텔라 XI - 늑대 자리 강화', '스텔라 XII - 모래시계 자리 강화', '서클 오브 세이비어 강화'],
-    common:  ['솔 야누스', '솔 헤카테'],
+    mastery: ['샤인 레이 / SHINE Stellar I - Antares', 'SHINE Boom / SHINE Stellar II - Algol / SHINE Stellar V - Fomalhaut'],
+    boost:   ['샤인 강화', 'Stellar XI - Sirius 강화', 'Stellar XII - Sadalsuud 강화', '서클 오브 세이비어 강화'],
+    common:  ['솔 야누스', '솔 헤카테', 'SHINE Tree of Stars'],
   },
   'Lethe': {
     folder:  'Lethe',

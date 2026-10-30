@@ -10,7 +10,7 @@ function _hxCharId() {
 }
 function _hxKey(base) { return `${base}_${_hxCharId()}`; }
 
-/* 코어 개수는 직업마다 다르므로(시아 마스터리 1개 등) 직업 데이터의 이름 수만큼 불러온다.
+/* 코어 개수는 직업마다 다르므로(시아·에렐 마스터리 2개 등) 직업 데이터의 이름 수만큼 불러온다.
    minFirst: 첫 노드의 최소 레벨 */
 function _hxLoad(base, names, minFirst = 0) {
   const stored = JSON.parse(localStorage.getItem(_hxKey(base)) || '[]');
@@ -69,7 +69,9 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
 /* 탭 진입·캐릭 전환 때마다 활성 캐릭터의 저장 수치로 다시 불러와 그린다 */
 function renderAllHexaLists() {
   const ch  = state.chars[state.activeChar];
-  const job = ch?.fetched?.job || JOB_LIST[ch?.jobIdx]?.name || '';
+  const raw = ch?.fetched?.job || JOB_LIST[ch?.jobIdx]?.name || '';
+  // 넥슨 랭킹 직업명 Bow Master·Blade Master 등은 JOB_NAME_CANON으로 우리 키에 맞춘다
+  const job = typeof canonJobName === 'function' ? canonJobName(raw) : raw;
   const jd  = HEXA_JOB_DATA[job] || HEXA_DEFAULT_DATA;
 
   const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png` : null;
@@ -78,10 +80,17 @@ function renderAllHexaLists() {
   hxSkill   = _hxLoad(STORAGE_KEYS.hexaSkill,   jd.skill, 1); // 노드1=오리진: 6차 전직 시 항상 Lv1 이상
   hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, jd.mastery);
   hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   jd.boost);
+  // 데몬 어벤져는 공용 코어 맨 앞에 솔 야누스가 새로 들어갔다. 예전에 솔 헤카테·콜 마스테마 두 칸으로
+  // 저장된 값은 자리 기준이라 그대로 읽으면 한 칸씩 밀리므로, 앞에 빈 칸을 하나 끼워 한 번만 옮긴다
+  if (job === 'Demon Avenger') {
+    const k = _hxKey(STORAGE_KEYS.hexaCommon);
+    const old = JSON.parse(localStorage.getItem(k) || 'null');
+    if (Array.isArray(old) && old.length === 2) localStorage.setItem(k, JSON.stringify([{ cur: 0, tgt: 30 }, ...old]));
+  }
   hxCommon  = _hxLoad(STORAGE_KEYS.hexaCommon,  jd.common);
 
   // 공용 코어 아이콘 — 솔 야누스·헤카테는 공용 그림, 나머지는 직업 폴더 15번부터.
-  // 자리로 정하면 솔 야누스가 없는 직업(데몬 어벤져)에서 아이콘이 한 칸씩 밀린다.
+  // 자리가 아니라 이름으로 가려야 공용 코어 구성이 다른 직업에서도 아이콘이 밀리지 않는다.
   const SOL_ICON = { '솔 야누스': 'images/skill/Common/sol_janus.png', '솔 헤카테': 'images/skill/Common/sol_hecate.png' };
   let jobCommonIdx = 0;
   const commonIcoFull = jd.common.map(n => SOL_ICON[n] || ico(15 + jobCommonIdx++));
@@ -124,7 +133,7 @@ function _hxCompute() {
   const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS
                          : skillIsCommon ? HEXA_COMMON_COSTS
                          : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
-  // 솔 야누스/헤카테는 공용 비용, 나머지 = 직업별 공용(프리드의 가호 등). 이름으로 가린다(데몬 어벤져는 야누스가 없다)
+  // 솔 야누스/헤카테는 공용 비용, 나머지 = 직업별 3번째 공용(프리드의 가호 등)은 HEXA_COMMON3_COSTS. 이름으로 가린다
   const commonTable = i => /^솔 (야누스|헤카테)$/.test(hxCommon[i]?.name || '') ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
   addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
@@ -165,13 +174,14 @@ function _hxCompute() {
       ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.
     </div>`;
 }
-/* 솔 에르다 최대 소지량 — 캐릭터 레벨에 따라 284까지 20개, 285~289는 25개, 290부터 30개.
+/* 솔 에르다 최대 소지량 — 캐릭터 레벨에 따라 274까지 20개, 275~289는 25개, 290부터 30개.
+   GMS 위키 Sol_Erda 표 260-274 20, 275-289 25, 290+ 30 기준.
    캐릭터가 없으면 레벨을 모르므로 가장 큰 30개까지 받는다 */
 function solErdaMax() {
   const ch = state.chars[state.activeChar];
   if (!ch) return 30;
   const lv = parseInt(ch.fetched?.level || ch.level) || 0;
-  return lv >= 290 ? 30 : lv >= 285 ? 25 : 20;
+  return lv >= 290 ? 30 : lv >= 275 ? 25 : 20;
 }
 /* 보유 솔 에르다 칸의 최대값을 활성 캐릭터에 맞추고, 넘는 값은 최대로 잘라 칸에도 되돌려 적는다 */
 function _hxClampHaveSE() {

@@ -33,11 +33,20 @@ function libDaysLeft(d) {
 function libWeeksStr(days) { return `${(days/7).toFixed(1)}주 · ${days}일`; }
 const libMsgHtml = msg => `<p style="color:var(--text-sub);font-size:.85rem;text-align:center;padding:24px 0">${msg}</p>`;
 
-/* 주간 리셋은 로컬 목요일. 시작일에서 resets번째 리셋 날짜, 0이면 시작일 그대로.
-   시작일이 목요일이면 다음 주 목요일부터 센다. */
+/* GMS 리셋은 주간이 목요일 0시 UTC, 월간이 매달 1일 0시 UTC다. 그 순간이 이 기기 시간대에서
+   며칠인지로 센다. 한국·유럽은 목요일과 1일 그대로이고, 미주는 수요일과 전달 마지막 날이 된다.
+   2026-01-01은 목요일이다 */
+const LIB_RESET_DOW = new Date(Date.UTC(2026, 0, 1)).getDay();
+function libMonthResetDate(y, m) {
+  const u = new Date(Date.UTC(y, m, 1));
+  return new Date(u.getFullYear(), u.getMonth(), u.getDate());
+}
+
+/* 시작일에서 resets번째 주간 리셋 날짜, 0이면 시작일 그대로.
+   시작일이 리셋 요일이면 다음 주 리셋부터 센다. */
 function libResetDate(startD, resets) {
   const d = new Date(startD);
-  if (resets > 0) d.setDate(startD.getDate() + ((4 - startD.getDay() + 7) % 7 || 7) + (resets - 1) * 7);
+  if (resets > 0) d.setDate(startD.getDate() + ((LIB_RESET_DOW - startD.getDay() + 7) % 7 || 7) + (resets - 1) * 7);
   return d;
 }
 
@@ -248,7 +257,10 @@ function calcResult() {
       libDate = new Date(startD);           // 이번 주 안에 달성
     } else {
       const nextThu = libResetDate(startD, 1);
-      const nextMonth = new Date(startD.getFullYear(), startD.getMonth() + 1, 1);
+      // 다음 월간 리셋. 미주는 리셋 날이 전달 마지막 날이라 시작일과 겹치면 그다음 달로 넘긴다
+      let mi = startD.getMonth() + 1;
+      let nextMonth = libMonthResetDate(startD.getFullYear(), mi);
+      if (nextMonth <= startD) nextMonth = libMonthResetDate(startD.getFullYear(), ++mi);
 
       for (let i = 0; i < 52 * 30; i++) {   // 30년이면 사실상 무한 방지용
         const t = nextThu.getTime(), m = nextMonth.getTime();
@@ -259,7 +271,7 @@ function calcResult() {
         if (acc >= remaining) { libDate = new Date(when); break; }
 
         if (t === when) nextThu.setDate(nextThu.getDate() + 7);
-        if (m === when) nextMonth.setMonth(nextMonth.getMonth() + 1);
+        if (m === when) nextMonth = libMonthResetDate(startD.getFullYear(), ++mi);
       }
     }
 
@@ -580,7 +592,7 @@ function calcAstraResult() {
   const area     = ASTRA_DAILY_AREAS[astraState.areaIdx] || ASTRA_DAILY_AREAS[0];
   const perDay   = area.frag;
   const heldFrag = Math.max(0, astraState.heldFrag);
-  const heldTrace= Math.max(0, astraState.heldTrace);
+  const heldTrace= Math.max(0, Math.min(ASTRA_TRACE_MAX, astraState.heldTrace));
   const startD   = libLocalDate(astraState.startDate);
 
   // 지금 낀 보조무기 다음 단계부터가 남은 퀘스트다
@@ -706,7 +718,7 @@ function renderAstra() {
               <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.png?v=2" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 격전의 흔적</div>
-                <input class="inp" id="astraHeldTrace" type="number" min="0" value="${Math.max(0, astraState.heldTrace)}" />
+                <input class="inp" id="astraHeldTrace" type="number" min="0" max="${ASTRA_TRACE_MAX}" value="${Math.max(0, Math.min(ASTRA_TRACE_MAX, astraState.heldTrace))}" />
               </div>
             </div>
           </div>
@@ -730,7 +742,7 @@ function renderAstra() {
   libOnChange(ASTRA, 'astraWeapon', el => { astraState.weaponIdx = parseInt(el.value) || 0; });
   libOnChange(ASTRA, 'astraArea', el => { astraState.areaIdx = parseInt(el.value) || 0; });
   libOnChange(ASTRA, 'astraHeldFrag', el => { astraState.heldFrag = libHeld(el); });
-  libOnChange(ASTRA, 'astraHeldTrace', el => { astraState.heldTrace = libHeld(el); });
+  libOnChange(ASTRA, 'astraHeldTrace', el => { astraState.heldTrace = libHeld(el, ASTRA_TRACE_MAX); });
   libBindBossCards(ASTRA, panel);
   document.getElementById('astraCalcBtn').addEventListener('click', renderAstraResult);
 }

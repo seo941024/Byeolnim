@@ -325,23 +325,28 @@ function _frRenderBonusDice() {
 }
 
 
+/* 패밀리어마다 주사위를 하나씩 주고, 나오는 눈의 범위는 그 패밀리어 등급을 따른다.
+   GMS v.265 패치노트 "Dice roll range based on familiar rank": 커먼 1~3, 레어 1~4, 에픽 1~5, 유니크·레전드리 1~6 */
+const FR_RANK_DICE_MAX = { common: 3, rare: 4, epic: 5, unique: 6 };
+
 /* "Prevents dice from rolling over N"을 고르면 주사위가 N을 넘을 수 없다.
    넘는 눈을 고를 수 있게 두면 있을 수 없는 조합으로 점수가 나오니, 선택지에서 아예 없앤다.
-   여러 장이 각각 상한을 걸면 제일 낮은 값이 실제 상한이 된다. */
+   여러 장이 각각 상한을 걸면 제일 낮은 값이 실제 상한이 된다. 주사위마다 그 패밀리어 등급 상한과 비교해 낮은 쪽을 쓴다. */
 function _frDiceCap() {
   let cap = 6;
   _frTeam.forEach(f => {
     const c = f.line && f.line.cond;
     if (c && c.t === 'prevent' && c.w < cap) cap = c.w;
   });
-  return cap;
+  return _frTeam.map(f => Math.min(cap, FR_RANK_DICE_MAX[f.rank] || 6));
 }
 
 const FR_DICE_IDS = ['frDice1', 'frDice2', 'frDice3'];
 
 function _frSyncDiceOptions() {
-  const cap = _frDiceCap();
-  FR_DICE_IDS.forEach(id => {
+  const caps = _frDiceCap();
+  FR_DICE_IDS.forEach((id, i) => {
+    const cap = caps[i];
     const sel = document.getElementById(id);
     if (!sel || +sel.dataset.cap === cap) return;
     const cur = Math.min(parseInt(sel.value) || 1, cap);
@@ -360,9 +365,9 @@ function _frSyncDiceOptions() {
 function _frCalcRange() {
   const cap = _frDiceCap();
   let min = Infinity, max = -Infinity;
-  for (let a = 1; a <= cap; a++) {
-    for (let b = 1; b <= cap; b++) {
-      for (let c = 1; c <= cap; c++) {
+  for (let a = 1; a <= cap[0]; a++) {
+    for (let b = 1; b <= cap[1]; b++) {
+      for (let c = 1; c <= cap[2]; c++) {
         const { score } = _frScore([a, b, c]);
         if (score < min) min = score;
         if (score > max) max = score;
@@ -372,12 +377,13 @@ function _frCalcRange() {
   return { min, max };
 }
 
-/* (주사위 합 + 합계값) × 배율 → 내림.
+/* (주사위 합 + 합계값) × 배율 → 내림. 합계값을 더한 주사위 합은 0 밑으로 내려가지 않는다.
+   maplestorywiki "Mystic Frontier": "Dice Total after all modifiers are applied cannot go negative."
    0.1 같은 값이 이진수로 딱 안 떨어져서 21×4.2가 88.19999...로 나오는 걸 막는다. */
 function _frScore(dice) {
   const agg = _frAggregate(dice);
   const diceSum = dice.reduce((a, b) => a + b, 0);
-  const raw = (diceSum + agg.addSum) * agg.mult;
+  const raw = Math.max(0, diceSum + agg.addSum) * agg.mult;
   return { ...agg, diceSum, raw, score: Math.floor(raw + 1e-9) };
 }
 
@@ -406,7 +412,7 @@ function _frCalcAndRender() {
   const fmt = n => (Number.isInteger(n) ? n : n.toFixed(1));
   document.getElementById('frResultScore').textContent = score.toLocaleString();
   document.getElementById('frResultFormula').textContent =
-    `(${diceSum} + ${fmt(addSum)}) × ${fmt(mult)} = ${fmt(raw)} → 내림 ${score.toLocaleString()}`;
+    `(${diceSum} + ${fmt(addSum)}${diceSum + addSum < 0 ? ' → 0' : ''}) × ${fmt(mult)} = ${fmt(raw)} → 내림 ${score.toLocaleString()}`;
 
   // 지금 입력한 주사위 눈과 무관하게, 이 팀·보너스 주사위 구성으로 가능한 범위만 본다
   const { min, max } = _frCalcRange();

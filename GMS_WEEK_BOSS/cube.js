@@ -87,6 +87,20 @@ function _gmsAdj(p, lv) {
   return 0;
 }
 
+/* 수치가 이름 안에 들어 있는 옵션의 GMS 151제 이름. 표의 150·200제 구간 이름을 바꿔 보여주고 계산한다.
+   StrategyWiki Potential 표에 GMS 151제 값이 있는 것만 넣었다. 250제 구간은 이름이 달라 그대로 지나간다. */
+const _GMS_NAME_151 = {
+  '공격 시 20% 확률로 240의 HP 회복': '공격 시 20% 확률로 250의 HP 회복',
+  '공격 시 20% 확률로 360의 HP 회복': '공격 시 20% 확률로 375의 HP 회복',
+  '공격 시 20% 확률로 120의 MP 회복': '공격 시 20% 확률로 125의 MP 회복',
+  '공격 시 20% 확률로 180의 MP 회복': '공격 시 20% 확률로 187의 MP 회복',
+  '몬스터 처치 시 15% 확률로 95의 HP 회복': '몬스터 처치 시 15% 확률로 97의 HP 회복',
+  '몬스터 처치 시 15% 확률로 95의 MP 회복': '몬스터 처치 시 15% 확률로 97의 MP 회복',
+  '모든 스킬의 MP 소모 : -15%': '모든 스킬의 MP 소모 : -17%',
+  '모든 스킬의 MP 소모 : -30%': '모든 스킬의 MP 소모 : -35%',
+};
+function _gmsName(name, lv) { return lv >= 151 ? (_GMS_NAME_151[name] ?? name) : name; }
+
 // GMS 보정 포함 stat 기여값 반환
 /* 목표 판정에서 줄마다 호출되므로(자동 돌리기는 초당 수천 번) 결과를 기억해둔다.
    레벨이 바뀌면 GMS 보정이 달라지므로 레벨도 키에 넣는다. */
@@ -95,7 +109,7 @@ function _statContrib(name) {
   const lv=_cubeLv();
   const ck = lv+'|'+name;
   if (_statContribCache.has(ck)) return _statContribCache.get(ck);
-  const p=_parse(name);
+  const p=_parse(_gmsName(name, lv));
   let out = {};
   if (p.type==='pct'||p.type==='flat') out = {[p.cat]: p.valNum + _gmsAdj(p, lv)};
   else if (p.type==='colon') out = {[p.cat]: _extractNum(p.valShort)};
@@ -155,7 +169,7 @@ function _buildLeftOpts(dk, part, lv, grade) {
     } else {
       if (!seenUniq.has(o.name)) {
         seenUniq.add(o.name);
-        html.push(`<option value="${o.name}" data-type="unique">${_uniqueLabel(o.name)}</option>`);
+        html.push(`<option value="${o.name}" data-type="unique">${_uniqueLabel(_gmsName(o.name, lv))}</option>`);
       }
     }
   }
@@ -425,12 +439,12 @@ function _computeAllSets() {
 // 계산에 쓰는 값과 화면에 보이는 값이 달라지지 않도록 표시에도 GMS 보정을 반영한다
 // (예전엔 160제에서 13%로 계산해놓고 화면엔 12%로 찍혀 혼란스러웠음)
 function _shortName(name) {
-  const p=_parse(name), lv=_cubeLv();
+  const lv=_cubeLv(), nm=_gmsName(name, lv), p=_parse(nm);
   const adj=_gmsAdj(p, lv);
   if(p.type==='pct')    return `${p.base} : +${p.valNum+adj}%`;
   if(p.type==='flat')   return `${p.base} : +${p.valNum+adj}`;
   if(p.type==='colon')  return `${p.cat} ${p.valShort}`;
-  return _uniqueLabel(name);
+  return _uniqueLabel(nm);
 }
 
 // "<쓸만한 블레스> 스킬 사용 가능" → "쓸만한 블레스 스킬"

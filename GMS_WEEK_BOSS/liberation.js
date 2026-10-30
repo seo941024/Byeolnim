@@ -116,7 +116,7 @@ function libBossCardHtml(cfg, b) {
   const name = `<span class="gen-boss__name">${b.name}</span>`;
   return `
       <div class="gen-boss ${active?'on':''}" data-id="${b.id}">
-        <div class="boss-thumb"><img src="${b.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
+        <div class="boss-thumb${b.img.startsWith('images/liberation/') ? ' boss-thumb--icon' : ''}"><img src="${b.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
         <div class="gen-boss__body">
           <div class="gen-boss__top">${cfg.topNl ? `\n            ${name}\n          ` : name}</div>
           <div class="gen-boss__row2">
@@ -208,7 +208,7 @@ const GEN = {
   topNl: true,   // 제네시스 카드만 이름 줄 앞뒤에 줄바꿈이 들어간다 — innerHTML을 그대로 두려고 맞춤
   bosses: Object.keys(TRACE_YIELD).map(id => {
     const b = BOSS_DATA.find(x => x.id === id) || { name:id, img:'' };
-    return { id, name: b.name, img: b.img, maxParty: b.maxParty ?? 6 };   // 보스 수익 계산기와 같은 난이도별 최대 인원
+    return { id, name: b.name, img: LIB_BOSS_ICON(id), maxParty: b.maxParty ?? 6 };   // 보스 수익 계산기와 같은 난이도별 최대 인원
   }),
   yields: TRACE_YIELD,
   mult: () => genState.pass ? GENESIS_PASS_MULT : 1,
@@ -352,14 +352,14 @@ function renderGenesis() {
           </div>
           <div class="gen-input-row" style="margin-top:12px;align-items:stretch">
             <div class="gen-cfg-card">
-              <img class="gen-cfg-card__img" src="images/icons/Trace_of_darkness.webp" alt="">
+              <img class="gen-cfg-card__img" src="images/liberation/trace_of_darkness.png" alt="">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 어둠의 흔적</div>
                 <input class="inp" id="genHeld" type="number" min="0" max="${TRACE_HOLD_MAX}" value="${held}" />
               </div>
             </div>
             <div class="gen-cfg-card gen-cfg-card--pass${genState.pass?' on':''}">
-              <img class="gen-cfg-card__img" src="images/icons/Genesis.png" alt="">
+              <img class="gen-cfg-card__img" src="images/liberation/genesis_pass.png" alt="">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">제네시스 패스</div>
                 <label class="gen-switch gen-pass-toggle">
@@ -532,7 +532,7 @@ function renderDestiny() {
           </div>
           <div class="gen-input-row" style="margin-top:12px;align-items:stretch">
             <div class="gen-cfg-card">
-              <img class="gen-cfg-card__img" src="images/icons/Rivals_resolve.webp" alt="" onerror="this.style.display='none'">
+              <img class="gen-cfg-card__img" src="images/liberation/adversary_determination.png" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 대적자의 결의</div>
                 <input class="inp" id="destHeld" type="number" min="0" max="${DESTINY_RESOLVE_MAX}" value="${held}" />
@@ -706,7 +706,7 @@ function renderAstra() {
           </div>
           <div class="gen-input-row" style="margin-top:12px;align-items:stretch">
             <div class="gen-cfg-card">
-              <img class="gen-cfg-card__img" src="images/WANT/Etc_Vestige_of_Erion.png" alt="" onerror="this.style.display='none'">
+              <img class="gen-cfg-card__img" src="images/liberation/vestige_of_erion.png" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 에리온의 조각</div>
                 <input class="inp" id="astraHeldFrag" type="number" min="0" value="${Math.max(0, astraState.heldFrag)}" />
@@ -715,7 +715,7 @@ function renderAstra() {
             <div class="gen-cfg-card">
               <!-- 파일 이름을 그대로 두고 내용만 바꾸면 브라우저가 옛 그림을 계속 쓴다.
                    그림을 손볼 때마다 v를 올려야 바뀐 게 보인다. -->
-              <img class="gen-cfg-card__img" src="images/icons/Traces_of_Fierce_Battle.png?v=2" alt="" onerror="this.style.display='none'">
+              <img class="gen-cfg-card__img" src="images/liberation/traces_of_battle.png" alt="" onerror="this.style.display='none'">
               <div class="gen-cfg-card__body">
                 <div class="gen-cfg-card__title">보유 격전의 흔적</div>
                 <input class="inp" id="astraHeldTrace" type="number" min="0" max="${ASTRA_TRACE_MAX}" value="${Math.max(0, Math.min(ASTRA_TRACE_MAX, astraState.heldTrace))}" />

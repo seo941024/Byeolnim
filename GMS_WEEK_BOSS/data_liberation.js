@@ -45,16 +45,19 @@ const DESTINY_RESOLVE_YIELD = {
   baldrix:    { 노말:150, 하드:450 },
   jupiter:    { 노말:160, 하드:500 },
 };
+/* 해방 계산기 보스·재화 그림은 GMS v.270 게임 파일 원본 PNG다. 보스는 UI/UIBoss.img 보스 목록의 작은 아이콘,
+   재화는 아이템 아이콘이다. 벨로나는 GMS에 아직 없어 게임 그림이 없으므로 예전 그림을 쓴다 */
+const LIB_BOSS_ICON = id => `images/liberation/boss/${id}.png`;
 const DESTINY_BOSS_META = [
-  { id:'seren',      name:'선택받은 세렌', maxParty:6, img:'images/bosses/seren.webp' },
-  { id:'kalos',      name:'감시자 칼로스', maxParty:6, img:'images/bosses/kalos.webp' },
-  { id:'daejuk',     name:'최초의 대적자', maxParty:3, img:'images/bosses/daejuk.webp' },
-  { id:'kaling',     name:'카링',          maxParty:6, img:'images/bosses/kaling.webp' },
-  { id:'hyungseong', name:'찬란한 흉성',   maxParty:3, img:'images/bosses/hyungseong.webp' },
+  { id:'seren',      name:'선택받은 세렌', maxParty:6, img:LIB_BOSS_ICON('seren') },
+  { id:'kalos',      name:'감시자 칼로스', maxParty:6, img:LIB_BOSS_ICON('kalos') },
+  { id:'daejuk',     name:'최초의 대적자', maxParty:3, img:LIB_BOSS_ICON('daejuk') },
+  { id:'kaling',     name:'카링',          maxParty:6, img:LIB_BOSS_ICON('kaling') },
+  { id:'hyungseong', name:'찬란한 흉성',   maxParty:3, img:LIB_BOSS_ICON('hyungseong') },
   { id:'bellona',    name:'벨로나',        maxParty:3, img:'images/bosses/Bellona.png' },
-  { id:'limbo',      name:'림보',          maxParty:3, img:'images/bosses/limbo.webp' },
-  { id:'baldrix',    name:'발드릭스',      maxParty:3, img:'images/bosses/baldrix.webp' },
-  { id:'jupiter',    name:'유피테르',      maxParty:3, img:'images/bosses/jupiter.webp' },
+  { id:'limbo',      name:'림보',          maxParty:3, img:LIB_BOSS_ICON('limbo') },
+  { id:'baldrix',    name:'발드릭스',      maxParty:3, img:LIB_BOSS_ICON('baldrix') },
+  { id:'jupiter',    name:'유피테르',      maxParty:3, img:LIB_BOSS_ICON('jupiter') },
 ];
 
 /* 결전 퀘스트 — 각 퀘스트를 열려면 "요구 대적자의 결의"만큼 모아야 한다.

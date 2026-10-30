@@ -14,7 +14,6 @@ let _csUser = null;      // 로그인된 아이디
 let _csNick = null;      // 표시용 닉네임. 안 정했으면 서버가 아이디를 그대로 돌려준다
 // 관리자 배지 표시 여부. 서버(ADMIN_IDS)가 판단해서 내려주는 값만 믿는다 — 여기서 정하지 않는다.
 let _csAdmin = false;
-let _csRepChar = null;   // { name, level, job, world, region, img } | null — 커뮤니티에서 닉네임 누르면 보여줄 캐릭터
 let _csBusy = false;
 let _csMode = 'login';   // 로그아웃 화면에서 'login' | 'signup'
 let _csPwOpen = false;   // 로그인 화면에서 비밀번호 변경 폼이 펼쳐져 있는지
@@ -59,7 +58,6 @@ function csRemember(j) {
   _csUser = j.id;
   _csNick = j.nickname || j.id;
   _csAdmin = !!j.isAdmin;
-  _csRepChar = j.repChar || null;
 }
 /* 로그아웃했거나 토큰이 만료됐을 때 */
 function csForget() {
@@ -68,7 +66,6 @@ function csForget() {
   _csUser = null;
   _csNick = null;
   _csAdmin = false;
-  _csRepChar = null;
 }
 
 function csFmtTime(ms) {
@@ -143,13 +140,6 @@ function csRender(savedAt) {
       <button class="sbtn sbtn--ghost" id="csNickSaveBtn">닉네임 저장</button>
     </div>
     <p class="dt-help mt8">한글·영문·숫자·기호로 1~12자까지 정할 수 있고, 우측 위 버튼에 이 이름으로 표시됩니다.</p>
-    <div class="cs-row mt8">
-      <select class="sel cs-inp" id="csRepSel">${csRepCharOptions()}</select>
-      <button class="sbtn sbtn--ghost" id="csRepSaveBtn">대표 캐릭터 저장</button>
-    </div>
-    <p class="dt-help mt8">${_csRepChar
-      ? `현재 대표 캐릭터: <b>${escHtml(_csRepChar.name)}</b> (Lv.${_csRepChar.level} · ${escHtml(_csRepChar.world)}). 커뮤니티에서 내 닉네임을 누르면 이 캐릭터가 보입니다.`
-      : '커뮤니티에서 닉네임을 누르면 여기서 고른 캐릭터가 보입니다. 캐릭터 목록에 등록해 둔 것 중에서 고를 수 있습니다.'}</p>
     <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
     <div class="cs-row mt8">
       <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
@@ -168,7 +158,6 @@ function csRender(savedAt) {
   document.getElementById('csLogoutBtn').addEventListener('click', csLogout);
   document.getElementById('csNickSaveBtn').addEventListener('click', () => csSetNick(savedAt));
   document.getElementById('csNickInp').addEventListener('keydown', e => { if (e.key === 'Enter') csSetNick(savedAt); });
-  document.getElementById('csRepSaveBtn').addEventListener('click', () => csSetRepChar(savedAt));
   document.getElementById('csSaveBtn').addEventListener('click', csSave);
   document.getElementById('csLoadBtn').addEventListener('click', csLoad);
   document.getElementById('csPwToggleBtn').addEventListener('click', () => {
@@ -231,50 +220,6 @@ async function csChangePw(savedAt) {
   if (!j.ok) { showToast(j.error || '변경에 실패했습니다.'); return; }
   _csPwOpen = false;
   showToast('비밀번호를 변경했습니다.');
-  csRender(savedAt);
-}
-
-/* ── 대표 캐릭터 ──
-   캐릭터 목록(state.chars)에서 골라 서버에 스냅샷으로 올린다. 실시간 조회가
-   아니라 "고를 때의 이름·레벨·직업·서버·이미지"를 그대로 저장하는 것이라,
-   나중에 그 캐릭터 정보를 갱신해도 이미 고른 값은 안 바뀐다(다시 저장해야 함) —
-   닉네임과 같은 원칙. */
-function csRepCharOptions() {
-  const chars = Array.isArray(state.chars) ? state.chars : [];
-  const curName = _csRepChar && _csRepChar.name;
-  const opts = chars.map((ch, i) => {
-    const f = ch.fetched || {};
-    const world = f.world || '';
-    return `<option value="${i}"${ch.name === curName ? ' selected' : ''}>${escHtml(ch.name)}${world ? ` (${escHtml(world)})` : ''}</option>`;
-  }).join('');
-  const noneSelected = !curName || !chars.some(ch => ch.name === curName);
-  return `<option value=""${noneSelected ? ' selected' : ''}>— 없음(해제) —</option>${opts}`;
-}
-
-async function csSetRepChar(savedAt) {
-  if (_csBusy) return;
-  const idx = document.getElementById('csRepSel').value;
-
-  let j;
-  if (idx === '') {
-    j = await csCall('csRepSaveBtn', '저장 중...', 'setrepchar', { clear: true });
-  } else {
-    const ch = (state.chars || [])[Number(idx)];
-    if (!ch) { j = { ok: false, error: '캐릭터를 찾을 수 없습니다.' }; }
-    else {
-      const f = ch.fetched || {};
-      j = await csCall('csRepSaveBtn', '저장 중...', 'setrepchar', {
-        name: ch.name, level: f.level || ch.level,
-        job: charJobName(ch),
-        world: f.world || '', region: charRegion(ch),
-        img: f.img || '', cardBg: ch.cardBg || null,
-      });
-    }
-  }
-
-  if (!j.ok) { showToast(j.error || '대표 캐릭터 설정에 실패했습니다.'); return; }
-  _csRepChar = j.repChar;
-  showToast(idx === '' ? '대표 캐릭터를 해제했습니다.' : '대표 캐릭터를 저장했습니다.');
   csRender(savedAt);
 }
 

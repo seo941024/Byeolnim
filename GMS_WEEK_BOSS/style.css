@@ -2092,7 +2092,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
   display: flex; flex-direction: column; gap: 10px;
 }
 .lookup-box__title { font-size: .8rem; font-weight: 800; color: var(--text); }
-/* 서버 토글 (NA / EU) — 캐릭터 조회 창, 서버 상태 */
+/* 서버 토글 (NA / EU) — 캐릭터 조회 창 */
 .region-toggle { display: flex; gap: 0; margin: 12px 12px 6px; padding: 4px; background: rgba(255,255,255,.03); border-radius: 8px; overflow: hidden; border: 1.5px solid var(--border); align-self: flex-start; }
 .region-toggle__btn { flex: 1; padding: 5px 18px; border-radius: var(--radius-pill); font-size: .78rem; font-weight: 700; letter-spacing: .6px; background: transparent; color: var(--text-sub); border: none; border-right: 1px solid var(--border); cursor: var(--cur-pointer); transition: all .15s; }
 .region-toggle__btn:last-child { border-right: none; }
@@ -3386,57 +3386,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .adm-result.is-ok  { color: var(--success); }
 .adm-result.is-err { color: var(--danger); }
 
-/* ── 서버 상태 ── */
-.ss-maint {
-  background: rgba(240,80,96,.12); border: 1px solid rgba(240,80,96,.4);
-  color: var(--danger); font-weight: 800; font-size: .88rem;
-  border-radius: var(--radius-sm); padding: 12px 16px; margin-bottom: 16px;
-}
-/* 2열 고정 — NA 6개 월드 기준 3행 2열 */
-.ss-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 12px; }
-.ss-card {
-  background: var(--panel-veil); border: 1px solid var(--border);
-  border-radius: var(--radius); padding: 14px 16px;
-  display: flex; flex-direction: column; gap: 8px;
-  border-left: 3px solid var(--text-sub);
-}
-.ss-card.ss-up { border-left-color: var(--success); }
-.ss-card.ss-partial { border-left-color: var(--accent); }
-.ss-card.ss-down { border-left-color: var(--danger); }
-.ss-card__head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.ss-card__name { font-weight: 900; font-size: .96rem; color: var(--text); display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
-.ss-card__icon { width: 26px; height: 26px; object-fit: contain; flex: 0 0 26px; margin: -4px 0; }
-
-/* 서버 아이콘 원본이 전부 55~62px 같은 계열로 통일돼서 예전 Luna/Solis 개별
-   보정은 제거했다. 다만 Challengers만 62x62 캔버스 안에 실제 그림이 46x48이라
-   투명 여백을 안고 있어 같은 박스에 넣으면 혼자 작아 보인다 — 여백만큼 키운다.
-   늘어난 크기는 음수 마진으로 흡수해 줄 높이는 건드리지 않는다. */
-/* Challengers는 33px이라 26px짜리와 라인 정렬이 달라, .icon-lbl을 1px 내린
-   만큼 아이콘도 1px 내려야 같이 맞는다(위 -6 / 아래 -8). */
-.ss-card__icon[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -6px -3px -8px; }
-.char-card__world-line img[src*="Challengers"] { width: 21px; height: 21px; margin: -4px -2px; }
-/* Challengers 아이콘은 그림이 작게 그려져 있어 광학적으로 맞추려고 더 키운 값 —
-   기본값을 올린 만큼 같은 비율(약 1.29배)로 함께 올린다 */
-.ci-servericon[src*="Challengers"] { width: clamp(31px, 9.3cqw, 52px); height: clamp(31px, 9.3cqw, 52px); margin: -2px; }
-.ss-card__badge {
-  font-size: .68rem; font-weight: 800; padding: 3px 9px; border-radius: 99px;
-  background: rgba(255,255,255,.06); color: var(--text-sub); white-space: nowrap;
-}
-.ss-card.ss-up .ss-card__badge { background: rgba(74,222,128,.15); color: var(--success); }
-.ss-card.ss-partial .ss-card__badge { background: rgba(var(--star),.15); color: var(--accent); }
-.ss-card.ss-down .ss-card__badge { background: rgba(240,80,96,.15); color: var(--danger); }
-.ss-card__row { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--text-sub); }
-.ss-card__row b { color: var(--text); font-weight: 800; font-variant-numeric: tabular-nums; }
-.ss-card__upd { font-size: .7rem; color: var(--text-dim); margin-top: 2px; }
-.ss-chan-grid { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-.ss-chan {
-  min-width: 22px; text-align: center; padding: 2px 3px;
-  border-radius: 4px; font-size: .64rem; font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.ss-chan--up { background: rgba(74,222,128,.15); color: var(--success); }
-.ss-chan--down { background: rgba(240,80,96,.18); color: var(--danger); }
-
 /* ── 숙제 트래커 ── */
 .dt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
 .dt-card { display: flex; flex-direction: column; gap: 12px; transition: opacity .15s, border-color .15s; }
@@ -3564,134 +3513,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .ci-server .icon-lbl { top: 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-result__world[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
 
-
-/* ══════════ 커뮤니티 ══════════ */
-.cm-toolbar { display: flex; align-items: center; gap: 8px; margin: 10px 0; }
-.cm-toolbar .sbtn--danger { margin-left: auto; }
-
-/* 목록 — 사진이 있으면 왼쪽에 썸네일, 없으면 글만 */
-.cm-list { display: flex; flex-direction: column; gap: 8px; }
-.cm-item {
-  display: flex; align-items: stretch; gap: 12px; width: 100%; text-align: left;
-  padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--bg2); cursor: var(--cur-pointer); transition: border-color .15s, background .15s;
-}
-.cm-item:hover { border-color: var(--primary); background: rgba(var(--hue),.08); }
-.cm-item__thumb { flex: none; width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); }
-.cm-item__body { display: flex; flex-direction: column; gap: 3px; min-width: 0; flex: 1; }
-.cm-item__title { font-size: .95rem; font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cm-item__cc { color: var(--accent); margin-left: 5px; font-size: .84rem; }
-.cm-item__preview { font-size: .78rem; color: var(--text-sub); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.cm-item__meta { display: flex; align-items: center; gap: 10px; font-size: .72rem; color: var(--text-dim); font-weight: 700; }
-.cm-item__nick { color: var(--accent); }
-/* 번호 페이지네이션 — "더 보기"로 이어붙이던 걸 대체했다(마지막 페이지로 바로 못 가서). */
-.cm-pager { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; margin-top: 14px; }
-.cm-page {
-  min-width: 34px; height: 34px; padding: 0 8px; border-radius: 8px;
-  border: 1px solid var(--border); background: var(--bg2); color: var(--text-sub);
-  font-size: .82rem; font-weight: 700; cursor: var(--cur-pointer); transition: .15s;
-}
-.cm-page:hover:not(:disabled) { border-color: var(--primary); color: var(--text); }
-.cm-page--cur { background: var(--primary); border-color: var(--primary); color: #fff; }
-.cm-page:disabled { opacity: .35; cursor: var(--cur-default); }
-
-/* 글쓰기 */
-.cm-write { display: flex; flex-direction: column; }
-.cm-upstate { font-size: .76rem; color: var(--text-dim); font-weight: 700; margin-left: 8px; }
-.cm-write__foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-
-/* 글 보기 */
-.cm-post__title { font-size: 1.25rem; font-weight: 900; color: var(--text); margin: 0 0 6px; }
-.cm-post__meta { display: flex; gap: 10px; font-size: .76rem; color: var(--text-dim); font-weight: 700; padding-bottom: 10px; border-bottom: 1px solid var(--border); }
-.cm-post__nick {
-  background: none; border: none; padding: 0; font: inherit; font-weight: 800;
-  color: var(--accent); cursor: var(--cur-pointer);
-}
-.cm-post__nick:hover { text-decoration: underline; }
-.cm-editor .ql-toolbar.ql-snow, .cm-editor .ql-container.ql-snow { border-color: var(--border); font-family: inherit; }
-.cm-editor .ql-toolbar.ql-snow { border-radius: var(--radius-sm) var(--radius-sm) 0 0; background: var(--bg2); }
-/* quill.snow.css가 style.css보다 뒤에 읽혀 시스템 손가락 커서를 다시 건다 — 한 단계 높은 선택자로 전용 커서를 덮는다 */
-.cm-editor :is(.ql-toolbar button, .ql-picker-label, .ql-picker-item, .ql-tooltip a) { cursor: var(--cur-pointer); }
-.cm-editor .ql-container.ql-snow { min-height: 260px; border-radius: 0 0 var(--radius-sm) var(--radius-sm); font-size: .9rem; color: var(--text); }
-.cm-editor .ql-editor { min-height: 260px; line-height: 1.65; }
-.cm-editor .ql-snow .ql-stroke { stroke: var(--text-sub); }
-.cm-editor .ql-snow .ql-fill { fill: var(--text-sub); }
-.cm-editor .ql-snow .ql-picker { color: var(--text-sub); }
-.cm-editor .ql-snow .ql-picker-options { background: var(--bg2); border-color: var(--border); }
-.cm-editor .ql-editor img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
-/* 서버 sanitizer를 통과한 HTML만 여기 들어온다. */
-.cm-post__body { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.65; font-size: .9rem; color: var(--text); padding: 14px 0; }
-.cm-post__body p { margin: 0 0 .7em; }
-.cm-post__body img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 10px 0; }
-.cm-post__body .ql-size-small { font-size: .75em; }
-.cm-post__body .ql-size-large { font-size: 1.5em; }
-.cm-post__body .ql-size-huge { font-size: 2.5em; }
-/* 커뮤니티 글자색은 다크·화이트 어느 쪽에서도 읽히는 세 가지로 제한한다.
-   Quill의 class 포맷을 쓰므로 style 속성을 열 필요가 없다. */
-.cm-editor .ql-color-red, .cm-post__body .ql-color-red { color: #f87171; }
-.cm-editor .ql-color-yellow, .cm-post__body .ql-color-yellow { color: #facc15; }
-.cm-editor .ql-color-blue, .cm-post__body .ql-color-blue { color: #60a5fa; }
-.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="red"] { background-color: #f87171; }
-.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="yellow"] { background-color: #facc15; }
-.cm-editor .ql-snow .ql-picker.ql-color-picker .ql-picker-item[data-value="blue"] { background-color: #60a5fa; }
-:root[data-theme="light"] .cm-editor .ql-color-red,
-:root[data-theme="light"] .cm-post__body .ql-color-red { color: #dc2626; }
-:root[data-theme="light"] .cm-editor .ql-color-yellow,
-:root[data-theme="light"] .cm-post__body .ql-color-yellow { color: #a16207; }
-:root[data-theme="light"] .cm-editor .ql-color-blue,
-:root[data-theme="light"] .cm-post__body .ql-color-blue { color: #2563eb; }
-.cm-post__img { display: block; max-width: 100%; height: auto; border-radius: var(--radius-sm); margin: 8px 0; }
-
-/* 댓글 */
-.cm-comments { margin-top: 12px; }
-.cm-clist { display: flex; flex-direction: column; gap: 10px; margin: 10px 0; }
-.cm-c { padding: 10px 12px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); }
-.cm-c__head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.cm-c__nick {
-  background: none; border: none; padding: 0; font: inherit;
-  font-size: .8rem; font-weight: 800; color: var(--accent); cursor: var(--cur-pointer);
-}
-.cm-c__nick:hover { text-decoration: underline; }
-.cm-c__time { font-size: .72rem; color: var(--text-dim); font-weight: 700; }
-.cm-c__reply { padding: 0; border: none; background: transparent; color: var(--text-dim); font-size: .72rem; font-weight: 700; }
-.cm-c__reply:hover { color: var(--primary); text-decoration: underline; }
-.cm-c__del { margin-left: auto; width: 20px; height: 20px; border-radius: 50%; border: none; background: transparent; color: var(--text-dim); cursor: var(--cur-pointer); font-size: .9rem; line-height: 1; }
-.cm-c__del:hover { color: #e5484d; }
-.cm-c__body { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .84rem; line-height: 1.55; color: var(--text); }
-.cm-cwrite { display: flex; gap: 8px; align-items: flex-start; }
-.cm-cinput { flex: 1; min-height: 70px; resize: vertical; font-family: inherit; line-height: 1.5; }
-.cm-c--reply { margin-left: calc(var(--cm-reply-depth) * 28px); border-left: 3px solid rgba(var(--hue), .45); background: rgba(var(--hue), .06); }
-.cm-replywrite { margin: 0 0 2px 28px; padding: 10px; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg2); }
-.cm-replywrite .cm-cinput { display: block; width: 100%; min-height: 64px; }
-.cm-replywrite__actions { display: flex; justify-content: flex-end; gap: 6px; margin-top: 7px; }
-.cm-pushhint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin: 10px 0; padding: 9px 10px; border: 1px solid rgba(var(--hue),.28); border-radius: var(--radius-sm); background: rgba(var(--hue),.07); color: var(--text-sub); font-size: .76rem; font-weight: 700; }
-
-/* 대표 캐릭터 팝업 — 세로형 카드. 사이드바 캐릭터 카드(.char-card)와 같은 배경/portrait
-   구성요소를 재사용하되, 초상화가 위 · 정보가 아래로 오는 배치만 다르다. */
-.cm-rep-modal { width: min(240px, 88vw); }
-.cm-rep { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px 0 6px; text-align: center; }
-.cm-rep__portrait {
-  position: relative; width: 100%; height: 140px;
-  border-radius: var(--radius-sm); overflow: hidden;
-  background: var(--panel-veil); border: 1px solid rgba(var(--hue),.2);
-  display: flex; align-items: flex-end; justify-content: center;
-  margin-bottom: 8px;
-}
-.cm-rep__img { width: 96px; height: 96px; object-fit: contain; object-position: bottom center; margin-bottom: 4px; position: relative; z-index: 1; image-rendering: pixelated; }
-.cm-rep__name { font-size: 1.02rem; font-weight: 900; color: var(--text); }
-.cm-rep__lv { color: var(--accent); font-weight: 800; font-size: .8rem; }
-.cm-rep__world-line { display: flex; align-items: center; gap: 3px; font-size: .78rem; color: var(--text-sub); font-weight: 600; margin-top: 2px; }
-.cm-rep__world-line img { width: 16px; height: 16px; object-fit: contain; }
-.cm-rep__job { font-size: .76rem; color: var(--text-dim); margin-top: 1px; }
-
-@media (max-width: 768px) {
-  .cm-item__thumb { width: 52px; height: 52px; }
-  .cm-cwrite { flex-direction: column; }
-  .cm-cwrite .sbtn { width: 100%; }
-  .cm-c--reply { margin-left: calc(var(--cm-reply-depth) * 14px); }
-  .cm-replywrite { margin-left: 14px; }
-  .cm-pushhint { align-items: flex-start; flex-direction: column; }
-}
 
 /* ── 메운디 ── */
 .mu-keys { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
@@ -4132,3 +3953,18 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* 본문 맨 아래 넥슨 권리 안내 */
 .site-notice { margin: 32px 0 8px; padding-top: 14px; border-top: 1px solid var(--border); font-size: .72rem; line-height: 1.6; color: var(--text-sub); text-align: center; }
+
+/* 해방 계산기 보스 칸 — 게임 보스 목록 아이콘은 테두리가 그림에 들어 있어 칸 테두리·배경 없이 꽉 채운다 */
+.boss-thumb--icon { border: 0; background: none; border-radius: 0; }
+.boss-thumb--icon img { object-fit: contain; }
+
+/* 헥사 코어 아이콘은 게임의 32px 그림이다. 원래 크기 그대로 두고, 고해상도 화면에서도 번지지 않게 픽셀 그대로 키운다 */
+.hx-node-name .hx-node-icon { width: 32px; height: 32px; image-rendering: pixelated; }
+
+/* 헥사 코어 이름 한글·영어 스위치 — 헤더 테마 스위치 .theme-toggle과 같은 모양으로 제목 줄 오른쪽에 둔다.
+   헤더 쪽 .theme-toggle-wrap·__label은 모바일에서 숨겨지므로 감싸개와 글자는 따로 둔다. 좁으면 제목 아래로 내려간다 */
+#sec-hexa .sec-head { flex-wrap: wrap; }
+.hx-lang { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.hx-lang__label { font-size: .74rem; font-weight: 700; color: var(--text); }
+.hx-lang .theme-toggle.is-ko { background: rgba(var(--hue),.22); }
+.hx-lang .theme-toggle.is-ko .theme-toggle__knob { transform: translateX(18px); }

@@ -96,8 +96,7 @@ const NAV_LABELS = {
   addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', familiar: '패밀리어 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
   mixdye: '코디 시뮬레이터',
-  bosshp: '보스 정보', serverstatus: '서버 상태',
-  community: '커뮤니티',
+  bosshp: '보스 정보',
 };
 /* fromHistory: 브라우저 뒤로가기·앞으로가기로 온 이동. 이때는 기록을 새로 남기지 않는다 */
 function navigateTo(sec, fromHistory = false) {
@@ -114,9 +113,6 @@ function navigateTo(sec, fromHistory = false) {
   grp?.classList.add('open');
   if (sec === 'charinfo') renderCharInfo();
   if (sec === 'bosshp')    renderBossHPTable();
-  if (sec === 'serverstatus') renderServerStatus();
-  // 커뮤니티는 들어올 때마다 목록을 새로 받는다 — 다른 사람이 쓴 글이 그새 올라올 수 있다
-  if (sec === 'community' && typeof renderCommunity === 'function') { _cmView = 'list'; renderCommunity(); }
   if (sec === 'dailytasks') renderDailyTasks();
   if (sec === 'wantchannel') renderWantChannel();
   if (sec === 'mcalendar') renderMapleCalendar();
@@ -731,7 +727,7 @@ document.getElementById('btnResetBoss').addEventListener('click', () => {
 });
 
 /* ── 캐릭터 표시 도우미 ──
-   사이드바·캐릭터 목록·캘린더·커뮤니티·채널 추천·서버 상태가 같이 쓴다. */
+   사이드바·캐릭터 목록·캘린더·채널 추천이 같이 쓴다. */
 // 캐릭터 일러스트 뒤에 깔리는 배경 그림. 기본값은 CSS에 박혀 있는
 // images/icons/bg.webp이고, 캐릭터가 cardBg를 고르면 그걸로 갈아끼운다.
 // png를 먼저 시도하고 없으면 webp, 둘 다 없으면 요소가 사라져 기본 배경이 드러난다.
@@ -961,23 +957,6 @@ const NOTICE_LOG = [
       {
         head: '캐릭터 카드에 이번 주 예상 수익 표시',
         desc: '보스 수익 계산기에서 체크한 보스와 대여비를 반영한 수익이 캐릭터 카드 아래에 나옵니다. 마우스를 올리면 정확한 금액을 볼 수 있습니다.',
-      },
-    ],
-  },
-  {
-    date: '2026. 08. 26.',
-    items: [
-      {
-        head: '커뮤니티 글 꾸미기와 사진 넣기',
-        desc: '글자를 굵게·기울게·밑줄·크기로 꾸밀 수 있고, 색은 빨강·노랑·파랑 중에서 고릅니다. 사진은 글 중간 원하는 곳에 넣을 수 있습니다.',
-      },
-      {
-        head: '닉네임으로 대표 캐릭터 보기',
-        desc: '계정 설정에서 대표 캐릭터를 정해 두면, 다른 사람이 내 닉네임을 눌렀을 때 그 캐릭터가 보입니다.',
-      },
-      {
-        head: '댓글 알림과 답글',
-        desc: '내 글이나 댓글에 새 댓글이 달리면 알려 드리고, 댓글에 답글을 이어서 달 수 있습니다.',
       },
     ],
   },

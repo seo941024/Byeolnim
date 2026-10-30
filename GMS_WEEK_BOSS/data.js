@@ -69,6 +69,8 @@ const STORAGE_KEYS = {
   hexaMastery: 'hx_mastery',
   hexaBoost:   'hx_boost',
   hexaCommon:  'hx_common',
+  // 헥사 코어 이름 표기 en·ko. 캐릭터와 상관없는 화면 설정이라 접미사 없이 하나만 둔다
+  hexaLang:    'hx_name_lang',
   dailyTasks:  'daily_tasks_v1',
   mapleCal:       'mc_drops_v1',
   mapleCalEvents: 'mc_events_v1',

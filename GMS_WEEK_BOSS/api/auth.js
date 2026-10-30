@@ -84,7 +84,7 @@ module.exports = async function handler(req, res) {
 
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
-      return res.status(200).json({ ok: true, id, nickname: id, token, isAdmin: isAdminId(id), repChar: null });
+      return res.status(200).json({ ok: true, id, nickname: id, token, isAdmin: isAdminId(id) });
     }
 
     /* ── 로그인 ── */
@@ -111,7 +111,7 @@ module.exports = async function handler(req, res) {
       const token = newToken();
       await redis.set('auth:tok:' + token, id, { ex: TOKEN_TTL });
       // 오래된 계정(닉네임 필드가 생기기 전 가입)은 nickname이 없을 수 있어 아이디로 대체
-      return res.status(200).json({ ok: true, id, nickname: rec.nickname || id, token, isAdmin: isAdminId(id), repChar: rec.repChar || null });
+      return res.status(200).json({ ok: true, id, nickname: rec.nickname || id, token, isAdmin: isAdminId(id) });
     }
 
     /* 아래는 전부 로그인된 사람만 */
@@ -166,42 +166,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ ok: true, nickname });
     }
 
-    /* ── 대표 캐릭터 설정/해제 ──
-       커뮤니티 글·댓글에서 닉네임을 누르면 보여줄 캐릭터. 캐릭터 목록은
-       각자 브라우저 localStorage에만 있어 서버가 원래 접근 못 하므로, 고를 때
-       화면에 보이는 값(이름·레벨·직업·서버·이미지)만 그대로 올려받아 그 계정
-       레코드에 스냅샷으로 저장한다 — 실시간 조회가 아니다. 닉네임과 같은 원칙:
-       나중에 캐릭터가 바뀌어도 이미 쓴 글에는 소급 반영되지 않는다. */
-    if (action === 'setrepchar') {
-      const rec = await getJson(redis, 'auth:user:' + uid);
-      if (!rec) return bad(res, 404, '계정 정보를 찾을 수 없습니다');
-
-      if (body.clear) {
-        rec.repChar = null;
-        await redis.set('auth:user:' + uid, JSON.stringify(rec));
-        return res.status(200).json({ ok: true, repChar: null });
-      }
-
-      const name = String(body.name || '').trim().slice(0, 20);
-      const level = Math.min(300, Math.max(1, Number(body.level) || 0));
-      const job = String(body.job || '').trim().slice(0, 40);
-      const world = String(body.world || '').trim().slice(0, 20);
-      const region = body.region === 'EU' ? 'EU' : 'NA';
-      const img = String(body.img || '');
-      // 넥슨이 실제로 내려주는 아바타 도메인만 허용 — 아무 이미지 URL이나
-      // 프로필에 박아 넣는 걸 막는다(글 사진의 Blob URL 검증과 같은 이유).
-      const IMG_RE = /^https:\/\/msavatar\d*\.nexon\.net\//i;
-      const safeImg = IMG_RE.test(img) ? img : '';
-      // 카드 배경도 캐릭터가 골라둔 값 그대로 — bgN 형식만 허용(임의 문자열 방지).
-      const cardBg = /^bg\d+$/.test(String(body.cardBg || '')) ? body.cardBg : null;
-
-      if (!name) return bad(res, 400, '캐릭터를 선택해주세요');
-
-      rec.repChar = { name, level, job, world, region, img: safeImg, cardBg };
-      await redis.set('auth:user:' + uid, JSON.stringify(rec));
-      return res.status(200).json({ ok: true, repChar: rec.repChar });
-    }
-
     /* ── 저장 ── */
     if (action === 'save') {
       const data = body.data;
@@ -229,7 +193,7 @@ module.exports = async function handler(req, res) {
     if (action === 'me') {
       const rec = await getJson(redis, 'auth:user:' + uid);
       const meta = await getJson(redis, 'auth:datameta:' + uid);
-      return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at, isAdmin: isAdminId(uid), repChar: (rec && rec.repChar) || null });
+      return res.status(200).json({ ok: true, id: uid, nickname: (rec && rec.nickname) || uid, savedAt: meta && meta.at, isAdmin: isAdminId(uid) });
     }
 
     /* ── 로그아웃 ── */

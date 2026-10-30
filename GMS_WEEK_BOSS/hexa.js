@@ -21,21 +21,42 @@ function _hxLoad(base, names, minFirst = 0) {
     return { name, cur, tgt: stored[i]?.tgt ?? 30, max: 30, min };
   });
 }
+/* 이름도 같이 적는다. 읽을 때는 자리 기준이지만, 이름이 있으면 아래 자리 옮기기를 이미 마친 값이라는 표시가 된다 */
 function _hxSave(base, nodes) {
-  localStorage.setItem(_hxKey(base), JSON.stringify(nodes.map(n => ({ cur:n.cur, tgt:n.tgt }))));
+  localStorage.setItem(_hxKey(base), JSON.stringify(nodes.map(n => ({ cur:n.cur, tgt:n.tgt, name:n.name }))));
 }
+
+/* 코어 이름을 게임 영문 이름·게임 슬롯 순서로 바꾸면서 강화 코어 자리가 바뀐 직업.
+   값은 예전 자리 순서를 새 이름으로 적은 것이다. 이름 없이 자리 기준으로 저장된 예전 값만 한 번 새 순서로 옮긴다 */
+const _HX_LEGACY_ORDER = {
+  'Hero':        { boost: ['Burning Soul Blade', 'Worldreaver', 'Instinctual Combo', 'Sword Illusion'] },
+  'Wild Hunter': { boost: ["Command: Predator's Eye", 'Wild Arrow Blast: Overdrive', 'Primal Bloom', 'Overbite'] },
+};
+const _HX_STORE = { skill: 'hexaSkill', mastery: 'hexaMastery', boost: 'hexaBoost', common: 'hexaCommon' };
+function _hxMigrateOrder(job, jd) {
+  Object.entries(_HX_LEGACY_ORDER[job] || {}).forEach(([cat, oldNames]) => {
+    const k = _hxKey(STORAGE_KEYS[_HX_STORE[cat]]);
+    const old = JSON.parse(localStorage.getItem(k) || 'null');
+    if (!Array.isArray(old) || !old.length || old.some(o => o && o.name != null)) return;
+    localStorage.setItem(k, JSON.stringify(jd[cat].map(n => ({ cur: 0, tgt: 30, ...old[oldNames.indexOf(n)], name: n }))));
+  });
+}
+
+/* 아이콘을 게임 그림으로 바꾼 판. 서비스 워커가 그림을 캐시에서 먼저 주므로 주소에 붙여 새 그림을 받게 한다 */
+const _HX_ICON_V = '20261030';
 
 let hxSkill, hxMastery, hxBoost, hxCommon;
 let _hxJobData = null;   // 현재 직업의 HEXA 데이터 (비용 예외 참조용)
 
 // 아이콘 로드 실패 시 .png ↔ .webp 상호 대체, 그래도 없으면 숨김
 function _hxIcoFallback(img) {
-  if (!img.dataset.alt && /\.png$/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.png$/, '.webp'); }
-  else if (!img.dataset.alt && /\.webp$/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.webp$/, '.png'); }
+  if (!img.dataset.alt && /\.png(?=\?|$)/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.png(?=\?|$)/, '.webp'); }
+  else if (!img.dataset.alt && /\.webp(?=\?|$)/.test(img.src)) { img.dataset.alt = '1'; img.src = img.src.replace(/\.webp(?=\?|$)/, '.png'); }
   else { img.style.display = 'none'; }
 }
 
-function renderNodeList(nodes, containerId, storageKey, icons=[]) {
+/* labels: 화면에 보일 이름. 없으면 기준 이름 sk.name */
+function renderNodeList(nodes, containerId, storageKey, icons=[], labels=[]) {
   const list = document.getElementById(containerId);
   if (!list) return;
   list.innerHTML = '';
@@ -47,7 +68,7 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
       : '';
     const minCur = sk.min ?? 0;
     div.innerHTML = `
-      <span class="hx-node-name">${iconHtml}${sk.name}</span>
+      <span class="hx-node-name">${iconHtml}${labels[i] ?? sk.name}</span>
       <span style="font-size:.75rem;color:var(--text-sub)">현재</span>
       <input class="inp" type="number" value="${sk.cur}" min="${minCur}" max="${sk.max}" data-i="${i}" data-field="cur" />
       <span style="font-size:.75rem;color:var(--text-sub)">목표</span>
@@ -77,7 +98,43 @@ function _hxShowErdaLink(on) {
   if (layout) layout.style.display = on ? 'none' : '';
   if (root)   root.style.display   = on ? '' : 'none';
   if (title)  title.textContent    = on ? _HX_TITLE.erdalink : _HX_TITLE.hexa;
+  // 이름 표기 스위치는 헥사 목록에만 쓰이므로 에르다 링크 판에서는 감춘다
+  const lang = document.getElementById('hxLang');
+  if (lang) lang.style.display = on ? 'none' : '';
 }
+
+/* 코어 이름 표기. 영어가 기본이고 고른 값은 STORAGE_KEYS.hexaLang에 남긴다.
+   화면 이름만 바꾸며 저장값·비용·아이콘은 기준 영문 이름으로 판단하므로 영향이 없다 */
+let _hxLang = 'en';
+try { if (localStorage.getItem(STORAGE_KEYS.hexaLang) === 'ko') _hxLang = 'ko'; } catch (e) {}
+let _hxIcons = null;   // 현재 직업의 노드별 아이콘 주소. 표기만 바꿔 다시 그릴 때 쓴다
+
+function _hxSyncLangToggle() {
+  const btn = document.getElementById('hxLangToggle');
+  const label = document.getElementById('hxLangLabel');
+  const ko = _hxLang === 'ko';
+  if (btn) { btn.classList.toggle('is-ko', ko); btn.setAttribute('aria-pressed', ko); }
+  if (label) label.textContent = ko ? '한글' : '영어';
+}
+
+/* 불러 둔 노드를 현재 표기로 다시 그린다. 저장값은 다시 읽지 않는다 */
+function _hxRenderLists() {
+  const jd = _hxJobData;
+  if (!jd || !_hxIcons) return;
+  const label = cat => jd[cat].map((n, i) => (_hxLang === 'ko' && jd.ko?.[cat]?.[i]) || n);
+  renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   _hxIcons.skill,   label('skill'));
+  renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, _hxIcons.mastery, label('mastery'));
+  renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   _hxIcons.boost,   label('boost'));
+  renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  _hxIcons.common,  label('common'));
+}
+
+document.getElementById('hxLangToggle')?.addEventListener('click', () => {
+  _hxLang = _hxLang === 'ko' ? 'en' : 'ko';
+  try { localStorage.setItem(STORAGE_KEYS.hexaLang, _hxLang); } catch (e) {}
+  _hxSyncLangToggle();
+  _hxRenderLists();
+});
+_hxSyncLangToggle();
 
 /* 탭 진입·캐릭 전환 때마다 활성 캐릭터의 저장 수치로 다시 불러와 그린다 */
 function renderAllHexaLists() {
@@ -96,9 +153,10 @@ function renderAllHexaLists() {
   }
   const jd  = HEXA_JOB_DATA[job] || HEXA_DEFAULT_DATA;
 
-  const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png` : null;
+  const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png?v=${_HX_ICON_V}` : null;
 
   _hxJobData = jd;   // 비용 계산에서 직업별 예외(skillCost 등) 참조
+  _hxMigrateOrder(job, jd);
   hxSkill   = _hxLoad(STORAGE_KEYS.hexaSkill,   jd.skill, 1); // 노드1=오리진: 6차 전직 시 항상 Lv1 이상
   hxMastery = _hxLoad(STORAGE_KEYS.hexaMastery, jd.mastery);
   hxBoost   = _hxLoad(STORAGE_KEYS.hexaBoost,   jd.boost);
@@ -113,14 +171,14 @@ function renderAllHexaLists() {
 
   // 공용 코어 아이콘 — 솔 야누스·헤카테는 공용 그림, 나머지는 직업 폴더 15번부터.
   // 자리가 아니라 이름으로 가려야 공용 코어 구성이 다른 직업에서도 아이콘이 밀리지 않는다.
-  const SOL_ICON = { '솔 야누스': 'images/skill/Common/sol_janus.png', '솔 헤카테': 'images/skill/Common/sol_hecate.png' };
+  const SOL_ICON = { 'Sol Janus': 'sol_janus', 'Sol Hecate': 'sol_hecate', '솔 야누스': 'sol_janus', '솔 헤카테': 'sol_hecate' };
+  const solIco = n => SOL_ICON[n] && `images/skill/Common/${SOL_ICON[n]}.png?v=${_HX_ICON_V}`;
   let jobCommonIdx = 0;
-  const commonIcoFull = jd.common.map(n => SOL_ICON[n] || ico(15 + jobCommonIdx++));
+  const commonIcoFull = jd.common.map(n => solIco(n) || ico(15 + jobCommonIdx++));
 
-  renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   [ico(1), ico(2), ico(3)]);
-  renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, [ico(5), ico(6), ico(7), ico(8)]);
-  renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   [ico(9), ico(10), ico(11), ico(12)]);
-  renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  commonIcoFull);
+  _hxIcons = { skill: [ico(1), ico(2), ico(3)], mastery: [ico(5), ico(6), ico(7), ico(8)],
+               boost: [ico(9), ico(10), ico(11), ico(12)], common: commonIcoFull };
+  _hxRenderLists();
   _hxClampHaveSE(); // 캐릭터 레벨에 따라 솔 에르다 최대 소지량이 달라진다
   _hxCompute(); // 탭 진입/캐릭 전환 시 결과 자동 표시
 }
@@ -155,8 +213,9 @@ function _hxCompute() {
   const skillTable  = i => i === 0 ? HEXA_SKILL1_COSTS
                          : skillIsCommon ? HEXA_COMMON_COSTS
                          : i === 1 ? HEXA_SKILL_COSTS : HEXA_SKILL3_COSTS;
-  // 솔 야누스/헤카테는 공용 비용, 나머지 = 직업별 3번째 공용(프리드의 가호 등)은 HEXA_COMMON3_COSTS. 이름으로 가린다
-  const commonTable = i => /^솔 (야누스|헤카테)$/.test(hxCommon[i]?.name || '') ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
+  // 솔 야누스/헤카테는 공용 비용, 나머지 = 직업별 3번째 공용(프리드의 가호 등)은 HEXA_COMMON3_COSTS.
+  // 화면 표기가 아니라 노드의 기준 이름 name으로 가리므로 한글·영어 전환과 상관없다
+  const commonTable = i => /^(Sol (Janus|Hecate)|솔 (야누스|헤카테))$/.test(hxCommon[i]?.name || '') ? HEXA_COMMON_COSTS : HEXA_COMMON3_COSTS;
   addNodes(hxSkill,   skillTable);
   addNodes(hxMastery, HEXA_MASTERY_COSTS);
   addNodes(hxBoost,   HEXA_BOOST_COSTS);

@@ -8,7 +8,10 @@
      키보드는 그 창을 눌러 둔 동안만 받는다. 게임 창을 누르면 키는 게임이 가져간다
    - 남은 시간은 끝나는 시각에서 지금 시각을 빼서 구한다. 게임 창이 앞에 있으면 브라우저가 가려진 탭의 타이머를 늦추므로,
      PIP 창이 열려 있으면 그 창의 타이머로도 다시 그린다
-   - 그림: GMS v.270 Etc/VCore.img/vSkill/CoreData/30000001/icon (Lethal Strike I), images/myutil/lethal_strike.png
+   - 이름은 게임 영어 이름 Lethal Strike I 그대로 적는다(지수 요청)
+   - 그림: GMS v.270 Etc/VCore.img/vSkill/CoreData/30000001/icon, images/myutil/lethal_strike.png. 스킬 400007003의 icon과 같은 그림이다.
+     세는 동안은 회색, 다시 발동할 수 있으면 컬러로 보인다(지수 요청). 게임의 회색 그림 iconDisabled는 maplestory.io가
+     GMS v.270에서 내려 주지 못해(서버 오류), style.css 필터로 채도를 뺀다. KMS의 400007003은 다른 스킬이라 쓸 수 없다
    ═══════════════════════════════════════════════════════════ */
 
 const LT_SEC = 60;
@@ -24,7 +27,7 @@ function _ltBoardHtml(pip) {
   return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-state="idle">
       <img class="lt-ico" src="${LT_ICON}" alt="">
       <div class="lt-main">
-        <div class="lt-name">치명적 일격</div>
+        <div class="lt-name">Lethal Strike I</div>
         <div class="lt-time">${LT_SEC}</div>
         <div class="lt-bar"><i></i></div>
       </div>
@@ -126,7 +129,7 @@ function initMyUtil() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">개인 유틸</h2></div>
-    <p class="dt-help">치명적 일격이 발동하면 시작을 누릅니다. 60초 뒤 다시 발동할 수 있습니다. S 또는 시작 버튼으로 시작하고, R 또는 초기화 버튼으로 초기화합니다.</p>
+    <p class="dt-help">Lethal Strike I 발동 시 시작을 누릅니다. 60초 동안 아이콘이 회색으로 바뀌고, 다시 발동할 수 있으면 컬러로 돌아옵니다. S 또는 시작 버튼으로 시작하고, R 또는 초기화 버튼으로 초기화합니다.</p>
     <div class="card lt-card">
       ${window.documentPictureInPicture ? '<div class="lt-tools"><button class="lt-pip" type="button">PIP모드</button></div>' : ''}
       ${_ltBoardHtml(false)}

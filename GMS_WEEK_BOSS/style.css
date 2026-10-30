@@ -3614,7 +3614,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 @media (prefers-reduced-motion: no-preference) { .vp-key--new { animation: vpPop .18s cubic-bezier(.3,1.6,.5,1); } }
 @keyframes vpPop { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 
-/* ── 개인 유틸 · 치명적 일격 타이머 (myutil.js) ──
+/* ── 개인 유틸 · Lethal Strike I 타이머 (myutil.js) ──
    아이콘은 32×32 도트라 정수 배율로 픽셀 그대로 키운다. 다 세면 테두리와 글자를 금색으로 바꾼다 */
 .lt-tools { display: flex; margin-bottom: 10px; }
 .lt-board {
@@ -3623,6 +3623,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .lt-board[data-state="ready"] { border-color: rgb(var(--star)); box-shadow: inset 0 0 0 1px rgba(var(--star), .45); }
 .lt-ico { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
+/* 세는 동안은 회색, 다시 발동할 수 있으면 컬러 */
+.lt-board[data-state="run"] .lt-ico { filter: grayscale(1) brightness(.8); }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
 .lt-time { font-size: 2.4rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }

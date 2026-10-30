@@ -3624,7 +3624,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .lt-board[data-state="ready"] { border-color: rgb(var(--star)); box-shadow: inset 0 0 0 1px rgba(var(--star), .45); }
 .lt-ico { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
 /* 세는 동안은 채도를 빼고 밝기를 조금 올린 회색으로, 다시 발동할 수 있으면 컬러 */
-.lt-board[data-state="run"] .lt-ico { filter: grayscale(1) brightness(1.2); }
+.lt-board[data-state="run"] .lt-ico { filter: grayscale(1) brightness(1.4); }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
 .lt-time { font-size: 2.4rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }

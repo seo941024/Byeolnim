@@ -11,7 +11,7 @@
    - 이름은 게임 영어 이름 Lethal Strike I 그대로 적는다(지수 요청)
    - 그림: GMS v.270 Etc/VCore.img/vSkill/CoreData/30000001/icon, images/myutil/lethal_strike.png. 스킬 400007003의 icon과 같은 그림이다.
      세는 동안은 회색, 다시 발동할 수 있으면 컬러로 보인다(지수 요청). 게임의 회색 그림 iconDisabled는 maplestory.io가
-     GMS v.270에서 내려 주지 못해(서버 오류), style.css grayscale 필터로 채도를 빼고 밝기를 1.2배로 올린다. KMS의 400007003은 다른 스킬이라 쓸 수 없다
+     GMS v.270에서 내려 주지 못해(서버 오류), style.css grayscale 필터로 채도를 빼고 밝기를 1.4배로 올린다. KMS의 400007003은 다른 스킬이라 쓸 수 없다
    ═══════════════════════════════════════════════════════════ */
 
 const LT_SEC = 60;

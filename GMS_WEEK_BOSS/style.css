@@ -4129,3 +4129,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   .el-view { max-height: 62vh; }
   .el-fit { padding: 5px 10px; }
 }
+
+/* 본문 맨 아래 넥슨 권리 안내 */
+.site-notice { margin: 32px 0 8px; padding-top: 14px; border-top: 1px solid var(--border); font-size: .72rem; line-height: 1.6; color: var(--text-sub); text-align: center; }

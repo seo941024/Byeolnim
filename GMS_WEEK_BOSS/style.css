@@ -4001,6 +4001,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* ── 코디 시뮬레이터 편의 기능: 배율·좌우 반전·되돌리기·프리셋·찜 ── */
 #sec-mixdye.is-flip .mx-stage canvas { transform: scaleX(-1); }
 .mx-flip.active { border-color: rgb(var(--star)); color: var(--accent); }
+.mx-zoom:disabled { opacity: .35; cursor: var(--cur-default); }
 .mx-histbtns { display: flex; gap: 6px; }
 .mx-combo__acts { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; }
 .mx-preset-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; }

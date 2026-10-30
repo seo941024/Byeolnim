@@ -360,7 +360,7 @@ function _mxDrawCards() {
   const g = _mxCur.g;
   const tH = _mxMixOn(MX_PARTS.hair) ? _mxState.hair.ratio / 100 : 0;
   const tF = _mxMixOn(MX_PARTS.face) ? _mxState.face.ratio / 100 : 0;
-  _mxPaint('mxCvResult', _mxCompose(g, tH, tF, _mxMatte()), _mxState.zoom);
+  _mxPaint('mxCvResult', _mxCompose(g, tH, tF, _mxMatte()), _mxZoomNow());
   if (_mxState.part === 'coordi' || _mxState.part === 'skin') return;
   const onHair = _mxState.part === 'hair';
   const mixOn = _mxMixOn(MX_PARTS[_mxState.part]) ? 1 : 0;
@@ -763,7 +763,12 @@ function _mxRender() {
 
   document.querySelectorAll('#sec-mixdye .mx-view').forEach(b => b.classList.toggle('active', b.dataset.mxview === _mxState.view));
   document.getElementById('mxViewNote').style.display = _mxState.part === 'face' && _mxState.view === 'ladder' ? '' : 'none';
-  document.querySelectorAll('#sec-mixdye .mx-zoom').forEach(b => b.classList.toggle('active', +b.dataset.mxzoom === _mxState.zoom));
+  const fit = _mxZoomFit(), zoom = Math.min(_mxState.zoom, fit);
+  _mxFitAt = fit;
+  document.querySelectorAll('#sec-mixdye .mx-zoom').forEach(b => {
+    b.classList.toggle('active', +b.dataset.mxzoom === zoom);
+    b.disabled = +b.dataset.mxzoom > fit;
+  });
   const flip = document.querySelector('#sec-mixdye .mx-flip');
   flip.classList.toggle('active', _mxState.flip);
   flip.setAttribute('aria-pressed', String(_mxState.flip));
@@ -773,6 +778,21 @@ function _mxRender() {
   _mxSave();
   _mxHistNote();
 }
+
+/* 결과 칸에 다 들어가는 가장 큰 정수 배율. 칸이 좁은데 ×4로 그리면 칸에 맞춰 줄어들며 도트 크기가 들쭉날쭉해서,
+   고른 배율이 안 들어가면 들어가는 배율로 낮춰 그리고 안 들어가는 배율 단추는 끈다. 고른 값은 그대로 기억해서 칸이 넓어지면 돌아온다 */
+function _mxZoomFit() {
+  const st = document.querySelector('#sec-mixdye .mx-card--result .mx-stage');
+  const w = st ? st.clientWidth : 0;
+  return w ? Math.max(MX_ZOOMS[0], Math.floor(w / MX_LAYER_SIZE)) : MX_ZOOMS[MX_ZOOMS.length - 1];
+}
+const _mxZoomNow = () => Math.min(_mxState.zoom, _mxZoomFit());
+let _mxFitAt = 0;
+addEventListener('resize', () => {
+  if (!_mxCur || !document.getElementById('sec-mixdye')?.classList.contains('active')) return;
+  const fit = _mxZoomFit();
+  if (fit !== _mxFitAt) { _mxFitAt = fit; _mxRender(); }
+});
 
 /* ── 되돌리기 ── 모습이 바뀔 때마다 두 성별 상태를 통째로 적어 둔다. 탭·보기·배율 전환은 적지 않는다.
    슬라이더를 끄는 것처럼 0.35초 안에 이어진 변화는 하나로 합친다 */
@@ -834,7 +854,8 @@ function _mxPresetsSave() {
 
 // 공유 링크와 프리셋을 지금 캐릭터로 불러온다. 성별이 다르면 그 성별로 바꾼다
 function _mxApplyLook(look) {
-  if (!look || !MX_SEX[look.g]) return false;
+  // toString 같은 상속 이름이 들어와도 통과하지 않게 MX_SEX에 직접 있는 열쇠만 받는다
+  if (!look || !Object.prototype.hasOwnProperty.call(MX_SEX, look.g)) return false;
   _mxState.g = look.g;
   _mxState.chars[look.g] = _mxCharFrom(look.g, look, _mxChar(look.g));
   if (window.COORDI_DATA) _mxCoordiReady();
@@ -843,18 +864,21 @@ function _mxApplyLook(look) {
   return true;
 }
 
-function _mxPresetAct(act, i) {
+async function _mxPresetAct(act, i) {
   if (act === 'pick') {
     _mxPresetAt = i;
     if (_mxPresets[i]) _mxApplyLook(_mxPresets[i].look);
     _mxRenderPresets();
   } else if (act === 'save') {
-    const cv = document.getElementById('mxCvResult');
-    const look = { g: _mxState.g, ..._mxCharOut(_mxState.chars[_mxState.g]) };
-    const was = _mxPresets[_mxPresetAt];
-    _mxPresets[_mxPresetAt] = { look, img: cv && cv.width ? cv.toDataURL() : '' };
-    if (!_mxPresetsSave()) _mxPresets[_mxPresetAt] = was;
-    else showToast(`프리셋 ${_mxPresetAt + 1}에 저장했습니다`);
+    const at = _mxPresetAt, look = { g: _mxState.g, ..._mxCharOut(_mxState.chars[_mxState.g]) };
+    // 새 아이템 그림을 받는 중이면 결과 칸에 아직 예전 모습이 남아 있어서, 지금 모습을 다 그린 뒤에 담는다
+    const drawn = () => _mxCur && _mxCur.key === JSON.stringify(_mxPixKeys());
+    if (!drawn()) await _mxDraw();
+    if (!drawn()) { showToast('그림을 다 불러온 뒤에 저장해 주세요'); return; }
+    const was = _mxPresets[at];
+    _mxPresets[at] = { look, img: document.getElementById('mxCvResult').toDataURL() };
+    if (!_mxPresetsSave()) _mxPresets[at] = was;
+    else showToast(`프리셋 ${at + 1}에 저장했습니다`);
     _mxRenderPresets();
   } else if (act === 'clear') {
     _mxPresets[_mxPresetAt] = null;
@@ -892,6 +916,7 @@ window.addEventListener('load', () => {
 });
 
 /* ── 랜덤 코디 ── 지금 성별로 헤어·성형을 아무 모양·색으로, 코디는 부위마다 아무거나 입힌다. 믹스와 피부는 그대로.
+   믹스 색이 새 헤어·성형에 없거나 새 기준 색과 같으면 _mxRender의 _mxFixColors가 다른 색으로 맞춘다.
    한벌옷과 상의·하의는 반반, 얼굴장식·눈장식·귀걸이는 너무 어지럽지 않게 3분의 1만 입힌다 */
 const MX_RANDOM_SOMETIMES = ['faceacc', 'eyeacc', 'earrings'];
 async function _mxRandom() {
@@ -903,7 +928,7 @@ async function _mxRandom() {
   for (const p of Object.values(MX_PARTS)) {
     const r = one(p.rowsBy[g].filter(r => _mxColorsOf(p, r, g).length));
     if (!r) continue;
-    Object.assign(ch[p.key], { id: r[0], base: one(_mxColorsOf(p, r, g)), mix: -1 });
+    Object.assign(ch[p.key], { id: r[0], base: one(_mxColorsOf(p, r, g)) });
   }
   const D = _mxCD(), digit = MX_SEX[g].digit;
   const pool = slot => (D.items[slot] || []).filter(r => (r[3] === 2 || r[3] === digit) && _mxAvail(`coordi-${slot}`, r[0]));
@@ -1144,10 +1169,13 @@ function initMixdye() {
   });
   sec.querySelector('.mx-random').addEventListener('click', _mxRandom);
   sec.querySelector('.mx-share').addEventListener('click', _mxShare);
-  // Ctrl+Z 되돌리기, Ctrl+Y·Ctrl+Shift+Z 다시 하기. 검색칸에서는 글자 되돌리기를 그대로 쓴다
+  // Ctrl+Z 되돌리기, Ctrl+Y·Ctrl+Shift+Z 다시 하기. common.js bindSimKeys처럼 글자를 고치는 칸에 있거나
+  // 모달이 떠 있으면 넘겨서 그 칸의 글자 되돌리기를 쓴다. 슬라이더·체크박스에서는 모습 되돌리기를 쓴다
   document.addEventListener('keydown', e => {
     if (!(e.ctrlKey || e.metaKey) || e.altKey || !sec.classList.contains('active')) return;
-    if (e.target.matches?.('input[type="search"], input[type="text"], textarea, [contenteditable="true"]')) return;
+    const el = document.activeElement, tag = el?.tagName;
+    if ((tag === 'INPUT' && !['range', 'checkbox', 'radio', 'button'].includes(el.type)) || tag === 'SELECT' || tag === 'TEXTAREA' || el?.isContentEditable) return;
+    if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     const step = e.code === 'KeyZ' ? (e.shiftKey ? 1 : -1) : e.code === 'KeyY' ? 1 : 0;
     if (!step) return;
     e.preventDefault();

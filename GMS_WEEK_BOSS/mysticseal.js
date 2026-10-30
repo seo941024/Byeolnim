@@ -110,11 +110,14 @@ function _msEnhOne() {
   if (ok) e.lv++;
 }
 
+// 자동 상한은 초기화 없이 여러 번 돌려도 걸리지 않게 누적이 아니라 이번 실행에서 쓴 개수로 본다
+let _msRun = 0;
 const _msDrawAuto = createAutoRunner({
   btnId: 'msDrawAuto', idleLabel: '레전드리 나올 때까지 [A]', runLabel: '중지 [A]', batch: 300,
+  onStart: () => { _msRun = 0; },
   tick: () => {
     if (_msDrawOne() === 4) return 'done';
-    if (_msD.rods >= MS_AUTO_MAX) return 'max';
+    if (++_msRun >= MS_AUTO_MAX) return 'max';
   },
   maxMsg: () => `제어봉 ${MS_AUTO_MAX.toLocaleString()}개를 써도 레전드리가 나오지 않아 멈췄습니다.`,
   render: () => _msRender(),
@@ -123,10 +126,11 @@ const _msDrawAuto = createAutoRunner({
 const _msEnhAuto = createAutoRunner({
   btnId: 'msEnhAuto', idleLabel: '목표까지 자동 [A]', runLabel: '중지 [A]', batch: 20, delay: 30,
   canStart: () => _msE.lv < _msTarget,
+  onStart: () => { _msRun = 0; },
   tick: () => {
     _msEnhOne();
     if (_msE.lv >= _msTarget) return 'done';
-    if (_msE.tries >= MS_AUTO_MAX) return 'max';
+    if (++_msRun >= MS_AUTO_MAX) return 'max';
   },
   maxMsg: () => `${MS_AUTO_MAX.toLocaleString()}번을 시도해도 목표에 닿지 않아 멈췄습니다.`,
   render: () => _msRender(),

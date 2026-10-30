@@ -66,12 +66,34 @@ function renderNodeList(nodes, containerId, storageKey, icons=[]) {
   });
 }
 
+/* 에렐 라이트·시아 아스텔은 HEXA가 아니라 에르다 링크를 쓴다. 값은 게임 파일의 직업 번호 */
+const ERDALINK_JOBS = { 'Erel Light': '18112', 'Sia Astelle': '18212' };
+const _HX_TITLE = { hexa: '헥사 매트릭스 솔 에르다 계산기', erdalink: '에르다 링크 솔 에르다 계산기' };
+/* 헥사 목록과 에르다 링크 판 중 하나만 보이게 한다 */
+function _hxShowErdaLink(on) {
+  const layout = document.querySelector('#sec-hexa .hexa-layout');
+  const root   = document.getElementById('elRoot');
+  const title  = document.querySelector('#sec-hexa .sec-title');
+  if (layout) layout.style.display = on ? 'none' : '';
+  if (root)   root.style.display   = on ? '' : 'none';
+  if (title)  title.textContent    = on ? _HX_TITLE.erdalink : _HX_TITLE.hexa;
+}
+
 /* 탭 진입·캐릭 전환 때마다 활성 캐릭터의 저장 수치로 다시 불러와 그린다 */
 function renderAllHexaLists() {
   const ch  = state.chars[state.activeChar];
   const raw = ch?.fetched?.job || JOB_LIST[ch?.jobIdx]?.name || '';
   // 넥슨 랭킹 직업명 Bow Master·Blade Master 등은 JOB_NAME_CANON으로 우리 키에 맞춘다
   const job = typeof canonJobName === 'function' ? canonJobName(raw) : raw;
+  const elJob = ERDALINK_JOBS[job];
+  _hxShowErdaLink(!!elJob);
+  if (elJob) {
+    // 에르다 링크 데이터는 헥사 탭이 열려 있을 때만 받는다. 다른 탭에서 캐릭터를 바꿀 때는 자리만 바꿔 둔다
+    if (document.getElementById('sec-hexa')?.classList.contains('active') && typeof ensureErdaLinkReady === 'function') {
+      ensureErdaLinkReady(() => renderErdaLink(elJob));
+    }
+    return;
+  }
   const jd  = HEXA_JOB_DATA[job] || HEXA_DEFAULT_DATA;
 
   const ico = (n) => jd.folder ? `images/skill/${jd.folder}/${n}.png` : null;

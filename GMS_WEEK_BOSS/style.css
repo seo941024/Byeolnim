@@ -4030,3 +4030,101 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mx-item:hover .mx-item__fav { opacity: .7; }
 .mx-item__fav:hover { transform: scale(1.2); }
 .mx-item.is-fav .mx-item__fav { color: rgb(var(--star)); opacity: 1; }
+
+/* ── 에르다 링크 erdalink.js ──
+   에렐 라이트·시아 아스텔 캐릭터로 헥사 탭을 열면 헥사 목록 대신 뜬다.
+   판 안의 그림은 모두 게임 파일 그대로라 테마와 상관없이 게임 색을 쓴다. 판 밖의 카드·버튼만 사이트 색을 따른다.
+   판 좌표는 게임과 같은 px이고, .el-stage 전체를 transform으로 옮기고 키운다 */
+.el-layout { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 16px; align-items: start; }
+.el-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.el-board { padding: 16px; min-width: 0; }
+.el-board__head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; }
+.el-board__head .card__title { margin-bottom: 0; }
+.el-fit { padding: 6px 12px; font-size: .76rem; flex-shrink: 0; }
+.el-view {
+  position: relative; width: 100%; aspect-ratio: 1560 / 1200; max-height: 72vh; min-height: 240px;
+  overflow: hidden; border-radius: var(--radius-sm); border: 1px solid var(--border); background: #1a1440;
+  touch-action: none; user-select: none; -webkit-user-select: none; overscroll-behavior: contain;
+}
+.el-stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
+.el-stage img, .el-shine img { position: absolute; max-width: none; pointer-events: none; image-rendering: pixelated; }
+.el-stage .el-bg, .el-stage .el-deco, .el-shine .el-bg { image-rendering: auto; }
+.el-bg { left: 0; top: 0; }
+.el-line { opacity: .35; transition: opacity .2s; }
+.el-line.is-on { opacity: 1; }
+/* 스톤은 크기 0인 단추를 가운데 점에 두고, 그림을 그 점 기준으로 붙인다. 누르는 자리는 ::before 원 */
+.el-st { position: absolute; width: 0; height: 0; padding: 0; border: 0; background: none; cursor: var(--cur-pointer); }
+.el-st::before { content: ''; position: absolute; left: -30px; top: -30px; width: 60px; height: 60px; border-radius: 50%; }
+.el-st--origin::before { left: -22px; top: -22px; width: 44px; height: 44px; }
+.el-st--SHINE::before { left: -28px; top: -28px; width: 56px; height: 56px; }
+.el-st:focus-visible { outline: none; }
+.el-st:focus-visible::before { box-shadow: 0 0 0 3px rgb(var(--star)); }
+.el-lv { position: absolute; width: 0; height: 0; }
+.el-ico--on, .el-ico--mo { display: none; }
+.el-st.is-on .el-ico--off { display: none; }
+.el-st.is-on .el-ico--on { display: block; }
+@media (hover: hover) { .el-st:hover .el-ico--mo { display: block; } }
+/* 오리진 스톤은 게임 파일에 꺼진 아이콘이 따로 없어 같은 그림을 어둡게 둔다 */
+.el-st--origin:not(.is-on) .el-ico { filter: grayscale(1) brightness(.7); }
+.el-act, .el-lock, .el-sel { display: none; }
+.el-st.is-act .el-act { display: block; animation: el-pulse 1.6s ease-in-out infinite; }
+.el-st.is-lock .el-lock, .el-lock.is-fixed { display: block; }
+.el-st.is-sel .el-sel { display: block; }
+/* 목표가 현재보다 높은 스톤 */
+.el-st.is-plan .el-frame { filter: drop-shadow(0 0 5px rgb(var(--star))) drop-shadow(0 0 2px rgb(var(--star))); }
+@keyframes el-pulse { 0%, 100% { opacity: .45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .el-st.is-act .el-act { animation: none; } }
+
+/* SHINE 판. 원래 509px을 넘지 않고, 좁으면 erdalink.js가 비율대로 줄인다 */
+.el-shine { position: relative; width: 100%; max-width: 509px; margin: 12px auto 0; overflow: hidden; }
+.el-shine__in { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+
+/* 스톤 정보 */
+.el-detail .empty { padding: 20px; }
+.el-dt__head { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.el-dt__ico {
+  width: 52px; height: 52px; flex-shrink: 0; display: grid; place-items: center;
+  background: #1a1440; border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.el-dt__ico img { image-rendering: pixelated; }
+.el-dt__name { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; min-width: 0; }
+.el-dt__name b { font-size: 1rem; font-weight: 800; color: var(--text); overflow-wrap: anywhere; }
+.el-dt__desc {
+  font-size: .8rem; line-height: 1.6; color: var(--text-sub); white-space: pre-line; overflow-wrap: anywhere;
+  background: var(--bg3); border-radius: var(--radius-sm); padding: 10px 12px; max-height: 180px; overflow-y: auto;
+}
+.el-hl { color: var(--accent); font-weight: 700; }
+.el-dt__sub { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; margin: 16px 0 6px; }
+.el-conds { display: flex; flex-direction: column; gap: 6px; }
+.el-cond {
+  display: flex; justify-content: space-between; align-items: center; gap: 8px;
+  font-size: .82rem; color: var(--text); background: var(--bg3); padding: 7px 10px; border-radius: var(--radius-sm);
+}
+.el-cond__ok { font-size: .74rem; font-weight: 800; flex-shrink: 0; }
+.el-cond__ok.is-ok { color: var(--success); }
+.el-cond__ok.is-ng { color: var(--danger); }
+.el-dt__lock { margin-top: 14px; font-size: .86rem; font-weight: 800; color: var(--text-dim); }
+.el-inputs { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; margin-top: 16px; }
+.el-in { display: flex; flex-direction: column; gap: 5px; font-size: .78rem; font-weight: 700; color: var(--text-sub); }
+.el-in .inp { width: 92px; }
+.el-in__max { font-size: .74rem; color: var(--text-dim); padding-bottom: 11px; }
+.el-tg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.el-tg button { padding: 8px 14px; font-size: .8rem; font-weight: 700; color: var(--text-sub); cursor: var(--cur-pointer); transition: background .15s, color .15s; }
+.el-tg button + button { border-left: 1px solid var(--border); }
+.el-tg button:hover { color: var(--text); }
+.el-tg button.active { background: var(--btn); color: var(--on-btn); }
+.el-detail .hexa-result { gap: 0; }
+/* 조 단위 메소처럼 값이 길면 이름은 한 줄로 두고 값만 줄바꿈한다 */
+.el-row { gap: 10px; }
+.el-row .rl { flex-shrink: 0; }
+.el-row .rv { min-width: 0; }
+.el-row__v { text-align: right; overflow-wrap: anywhere; }
+
+@media (max-width: 1100px) {
+  .el-layout { grid-template-columns: 1fr; }
+}
+@media (max-width: 768px) {
+  .el-board { padding: 12px; }
+  .el-view { max-height: 62vh; }
+  .el-fit { padding: 5px 10px; }
+}

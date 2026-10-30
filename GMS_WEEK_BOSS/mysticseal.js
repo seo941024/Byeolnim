@@ -11,7 +11,13 @@
      2025-12-18. 테스트월드 업데이트 144, 메애기 표와 같다
    - 레전드리 추출은 공지에 1단계 값만 있다. 더 높은 희귀도가 없어 강화한 레전드리가 추출될 일이 없기 때문이다
    - 핵 능력치: 메애기 의문의 결계 시뮬레이터 표. 공식 공지에는 수치가 없다
-   - 그림: 메애기 cdn에서 받은 게임 그림, images/mysticseal/
+   - 그림: GMS v.270 게임 파일에서 오프라인으로 옮긴 그림, images/mysticseal/official/. 원래 크기 그대로 두고 화면에서만 정수 배율로 키운다
+     · 제어봉: UI/UIWindowEvent3.img/2506MysticSeal/unlock의 button:unlock·button:unlockAll 버튼 그림.
+       제어봉만 따로 된 그림이 없어, 바탕색이 다른 두 버튼에서 똑같은 제어봉 픽셀만 떼어 냈다
+     · 결계 에너지·메뉴 아이콘: 같은 곳 extract/layer:energyIcon
+     · 결계의 핵: info/inventoryIcon, 큰 그림은 info/equipIcon
+     · 챌린저스 티어: UI/UIWindowEvent2.img/ChallengersMain/leftPanel/tier. 메달 아이템 아이콘에는 시즌 숫자가 박혀 있어
+       숫자 없는 이 그림을 쓴다. 아래 영어 티어 이름은 잘라 냈고, 에메랄드 이상은 뒤에 깔린 사각 후광의 옅은 알파만 걷어 냈다
    확률은 정수로 계산한다. 핵 확률은 0.001% 단위, 강화 확률은 0.1% 단위다
    ═══════════════════════════════════════════════════════════ */
 
@@ -26,11 +32,11 @@ const MS_CORES = [
    공지의 해제 조건은 골드 미만·골드 이상·에메랄드 이상·다이아몬드 이상·마스터 이상이다. 화면에는 지수 요청으로
    미만·이상을 빼고 배지 그림의 티어 이름만 적고, 조건은 버튼에 마우스를 올리면 나오는 title에 둔다 */
 const MS_TIERS = [
-  { label: '브론즈',     cond: '골드 미만',       barrier: '1단계 초소형', badge: 'tier1', prob: [67490, 30450, 2030, 23, 7] },
-  { label: '골드',       cond: '골드 이상',       barrier: '2단계 소형',   badge: 'tier3', prob: [52600, 31400, 15700, 250, 50] },
-  { label: '에메랄드',   cond: '에메랄드 이상',   barrier: '3단계 중형',   badge: 'tier5', prob: [49950, 29950, 14950, 5050, 100] },
-  { label: '다이아몬드', cond: '다이아몬드 이상', barrier: '4단계 대형',   badge: 'tier6', prob: [0, 29950, 62880, 6650, 520] },
-  { label: '마스터',     cond: '마스터 이상',     barrier: '5단계 초대형', badge: 'tier7', prob: [0, 0, 91850, 7100, 1050] },
+  { label: '브론즈',     cond: '골드 미만',       barrier: '1단계 초소형', badge: 'tier_bronze', prob: [67490, 30450, 2030, 23, 7] },
+  { label: '골드',       cond: '골드 이상',       barrier: '2단계 소형',   badge: 'tier_gold', prob: [52600, 31400, 15700, 250, 50] },
+  { label: '에메랄드',   cond: '에메랄드 이상',   barrier: '3단계 중형',   badge: 'tier_emerald', prob: [49950, 29950, 14950, 5050, 100] },
+  { label: '다이아몬드', cond: '다이아몬드 이상', barrier: '4단계 대형',   badge: 'tier_diamond', prob: [0, 29950, 62880, 6650, 520] },
+  { label: '마스터',     cond: '마스터 이상',     barrier: '5단계 초대형', badge: 'tier_master', prob: [0, 0, 91850, 7100, 1050] },
 ];
 // 강화 Lv.n → n+1 성공 확률. 모든 희귀도가 같다
 const MS_SUCC = [1000, 900, 800, 750, 500, 200, 100, 60, 40, 20, 7];
@@ -74,9 +80,10 @@ const MS_BULK = [10, 100, 1000];   // 한 번에 해제할 제어봉 개수
 const MS_LOG_MAX = 200;
 const MS_AUTO_MAX = 1000000;
 
-const _msImg = n => `images/mysticseal/${n}.png`;
-const _msCoreImg = (r, cls = 'ms-core') => `<img class="${cls}" src="${_msImg('core' + (r + 1))}" alt="">`;
-const _msEnergy = n => `<img class="ms-ico" src="${_msImg('energy')}" alt="">${n.toLocaleString()}`;
+const _msImg = n => `images/mysticseal/official/${n}.png`;
+// big이면 장착 칸의 큰 핵 그림을 쓴다
+const _msCoreImg = (r, cls = 'ms-core', big = false) => `<img class="${cls}" src="${_msImg('core' + (r + 1) + (big ? '_big' : ''))}" alt="">`;
+const _msEnergy = n => `<img class="ms-ico ms-ico--energy" src="${_msImg('energy')}" alt="">${n.toLocaleString()}`;
 const _msCoreName = r => `<span class="ms-g" data-g="${r}">${MS_CORES[r].name} 결계의 핵</span>`;
 const _msPct = p => `${(p / 1000).toLocaleString(undefined, { maximumFractionDigits: 3 })}%`;
 const _msSuccPct = s => `${s / 10}%`;
@@ -170,7 +177,7 @@ function _msDrawHtml() {
       </div>
       <div class="card">
         <div class="card__title">누적</div>
-        <div class="sf-res-item"><span class="sf-res-label">사용한 제어봉</span><span class="sf-res-val"><img class="ms-ico" src="${_msImg('rod')}" alt="">${d.rods.toLocaleString()}개</span></div>
+        <div class="sf-res-item"><span class="sf-res-label">사용한 제어봉</span><span class="sf-res-val"><img class="ms-ico ms-ico--rod" src="${_msImg('rod')}" alt="">${d.rods.toLocaleString()}개</span></div>
         <div class="sf-res-item"><span class="sf-res-label">모두 추출한 에너지</span><span class="sf-res-val">${_msEnergy(d.energy)}</span></div>
         <div class="card__title mt16">기록</div>
         ${_msLogHtml(d.log.map(e => `
@@ -205,7 +212,7 @@ function _msEnhHtml() {
         <div class="card__title">강화할 핵</div>
         <div class="ms-pick">${MS_CORES.map((c, r) => `
           <button class="${r === e.core ? 'active' : ''}" type="button" data-ms-core="${r}">${_msCoreImg(r)}<span class="ms-g" data-g="${r}">${c.grade}</span></button>`).join('')}</div>
-        <div class="ms-now mt16">${_msCoreImg(e.core, 'ms-now__img')}<div>${_msCoreName(e.core)}<b>Lv.${e.lv}</b></div></div>
+        <div class="ms-now mt16">${_msCoreImg(e.core, 'ms-now__img', true)}<div>${_msCoreName(e.core)}<b>Lv.${e.lv}</b></div></div>
         <div class="sf-res-item mt8"><span class="sf-res-label">성공 확률</span><span class="sf-res-val">${top ? '최대 단계' : _msSuccPct(MS_SUCC[e.lv - 1])}</span></div>
         <div class="sf-res-item"><span class="sf-res-label">에너지 소모량</span><span class="sf-res-val">${top ? '-' : _msEnergy(MS_COST[e.core][e.lv - 1])}</span></div>
         <div class="cube-btns mt16"><button class="sbtn sbtn--primary cube-btn-full" type="button" data-ms="enh1"${top ? ' disabled' : ''}>강화 [S]</button></div>

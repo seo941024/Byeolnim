@@ -270,9 +270,11 @@ function renderBossHPTable() {
     seen[b.name].diffs.push(b);
   });
 
+  /* 카드 그림은 GMS v.270 게임 파일 UI/UIBoss.img 보스 목록의 큰 그림 422×500이고 영문 보스 이름이 그림에 들어 있다.
+     boss.img는 드랍 팝업이 GIF를 찾는 이름으로 쓰므로 그대로 두고 카드 그림만 따로 든다 */
   BOSS_DATA.forEach(bd => {
     const key = Object.keys(seen).find(k => norm(k) === norm(bd.name));
-    if (key) { seen[key].img = bd.img; seen[key].monthly = !!bd.monthly; }
+    if (key) { seen[key].img = bd.img; seen[key].card = `images/official/boss_card/${bd.id}.png`; seen[key].monthly = !!bd.monthly; }
   });
   // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지(BOSS_IMG_EXTRA).
   Object.entries(BOSS_IMG_EXTRA).forEach(([n, src]) => {
@@ -283,8 +285,9 @@ function renderBossHPTable() {
 
   const container = document.getElementById('bossHPCards');
   container.innerHTML = groups.map(boss => {
-    const imgHtml = boss.img
-      ? `<img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span>`
+    const imgSrc = boss.card || boss.img;
+    const imgHtml = imgSrc
+      ? `<img src="${imgSrc}" loading="lazy" decoding="async"${boss.card ? ' class="bhp-card__art"' : ''} onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span>`
       : '<span class="noimg">BOSS</span>';
 
     const activeDiff = bossHPActiveDiffs[boss.name] || boss.diffs[0]?.diff;

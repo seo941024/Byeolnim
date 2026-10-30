@@ -3987,3 +3987,18 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .fr-dd__trigger img[src*="/frontier/attr/"], .fr-dd__item img[src*="/frontier/attr/"] { width: 24px; height: 24px; object-fit: none; }
 /* 게임 월드 문장은 여백 없이 잘라 두어 Challengers만 키우던 보정이 필요 없다 */
 .wc-result__world[src*="/official/world/"] { width: 26px; height: 26px; flex-basis: 26px; margin: -4px 0; }
+
+/* 의문의 결계 시뮬레이터 공식 그림 — images/mysticseal/official/.
+   도트 그림인 제어봉·핵은 원래 크기 그대로 정수 배율로 픽셀을 살려 보이고,
+   결계 에너지는 70px 그림을 꼭 절반인 35px로 줄여 고해상도 화면에서는 원래 픽셀 그대로 보인다.
+   티어 그림은 도트가 아닌 큰 그림이라 높이만 맞춰 부드럽게 줄인다 */
+.ms-ico { vertical-align: middle; }
+.ms-ico--rod { width: 26px; height: 26px; margin-right: 6px; image-rendering: pixelated; }
+.ms-ico--energy { width: 35px; height: 35px; margin: -4px 6px -4px 0; image-rendering: auto; }
+.ms-core, .ms-th-img { width: auto; height: auto; image-rendering: pixelated; }
+.ms-now__img { width: auto; height: auto; image-rendering: pixelated; }
+.ms-tier img { width: 44px; height: 36px; object-fit: contain; image-rendering: auto; }
+.ms-badge { width: 28px; height: 24px; object-fit: contain; image-rendering: auto; }
+
+/* 보스 정보 카드의 게임 큰 보스 그림 422×500 — 정사각형 칸에 위쪽 기준으로 채워 그림 속 영문 이름이 잘리지 않게 한다 */
+.bhp-card__img img.bhp-card__art { width: 100%; height: 100%; object-fit: cover; object-position: center top; image-rendering: auto; }

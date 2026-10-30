@@ -120,7 +120,10 @@ function _statContrib(name) {
 // ── 데이터 헬퍼 ─────────────────────────────
 /* optionTable은 키가 1,600개가 넘어서 이 함수를 부를 때마다 전부 훑으면 꽤 비싸다.
    자동 돌리기는 한 번에 300회 × 3줄 = 900번씩 부르는데, 캐시가 없으면 그 묶음마다
-   화면이 0.7초씩 멈췄다(실측). 표는 한 번 받으면 바뀌지 않으므로 결과를 기억해둔다. */
+   화면이 0.7초씩 멈췄다(실측). 표는 한 번 받으면 바뀌지 않으므로 결과를 기억해둔다.
+   표의 레벨 키는 구간의 위쪽 끝이다. 30은 0~30제, 70은 31~70제, 120은 71~120제를 뜻해서
+   StrategyWiki의 STR% 0~30 +1%, 31~70 +2%, 71+ +3%와 맞는다. 그래서 레벨 이상인 키 중 가장 작은 것을 고른다.
+   201~249제는 GMS 자료가 없어 지금까지처럼 200 구간에 GMS 보정을 얹고, 키가 모자라면 가장 큰 키를 쓴다. */
 const _bracketCache = new Map();
 function _bracket(dk, part, lv) {
   const t=window.CUBE_TABLE; if(!t) return null;
@@ -130,7 +133,7 @@ function _bracket(dk, part, lv) {
     .filter(k=>{const[c,p]=k.split('|');return c===dk&&p===part;})
     .map(k=>+k.split('|')[2]))].sort((a,b)=>a-b);
   let pick=null;
-  if(lvs.length){ pick=lvs[0]; for(const L of lvs) if(L<=lv) pick=L; }
+  if(lvs.length){ const L = lv > 200 && lv < 250 ? 200 : lv; pick = lvs.find(k=>k>=L) ?? lvs[lvs.length-1]; }
   _bracketCache.set(ck, pick);
   return pick;
 }

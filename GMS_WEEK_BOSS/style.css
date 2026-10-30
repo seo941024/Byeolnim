@@ -3516,8 +3516,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .mu-keys { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; }
 .mu-chip { font-size: 1.05rem; font-weight: 800; color: var(--text); line-height: 1.5; word-break: keep-all; }
 .mu-panel-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-:is(.mu-pip, .vp-pip) { padding: 4px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: .95rem; font-weight: 800; cursor: var(--cur-pointer); }
-:is(.mu-pip, .vp-pip):hover { filter: brightness(1.08); }
+:is(.mu-pip, .vp-pip, .lt-pip) { padding: 4px 14px; border-radius: 8px; border: none; background: var(--primary); color: #fff; font-size: .95rem; font-weight: 800; cursor: var(--cur-pointer); }
+:is(.mu-pip, .vp-pip, .lt-pip):hover { filter: brightness(1.08); }
 .mu-pay { margin-left: auto; font-size: .85rem; font-weight: 800; color: var(--accent); }
 .mu-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--border); }
 .mu-head { flex: 0 0 104px; display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
@@ -3613,6 +3613,34 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .vp-board--pip { position: fixed; inset: 0; z-index: 1; width: auto; max-width: none; aspect-ratio: auto; border-radius: 0; }
 @media (prefers-reduced-motion: no-preference) { .vp-key--new { animation: vpPop .18s cubic-bezier(.3,1.6,.5,1); } }
 @keyframes vpPop { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
+
+/* ── 개인 유틸 · 치명적 일격 타이머 (myutil.js) ──
+   아이콘은 32×32 도트라 정수 배율로 픽셀 그대로 키운다. 다 세면 테두리와 글자를 금색으로 바꾼다 */
+.lt-tools { display: flex; margin-bottom: 10px; }
+.lt-board {
+  display: flex; align-items: center; gap: 16px; max-width: 520px; padding: 14px 16px; border-radius: 10px;
+  border: 1.5px solid var(--border); background: var(--bg2); user-select: none;
+}
+.lt-board[data-state="ready"] { border-color: rgb(var(--star)); box-shadow: inset 0 0 0 1px rgba(var(--star), .45); }
+.lt-ico { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
+.lt-main { flex: 1; min-width: 0; }
+.lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
+.lt-time { font-size: 2.4rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lt-board[data-state="ready"] .lt-time { color: rgb(var(--star)); font-size: 1.9rem; }
+.lt-bar { height: 6px; margin-top: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.lt-bar i { display: block; width: 100%; height: 100%; background: var(--primary); }
+.lt-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
+.lt-btns button {
+  padding: 6px 16px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
+  font-size: .9rem; font-weight: 800; cursor: var(--cur-pointer);
+}
+.lt-btns [data-lt="start"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+.lt-btns button:hover { filter: brightness(1.08); }
+/* PIP 창 — 판이 창 전체를 덮는다 */
+.lt-pip-body { margin: 0; overflow: hidden; background: var(--bg2); }
+.lt-board--pip { position: fixed; inset: 0; z-index: 1; max-width: none; padding: 10px 14px; border-width: 0; border-radius: 0; }
+.lt-board--pip[data-state="ready"] { border-width: 2px; }
+.sb-nav__icon--px { image-rendering: pixelated; }
 
 /* ── 의문의 결계 시뮬레이터 (mysticseal.js) ──
    핵 그림은 도트라 키울 때 픽셀을 그대로 키운다. 희귀도 글자색은 잠재능력 등급색 --gt-*를 쓴다 */
@@ -3991,14 +4019,15 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* 의문의 결계 시뮬레이터 공식 그림 — images/mysticseal/official/.
    도트 그림인 제어봉·핵은 원래 크기 그대로 정수 배율로 픽셀을 살려 보이고,
    결계 에너지는 70px 그림을 꼭 절반인 35px로 줄여 고해상도 화면에서는 원래 픽셀 그대로 보인다.
-   티어 그림은 도트가 아닌 큰 그림이라 높이만 맞춰 부드럽게 줄인다 */
+   티어 그림도 도트 훈장 아이콘이라 원래 크기 그대로 두고, 높이가 31~35px로 달라 버튼 아래쪽에 맞춰 이름 줄을 가지런히 한다 */
 .ms-ico { vertical-align: middle; }
 .ms-ico--rod { width: 26px; height: 26px; margin-right: 6px; image-rendering: pixelated; }
 .ms-ico--energy { width: 35px; height: 35px; margin: -4px 6px -4px 0; image-rendering: auto; }
 .ms-core, .ms-th-img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-now__img { width: auto; height: auto; image-rendering: pixelated; }
-.ms-tier img { width: 44px; height: 36px; object-fit: contain; image-rendering: auto; }
-.ms-badge { width: 28px; height: 24px; object-fit: contain; image-rendering: auto; }
+.ms-tier { justify-content: flex-end; }
+.ms-tier img { width: auto; height: auto; image-rendering: pixelated; }
+.ms-badge { width: auto; height: auto; image-rendering: pixelated; }
 
 /* 보스 정보 카드의 게임 큰 보스 그림 422×500 — 정사각형 칸에 위쪽 기준으로 채워 그림 속 영문 이름이 잘리지 않게 한다 */
 .bhp-card__img img.bhp-card__art { width: 100%; height: 100%; object-fit: cover; object-position: center top; image-rendering: auto; }

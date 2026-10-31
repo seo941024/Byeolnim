@@ -11,7 +11,7 @@
 const HOME_FEATURES = [
   { sec: 'boss',       title: '보스 수익 계산기',   desc: '캐릭터별 주간 결정석 개수와 예상 수익을 계산합니다.' },
   { sec: 'cube',       title: '큐브 시뮬레이터',     desc: '큐브 잠재 옵션 확률과 시뮬레이션을 사용할 수 있습니다.' },
-  { sec: 'starforce',  title: '스타포스 시뮬레이터', desc: '목표 성까지 드는 메소 기댓값을 계산하고 직접 강화해 볼 수 있습니다.' },
+  { sec: 'starforce',  title: '스타포스 시뮬레이터', desc: '목표까지 드는 메소 기댓값을 계산하고 직접 강화해 볼 수 있습니다.' },
   { sec: 'mixdye',     title: '코디 시뮬레이터',     desc: '믹스 염색과 코디를 캐릭터에 입혀 미리 볼 수 있습니다.' },
   { sec: 'mcalendar',  title: '메이플 캘린더',       desc: '보스 일정과 획득한 아이템을 날짜별로 기록합니다.' },
   { sec: 'liberation', title: '무기 해방 계산기',     desc: '해방 완료 예상 날짜를 알려줍니다.' },

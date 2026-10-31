@@ -1059,10 +1059,11 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 .hexa-label__icon-wrap { width: 40px; height: 40px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hexa-support-item .inp { max-width: 60px; }
 .hexa-support-item button { color: var(--danger); font-size: .82rem; padding: 0 4px; }
-.hexa-result { display: flex; flex-direction: column; gap: 10px; }
+/* 줄마다 밑줄이 있어서 줄 사이 간격을 두면 위쪽에만 여백이 더해져 글자가 아래로 쏠려 보인다. 간격 없이 줄 안쪽 위아래 여백만 같게 둔다 */
+.hexa-result { display: flex; flex-direction: column; gap: 0; }
 .hexa-result-row {
   display: flex; justify-content: space-between; align-items: center;
-  padding: 9px 0; border-bottom: 1px solid var(--border);
+  padding: 12px 0; border-bottom: 1px solid var(--border);
 }
 .hexa-result-row:last-child { border-bottom: none; }
 .hexa-result-row .rl { font-size: .86rem; color: var(--text-sub); }
@@ -1075,7 +1076,7 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 .hx-res-icon { width: auto; height: auto; max-width: 40px; max-height: 40px; object-fit: contain; flex-shrink: 0; }
 /* 아이콘을 값 뒤 고정폭 상자에 넣는다 — 숫자 자릿수가 달라도 아이콘(=행의 끝점)
    위치가 전부 같아진다. */
-.hx-res-icon-wrap { width: 40px; height: 34px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
+.hx-res-icon-wrap { width: 40px; height: 40px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 
@@ -4067,8 +4068,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
    티어 그림도 도트 훈장 아이콘이라 원래 크기 그대로 두고, 높이가 31~35px로 달라 버튼 아래쪽에 맞춰 이름 줄을 가지런히 한다 */
 .ms-ico { vertical-align: middle; }
 .ms-ico--rod { width: 26px; height: 26px; margin-right: 6px; image-rendering: pixelated; }
-/* 에너지는 게임 원본 70×70 그대로. 작은 원본이 게임 파일에 없다 */
-.ms-ico--energy { width: auto; height: auto; margin: -8px 6px -8px 0; image-rendering: auto; }
+/* 에너지는 게임 원본 70×70인데 작은 원본이 게임 파일에 없어, 지수 요청으로 제어봉과 같은 26px로 줄여 쓴다 */
+.ms-ico--energy { width: 26px; height: 26px; margin-right: 6px; image-rendering: auto; }
 .ms-core, .ms-th-img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-now__img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-tier { justify-content: flex-end; }

@@ -228,7 +228,7 @@ function _msEnhHtml() {
         <div class="card__title">누적</div>
         <div class="sf-res-item"><span class="sf-res-label">시도</span><span class="sf-res-val">${e.tries.toLocaleString()}</span></div>
         <div class="sf-res-item"><span class="sf-res-label">사용한 에너지</span><span class="sf-res-val">${_msEnergy(e.spent)}</span></div>
-        ${extract === undefined ? '' : `<div class="sf-res-item"><span class="sf-res-label">지금 추출하면</span><span class="sf-res-val">${_msEnergy(extract)}</span></div>`}
+        ${extract === undefined ? '' : `<div class="sf-res-item"><span class="sf-res-label">추출 에너지</span><span class="sf-res-val">${_msEnergy(extract)}</span></div>`}
         <div class="card__title mt16">Lv.${e.lv} 효과</div>
         ${_msEffectHtml(e.core, e.lv)}
         <div class="card__title mt16">기록</div>

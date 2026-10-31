@@ -227,15 +227,15 @@ function _hxCompute() {
   // 아이콘은 항상 값 뒤(오른쪽 끝)에 고정폭 상자로 붙는다 — 그래야 숫자 자릿수가
   // 달라도 아이콘 위치(=행의 끝점)가 전부 같아진다.
   const seIcon  = `<span class="hx-res-icon-wrap"><img src="images/icons/Use_Sol_Erda.png" class="hx-res-icon" alt=""></span>`;
-  const sefIcon = `<span class="hx-res-icon-wrap"><img src="images/official/item/sol_erda_fragment.png" class="hx-res-icon" alt=""></span>`;
+  const sefIcon = `<span class="hx-res-icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon" alt=""></span>`;
   const SE_ICON  = n => `${n.toLocaleString()}${seIcon}`;
   const SEF_ICON = n => `${n.toLocaleString()}${sefIcon}`;
   res.innerHTML = `
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다</span><span class="rv">${SE_ICON(totalAllSE)}</span></div>
     <div class="hexa-result-row"><span class="rl">총 요구 솔 에르다 조각</span><span class="rv">${SEF_ICON(totalAllSEF)}</span></div>
-    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">이미 사용한 솔 에르다</span><span class="rv">${SE_ICON(usedSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">이미 사용한 솔 에르다</span><span class="rv">${SE_ICON(usedSE)}</span></div>
     <div class="hexa-result-row"><span class="rl">이미 사용한 솔 에르다 조각</span><span class="rv">${SEF_ICON(usedSEF)}</span></div>
-    <div class="hexa-result-row" style="margin-top:6px"><span class="rl">만렙까지 남은 솔 에르다</span><span class="rv">${SE_ICON(remainSE)}</span></div>
+    <div class="hexa-result-row"><span class="rl">만렙까지 남은 솔 에르다</span><span class="rv">${SE_ICON(remainSE)}</span></div>
     <div class="hexa-result-row"><span class="rl">만렙까지 남은 솔 에르다 조각</span><span class="rv">${SEF_ICON(remainSEF)}</span></div>
     <div class="hx-result-sep"></div>
     <div class="hexa-result-label">필요량 계산 결과</div>
@@ -243,17 +243,15 @@ function _hxCompute() {
     <div class="hexa-result-row"><span class="rl">필요 솔 에르다 조각</span><span class="rv">${SEF_ICON(totalSEF)}</span></div>
     <div class="hexa-result-row"><span class="rl">보유 솔 에르다</span><span class="rv">${SE_ICON(haveSE)}</span></div>
     <div class="hexa-result-row"><span class="rl">보유 솔 에르다 조각</span><span class="rv">${SEF_ICON(haveSEF)}</span></div>
-    <div class="hexa-result-row" style="margin-top:8px;padding-top:8px;border-top:1px solid var(--border)">
+    <div class="hexa-result-row">
       <span class="rl">솔 에르다 부족량</span>
       <span class="rv ${enough?'hp-suf':'ng'}">${enough?'요구량 충족':(totalSE-haveSE).toLocaleString()+' 개 부족'}</span>
     </div>
     <div class="hexa-result-row">
       <span class="rl">솔 에르다 조각 부족량</span>
       <span class="rv ${enoughF?'hp-suf':'ng'}">${enoughF?'요구량 충족':(totalSEF-haveSEF).toLocaleString()+' 개 부족'}</span>
-    </div>
-    <div style="margin-top:10px;font-size:.75rem;color:var(--text-sub);line-height:1.6">
-      ※ 비용은 근삿값입니다. 실제 게임과 차이가 있을 수 있습니다.
     </div>`;
+  // 비용은 근삿값이라 실제 게임과 차이가 있을 수 있다. 화면 안내는 지수 요청으로 뺐다
 }
 /* 솔 에르다 최대 소지량 — 캐릭터 레벨에 따라 274까지 20개, 275~289는 25개, 290부터 30개.
    GMS 위키 Sol_Erda 표 260-274 20, 275-289 25, 290+ 30 기준.

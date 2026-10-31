@@ -2809,7 +2809,6 @@ body::before {
 .home-deco__s {
   position: absolute; width: auto; height: calc(var(--st-h) * var(--ds));
   top: calc(var(--hero-pt) + var(--st-h) * var(--cy) - var(--st-h) * var(--ds) / 2);
-  filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
 /* 한쪽에 넷. 위아래로 고르게 두고 안쪽·바깥쪽을 번갈아 지그재그로 */
 .home-deco__s--1 { left: 5%;   --cy: .12;  rotate: -12deg; }

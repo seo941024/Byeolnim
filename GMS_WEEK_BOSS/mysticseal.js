@@ -122,7 +122,7 @@ function _msEnhOne() {
 // 자동 상한은 초기화 없이 여러 번 돌려도 걸리지 않게 누적이 아니라 이번 실행에서 쓴 개수로 본다
 let _msRun = 0;
 const _msDrawAuto = createAutoRunner({
-  btnId: 'msDrawAuto', idleLabel: '레전드리 나올 때까지 [A]', runLabel: '중지 [A]', batch: 300,
+  btnId: 'msDrawAuto', idleLabel: '자동 진행 [A]', runLabel: '중지 [A]', batch: 300,
   onStart: () => { _msRun = 0; },
   tick: () => {
     if (_msDrawOne() === 4) return 'done';
@@ -173,7 +173,7 @@ function _msDrawHtml() {
           <button class="sbtn sbtn--ghost" type="button" data-ms="drawN">한 번에 해제</button>
         </div>
         <div class="cube-btns mt8">
-          <button class="sbtn sbtn--ghost cube-btn-full" type="button" id="msDrawAuto" data-ms="drawAuto">${_msDrawAuto.running() ? '중지 [A]' : '레전드리 나올 때까지 [A]'}</button>
+          <button class="sbtn sbtn--ghost cube-btn-full" type="button" id="msDrawAuto" data-ms="drawAuto">${_msDrawAuto.running() ? '중지 [A]' : '자동 진행 [A]'}</button>
           <button class="sbtn sbtn--ghost cube-btn-full mt8" type="button" data-ms="reset">초기화 [R]</button>
         </div>
       </div>

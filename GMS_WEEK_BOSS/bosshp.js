@@ -13,6 +13,9 @@ const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses/Bellona.png' };
 const BOSS_CARD_EXTRA = { '벨로나': 'bellona' };
 // 카드 그림을 같은 파일 이름으로 바꿀 때 서비스 워커가 옛 그림을 내주지 않도록 v를 올린다
 const _bhpCardSrc = id => `images/official/boss_card/${id}.png?v=20261031c`;
+// 카드 그림이 일본어판인 보스는 화면 글자도 그림 속 원문 그대로 적는다, 지수 요청. 데이터 키는 한글 이름 그대로 둔다
+const BOSS_NAME_SHOWN = { '아케치': 'アケチミツヒデ', '노히메': 'ノウ姫' };
+const _bhpName = n => BOSS_NAME_SHOWN[n] || n;
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
@@ -71,7 +74,7 @@ function _bhpOpenDropsModal(boss) {
   overlay.innerHTML = `
     <div class="modal modal--boss-drop">
       <div class="modal__head">
-        <span class="modal__title modal__title--boss">${boss.name}</span>
+        <span class="modal__title modal__title--boss">${_bhpName(boss.name)}</span>
         <button class="modal__close" id="bhpModalClose">×</button>
       </div>
       <div class="modal__body">
@@ -220,7 +223,7 @@ function renderBusPanel(groups) {
           : '';
 
         return `<tr data-bus-boss="${boss.name}">
-          <td class="bus-boss-name">${imgHtml}<span>${boss.name}</span></td>
+          <td class="bus-boss-name">${imgHtml}<span>${_bhpName(boss.name)}</span></td>
           <td><select class="bus-diff-sel" data-boss="${boss.name}">${_bhpDiffOpts(boss, activeDiff)}</select></td>
           <td class="bus-pct5"><b>${hp5 > 0 ? fmtBossHpEok(hp5) : '—'}</b></td>
           <td><button class="bus-remove" data-boss="${boss.name}" title="제거">✕</button></td>
@@ -351,7 +354,7 @@ function renderBossHPTable() {
       <div class="bhp-card__body">
         <div class="bhp-card__top">
           <div class="bhp-name-row">
-            <div class="bhp-card__name"><span class="bhp-card__name-t">${active.nameOverride || boss.name}</span></div>
+            <div class="bhp-card__name"><span class="bhp-card__name-t">${active.nameOverride || _bhpName(boss.name)}</span></div>
             <label class="bus-toggle-wrap" title="버스 참조에 추가">
               <input type="checkbox" class="bus-toggle-input" data-boss="${boss.name}"${isOn ? ' checked' : ''} />
               <span class="bus-toggle-track"><span class="bus-toggle-thumb"></span></span>

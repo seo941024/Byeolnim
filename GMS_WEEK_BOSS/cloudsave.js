@@ -260,7 +260,7 @@ async function csDoLoad() {
 
   let bundle = null;
   try { bundle = JSON.parse(j.data); } catch { bundle = null; }
-  if (!bundle) { showToast('저장된 데이터를 읽지 못했습니다.'); return; }
+  if (!isValidBackup(bundle)) { showToast('저장된 데이터를 읽지 못했습니다.'); return; }
 
   applyBackupBundle(bundle);
   showToast('불러오기 완료! 새로고침합니다…');

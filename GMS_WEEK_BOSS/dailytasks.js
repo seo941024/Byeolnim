@@ -131,6 +131,8 @@ async function dtRefreshStaleChars() {
         const r = await fetch(`/api/lookup?name=${encodeURIComponent(rec.name)}&reboot=0&region=${rec.region}`);
         const j = await r.json();
         if (!j.ok || !j.data) return null;
+        // 이름이 바뀌었거나 랭킹에서 빠진 캐릭터는 조회가 다른 캐릭터를 돌려줄 수 있어, 이름이 같을 때만 반영한다
+        if ((j.data.name || '').toLowerCase() !== (rec.name || '').toLowerCase()) return null;
         return { id, img: j.data.img || rec.img, level: j.data.level || rec.level };
       } catch { return null; /* 네트워크 실패 → 다음 진입 때 재시도 */ }
     }));
@@ -197,7 +199,7 @@ function _dtCardHtml(charId, rec) {
         <span class="dt-card__drag" title="드래그해서 순서 바꾸기">⠿</span>
         <span class="dt-card__portrait">${portraitHtml}</span>
         <span class="dt-card__whoBody">
-          <span class="dt-card__name">${name}</span>
+          <span class="dt-card__name">${escHtml(name)}</span>
           ${level ? `<span class="dt-card__lv">Lv.${level}</span>` : ''}
         </span>
         <button class="dt-card__edit" data-edit-char="${charId}" title="캐릭터 정보·추적 항목 수정">✎</button>
@@ -315,13 +317,13 @@ function _dtWireStep1() {
       const region = state.region;
       const r = await fetch(`/api/lookup?name=${encodeURIComponent(name)}&reboot=0&region=${region}`);
       const j = await r.json();
-      if (!j.ok) { box.innerHTML = `<span class="lk-err">${j.error}</span>`; return; }
+      if (!j.ok) { box.innerHTML = `<span class="lk-err">${escHtml(j.error)}</span>`; return; }
       box.innerHTML = `
         <div class="lk-card">
-          ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
+          ${j.data.img ? `<img class="lk-card__av" src="${escHtml(j.data.img)}" onerror="this.style.display='none'" />` : ''}
           <div class="lk-card__info">
-            <div class="lk-card__name">${j.data.name} <span class="lk-card__job">${j.data.job || ''}</span></div>
-            <div class="lk-card__meta">Lv.${j.data.level} · ${j.data.region} ${j.data.world}</div>
+            <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(j.data.job || '')}</span></div>
+            <div class="lk-card__meta">Lv.${escHtml(j.data.level)} · ${escHtml(j.data.region)} ${escHtml(j.data.world)}</div>
           </div>
         </div>
         <button class="sbtn sbtn--primary w100" id="dtLkUse" style="margin-top:8px">이 캐릭터로 계속</button>`;
@@ -364,7 +366,7 @@ function _dtStep2Html() {
         <div class="dt-step2-head">
           <img class="dt-step2-portrait" src="${_dtPendingImg || DT_DEFAULT_PORTRAIT}" alt="" onerror="this.src='${DT_DEFAULT_PORTRAIT}'" />
           <span class="dt-step2-namebox">
-            <span class="dt-step2-name">${_dtPendingName}</span>
+            <span class="dt-step2-name">${escHtml(_dtPendingName)}</span>
             ${_dtPendingLevel ? `<span class="dt-step2-lv">Lv.${_dtPendingLevel}</span>` : ''}
           </span>
           <button class="sbtn sbtn--ghost sbtn--sm" id="dtEditWho">이름·레벨 수정</button>

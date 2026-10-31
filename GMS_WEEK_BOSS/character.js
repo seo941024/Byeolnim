@@ -269,6 +269,8 @@ async function refreshStaleChars() {
       if (!j.ok || !j.data) continue;
       // reboot/region은 히스토리 키의 일부이므로 덮어쓰지 않는다
       const d = j.data;
+      // 이름이 바뀌었거나 랭킹에서 빠진 캐릭터는 조회가 다른 캐릭터를 돌려줄 수 있어, 이름이 같을 때만 반영한다
+      if ((d.name || '').toLowerCase() !== (f.name || '').toLowerCase()) continue;
       Object.assign(f, {
         level: d.level, exp: d.exp, rank: d.rank,
         job: canonJobName(d.job), world: d.world, worldID: d.worldID,

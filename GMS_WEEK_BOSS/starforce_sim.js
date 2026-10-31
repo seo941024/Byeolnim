@@ -54,11 +54,11 @@ let _sfStages = { 15:1, 16:1, 17:1, 18:1, 19:1, 20:1, 21:1 };
 
 function _sfGetEvent()    { return document.querySelector('#sfEventGroup .sf-toggle.active')?.dataset.val || 'none'; }
 function _sfGetMvp()      { return parseFloat(document.querySelector('#sfMvpGroup .sf-toggle.active')?.dataset.val || '0'); }
-function _sfGetLevel()    { return parseInt(document.getElementById('sfLevel').value) || 200; }
+function _sfGetLevel()    { return Math.max(1, parseInt(document.getElementById('sfLevel').value) || 200); }
 /* 목표·현재 성수는 장비 레벨의 상한을 넘을 수 없다. 확률표는 성수 0~29를
    통짜로 갖고 있어서, 막지 않으면 120제에 22성 같은 게임에 없는 조합도
    숫자만 그럴듯하게 계산돼 버린다. */
-function _sfGetFrom()     { return Math.min(sfMaxStar(_sfGetLevel()), parseInt(document.getElementById('sfFrom').value) || 0); }
+function _sfGetFrom()     { return Math.max(0, Math.min(sfMaxStar(_sfGetLevel()), parseInt(document.getElementById('sfFrom').value) || 0)); }
 function _sfGetTo()       {
   const cap = sfMaxStar(_sfGetLevel());
   return Math.min(cap, parseInt(document.getElementById('sfTo').value) || Math.min(22, cap));

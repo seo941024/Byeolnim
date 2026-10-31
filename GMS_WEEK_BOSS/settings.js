@@ -40,6 +40,13 @@ function backupBundle() {
   return { [BACKUP_MARK]: 1, state, extra };
 }
 /* 받아온 묶음을 브라우저에 되살린다. 되살린 뒤에는 부르는 쪽이 새로고침한다. */
+/* 백업 묶음이 쓸 만한 모양인지. 파일 가져오기와 클라우드 불러오기가 같은 기준을 쓴다 */
+function isValidBackup(data) {
+  const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  return !!data && !!data[BACKUP_MARK] && isObj(data.state) && Array.isArray(data.state.chars)
+    && (data.extra === undefined || isObj(data.extra));
+}
+
 function applyBackupBundle(bundle) {
   if (bundle.state) { state = bundle.state; save(); }
   Object.entries(bundle.extra || {}).forEach(([k, v]) => {

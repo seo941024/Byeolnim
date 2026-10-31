@@ -2795,16 +2795,14 @@ body::before {
   position: relative; overflow: hidden; isolation: isolate;
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px;
   padding: 44px 24px 16px; text-align: center;
-  --cmp-h: clamp(44px, 6vw, 62px);      /* 제목 위 가운데 나침반 스티커 높이 */
 }
-.home-hero__compass { position: relative; z-index: 1; height: var(--cmp-h); width: auto; image-rendering: pixelated; filter: drop-shadow(0 6px 10px rgba(0,0,0,.18)); }
 .home-hero__spark { position: absolute; color: rgb(var(--star)); line-height: 1; text-shadow: 0 0 12px rgba(var(--star),.8); }
 /* 머리 영역 좌우 메이플 아이콘 스티커 — 숨기지 않고, 화면이 좁아지면 좌우 %자리라 안쪽으로 모인다. 조금 겹치는 것은 괜찮다는 지수 의견.
    위아래 자리와 크기는 제목 글자 높이 --st-h에 맞춰 계산해서, 좁아져도 제목 옆 같은 높이에 머문다.
    --cy는 제목 윗변에서 스티커 가운데까지의 거리를 제목 높이 몇 배로 적은 것. 제목·캐릭터 칸이 스티커보다 위에 그려진다 */
 .home-deco {
   --st-h: clamp(78px, 12vw, 124px);   /* 제목 .home-title과 같은 값 */
-  --hero-pt: calc(44px + var(--cmp-h) + 18px);   /* 제목 윗변 = 위쪽 여백 + 나침반 + 칸 사이 간격 */
+  --hero-pt: 44px;                     /* .home-hero 위쪽 여백, 곧 제목 윗변 */
   --ds: .62;                           /* 스티커 높이 = 제목 높이 × --ds. 한쪽에 넷이라 셋일 때보다 조금 작게 */
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
 }
@@ -2823,7 +2821,7 @@ body::before {
 .home-deco__s--7 { right: 16%; --cy: 1.28; rotate: 8deg; }
 .home-deco__s--8 { right: 4%;  --cy: 1.86; rotate: -7deg; }
 .home-hero .home-title { position: relative; z-index: 1; margin-bottom: calc(var(--st-h) * .14); }
-@media (max-width: 768px) { .home-deco { --hero-pt: calc(32px + var(--cmp-h) + 18px); } }
+@media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
 /* 폰은 자리가 좁아 크기를 줄인다 */
 @media (max-width: 600px) {
   .home-deco { --ds: .46; }

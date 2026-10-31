@@ -3629,6 +3629,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .lt-board[data-state="run"] .lt-ico--off { display: block; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
+/* 효과 중에는 이름 옆에 효과 남은 초를 띄우고 테두리를 주 색으로 */
+.lt-buff { display: none; margin-left: 8px; padding: 1px 8px; border-radius: 6px; background: var(--primary); color: #fff; font-size: .78rem; font-variant-numeric: tabular-nums; }
+.lt-board--buff { border-color: var(--primary); }
+.lt-board--buff .lt-buff { display: inline-block; }
 .lt-time { font-size: 2.4rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .lt-board[data-state="ready"] .lt-time { color: rgb(var(--star)); font-size: 1.9rem; }
 .lt-bar { height: 6px; margin-top: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }

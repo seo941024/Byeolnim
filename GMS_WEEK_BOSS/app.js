@@ -96,7 +96,7 @@ const NAV_LABELS = {
   addoption: '추가 옵션 시뮬레이터', starforce: '스타포스 시뮬레이터',
   cube: '큐브 시뮬레이터', familiar: '패밀리어 시뮬레이터', soul: '소울 증폭 시뮬레이터', polish: '연마석 시뮬레이터',
   mixdye: '코디 시뮬레이터',
-  bosshp: '보스 정보', myutil: '개인 유틸',
+  bosshp: '보스 정보', myutil: '특수 코어 타이머',
 };
 /* fromHistory: 브라우저 뒤로가기·앞으로가기로 온 이동. 이때는 기록을 새로 남기지 않는다 */
 function navigateTo(sec, fromHistory = false) {

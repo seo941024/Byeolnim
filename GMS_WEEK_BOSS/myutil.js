@@ -1,10 +1,12 @@
 /* ═══════════════════════════════════════════════
-   개인 유틸 — 특수 코어 재발동 타이머: Lethal Strike I 60초, Fatal Strike I 30초
+   특수 코어 타이머 — 재발동 타이머: Lethal Strike I 60초, Fatal Strike I 30초
    V 매트릭스 특수 코어가 발동한 것을 보고 시작을 누르면 재발동 시간을 거꾸로 세고, 0이 되면 다시 발동할 수 있다고 표시한다.
    - Lethal Strike I, 한국 이름 치명적인 일격 Ⅰ: 1000번째 공격마다 10초 동안 크리티컬 확률 100% 증가, 60초에 한 번
    - Fatal Strike I, 한국 이름 일격필살 Ⅰ: 공격하면 4초 동안 데미지 100% 증가, 30초에 한 번
    - 두 타이머는 따로 돈다. 시작을 다시 누르면 처음부터 새로 센다. 초기화는 멈추고 처음 초로 되돌린다
    - 시작부터 효과 시간 동안은 판에 효과 남은 초를 따로 보여 준다. Lethal Strike I 10초, Fatal Strike I 4초. 큰 숫자는 그대로 재발동까지 남은 초다
+   - 효과 남은 초는 아이콘 우측 상단에도 게임 버프 아이콘처럼 노란 도트 숫자로 띄운다. 숫자 그림은 GMS v.270 UI/Basic.img/ItemNoSecond,
+     게임 버프 시간 숫자와 픽셀까지 같은 그림이다. images/myutil/num/<0~9>.png
    - 키보드: Lethal Strike I은 S 시작·R 초기화, Fatal Strike I은 D 시작·F 초기화.
      한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다
    - PIP모드: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 이 화면과 작은 창이 같은 타이머 두 개를 보여 준다.
@@ -20,6 +22,7 @@
    ═══════════════════════════════════════════════════════════ */
 
 const LT_TICK_MS = 100;
+const LT_NUM = 'images/myutil/num/';
 // sec: 재발동 시간, buff: 효과 시간. end: 끝나는 시각(ms), 0이면 멈춘 상태. done: 다 센 뒤
 const LT_TIMERS = [
   { id: 'lethal', name: 'Lethal Strike I', sec: 60, buff: 10, startKey: 'KeyS', resetKey: 'KeyR',
@@ -35,8 +38,11 @@ const _ltTimers = new Map();   // 창 → setInterval 번호
 
 function _ltBoardHtml(t, pip) {
   return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-lt-id="${t.id}" data-state="idle">
-      <img class="lt-ico lt-ico--on" src="${t.icon}" alt="">
-      <img class="lt-ico lt-ico--off" src="${t.iconOff}" alt="">
+      <span class="lt-ico-wrap">
+        <img class="lt-ico lt-ico--on" src="${t.icon}" alt="">
+        <img class="lt-ico lt-ico--off" src="${t.iconOff}" alt="">
+        <span class="lt-buffno"></span>
+      </span>
       <div class="lt-main">
         <div class="lt-name">${t.name}<span class="lt-buff"></span></div>
         <div class="lt-time">${t.sec}</div>
@@ -68,7 +74,8 @@ function _ltRender() {
     const pct = state === 'ready' ? 0 : left / (t.sec * 10);
     // 시작한 뒤 지난 시간이 효과 시간보다 짧으면 효과 중이다
     const buffLeft = t.end ? Math.max(0, t.buff * 1000 - (t.sec * 1000 - left)) : 0;
-    const buffText = buffLeft ? `효과 ${Math.ceil(buffLeft / 1000)}초` : '';
+    const buffSec = buffLeft ? String(Math.ceil(buffLeft / 1000)) : '';
+    const buffText = buffSec ? `효과 ${buffSec}초` : '';
     _ltBoards(t).forEach(b => {
       b.dataset.state = state;
       b.classList.toggle('lt-board--buff', buffLeft > 0);
@@ -76,6 +83,11 @@ function _ltRender() {
       if (el.textContent !== text) el.textContent = text;
       const bf = b.querySelector('.lt-buff');
       if (bf.textContent !== buffText) bf.textContent = buffText;
+      const no = b.querySelector('.lt-buffno');
+      if (no.dataset.v !== buffSec) {
+        no.dataset.v = buffSec;
+        no.innerHTML = [...buffSec].map(n => `<img src="${LT_NUM}${n}.png?v=20261031a" alt="">`).join('');
+      }
       b.querySelector('.lt-bar i').style.width = pct + '%';
     });
   });
@@ -156,7 +168,7 @@ function initMyUtil() {
   if (!sec || sec.dataset.inited) return;
   sec.dataset.inited = '1';
   sec.innerHTML = `
-    <div class="sec-head"><h2 class="sec-title">개인 유틸</h2></div>
+    <div class="sec-head"><h2 class="sec-title">특수 코어 타이머</h2></div>
     <p class="dt-help">스킬 발동 시 시작을 누릅니다. 재발동 시간 동안 아이콘이 회색으로 바뀌고, 효과가 남아 있는 동안은 효과 시간이 함께 표시되며, 다시 발동할 수 있으면 컬러로 돌아옵니다. Lethal Strike I은 S로 시작하고 R로 초기화하며, Fatal Strike I은 D로 시작하고 F로 초기화합니다.</p>
     <div class="card lt-card">
       ${window.documentPictureInPicture ? '<div class="lt-tools"><button class="lt-pip" type="button">PIP모드</button></div>' : ''}
@@ -174,5 +186,7 @@ function initMyUtil() {
     if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
     _ltOnKey(e);
   });
+  // 효과가 처음 뜰 때 숫자 그림이 늦게 뜨지 않게 미리 받아 둔다
+  for (let n = 0; n < 10; n++) new Image().src = `${LT_NUM}${n}.png?v=20261031a`;
   _ltRender();
 }

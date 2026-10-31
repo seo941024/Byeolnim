@@ -3522,7 +3522,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
    내려가야 하므로 같은 규칙을 물려준다. */
 .ci-server .icon-lbl { top: 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.wc-result__world[src*="Challengers"] { width: 33px; height: 33px; flex-basis: 33px; margin: -7px -3px; }
 
 
 /* ── 메운디 ── */

@@ -41,8 +41,9 @@ const TAG_PAD = 20, TAG_GAP = 24, TAG_PITCH = 123;
 /* 머리 영역 좌우에 떠다니는 메이플 아이콘 스티커. 흰·노랑 테두리는 그림 파일에 미리 그려 두었다.
    게임 아이콘을 도트 그대로 2배로 키우고 흰 테두리 6px, 노랑 테두리 3px, 4px 아래 옅은 보라 그림자를 그린 그림이다.
    앞의 넷은 왼쪽, 뒤의 넷은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호.
-   환생의 불꽃 2048753, 솔 에르다 4009546, 데스티니 무기, 로로 1172000 스티커는 2026-10-31 지수 요청으로 더했다 */
-const HOME_DECO = ['cube', 'crystal', 'flame', 'solerda', 'hammer', 'card', 'destiny', 'roro'];
+   환생의 불꽃 2048753, 솔 에르다 4009546, 데스티니 무기, 로로 1172000 스티커는 2026-10-31 지수 요청으로 더했다.
+   2026-11-01 지수 요청으로 전체 기능 메뉴 아이콘(ev_90·171·96·j1121·18·158·93·1156)을 같은 방식으로 감싼 그림으로 바꿨다 */
+const HOME_DECO = ['char', 'channel', 'calendar', 'homework', 'bossprofit', 'hexa', 'liberation', 'mystic'];
 
 /* 홈 머리 영역에 반짝이는 ✦와 같은 네 갈래 별 */
 const HOME_TITLE_SPARK = 'M0-50Q9-9 50 0Q9 9 0 50Q-9 9-50 0Q-9-9 0-50Z';
@@ -134,7 +135,7 @@ function renderHome() {
         <img class="home-hero__face home-hero__face--smile" src="images/logo/head_smile.png" alt="" width="248" height="216">
       </div>
       <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
-        `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png" alt="" draggable="false">`).join('')}</div>
+        `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png?v=2" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
       ${_homeTaglineHtml()}
     </div>

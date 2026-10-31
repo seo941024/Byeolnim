@@ -46,7 +46,7 @@ const DESTINY_RESOLVE_YIELD = {
   jupiter:    { 노말:160, 하드:500 },
 };
 /* 해방 계산기 보스·재화 그림은 GMS v.270 게임 파일 원본 PNG다. 보스는 UI/UIBoss.img 보스 목록의 작은 아이콘,
-   재화는 아이템 아이콘이다. 벨로나는 GMS에 아직 없어 게임 그림이 없으므로 예전 그림을 쓴다 */
+   재화는 아이템 아이콘이다. 벨로나는 GMS에 아직 없어 메이플 위키에 올라온 KMS 같은 형식 아이콘 Maple Guide - Bellona를 쓴다 */
 const LIB_BOSS_ICON = id => `images/liberation/boss/${id}.png`;
 const DESTINY_BOSS_META = [
   { id:'seren',      name:'선택받은 세렌', maxParty:6, img:LIB_BOSS_ICON('seren') },
@@ -54,7 +54,7 @@ const DESTINY_BOSS_META = [
   { id:'daejuk',     name:'최초의 대적자', maxParty:3, img:LIB_BOSS_ICON('daejuk') },
   { id:'kaling',     name:'카링',          maxParty:6, img:LIB_BOSS_ICON('kaling') },
   { id:'hyungseong', name:'찬란한 흉성',   maxParty:3, img:LIB_BOSS_ICON('hyungseong') },
-  { id:'bellona',    name:'벨로나',        maxParty:3, img:'images/bosses/Bellona.png' },
+  { id:'bellona',    name:'벨로나',        maxParty:3, img:LIB_BOSS_ICON('bellona') },
   { id:'limbo',      name:'림보',          maxParty:3, img:LIB_BOSS_ICON('limbo') },
   { id:'baldrix',    name:'발드릭스',      maxParty:3, img:LIB_BOSS_ICON('baldrix') },
   { id:'jupiter',    name:'유피테르',      maxParty:3, img:LIB_BOSS_ICON('jupiter') },

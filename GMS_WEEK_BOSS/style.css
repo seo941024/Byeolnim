@@ -3223,7 +3223,11 @@ body.sidebar-open .hamburger span:nth-child(3) { transform: translateY(-6px) rot
     border-radius: var(--radius);
     background: var(--bg2);
   }
-  .boss-table tr.done { border-color: rgba(var(--hue),.4); }
+  /* 데스크톱의 `tbody tr`(윗선만)·`:first-child`(윗선 없음) 규칙이 더 구체적이라
+     카드 테두리가 한쪽만 남거나 첫 카드만 윗선이 빠진다 — 같은 구체성으로 덮는다 */
+  .boss-table tbody tr,
+  .boss-table tbody tr:first-child { border: 1px solid var(--border); }
+  .boss-table tbody tr.done { border-color: rgba(var(--hue),.4); }
   .boss-table tr.locked { opacity: .45; }
   .boss-table td { display: block; padding: 0; border: none; }
   .boss-table td:nth-child(1) { grid-column: 1 / -1; }

@@ -12,7 +12,7 @@ const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses/Bellona.png' };
 // 위와 같은 보스의 카드 그림 파일 이름. images/official/boss_card/<이름>.png
 const BOSS_CARD_EXTRA = { '벨로나': 'bellona' };
 // 카드 그림을 같은 파일 이름으로 바꿀 때 서비스 워커가 옛 그림을 내주지 않도록 v를 올린다
-const _bhpCardSrc = id => `images/official/boss_card/${id}.png?v=20261031b`;
+const _bhpCardSrc = id => `images/official/boss_card/${id}.png?v=20261031c`;
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
@@ -278,7 +278,8 @@ function renderBossHPTable() {
      - KMS v.389 그림 21장: 서버마다 번호가 달라 GMS 그림과 글자 아래쪽 모양을 대조해 짝지었다
      - 벨로나·림보·발드릭스·최초의 대적자·찬란한 흉성·유피테르: KMS v.389 뒤에 나온 보스라 메이플 위키 Boss UI 파일 역사에 남은
        KMS 한글판을 지수가 받아 왔다. 글자 아래 그림이 GMS 게임 그림과 픽셀까지 같다, 찬란한 흉성만 조금 다르다
-     - 스우: KMS v.389 그림은 리뉴얼 전 옛 일러스트라 새 일러스트인 GMS 영문 그림. 새 그림의 한글판을 구하면 바꾼다
+     - 스우: KMS v.389 그림은 리뉴얼 전 옛 일러스트다. 새 일러스트의 한글판은 지수가 구한 압축 webp뿐이라, 그림은 GMS 게임 PNG를 그대로 두고
+       왼쪽 위 이름 글자 칸 x15~119·y24~69만 그 webp에서 가져와 합쳤다
      - 아케치·노히메: KMS에 없는 일본 보스라 JMS v.444 일본어 그림
      boss.img는 드랍 팝업이 GIF를 찾는 이름으로 쓰므로 그대로 두고 카드 그림만 따로 든다 */
   BOSS_DATA.forEach(bd => {

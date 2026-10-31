@@ -235,7 +235,22 @@ async function csSetNick(savedAt) {
 }
 
 /* ── 저장 / 불러오기 ── */
-async function csSave() {
+function csSave() {
+  if (_csBusy) return;
+  /* 서버에 이미 저장본이 있으면 덮어쓰기 전에 확인받는다.
+     새 기기에서 빈 상태로 눌러 기존 백업을 날리는 사고를 막기 위함 */
+  const prev = (document.getElementById('csSavedAt') || {}).textContent || '';
+  if (prev && prev !== csFmtTime(0)) {
+    openConfirm(`서버에 ${prev}에 저장한 데이터가 있습니다. 이 기기의 데이터로 덮어쓸까요?`, () => {
+      closeConfirm();
+      csDoSave();
+    });
+    return;
+  }
+  csDoSave();
+}
+
+async function csDoSave() {
   if (_csBusy) return;
   const j = await csCall('csSaveBtn', '저장 중...', 'save', { data: JSON.stringify(backupBundle()) });
   if (!j.ok) { showToast(j.error || '저장에 실패했습니다.'); return; }

@@ -146,6 +146,7 @@ function renderMapleCalendar() {
     <div class="sec-head">
       <h2 class="sec-title">메이플 캘린더</h2>
     </div>
+    <p class="dt-help">보스 일정과 획득 아이템 기록 캘린더입니다.</p>
 
     <div class="mc-panel">
       <div class="mc-topbar">

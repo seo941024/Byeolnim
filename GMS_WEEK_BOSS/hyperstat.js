@@ -158,6 +158,7 @@ function initHyperStat() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">하이퍼스탯 최적화</h2></div>
+    <p class="dt-help">하이퍼스탯 포인트 최적 분배 계산기입니다.</p>
 
     <div class="hexa-layout">
       <div class="card">

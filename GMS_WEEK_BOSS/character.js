@@ -402,7 +402,8 @@ function ciExpChartHtml(ch) {
 }
 
 const CHARINFO_HEAD = `
-  <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>`;
+  <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>
+  <p class="dt-help">등록한 캐릭터 모음입니다.</p>`;
 
 function renderCharInfo() {
   const box = document.getElementById('charInfoBody');

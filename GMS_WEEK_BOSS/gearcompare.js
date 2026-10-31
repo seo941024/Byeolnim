@@ -105,6 +105,7 @@ function initGearCompare() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">장비 교체 비교</h2></div>
+    <p class="dt-help">장비 교체 시 데미지 증감 계산기입니다.</p>
 
     <div class="sf-layout">
       ${gcCardHtml('A', '장비 A · 지금 낀 것')}

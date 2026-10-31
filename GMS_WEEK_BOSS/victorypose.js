@@ -210,6 +210,7 @@ function initVictoryPose() {
   // PIP모드 버튼은 판 바로 위 왼쪽에 둔다. 제목 줄 오른쪽 끝에 두었더니 잘 안 보인다는 지수 의견
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">승리 포즈 연습</h2></div>
+    <p class="dt-help">승리 포즈 방향 입력 연습입니다.</p>
     <div class="card vp-card">
       ${window.documentPictureInPicture ? '<div class="vp-tools"><button class="vp-pip" type="button">PIP모드</button></div>' : ''}
       ${_vpBoardHtml(false)}

@@ -1,5 +1,7 @@
 /* =============================================
    data_bosshp.js — 보스 HP / 심볼 데이터
+   hp 단위는 억. 화면은 지금 GMS 30분 전투 기준 값을 쓴다, 지수 요청.
+   hp20은 20분화 패치 뒤 값으로 보이는 데이터로, 화면에는 쓰지 않는다. 패치가 들어오면 GMS에서 확인하고 hp로 옮긴다
    ============================================= */
 
 const BOSS_HP_TABLE = [
@@ -19,7 +21,10 @@ const BOSS_HP_TABLE = [
   {name:'찬란한 흉성',        diff:'하드',     hp:147_000_000,  lv:280, pdr:380, force:550,  ftype:'auth'},
   {name:'카링',               diff:'이지',     hp:9_210_000,    lv:275, pdr:380, force:230,  ftype:'auth'},
   {name:'카링',               diff:'노말',     hp:39_300_000,   lv:285, pdr:380, force:330,  ftype:'auth'},
-  {name:'카링',               diff:'하드',     hp:94_000_000,   lv:285, pdr:380, force:350,  ftype:'auth'},
+  // 하드 카링 — maplestorywiki Kaling/Monster: 출시 17.9Q, Carcion Octo Festival 업데이트로 12.09Q, Post-Crown 업데이트로 8.2149Q.
+  // hp는 30분 기준 12.09Q. 아래 페이즈 값은 출처를 모르고 합이 11.85Q라 2% 차이가 난다.
+  // hp20의 9.4Q는 예전부터 쓰던 값으로, 위키의 지금 페이즈 값 합 9.42Q와 같다. 위키 본문의 8.2149Q와는 달라 패치 뒤 확인
+  {name:'카링',               diff:'하드',     hp:120_900_000,  hp20:94_000_000, lv:285, pdr:380, force:350,  ftype:'auth'},
   {name:'카링',               diff:'익스트림', hp:545_900_000,  lv:285, pdr:380, force:480,  ftype:'auth'},
   {name:'최초의 대적자',      diff:'이지',     hp:5_710_900,    lv:270, pdr:380, force:220,  ftype:'auth'},
   {name:'최초의 대적자',      diff:'노말',     hp:16_400_000,   lv:280, pdr:380, force:320,  ftype:'auth'},
@@ -63,9 +68,9 @@ const BOSS_HP_TABLE = [
   {name:'반반',               diff:'카오스',   hp:1_000,        lv:180, pdr:100, force:null, ftype:null},
   {name:'매그너스',           diff:'하드',     hp:1_200,        lv:155, pdr:120, force:null, ftype:null},
   {name:'시그너스',           diff:'이지',     hp:105,          lv:140, pdr:100, force:null, ftype:null},
-  // 노말 시그너스 — 20분화 패치 후 값을 미리 쓴다. 지금 GMS 위키는 630억이고, 210억은 예전부터 쓰던 값으로
-  // 위키 값의 정확히 3분의 1이라 패치가 먼저 들어간 KMS 값으로 보인다. 패치가 들어오면 GMS 값으로 다시 확인
-  {name:'시그너스',           diff:'노말',     hp:210,          lv:160, pdr:100, force:null, ftype:null},
+  // 노말 시그너스 — hp는 지금 GMS 위키 값 630억. hp20의 210억은 예전부터 쓰던 값으로 위키 값의 정확히 3분의 1이라
+  // 20분화가 먼저 들어간 KMS 값으로 보인다. 패치가 들어오면 GMS 값으로 다시 확인
+  {name:'시그너스',           diff:'노말',     hp:630,          hp20:210, lv:160, pdr:100, force:null, ftype:null},
   {name:'핑크빈',             diff:'카오스',   hp:693,          lv:140, pdr:100, force:null, ftype:null},
   {name:'힐라',               diff:'하드',     hp:168,          lv:120, pdr:100, force:null, ftype:null},
   {name:'자쿰',               diff:'카오스',   hp:840,          lv:140, pdr:100, force:null, ftype:null},

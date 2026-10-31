@@ -279,7 +279,6 @@ function mcOverlay(id) {
     ov.id = id;
     ov.className = 'overlay';
     document.body.appendChild(ov);
-    ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
   }
   return ov;
 }

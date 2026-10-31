@@ -235,7 +235,6 @@ function _dtEnsureOverlay() {
     overlay.id = 'dtAddOverlay';
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) _dtCloseAddModal(); });
   }
   return overlay;
 }
@@ -283,7 +282,7 @@ function _dtStep1Html() {
         <div class="lookup-box">
           <div class="lookup-box__title">검색으로 데이터 불러오기</div>
           <div class="lookup-box__row">
-            <input class="inp" id="dtLkName" placeholder="GMS 캐릭터명 · 영문" autocomplete="off" />
+            <input class="inp" id="dtLkName" placeholder="캐릭터명을 입력하세요." autocomplete="off" />
             <button class="sbtn sbtn--primary" id="dtLkBtn">조회</button>
           </div>
         </div>

@@ -53,7 +53,6 @@ function _bhpEnsureOverlay() {
     overlay.id = 'bhpOverlay';
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) _bhpCloseModal(); });
   }
   return overlay;
 }

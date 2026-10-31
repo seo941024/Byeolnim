@@ -836,7 +836,4 @@ async function initCube() {
   document.getElementById('cubeResultClose')?.addEventListener('click',()=>{
     document.getElementById('overlayCubeResult').style.display='none';
   });
-  document.getElementById('overlayCubeResult')?.addEventListener('click',e=>{
-    if(e.target===e.currentTarget) e.currentTarget.style.display='none';
-  });
 }

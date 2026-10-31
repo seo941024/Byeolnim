@@ -811,11 +811,8 @@ function closeConfirm() {
 ['confirmClose','confirmCancel'].forEach(id => {
   document.getElementById(id).addEventListener('click', closeConfirm);
 });
-// 뭔가를 길게 입력하는 창은 바깥을 잘못 눌렀을 때 쓰던 내용이 통째로 날아간다.
-// 그런 창(로그인, 관리자 알림 발송)은 여기서 빼고 ×로만 닫게 한다.
-document.querySelectorAll('.overlay:not(#overlayAuth):not(#overlayAdmin)').forEach(ov => {
-  ov.addEventListener('click', e => { if (e.target === ov) ov.classList.remove('open'); });
-});
+// 팝업 창은 바깥을 눌러도 닫히지 않는다. 입력하던 내용이 날아가거나 창 안에서 끌다가 바깥에서 떼면 꺼지는 일이 있어
+// 모든 창을 ×·취소·확인 버튼으로만 닫게 했다. 새 팝업을 만들 때도 바깥 클릭 닫기를 붙이지 않는다
 
 /* ── 첫 방문 공지 카드 ──
    ※ 배포(커밋/푸시)할 때마다 여기에 이번에 바뀐 내용을 정리해 넣는다.

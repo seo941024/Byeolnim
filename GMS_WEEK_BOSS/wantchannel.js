@@ -74,7 +74,6 @@ function _wcEnsureOverlay() {
     overlay.id = 'wcOverlay';
     overlay.className = 'overlay';
     document.body.appendChild(overlay);
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.remove('open'); });
   }
   return overlay;
 }

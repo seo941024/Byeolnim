@@ -3614,9 +3614,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 @media (prefers-reduced-motion: no-preference) { .vp-key--new { animation: vpPop .18s cubic-bezier(.3,1.6,.5,1); } }
 @keyframes vpPop { from { scale: .5; opacity: 0; } to { scale: 1; opacity: 1; } }
 
-/* ── 개인 유틸 · Lethal Strike I 타이머 (myutil.js) ──
+/* ── 개인 유틸 · Lethal Strike I·Fatal Strike I 타이머 (myutil.js) ──
    아이콘은 32×32 도트라 정수 배율로 픽셀 그대로 키운다. 다 세면 테두리와 글자를 금색으로 바꾼다 */
 .lt-tools { display: flex; margin-bottom: 10px; }
+.lt-stack { display: flex; flex-direction: column; gap: 10px; }
 .lt-board {
   display: flex; align-items: center; gap: 16px; max-width: 520px; padding: 14px 16px; border-radius: 10px;
   border: 1.5px solid var(--border); background: var(--bg2); user-select: none;
@@ -3639,9 +3640,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .lt-btns [data-lt="start"] { background: var(--primary); border-color: var(--primary); color: #fff; }
 .lt-btns button:hover { filter: brightness(1.08); }
-/* PIP 창 — 판이 창 전체를 덮는다 */
-.lt-pip-body { margin: 0; overflow: hidden; background: var(--bg2); }
-.lt-board--pip { position: fixed; inset: 0; z-index: 1; max-width: none; padding: 10px 14px; border-width: 0; border-radius: 0; }
+/* PIP 창 — 판 두 개가 창을 위아래로 나눠 덮는다. 배경 층 body::before보다 위에 오게 한다 */
+.lt-pip-body { margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg2); }
+.lt-board--pip { position: relative; z-index: 1; flex: 1; min-height: 0; max-width: none; padding: 8px 14px; border-width: 0; border-radius: 0; }
+.lt-board--pip + .lt-board--pip { border-top-width: 1.5px; }
 .lt-board--pip[data-state="ready"] { border-width: 2px; }
 .sb-nav__icon--px { image-rendering: pixelated; }
 

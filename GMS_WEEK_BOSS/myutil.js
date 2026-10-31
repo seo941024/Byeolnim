@@ -1,36 +1,43 @@
 /* ═══════════════════════════════════════════════
-   개인 유틸 — 치명적 일격 60초 타이머
-   V 매트릭스 특수 코어 치명적 일격 I(Lethal Strike I)은 1000번째 공격마다 10초 동안 크리티컬 확률을 100% 올리고,
-   60초에 한 번만 발동한다. 발동을 보고 시작을 누르면 60초를 거꾸로 세고, 0이 되면 다시 발동할 수 있다고 표시한다.
-   - 시작을 다시 누르면 60초부터 새로 센다. 초기화는 멈추고 60으로 되돌린다
-   - 키보드: S 시작, R 초기화. 한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다
-   - PIP모드: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 이 화면과 작은 창이 같은 타이머를 보여 준다.
+   개인 유틸 — 특수 코어 재발동 타이머: Lethal Strike I 60초, Fatal Strike I 30초
+   V 매트릭스 특수 코어가 발동한 것을 보고 시작을 누르면 재발동 시간을 거꾸로 세고, 0이 되면 다시 발동할 수 있다고 표시한다.
+   - Lethal Strike I, 한국 이름 치명적인 일격 Ⅰ: 1000번째 공격마다 10초 동안 크리티컬 확률 100% 증가, 60초에 한 번
+   - Fatal Strike I, 한국 이름 일격필살 Ⅰ: 공격하면 4초 동안 데미지 100% 증가, 30초에 한 번
+   - 두 타이머는 따로 돈다. 시작을 다시 누르면 처음부터 새로 센다. 초기화는 멈추고 처음 초로 되돌린다
+   - 키보드: Lethal Strike I은 S 시작·R 초기화, Fatal Strike I은 D 시작·F 초기화.
+     한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다
+   - PIP모드: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 이 화면과 작은 창이 같은 타이머 두 개를 보여 준다.
      키보드는 그 창을 눌러 둔 동안만 받는다. 게임 창을 누르면 키는 게임이 가져간다
    - 남은 시간은 끝나는 시각에서 지금 시각을 빼서 구한다. 게임 창이 앞에 있으면 브라우저가 가려진 탭의 타이머를 늦추므로,
      PIP 창이 열려 있으면 그 창의 타이머로도 다시 그린다
-   - 이름은 게임 영어 이름 Lethal Strike I 그대로 적는다(지수 요청)
-   - 그림: GMS v.270 Etc/VCore.img/vSkill/CoreData/30000001/icon, images/myutil/lethal_strike.png. 스킬 400007003의 icon과 같은 그림이다.
-     세는 동안은 회색, 다시 발동할 수 있으면 컬러로 보인다(지수 요청). 회색은 같은 코어의 게임 그림 iconDisabled,
-     images/myutil/lethal_strike_disabled.png다. 판마다 두 그림을 다 넣어 두고 style.css가 상태에 따라 하나만 보여 준다
+   - 이름은 게임 영어 이름 그대로 적는다, 지수 요청
+   - 그림·초: GMS v.270 Etc/VCore.img/vSkill/CoreData/<코어>의 icon·iconDisabled와 spCoreOption/cond/cooltime.
+     30000001이 Lethal Strike I, 스킬 400007003이고 30000023이 Fatal Strike I, 스킬 400007013이다.
+     세는 동안은 회색 iconDisabled, 다시 발동할 수 있으면 컬러 icon으로 보인다, 지수 요청.
+     판마다 두 그림을 다 넣어 두고 style.css가 상태에 따라 하나만 보여 준다
    ═══════════════════════════════════════════════════════════ */
 
-const LT_SEC = 60;
 const LT_TICK_MS = 100;
-const LT_ICON = 'images/myutil/lethal_strike.png?v=20261031a';
-const LT_ICON_OFF = 'images/myutil/lethal_strike_disabled.png?v=20261031a';
+// end: 끝나는 시각(ms), 0이면 멈춘 상태. done: 다 센 뒤
+const LT_TIMERS = [
+  { id: 'lethal', name: 'Lethal Strike I', sec: 60, startKey: 'KeyS', resetKey: 'KeyR',
+    icon: 'images/myutil/lethal_strike.png?v=20261031a', iconOff: 'images/myutil/lethal_strike_disabled.png?v=20261031a',
+    end: 0, done: false },
+  { id: 'fatal', name: 'Fatal Strike I', sec: 30, startKey: 'KeyD', resetKey: 'KeyF',
+    icon: 'images/myutil/fatal_strike.png?v=20261031a', iconOff: 'images/myutil/fatal_strike_disabled.png?v=20261031a',
+    end: 0, done: false },
+];
 
-let _ltEnd = 0;           // 끝나는 시각(ms). 0이면 멈춘 상태
-let _ltDone = false;      // 60초를 다 센 뒤
 let _ltPipWin = null;     // 열려 있는 작은 창
 const _ltTimers = new Map();   // 창 → setInterval 번호
 
-function _ltBoardHtml(pip) {
-  return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-state="idle">
-      <img class="lt-ico lt-ico--on" src="${LT_ICON}" alt="">
-      <img class="lt-ico lt-ico--off" src="${LT_ICON_OFF}" alt="">
+function _ltBoardHtml(t, pip) {
+  return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-lt-id="${t.id}" data-state="idle">
+      <img class="lt-ico lt-ico--on" src="${t.icon}" alt="">
+      <img class="lt-ico lt-ico--off" src="${t.iconOff}" alt="">
       <div class="lt-main">
-        <div class="lt-name">Lethal Strike I</div>
-        <div class="lt-time">${LT_SEC}</div>
+        <div class="lt-name">${t.name}</div>
+        <div class="lt-time">${t.sec}</div>
         <div class="lt-bar"><i></i></div>
       </div>
       <div class="lt-btns">
@@ -40,23 +47,31 @@ function _ltBoardHtml(pip) {
     </div>`;
 }
 
-function _ltBoards() {
-  return [document, _ltPipWin?.document].filter(Boolean).flatMap(d => [...d.querySelectorAll('.lt-board')]);
+function _ltBoardsHtml(pip) {
+  return LT_TIMERS.map(t => _ltBoardHtml(t, pip)).join('');
 }
 
-// 이 화면과 작은 창의 판 모두에 남은 시간을 그린다. 다 세면 창마다 돌던 타이머를 멈춘다
+function _ltBoards(t) {
+  return [document, _ltPipWin?.document].filter(Boolean).flatMap(d => [...d.querySelectorAll(`.lt-board[data-lt-id="${t.id}"]`)]);
+}
+
+// 이 화면과 작은 창의 판 모두에 남은 시간을 그린다. 두 타이머를 다 세면 창마다 돌던 타이머를 멈춘다
 function _ltRender() {
-  const left = _ltEnd ? Math.max(0, _ltEnd - Date.now()) : LT_SEC * 1000;
-  if (_ltEnd && left === 0) { _ltEnd = 0; _ltDone = true; _ltStopTimers(); }
-  const state = _ltEnd ? 'run' : _ltDone ? 'ready' : 'idle';
-  const text = state === 'ready' ? '발동 가능' : String(Math.ceil(left / 1000));
-  const pct = state === 'ready' ? 0 : left / (LT_SEC * 10);
-  _ltBoards().forEach(b => {
-    b.dataset.state = state;
-    const t = b.querySelector('.lt-time');
-    if (t.textContent !== text) t.textContent = text;
-    b.querySelector('.lt-bar i').style.width = pct + '%';
+  const now = Date.now();
+  LT_TIMERS.forEach(t => {
+    const left = t.end ? Math.max(0, t.end - now) : t.sec * 1000;
+    if (t.end && left === 0) { t.end = 0; t.done = true; }
+    const state = t.end ? 'run' : t.done ? 'ready' : 'idle';
+    const text = state === 'ready' ? '발동 가능' : String(Math.ceil(left / 1000));
+    const pct = state === 'ready' ? 0 : left / (t.sec * 10);
+    _ltBoards(t).forEach(b => {
+      b.dataset.state = state;
+      const el = b.querySelector('.lt-time');
+      if (el.textContent !== text) el.textContent = text;
+      b.querySelector('.lt-bar i').style.width = pct + '%';
+    });
   });
+  if (!LT_TIMERS.some(t => t.end)) _ltStopTimers();
 }
 
 function _ltStartTimers() {
@@ -70,39 +85,42 @@ function _ltStopTimers() {
   _ltTimers.clear();
 }
 
-function _ltStart() {
-  _ltEnd = Date.now() + LT_SEC * 1000;
-  _ltDone = false;
+function _ltStart(t) {
+  t.end = Date.now() + t.sec * 1000;
+  t.done = false;
   _ltStartTimers();
   _ltRender();
 }
 
-function _ltReset() {
-  _ltEnd = 0;
-  _ltDone = false;
-  _ltStopTimers();
+function _ltReset(t) {
+  t.end = 0;
+  t.done = false;
   _ltRender();
 }
 
 function _ltOnClick(e) {
   const b = e.target.closest('[data-lt]');
-  if (!b) return;
-  if (b.dataset.lt === 'start') _ltStart();
-  else _ltReset();
+  const t = b && LT_TIMERS.find(x => x.id === b.closest('.lt-board')?.dataset.ltId);
+  if (!t) return;
+  if (b.dataset.lt === 'start') _ltStart(t);
+  else _ltReset(t);
 }
 
-// S는 시작, R은 초기화. 누르고 있어 반복되는 입력은 버린다
+// 타이머마다 시작·초기화 키가 따로 있다. 누르고 있어 반복되는 입력은 버린다
 function _ltOnKey(e) {
   if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-  if (e.code === 'KeyS') { e.preventDefault(); _ltStart(); }
-  else if (e.code === 'KeyR') { e.preventDefault(); _ltReset(); }
+  const t = LT_TIMERS.find(x => x.startKey === e.code || x.resetKey === e.code);
+  if (!t) return;
+  e.preventDefault();
+  if (t.startKey === e.code) _ltStart(t);
+  else _ltReset(t);
 }
 
 async function _ltPip() {
   if (!window.documentPictureInPicture) return;
   documentPictureInPicture.window?.close();
   // preferInitialWindowPlacement가 없으면 브라우저가 지난번 창 크기를 되살린다
-  const win = await documentPictureInPicture.requestWindow({ width: 340, height: 120, preferInitialWindowPlacement: true });
+  const win = await documentPictureInPicture.requestWindow({ width: 340, height: 220, preferInitialWindowPlacement: true });
   const d = win.document;
   d.head.innerHTML = '<meta charset="utf-8">' + [...document.styleSheets].filter(ss => ss.href).map(ss => `<link rel="stylesheet" href="${ss.href}">`).join('');
   const theme = document.documentElement.getAttribute('data-theme');
@@ -112,7 +130,7 @@ async function _ltPip() {
   d.body.style.fontFamily = document.body.style.fontFamily;
   if (document.body.dataset.font) d.body.dataset.font = document.body.dataset.font;
   d.body.className = 'lt-pip-body';
-  d.body.innerHTML = _ltBoardHtml(true);
+  d.body.innerHTML = _ltBoardsHtml(true);
   d.body.addEventListener('click', _ltOnClick);
   win.addEventListener('keydown', _ltOnKey);
   win.addEventListener('pagehide', () => {
@@ -121,7 +139,7 @@ async function _ltPip() {
     _ltPipWin = null;
   });
   _ltPipWin = win;
-  if (_ltEnd) _ltStartTimers();
+  if (LT_TIMERS.some(t => t.end)) _ltStartTimers();
   _ltRender();
 }
 
@@ -131,10 +149,10 @@ function initMyUtil() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">개인 유틸</h2></div>
-    <p class="dt-help">Lethal Strike I 발동 시 시작을 누릅니다. 60초 동안 아이콘이 회색으로 바뀌고, 다시 발동할 수 있으면 컬러로 돌아옵니다. S 또는 시작 버튼으로 시작하고, R 또는 초기화 버튼으로 초기화합니다.</p>
+    <p class="dt-help">스킬 발동 시 시작을 누릅니다. 재발동 시간 동안 아이콘이 회색으로 바뀌고, 다시 발동할 수 있으면 컬러로 돌아옵니다. Lethal Strike I은 S로 시작하고 R로 초기화하며, Fatal Strike I은 D로 시작하고 F로 초기화합니다.</p>
     <div class="card lt-card">
       ${window.documentPictureInPicture ? '<div class="lt-tools"><button class="lt-pip" type="button">PIP모드</button></div>' : ''}
-      ${_ltBoardHtml(false)}
+      <div class="lt-stack">${_ltBoardsHtml(false)}</div>
     </div>`;
   sec.addEventListener('click', e => {
     if (e.target.closest('.lt-pip')) { _ltPip().catch(err => console.warn('[myutil] PiP 실패', err)); return; }

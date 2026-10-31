@@ -135,7 +135,7 @@ function renderHome() {
         <img class="home-hero__face home-hero__face--smile" src="images/logo/head_smile.png" alt="" width="248" height="216">
       </div>
       <div class="home-deco" aria-hidden="true">${HOME_DECO.map((n, i) =>
-        `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png?v=4" alt="" draggable="false">`).join('')}</div>
+        `<img class="home-deco__s home-deco__s--${i + 1}" src="images/home/sticker_${n}.png?v=5" alt="" draggable="false">`).join('')}</div>
       ${_homeTitleHtml()}
       ${_homeTaglineHtml()}
     </div>

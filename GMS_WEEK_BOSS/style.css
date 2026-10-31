@@ -2722,9 +2722,9 @@ body::before {
 }
 .boot.is-done { opacity: 0; visibility: hidden; }
 .boot__stage { position: relative; width: 176px; height: 176px; display: grid; place-items: center; }
-/* 로고의 웃는 얼굴을 원본 그대로 2배 — 정수배라 도트가 고르다 */
+/* 게임 이벤트 목록의 금색 별(43×38)을 원본 그대로 3배 — 정수배라 도트가 고르다 */
 .boot__art {
-  width: 124px; height: 108px; image-rendering: pixelated;
+  width: 129px; height: 114px; image-rendering: pixelated;
   filter: drop-shadow(0 10px 14px rgba(0,0,0,.4));
   animation: bootBob .9s cubic-bezier(.45,.05,.55,.95) infinite alternate;
 }

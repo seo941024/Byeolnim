@@ -814,8 +814,10 @@ const JOB_ASSET_NAMES = {
   'Sia Astelle':'SiaAstelle',
   'Hoyoung':'HoYoung',
 };
-// 월드 그림은 GMS v.270 게임 파일 UI/Login.img 채널 목록 제목 그림에서 월드 문장만 잘라낸 원본 PNG다.
-// 파일명 대소문자는 images/official/world/의 실제 파일과 정확히 일치해야 한다.
+// 월드 그림은 흰 테두리가 둘린 도트 스티커 PNG(images/world_px/)다. 무게중심이 한쪽으로 치우친 Kronos·Solis·Hyperion은 좌우 여백으로 보정해 두었다.
+// 파일명 대소문자는 실제 파일과 정확히 일치해야 한다.
+// 로컬 Windows는 대소문자를 안 가리지만 배포(Vercel/리눅스)는 가려서 404가 난다. 그림을 고치면 WORLD_ICON_VER를 올린다.
+const WORLD_ICON_VER = 2;
 // 로컬 Windows는 대소문자를 안 가리지만 배포(Vercel/리눅스)는 가려서 404가 난다.
 const SERVER_ASSET_EXT = { Bera:'png', Scania:'png', Kronos:'png', Hyperion:'png', Luna:'png', Solis:'png', Challengers:'png' };
 
@@ -837,7 +839,7 @@ function charJobHeadSrc(ch) {
 }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];
-  return ext ? `images/official/world/${encodeURIComponent(world)}.${ext}` : '';
+  return ext ? `images/world_px/${encodeURIComponent(world)}.${ext}?v=${WORLD_ICON_VER}` : '';
 }
 /* 랭킹으로 조회한 캐릭터는 그 지역, 직접 넣은 캐릭터는 지금 고른 서버 토글을 따른다 */
 function charRegion(ch) {

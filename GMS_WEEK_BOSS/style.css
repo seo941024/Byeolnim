@@ -4071,8 +4071,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .force-icon { width: auto; height: auto; }
 /* 미스틱 프론티어 속성·타입 아이콘은 13~23px이라 24px 칸 가운데에 원래 크기로 둔다 */
 .fr-dd__trigger img[src*="/frontier/attr/"], .fr-dd__item img[src*="/frontier/attr/"] { width: 24px; height: 24px; object-fit: none; }
-/* 게임 월드 문장은 여백 없이 잘라 두어 Challengers만 키우던 보정이 필요 없다 */
-.wc-result__world[src*="/official/world/"] { width: 26px; height: 26px; flex-basis: 26px; margin: -4px 0; }
+.wc-result__world[src*="/world_px/"] { width: 26px; height: 26px; flex-basis: 26px; margin: -4px 0; }
 
 /* 의문의 결계 시뮬레이터 공식 그림 — images/mysticseal/official/.
    도트 그림인 제어봉·핵은 원래 크기 그대로 정수 배율로 픽셀을 살려 보이고,
@@ -4112,4 +4111,4 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .world-dd__grp { padding: 6px 10px 2px; font-size: .72rem; font-weight: 800; color: var(--text-sub); }
 .world-dd__opt { padding: 6px 10px; border-radius: 6px; }
 .world-dd__opt.is-sub { padding-left: 18px; }
-.world-dd__opt:hover, .world-dd__opt.is-cur { background: rgba(var(--star), .18); }
+.world-dd__opt:hover, .world-dd__opt:focus-visible, .world-dd__opt.is-cur { background: rgba(var(--star), .18); }

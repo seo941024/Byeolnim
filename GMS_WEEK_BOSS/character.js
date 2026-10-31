@@ -780,20 +780,28 @@ function syncWorldDd() {
     sel.after(dd);
     const btn = dd.querySelector('.world-dd__btn'), list = dd.querySelector('.world-dd__list');
     const opt = (o, indent) => {
-      const src = o.value ? 'images/world_px/' + o.value + '.png?v=1' : '';
+      const src = o.value ? serverIconSrc(o.value) : '';
       return `<button type="button" class="world-dd__opt${indent ? ' is-sub' : ''}" role="option" data-v="${o.value}">${src ? `<img src="${src}" alt="">` : '<span class="world-dd__none"></span>'}<span>${escHtml(o.textContent)}</span></button>`;
     };
     list.innerHTML = [...sel.children].map(c => c.tagName === 'OPTGROUP'
       ? `<div class="world-dd__grp">${escHtml(c.label)}</div>` + [...c.children].map(o => opt(o, true)).join('')
       : opt(c, false)).join('');
-    btn.addEventListener('click', () => { list.hidden = !list.hidden; });
-    list.addEventListener('click', e => {
-      const b = e.target.closest('.world-dd__opt'); if (!b) return;
-      sel.value = b.dataset.v; list.hidden = true; syncWorldDd();
+    const pick = b => { sel.value = b.dataset.v; list.hidden = true; syncWorldDd(); btn.focus(); };
+    const opts = () => [...list.querySelectorAll('.world-dd__opt')];
+    const open = () => { list.hidden = false; (list.querySelector('.is-cur') || opts()[0]).focus(); };
+    btn.addEventListener('click', () => { list.hidden ? open() : (list.hidden = true); });
+    btn.addEventListener('keydown', e => { if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); open(); } });
+    list.addEventListener('click', e => { const b = e.target.closest('.world-dd__opt'); if (b) pick(b); });
+    list.addEventListener('keydown', e => {
+      const all = opts(), i = all.indexOf(document.activeElement);
+      if (e.key === 'ArrowDown') { e.preventDefault(); all[Math.min(i + 1, all.length - 1)].focus(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); all[Math.max(i - 1, 0)].focus(); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); list.hidden = true; btn.focus(); }
     });
     document.addEventListener('click', e => { if (!dd.contains(e.target)) list.hidden = true; });
   }
-  const o = sel.selectedOptions[0], v = sel.value, src = v ? 'images/world_px/' + v + '.png?v=1' : '';
+  dd.querySelector('.world-dd__list').hidden = true;   // 창을 다시 열 때 목록이 열린 채 남지 않게
+  const o = sel.selectedOptions[0], v = sel.value, src = v ? serverIconSrc(v) : '';
   dd.querySelector('.world-dd__btn').innerHTML = `${src ? `<img src="${src}" alt="">` : ''}<span>${escHtml(o ? o.textContent : '선택 안 함')}</span><span class="world-dd__arrow">▾</span>`;
   dd.querySelectorAll('.world-dd__opt').forEach(b => b.classList.toggle('is-cur', b.dataset.v === v));
 }

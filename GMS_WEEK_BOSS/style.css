@@ -819,7 +819,8 @@ textarea, [contenteditable="true"] { cursor: text; }
 .pill--red { background: var(--danger-l); color: var(--danger); cursor: var(--cur-pointer); transition: .15s; border: 1px solid transparent; }
 .pill--red:hover { background: var(--danger); color: #fff; }
 
-.boss-table-wrap { background: var(--bg); }
+/* 사이드바가 열린 중간 폭에서는 표가 래퍼보다 넓어져 바깥(overflow:hidden)에서 잘리므로 옆으로 스크롤되게 한다 */
+.boss-table-wrap { background: var(--bg); overflow-x: auto; }
 .boss-table { width: 100%; border-collapse: collapse; }
 .boss-table thead th {
   position: sticky; top: 0; background: var(--bg2);

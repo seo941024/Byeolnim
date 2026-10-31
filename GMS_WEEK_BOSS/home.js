@@ -39,8 +39,10 @@ const HOME_TAGLINE = [
 // 낱말 윤곽 사이 간격과 줄 간격. 흰 테두리가 양쪽에서 13씩 나와 26보다 좁으면 이웃 낱말의 흰 테두리가 붙는다
 const TAG_PAD = 20, TAG_GAP = 24, TAG_PITCH = 123;
 /* 머리 영역 좌우에 떠다니는 메이플 아이콘 스티커. 흰·노랑 테두리는 그림 파일에 미리 그려 두었다.
-   앞의 셋은 왼쪽, 뒤의 셋은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호 */
-const HOME_DECO = ['cube', 'crystal', 'coin', 'hammer', 'card', 'soul'];
+   게임 아이콘을 도트 그대로 2배로 키우고 흰 테두리 6px, 노랑 테두리 3px, 4px 아래 옅은 보라 그림자를 그린 그림이다.
+   앞의 넷은 왼쪽, 뒤의 넷은 오른쪽. 자리와 기울기는 style.css .home-deco__s--번호.
+   환생의 불꽃 2048753, 솔 에르다 4009546, 데스티니 무기, 로로 1172000 스티커는 2026-10-31 지수 요청으로 더했다 */
+const HOME_DECO = ['cube', 'crystal', 'flame', 'solerda', 'hammer', 'card', 'destiny', 'roro'];
 
 /* 홈 머리 영역에 반짝이는 ✦와 같은 네 갈래 별 */
 const HOME_TITLE_SPARK = 'M0-50Q9-9 50 0Q9 9 0 50Q-9 9-50 0Q-9-9 0-50Z';

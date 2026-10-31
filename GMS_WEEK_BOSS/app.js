@@ -796,7 +796,10 @@ function charJobHeadSrc(ch) {
   const norm = normJobName(en);
   const key = JOB_ASSET_NAMES[en] ? en : Object.keys(JOB_ASSET_NAMES).find(k => normJobName(k) === norm);
   const asset = key ? JOB_ASSET_NAMES[key] : en.replace(/\s+/g, '');
-  return asset ? `images/jobs/Head/${asset}.webp` : '';
+  // 직업 얼굴 그림은 GMS 공식 홈페이지 직업 안내의 330×330 PNG다. g.nexonstatic.com/maplestory/cms/v1/classes-jobs의
+  // characterThumbnail을 받아 두었다. 레테는 GMS에 아직 없어 예전 webp를 쓴다
+  if (!asset) return '';
+  return `images/jobs/Head/${asset}.${asset === 'Lethe' ? 'webp' : 'png'}?v=20261031a`;
 }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];

@@ -588,7 +588,7 @@ textarea, [contenteditable="true"] { cursor: text; }
   .char-card__portrait .char-card__btns { opacity: .22; transition: opacity .18s ease; }
   .char-card__portrait:hover .char-card__btns, .char-card__portrait:focus-within .char-card__btns { opacity: 1; }
 }
-.char-card__jobicon { flex-shrink: 0; width: 28px; height: 28px; object-fit: contain; margin: -3px -2px -4px 0; }
+.char-card__jobicon { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; margin: -8px -2px -8px 0; }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .char-card__stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .68rem; }
 .char-card__stat span { color: var(--text-sub); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -2080,7 +2080,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 }
 .job-item:hover { border-color: var(--primary); color: var(--primary); }
 .job-item.sel { background: rgba(var(--hue-l),.15); border-color: var(--primary); color: var(--primary); }
-.job-item img { width: 38px; height: 38px; object-fit: contain; border-radius: 7px; }
+.job-item img { width: 52px; height: 52px; object-fit: contain; border-radius: 7px; }
 
 /* 카드 배경 선택 그리드 — 파일이 없는 번호는 onerror 체인이 타일 자체를
    지워버리므로, 실제로 채워 넣은 개수만큼만 자동으로 줄어든다. */
@@ -2152,7 +2152,7 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-card__nameline > div { min-width: 0; }
 /* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음
    카드 폭(cqw) 기준으로 크기를 잡아 카드가 커지면 아이콘도 함께 커진다 */
-.ci-jobicon { width: clamp(26px, 10cqw, 48px); height: clamp(26px, 10cqw, 48px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
+.ci-jobicon { width: clamp(36px, 13cqw, 64px); height: clamp(36px, 13cqw, 64px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
 .ci-card__name { font-size: clamp(.8rem, .6rem + 1.8cqw, 1.25rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__job { font-size: clamp(.6rem, .46rem + .8cqw, .88rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {
@@ -2803,7 +2803,7 @@ body::before {
 .home-deco {
   --st-h: clamp(78px, 12vw, 124px);   /* 제목 .home-title과 같은 값 */
   --hero-pt: 44px;                     /* .home-hero 위쪽 여백, 곧 제목 윗변 */
-  --ds: .74;                           /* 스티커 높이 = 제목 높이 × --ds */
+  --ds: .62;                           /* 스티커 높이 = 제목 높이 × --ds. 한쪽에 넷이라 셋일 때보다 조금 작게 */
   position: absolute; inset: 0; pointer-events: none; z-index: 0;
 }
 .home-deco__s {
@@ -2811,20 +2811,20 @@ body::before {
   top: calc(var(--hero-pt) + var(--st-h) * var(--cy) - var(--st-h) * var(--ds) / 2);
   filter: drop-shadow(0 6px 10px rgba(0,0,0,.18));
 }
-.home-deco__s--1 { left: 5%;   --cy: .25;  rotate: -12deg; }
-.home-deco__s--2 { left: 18%;  --cy: .95;  rotate: 9deg; }
-.home-deco__s--3 { left: 9%;   --cy: 1.74; rotate: -4deg; }
-.home-deco__s--4 { right: 12%; --cy: .22;  rotate: 14deg; }
-.home-deco__s--5 { right: 3%;  --cy: .95;  rotate: -9deg; }
-.home-deco__s--6 { right: 10%; --cy: 1.72; rotate: 6deg; }
+/* 한쪽에 넷. 위아래로 고르게 두고 안쪽·바깥쪽을 번갈아 지그재그로 */
+.home-deco__s--1 { left: 5%;   --cy: .12;  rotate: -12deg; }
+.home-deco__s--2 { left: 17%;  --cy: .7;   rotate: 9deg; }
+.home-deco__s--3 { left: 5%;   --cy: 1.28; rotate: -6deg; }
+.home-deco__s--4 { left: 17%;  --cy: 1.86; rotate: 7deg; }
+.home-deco__s--5 { right: 16%; --cy: .12;  rotate: 14deg; }
+.home-deco__s--6 { right: 4%;  --cy: .7;   rotate: -9deg; }
+.home-deco__s--7 { right: 16%; --cy: 1.28; rotate: 8deg; }
+.home-deco__s--8 { right: 4%;  --cy: 1.86; rotate: -7deg; }
 .home-hero .home-title { position: relative; z-index: 1; margin-bottom: calc(var(--st-h) * .14); }
 @media (max-width: 768px) { .home-deco { --hero-pt: 32px; } }
 /* 폰은 자리가 좁아 크기를 줄인다 */
 @media (max-width: 600px) {
-  .home-deco { --ds: .55; }
-  /* 폰에서는 제목이 화면을 거의 다 차지해 오른쪽 가운데가 제목 반짝이 자리와 겹친다. 오른쪽 둘은 반짝이 위아래로 비킨다 */
-  .home-deco__s--5 { --cy: .85; }
-  .home-deco__s--6 { --cy: 1.95; }
+  .home-deco { --ds: .46; }
 }
 .home-hero__spark--1 { top: 10%; right: 5%; font-size: 22px; }
 .home-hero__spark--2 { top: 52%; left: 3%; font-size: 16px; color: #e4dcff; text-shadow: 0 0 12px rgba(214,200,255,.9); }
@@ -2979,7 +2979,7 @@ body::before {
 .hc__id { min-width: 0; }
 .hc__name { font-size: 1.15rem; font-weight: 900; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .hc__job { font-size: .76rem; font-weight: 700; color: var(--text-sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hc__jobicon { flex-shrink: 0; width: 38px; height: 38px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
+.hc__jobicon { flex-shrink: 0; width: 52px; height: 52px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,.3)); }
 .hc__meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .hc__lv { flex-shrink: 0; font-size: .86rem; font-weight: 900; color: var(--accent); }
 .hc__server { display: flex; align-items: center; gap: 4px; min-width: 0; overflow: hidden; white-space: nowrap; font-size: .76rem; font-weight: 700; color: var(--text-sub); }
@@ -3107,6 +3107,8 @@ body::before {
   .home-deco__s--4 { animation-duration: 2.9s; animation-delay: -.6s; }
   .home-deco__s--5 { animation-duration: 3.4s; animation-delay: -1.7s; }
   .home-deco__s--6 { animation-duration: 3s;   animation-delay: -2.6s; }
+  .home-deco__s--7 { animation-duration: 3.3s; animation-delay: -.9s; }
+  .home-deco__s--8 { animation-duration: 2.8s; animation-delay: -2s; }
   .home-slide__glow { animation: bootSpin 6s linear infinite; }
   .home-slide__icon { animation: heroIconFloat 2.6s ease-in-out infinite alternate; }
   .sec--enter .home-block { animation: riseIn .6s cubic-bezier(.2,.8,.2,1) backwards; animation-delay: .16s; }

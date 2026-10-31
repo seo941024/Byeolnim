@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261031zb" />
+  <link rel="stylesheet" href="style.css?v=20261031zd" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
@@ -201,7 +201,7 @@
         </div>
       </div>
       <button class="sb-nav__item" data-sec="bosshp">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/official/item/genesis_badge.png" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/official/boss/blackmage_gauge.png" alt="" onerror="this.style.display='none'"></span><span>보스 정보</span>
       </button>
       <button class="sb-nav__item" data-sec="myutil">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon sb-nav__icon--px" src="images/myutil/lethal_strike.png?v=20261031a" alt="" onerror="this.style.display='none'"></span><span>특수 코어 타이머</span>
@@ -900,7 +900,7 @@
 <script src="data_liberation.js?v=20261031a"></script>
 <script src="starforce.js?v=20261030a"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261031z"></script>
+<script src="app.js?v=20261031zc"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261030a"></script>
 <script src="character.js?v=20261031v"></script>
@@ -926,7 +926,7 @@
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->
 <script src="cloudsave.js?v=20261031t"></script>
 <!-- 첫 화면 — 사이드바 메뉴를 읽어 전체 메뉴 바둑판을 만들므로 맨 뒤에 둔다 -->
-<script src="home.js?v=20261031za"></script>
+<script src="home.js?v=20261031zd"></script>
 
 <!-- 첫 로딩 화면 걷기 — 위 스크립트가 모두 돈 뒤다. 글꼴을 기다리되 1.5초를 넘기지 않는다.
      앞쪽 스크립트에서 오류가 나도 이 블록은 따로 돌아서 화면이 가린 채로 남지 않는다 -->

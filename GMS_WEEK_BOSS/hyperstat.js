@@ -158,7 +158,6 @@ function initHyperStat() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">하이퍼스탯 최적화</h2></div>
-    <p class="dt-help">남은 하이퍼스탯 포인트를 어느 스탯에 쓰는 게 데미지 증가에 가장 이득인지 계산합니다. 기본 스탯은 하이퍼스탯을 빼고 지금 캐릭터가 가진 값을 넣어주세요.</p>
 
     <div class="hexa-layout">
       <div class="card">

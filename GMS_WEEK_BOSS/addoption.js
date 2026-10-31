@@ -609,7 +609,6 @@ function initAddOption() {
             <option value="">-</option>
             ${FLAME_WEAPON_SUBTYPES.map(w => `<option value="${w}">${w}</option>`).join('')}
           </select>
-          <p class="dt-help" style="margin-top:6px">무기 추옵은 제네시스 무기를 기준으로 합니다.</p>
         </div>
 
         <div class="form-grid" style="grid-template-columns:1fr 1fr;gap:10px">

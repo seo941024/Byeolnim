@@ -146,7 +146,6 @@ function renderMapleCalendar() {
     <div class="sec-head">
       <h2 class="sec-title">메이플 캘린더</h2>
     </div>
-    <p class="dt-help">날짜를 클릭하면 보스 일정과 획득한 아이템을 기록할 수 있습니다.</p>
 
     <div class="mc-panel">
       <div class="mc-topbar">
@@ -559,7 +558,6 @@ function mcOpenDayAll(date) {
       </div>
       <div class="modal__body">
         ${blocks || '<p class="empty">이 날짜에 기록한 일정과 아이템이 없습니다.</p>'}
-        <p class="dt-help">전체 보기에서는 읽기만 됩니다. 기록하려면 전체 보기를 끄고 캐릭터를 고르세요.</p>
       </div>
     </div>`;
   ov.classList.add('open');

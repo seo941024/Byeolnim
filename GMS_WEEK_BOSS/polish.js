@@ -64,7 +64,6 @@ function _polRender() {
 
   document.getElementById('polChance').textContent = (Math.round(chance * 1000) / 10) + '%';
   document.getElementById('polCost').textContent = fmtMeso(cost);
-  document.getElementById('polConfirmNote').style.display = chance >= 1 ? '' : 'none';
 
   const locked = _polState.locked[_polState.type];
   document.getElementById('polRollBtn').disabled = locked;
@@ -107,7 +106,6 @@ function initPolish() {
         <div class="cube-goal-hint mt8">등록 개수 <select class="sel" id="polCount">${_polBuildCountOpts()}</select></div>
         <div class="sf-res-item mt16"><span class="sf-res-label">성공률</span><span class="sf-res-val" id="polChance">100%</span></div>
         <div class="sf-res-item"><span class="sf-res-label">1회당 메소</span><span class="sf-res-val" id="polCost">0 메소</span></div>
-        <p class="dt-help" id="polConfirmNote" style="display:none">※ 최대 개수라 이번 시도는 확정 성공입니다.</p>
 
         <div class="cube-btns mt16">
           <button class="sbtn sbtn--primary cube-btn-full" id="polRollBtn">연마 시도 [S]</button>

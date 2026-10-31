@@ -488,7 +488,6 @@ function _mxFilter() {
   L.empty.textContent = mode === 'fav' && !q ? '찜한 아이템이 없습니다' : mode === 'recent' && !q ? '최근 고른 아이템이 없습니다' : '검색 결과가 없습니다';
   L.empty.style.display = shown ? 'none' : '';
   document.querySelectorAll('#sec-mixdye .mx-show').forEach(b => b.classList.toggle('active', b.dataset.mxshow === mode));
-  document.getElementById('mxCount').textContent = q ? `검색 결과 ${shown.toLocaleString()}종` : `${shown.toLocaleString()}종`;
 }
 
 /* ── 찜·최근 ── 목록마다 따로 적는다. 헤어·성형은 성별 목록마다, 코디는 부위마다 */
@@ -573,7 +572,6 @@ async function _mxShowPart() {
 
   if (coordi && !window.COORDI_DATA) {
     for (const L of Object.values(_mxLists)) L.box.style.display = 'none';
-    document.getElementById('mxCount').textContent = '';
     try {
       document.getElementById('mxSlots').innerHTML = '<span class="mx-hint">코디 목록을 불러오는 중</span>';
       await loadScriptOnce(MX_COORDI_DATA);
@@ -662,9 +660,8 @@ function _mxRenderSkinCard() {
   _mxPutIcon(document.getElementById('mxSelIcon'), 'skin', sk.id, 44);
   const r = _mxSkinRow(sk.id) || [sk.id, '', ''];
   document.getElementById('mxSelName').textContent = r[1] || `ID ${sk.id}`;
-  document.getElementById('mxSelSub').textContent = [r[2], `ID ${sk.id}`].filter(Boolean).join(' · ');
+  document.getElementById('mxSelSub').textContent = r[2] || '';
   document.getElementById('mxLineBox').style.display = line ? '' : 'none';
-  document.getElementById('mxLineHint').style.display = line ? 'none' : '';
   for (const k of ['tone', 'chroma', 'bright']) {
     document.getElementById(`mxLine-${k}`).value = sk[k];
     document.getElementById(`mxLineVal-${k}`).textContent = sk[k];
@@ -707,9 +704,7 @@ function _mxRenderCoordiCard() {
   const name = _mxSlotName(slot);
   document.getElementById('mxSelName').textContent = shown ? _mxWornName(slot, shown) : `${name} 없음`;
   document.getElementById('mxSelSub').textContent =
-    id ? `${name} 착용 중 · ID ${id}`
-    : shown ? `기본 ${name} · 목록에서 아이템을 누르면 바꿔 입습니다`
-    : slot === 'top' || slot === 'bottom' ? '한벌옷을 입고 있어 비어 있습니다' : '목록에서 아이템을 누르면 입습니다';
+    id ? '' : shown ? `기본 ${name}` : slot === 'top' || slot === 'bottom' ? '한벌옷 착용 중' : '';
 }
 
 function _mxRender() {
@@ -729,8 +724,7 @@ function _mxRender() {
 
     _mxPutIcon(document.getElementById('mxSelIcon'), key, r[0], 44);
     document.getElementById('mxSelName').textContent = r[1] || `ID ${r[0]}`;
-    document.getElementById('mxSelSub').textContent = [r[2], `ID ${r[0]}`, `${p.word} ${avail.length}종`,
-      single ? `${p.word}이 하나뿐이라 믹스 불가` : '', r[4] ? '성별 미확인' : ''].filter(Boolean).join(' · ');
+    document.getElementById('mxSelSub').textContent = r[2] || '';
 
     document.querySelectorAll('#mxBaseChips .mx-chip').forEach(b => {
       const i = +b.dataset.i;
@@ -762,7 +756,6 @@ function _mxRender() {
   _mxRenderCombo();
 
   document.querySelectorAll('#sec-mixdye .mx-view').forEach(b => b.classList.toggle('active', b.dataset.mxview === _mxState.view));
-  document.getElementById('mxViewNote').style.display = _mxState.part === 'face' && _mxState.view === 'ladder' ? '' : 'none';
   const fit = _mxZoomFit(), zoom = Math.min(_mxState.zoom, fit);
   _mxFitAt = fit;
   document.querySelectorAll('#sec-mixdye .mx-zoom').forEach(b => {
@@ -966,9 +959,6 @@ function initMixdye() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
-    <p class="dt-help">캐릭터 성별을 고르고 헤어·성형의 믹스 염색과 믹스 렌즈를 미리 보거나, 코디 탭에서 모자·한벌옷 같은 캐시 아이템을 입혀 봅니다.</p>
-    <p class="dt-help mx-notice">※ 믹스 염색·믹스 렌즈·피부 선 색은 실제 게임 계산이 아니라 비슷하게 만든 근사치입니다. 게임 화면과 색이 다를 수 있습니다.</p>
-    <p class="dt-help mx-source">출처: <a href="https://maplestory.io" target="_blank" rel="noopener">maplestory.io</a> — GMS v${D.version} 아이템 데이터를 미리 받아 두고 사이트에서 직접 조합합니다. 이미지의 권리는 NEXON에 있습니다.</p>
 
     <div class="mx-topbar">
       <div class="sf-tabs mx-sextabs">
@@ -995,7 +985,6 @@ function initMixdye() {
             <button type="button" class="mx-show" data-mxshow="recent">최근</button>
           </div>
           <label class="mx-check mx-only-coordi"><input type="checkbox" id="mxMixed" /><span id="mxMixedLabel"></span></label>
-          <span id="mxCount"></span>
         </div>
         <div class="mx-lists" id="mxLists"></div>
       </div>
@@ -1032,11 +1021,8 @@ function initMixdye() {
                 <div class="mx-line-row"><input class="mx-range" type="range" id="mxLine-${k}" data-line="${k}" min="${lo}" max="${hi}" step="1" aria-label="피부 ${label}" /><b class="mx-line-val" id="mxLineVal-${k}"></b></div></div>`).join('')}
               <div class="mx-row"><span class="mx-label" id="mxLineLabel">선 색</span>
                 <div class="mx-line-row"><span class="mx-line-swatch" id="mxLineSwatch"></span><button class="sbtn sbtn--ghost mx-line-reset" type="button">색 초기화</button></div></div>
-              <p class="mx-hint">게임처럼 색조·채도·명도로 색을 바꿉니다. 컬러라인 피부는 선 색이, 다른 커스텀 피부는 피부 색이 바뀌며 실제 게임 색과 다를 수 있습니다.</p>
             </div>
-            <p class="mx-hint" id="mxLineHint">색 조절은 이름에 Custom이 붙은 커스텀 피부에서만 됩니다.</p>
           </div>
-          <p class="mx-hint mx-only-coordi">목록에서 아이템을 누르면 입고, 같은 아이템을 다시 누르면 벗습니다. 한벌옷을 입으면 상의·하의가 빠지고, 벗으면 기본 옷으로 돌아옵니다.</p>
         </div>
 
         <div class="mx-viewbar">
@@ -1052,7 +1038,6 @@ function initMixdye() {
             <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxhist="undo" title="Ctrl+Z" disabled>되돌리기</button>
             <button class="sbtn sbtn--ghost sbtn--sm" type="button" data-mxhist="redo" title="Ctrl+Y" disabled>다시 하기</button>
           </div>
-          <span class="mx-viewnote" id="mxViewNote">뒷모습은 얼굴이 보이지 않습니다</span>
         </div>
 
         <div class="mx-compare">

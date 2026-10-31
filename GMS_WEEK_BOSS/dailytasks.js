@@ -427,7 +427,6 @@ function renderDailyTasks() {
       <h2 class="sec-title">숙제 트래커</h2>
       <button class="sbtn sbtn--primary" id="dtToggleAdd">+ 캐릭터 추가</button>
     </div>
-    <p class="dt-help">완료 후 목록을 클릭하면 CLEAR 처리가 됩니다.</p>
     ${ids.length
       ? `<div class="dt-grid">${ids.map(id => _dtCardHtml(id, _dtGetChar(id))).join('')}</div>`
       : '<p class="empty">위에서 캐릭터를 추가하세요.</p>'}

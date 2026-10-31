@@ -158,14 +158,6 @@ function _famRender() {
   const cardImg = document.getElementById('famCardImg');
   cardImg.src = _ruMiniSrc(rank); cardImg.style.display = '';
 
-  /* 레어는 확률이 추정치라 그 사실을 반드시 같이 띄운다.
-     이 판에 실제로 쓰이는 등급(현재 + 아랫줄) 중 추정치인 것만 짚어준다 */
-  const est = [rank, _famLower(rank)]
-    .filter(g => D.LINES[g] && D.ESTIMATED_RANKS.includes(g))
-    .map(g => D.RANK_LABEL[g]);
-  document.getElementById('famNote').innerHTML =
-    (est.length ? '<b>' + est.join('·') + ' 옵션은 정확한 자료가 없어 정규화 방식으로 추론된 값입니다.</b><br>' : '') +
-    D.SOURCE_NOTE;
 
   document.getElementById('famLog').innerHTML = _famState.log.map(e => `
       <div class="fam-log-row${e.prime ? ' is-hit' : ''}">
@@ -336,9 +328,6 @@ function initFamiliar() {
           <div class="sf-toggle-group" id="famRankGroup" style="margin-top:8px">${rankBtns}</div>
 
           <div class="card__title mt16">목표 옵션</div>
-          <div class="cube-goal-hint">
-            한 개만 고르면 <b>어느 줄에든</b> 뜨면 정지, 두 개를 고르면 <b>둘 다</b> 떠야 정지합니다.
-          </div>
           <div id="famGoalRows">
             <select class="sel fam-goal-sel"></select>
             <select class="sel fam-goal-sel mt8"></select>
@@ -373,7 +362,6 @@ function initFamiliar() {
 
           <div class="card__title mt16">기록</div>
           <div id="famLog" class="fam-log"></div>
-          <p class="dt-help mt16" id="famNote"></p>
         </div>
       </div>
     </div>`;

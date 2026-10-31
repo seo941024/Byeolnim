@@ -226,7 +226,6 @@
     <!-- ══════ 주보 트래커 ══════ -->
     <section class="sec" id="sec-boss">
       <div class="sec-head"><h2 class="sec-title">보스 수익 계산기</h2></div>
-      <p class="dt-help">캐릭터별로 잡을 보스와 난이도, 파티원 수를 고르면 주간 결정석 개수와 예상 수익을 계산해줍니다.</p>
       <div class="boss-panel">
         <div class="boss-panel__head">
           <span class="boss-panel__charname" id="bossCharName">캐릭터를 선택하세요</span>
@@ -551,10 +550,6 @@
             </div>
 
             <div class="card__title mt16">옵션 설정</div>
-            <div class="cube-goal-hint">
-              같은 항목을 한 줄에만 적으면 <b>세 줄 합산</b> 기준, 여러 줄에 나눠 적으면 <b>줄마다 따로</b> 만족해야 하는 기준입니다.<br>
-              예 · STR 26 한 줄 → 합산 26% 이상 / STR 13 · STR 13 두 줄 → 13% 이상인 줄이 2개
-            </div>
             <div id="cubeSetContainer"></div>
             <button class="sbtn sbtn--ghost cube-btn-full mt8" id="cubeAddSetBtn">+ 옵션 세트 추가</button>
 
@@ -570,10 +565,6 @@
               <select class="sel" id="hrGrade"></select>
             </div>
             <div class="card__title mt16">목표 옵션</div>
-            <div class="cube-goal-hint">
-              한 항목만 적으면 <b>세 줄 합산</b>, 같은 항목을 여러 줄에 적으면 <b>그 줄 수만큼</b> 떠야 멈춥니다.<br>
-              예 · 공격력 33 한 줄 → 합쳐 33% 이상이면 정지 / 공격력 1을 세 줄 → 공격력이 3줄 다 떠야 정지
-            </div>
             <div class="hr-preset" id="hrPresets"></div>
             <div id="hrGoalRows"></div>
             <button class="sbtn sbtn--ghost cube-btn-full mt8" id="hrAddSetBtn">+ 옵션 세트 추가</button>
@@ -625,8 +616,6 @@
       <div class="sec-head">
         <h2 class="sec-title">보스 정보</h2>
       </div>
-      <p class="dt-help">노말 스우 이상의 보스는 카드를 클릭하면 난이도별로 획득 가능한 아이템 목록을 확인할 수 있습니다.<br>
-        HP는 해당 난이도 보스의 전체 체력입니다. 카드의 토글키를 활성화하면 보상 획득을 위한 최소 딜량 수치를 알 수 있습니다.</p>
 
       <!-- 5% 빠른 참조 -->
       <div class="bus-panel">
@@ -775,7 +764,6 @@
     <div class="modal__body settings-grid">
       <div class="settings-box">
         <div class="settings-box__title">앱으로 설치</div>
-        <p class="settings-box__desc">홈 화면에 추가하면 앱처럼 바로 열 수 있습니다.</p>
         <p class="settings-box__warn">주의: 설치한 앱을 삭제하면 브라우저에 따라 저장된 데이터까지 함께 지워질 수 있어요. 삭제 전에 데이터 저장으로 미리 백업해두세요.</p>
         <button class="sbtn sbtn--ghost" id="btnInstallApp">설치 안내 보기</button>
       </div>
@@ -799,12 +787,10 @@
            거의 없는데 캘린더를 열 때마다 자리를 차지하고 있었다. -->
       <div class="settings-box" id="settingsPushBox">
         <div class="settings-box__title">일정 알림</div>
-        <p class="settings-box__desc">캘린더에 등록한 보스·파티 일정 시각에 알림을 보냅니다. 앱을 닫아둬도 받을 수 있어요.</p>
         <button class="sbtn sbtn--ghost" id="mcPushBtn">알림 받기</button>
       </div>
       <div class="settings-box">
         <div class="settings-box__title">파일로 백업</div>
-        <p class="settings-box__desc">데이터를 JSON 파일로 내보내고, 그 파일로 되돌립니다. 로그인 없이 쓸 수 있어 앱 삭제·기기 변경 전에 해두면 안전해요.</p>
         <p class="settings-box__warn">주의: 불러오면 지금 기기의 데이터를 덮어씁니다. 먼저 파일로 저장해두세요.</p>
         <div class="settings-font-btns">
           <button class="sbtn sbtn--ghost" id="btnExport">파일로 저장</button>
@@ -814,13 +800,11 @@
       </div>
       <div class="settings-box">
         <div class="settings-box__title">데이터 초기화</div>
-        <p class="settings-box__desc">모든 데이터를 삭제하고 초기 상태로 되돌립니다.</p>
         <button class="sbtn sbtn--danger" id="btnResetAll">초기화</button>
       </div>
       <!-- 관리자 항목은 항상 보이고, 실제 기능은 비밀번호 로그인으로 막는다(app.js) -->
       <div class="settings-box" id="settingsAdminBox">
         <div class="settings-box__title">관리자</div>
-        <p class="settings-box__desc">전체 알림을 보냅니다.</p>
         <button class="sbtn sbtn--ghost" id="btnAdmin">관리자 탭 열기</button>
       </div>
     </div>
@@ -836,7 +820,6 @@
       <button class="modal__close" id="authClose">×</button>
     </div>
     <div class="modal__body">
-      <p class="settings-box__desc" style="margin-top:0">로그인하면 데이터를 서버에 올려두고 다른 기기에서 그대로 불러올 수 있습니다.</p>
       <div id="cloudBox"></div>
     </div>
   </div>
@@ -852,7 +835,6 @@
     <div class="modal__body">
       <!-- 1단계: 로그인. 비밀번호가 확인되기 전에는 아래 발송 영역이 아예 안 보인다 -->
       <div id="admLoginStep">
-        <p class="settings-box__desc" style="margin-top:0">관리자 비밀번호를 입력하세요.</p>
         <div class="field mt8">
           <input class="inp" id="admSecret" type="password" autocomplete="off" placeholder="비밀번호" />
         </div>
@@ -860,7 +842,6 @@
 
       <!-- 2단계: 로그인 성공 후에만 보이는 실제 작업 영역 -->
       <div id="admWorkStep" style="display:none">
-        <p class="settings-box__desc" style="margin-top:0">알림을 켠 사용자 전원의 기기로 즉시 전송됩니다.</p>
         <div class="field mt8">
           <label class="field__label">제목</label>
           <input class="inp" id="admTitle" maxlength="60" />
@@ -916,28 +897,28 @@
 <script src="app.js?v=20261031b"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261030a"></script>
-<script src="character.js?v=20261027w"></script>
+<script src="character.js?v=20261031t"></script>
 <!-- 에르다 링크 화면. 데이터 data_erdalink.js는 두 직업으로 헥사 탭을 열 때만 받는다. hexa.js가 부르므로 그 앞에 둔다 -->
 <script src="erdalink.js?v=20261030c"></script>
 <script src="hexa.js?v=20261030c"></script>
 <!-- <script src="data_gearcompare.js?v=20260916a"></script> 장비 교체 비교 — 내림
-<script src="gearcompare.js?v=20260916a"></script> -->
-<!-- <script src="hyperstat.js?v=20260901a"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
+<script src="gearcompare.js?v=20261031t"></script> -->
+<!-- <script src="hyperstat.js?v=20261031t"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20261030b"></script>
 <script src="starforce_sim.js?v=20261027b"></script>
-<script src="cube.js?v=20261030c"></script><script src="familiar.js?v=20261030a"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261030a"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261030b"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261030b"></script><script src="meundi.js?v=20261029a"></script><script src="victorypose.js?v=20261030b"></script><script src="mysticseal.js?v=20261031a"></script><script src="myutil.js?v=20261031i"></script>
-<script src="addoption.js?v=20261030a"></script><script src="bosshp.js?v=20261031f"></script>
+<script src="cube.js?v=20261030c"></script><script src="familiar.js?v=20261031t"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031t"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261031t"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261030b"></script><script src="meundi.js?v=20261029a"></script><script src="victorypose.js?v=20261031t"></script><script src="mysticseal.js?v=20261031a"></script><script src="myutil.js?v=20261031t"></script>
+<script src="addoption.js?v=20261031t"></script><script src="bosshp.js?v=20261031f"></script>
 
-<script src="dailytasks.js?v=20261027t"></script>
-<script src="wantchannel.js?v=20261027b"></script>
+<script src="dailytasks.js?v=20261031t"></script>
+<script src="wantchannel.js?v=20261031t"></script>
 <!-- 캘린더가 알림 켜기/끄기를 호출하므로 mcalendar.js보다 먼저 와야 한다 -->
 <script src="bosspush.js?v=20261027b"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
-<script src="mcalendar.js?v=20261027b"></script>
+<script src="mcalendar.js?v=20261031t"></script>
 <!-- "앱으로 설치" 배너 -->
 <script src="pwa.js?v=20261027b"></script>
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->
-<script src="cloudsave.js?v=20261030a"></script>
+<script src="cloudsave.js?v=20261031t"></script>
 <!-- 첫 화면 — 사이드바 메뉴를 읽어 전체 메뉴 바둑판을 만들므로 맨 뒤에 둔다 -->
 <script src="home.js?v=20261029n"></script>
 

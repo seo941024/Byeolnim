@@ -193,7 +193,7 @@ function initMyUtil() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">특수 코어 타이머</h2></div>
-    <p class="dt-help">코어가 발동하면 시작을, 코어를 뺐다 끼우면 스위칭을 누릅니다. 효과 중에는 컬러 아이콘에 효과 남은 초가, 재발동을 기다리는 동안은 회색 아이콘에 남은 초가 표시되고, 스위칭 60초는 큰 숫자로 표시됩니다. 키보드는 Space 시작, Esc 초기화, R 스위칭이며 PIP 창에서는 그 창의 코어에, 이 화면에서는 마지막으로 누른 코어에 적용됩니다.</p>
+    <p class="dt-help">스위칭용 지속시간 및 쿨타임 체크 타이머입니다.</p>
     <div class="card lt-card">
       <div class="lt-stack">${LT_TIMERS.map(t => _ltBoardHtml(t, false)).join('')}</div>
     </div>`;

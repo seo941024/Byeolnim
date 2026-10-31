@@ -105,7 +105,6 @@ function initGearCompare() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">장비 교체 비교</h2></div>
-    <p class="dt-help">지금 낀 장비(A)와 바꿀 장비(B)의 스탯을 각각 넣으면 데미지가 몇 % 늘거나 주는지 계산합니다. 두 장비 모두 낀 상태의 "총" 스탯을 넣는 게 아니라, 그 장비 하나 때문에 달라지는 스탯만 넣어도 되고(변화분 비교), 전체 스탯을 두 번 넣어도(전체 비교) 결과 비율은 같습니다.</p>
 
     <div class="sf-layout">
       ${gcCardHtml('A', '장비 A · 지금 낀 것')}

@@ -115,8 +115,7 @@ function csRender(savedAt) {
       </div>` : ''}
       <div class="cs-row mt8">
         <button class="sbtn sbtn--primary w100" id="csGoBtn">${isSignup ? '가입하기' : '로그인'}</button>
-      </div>
-      <p class="dt-help mt8">아이디는 영문·숫자 3~16자이고 대소문자를 구분합니다. 비밀번호는 4~10자입니다.</p>`;
+      </div>`;
 
     box.querySelectorAll('.cs-tab').forEach(btn => {
       btn.addEventListener('click', () => { _csMode = btn.dataset.mode; csRender(savedAt); });
@@ -139,13 +138,11 @@ function csRender(savedAt) {
       <input class="inp cs-inp" id="csNickInp" value="${escHtml(_csNick || _csUser)}" maxlength="12" placeholder="닉네임">
       <button class="sbtn sbtn--ghost" id="csNickSaveBtn">닉네임 저장</button>
     </div>
-    <p class="dt-help mt8">한글·영문·숫자·기호로 1~12자까지 정할 수 있고, 우측 위 버튼에 이 이름으로 표시됩니다.</p>
     <div class="sf-res-item"><span class="sf-res-label">마지막 저장</span><span class="sf-res-val" id="csSavedAt">${csFmtTime(savedAt)}</span></div>
     <div class="cs-row mt8">
       <button class="sbtn sbtn--primary" id="csSaveBtn">서버에 저장</button>
       <button class="sbtn sbtn--ghost" id="csLoadBtn">서버에서 불러오기</button>
     </div>
-    <p class="dt-help mt8">저장하면 이 기기의 모든 데이터가 서버에 올라가고, 불러오면 이 기기의 데이터를 서버 것으로 덮어씁니다.</p>
     <button class="sbtn sbtn--ghost sbtn--sm mt8" id="csPwToggleBtn">${_csPwOpen ? '비밀번호 변경 닫기' : '비밀번호 변경'}</button>
     ${_csPwOpen ? `
     <div class="cs-pwbox mt8">

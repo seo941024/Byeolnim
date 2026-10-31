@@ -9,6 +9,10 @@ const _bhpDiffMeta = kr => DIFF_META[DIFF_KR_TO_ENG[kr] || 'normal'];
 // 파일명 stem(Bellona)으로 images/bosses_gif/Bellona.gif 를 자동으로 찾아간다.
 // 배포 환경(리눅스)은 대소문자를 구분하므로 png/gif의 stem 대소문자가 정확히 같아야 한다.
 const BOSS_IMG_EXTRA = { '벨로나': 'images/bosses/Bellona.png' };
+// 위와 같은 보스의 카드 그림 파일 이름. images/official/boss_card/<이름>.png
+const BOSS_CARD_EXTRA = { '벨로나': 'bellona' };
+// 카드 그림을 같은 파일 이름으로 바꿀 때 서비스 워커가 옛 그림을 내주지 않도록 v를 올린다
+const _bhpCardSrc = id => `images/official/boss_card/${id}.png?v=20261031a`;
 const bossHPActiveDiffs = {};
 const busChecked = new Set(); // 버스 참조에 추가된 보스명
 const busDiffs   = {};        // 버스 패널 전용 난이도 선택
@@ -270,15 +274,22 @@ function renderBossHPTable() {
     seen[b.name].diffs.push(b);
   });
 
-  /* 카드 그림은 GMS v.270 게임 파일 UI/UIBoss.img 보스 목록의 큰 그림 422×500이고 영문 보스 이름이 그림에 들어 있다.
+  /* 카드 그림은 게임 파일 UI/UIBoss.img 보스 목록의 큰 그림 422×500이고 보스 이름 글자가 그림에 들어 있다. 지수 요청으로 한글판을 쓴다.
+     - KMS v.389 그림 22장: 서버마다 번호가 달라 GMS 그림과 글자 아래쪽 모양을 대조해 짝지었다. 스우는 KMS 그림이 GMS와 다른 일러스트다
+     - 벨로나: 메이플 위키에 올라온 KMS 그림
+     - 아케치·노히메: KMS에 없는 일본 보스라 JMS v.444 일본어 그림
+     - 림보·발드릭스·최초의 대적자·찬란한 흉성·유피테르: KMS v.389 뒤에 나와 한글판을 아직 못 구해 GMS 영문 그림
      boss.img는 드랍 팝업이 GIF를 찾는 이름으로 쓰므로 그대로 두고 카드 그림만 따로 든다 */
   BOSS_DATA.forEach(bd => {
     const key = Object.keys(seen).find(k => norm(k) === norm(bd.name));
-    if (key) { seen[key].img = bd.img; seen[key].card = `images/official/boss_card/${bd.id}.png`; seen[key].monthly = !!bd.monthly; }
+    if (key) { seen[key].img = bd.img; seen[key].card = _bhpCardSrc(bd.id); seen[key].monthly = !!bd.monthly; }
   });
-  // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지(BOSS_IMG_EXTRA).
+  // 보스 수익 계산기(BOSS_DATA)엔 없고 이 페이지에만 있는 보스의 이미지(BOSS_IMG_EXTRA)와 카드 그림(BOSS_CARD_EXTRA).
   Object.entries(BOSS_IMG_EXTRA).forEach(([n, src]) => {
     if (seen[n] && !seen[n].img) seen[n].img = src;
+  });
+  Object.entries(BOSS_CARD_EXTRA).forEach(([n, id]) => {
+    if (seen[n] && !seen[n].card) seen[n].card = _bhpCardSrc(id);
   });
 
   renderBusPanel(groups);

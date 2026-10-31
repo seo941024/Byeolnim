@@ -4066,5 +4066,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .ms-tier img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-badge { width: auto; height: auto; image-rendering: pixelated; }
 
-/* 보스 정보 카드의 게임 큰 보스 그림 422×500 — 정사각형 칸에 위쪽 기준으로 채워 그림 속 영문 이름이 잘리지 않게 한다 */
+/* 보스 정보 카드의 게임 큰 보스 그림 422×500 — 칸을 그림과 같은 비율로 세로로 늘려 위아래가 잘리지 않게 한다 */
+.bhp-card__img--art { aspect-ratio: 422 / 500; }
 .bhp-card__img img.bhp-card__art { width: 100%; height: 100%; object-fit: cover; object-position: center top; image-rendering: auto; }

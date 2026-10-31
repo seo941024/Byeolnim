@@ -347,7 +347,7 @@ function renderBossHPTable() {
     const hasDrops = _bhpDropDiffs(boss).length > 0;
 
     return `<div class="bhp-card${boss.monthly ? ' bhp-card--monthly' : ''}">
-      <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
+      <div class="bhp-card__img${hasDrops ? ' bhp-card__img--clickable' : ''}${boss.card ? ' bhp-card__img--art' : ''}" data-boss="${boss.name}" title="${hasDrops ? '클릭: 획득 가능한 아이템 보기' : ''}">${imgHtml}</div>
       <div class="bhp-card__body">
         <div class="bhp-card__top">
           <div class="bhp-name-row">

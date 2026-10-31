@@ -73,7 +73,7 @@ http.createServer(async (req, res) => {
   // %2f·%5c는 URL 정규화를 지난 뒤에야 /·\로 풀리므로, 풀고 나서 ROOT 밖이면 막는다
   let rel;
   try { rel = decodeURIComponent(u.pathname === '/' ? '/index.html' : u.pathname); } catch { res.writeHead(400); res.end('Bad request'); return; }
-  if (rel.includes('  const filePath = path.join(ROOT, rel);')) { res.writeHead(400); res.end('Bad request'); return; }   // 경로에 널 문자가 있으면 fs가 예외를 던져 서버가 죽는다
+  if (rel.includes('\x00')) { res.writeHead(400); res.end('Bad request'); return; }   // 경로에 널 문자가 있으면 fs가 예외를 던져 서버가 죽는다
   const filePath = path.join(ROOT, rel);
   if (!filePath.startsWith(ROOT + path.sep)) { res.writeHead(403); res.end('Forbidden'); return; }
   const ext  = path.extname(filePath);

@@ -3581,6 +3581,24 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .sb-group__list { display: none; flex-direction: column; margin: 2px 0 4px 14px; padding-left: 8px; border-left: 2px solid var(--border); }
 .sb-group.open .sb-group__list { display: flex; }
+.sb-group.open .sb-group__list:empty { display: none; }
+
+/* ── 사이드바 즐겨찾기 별 (app.js renderFavs) ──
+   메뉴 줄에 마우스를 올리면 빈 별, 즐겨찾기에 넣은 메뉴는 노란 별이 늘 보인다. 별 그림은 원본 크기 11×10 그대로.
+   마우스가 없는 폰에서는 빈 별을 늘 보여 누를 자리를 알 수 있게 한다 */
+.sb-fav {
+  margin-left: auto; flex-shrink: 0; width: 22px; height: 30px; margin-right: -6px;
+  display: inline-flex; align-items: center; justify-content: center;
+  visibility: hidden; transition: transform .15s;
+}
+.sb-fav img { width: auto; height: auto; }
+.sb-fav__on { display: none; }
+.sb-nav__item:hover .sb-fav { visibility: visible; }
+.sb-nav__item .sb-fav:hover { transform: scale(1.25); }
+.sb-nav__item.is-fav .sb-fav, .sb-nav__item[data-fav] .sb-fav { visibility: visible; }
+.sb-nav__item.is-fav .sb-fav__on, .sb-nav__item[data-fav] .sb-fav__on { display: block; }
+.sb-nav__item.is-fav .sb-fav__off, .sb-nav__item[data-fav] .sb-fav__off { display: none; }
+@media (hover: none) { .sb-fav { visibility: visible; } }
 .mu-ref { margin-top: 10px; font-size: .84rem; color: var(--text-sub); word-break: break-all; }
 .mu-ref a { color: var(--primary); text-decoration: underline; }
 

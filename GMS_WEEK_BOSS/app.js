@@ -106,6 +106,8 @@ function navigateTo(sec, fromHistory = false) {
   if (!fromHistory && history.state?.sec !== sec) history.pushState({ sec }, '');
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
+  // 즐겨찾기 묶음에 복사해 둔 같은 메뉴 줄도 같이 켠다
+  document.querySelectorAll('.sb-nav__item[data-fav]').forEach(b => b.classList.toggle('active', b.dataset.fav === sec));
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
   // PC에서는 홈일 때 사이드바를 빼고, 메뉴에 들어가면 펼쳐 둔다. style.css body.on-home
   document.body.classList.toggle('on-home', sec === 'home');
@@ -147,8 +149,52 @@ function navigateTo(sec, fromHistory = false) {
   }
 }
 document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
-  btn.addEventListener('click', () => { navigateTo(btn.dataset.sec); closeSidebar(); });
+  btn.addEventListener('click', e => {
+    if (e.target.closest('.sb-fav')) return;   // 별은 즐겨찾기만 바꾸고 메뉴로 넘어가지 않는다
+    navigateTo(btn.dataset.sec); closeSidebar();
+  });
 });
+
+/* ── 사이드바 즐겨찾기 ──
+   메뉴 줄 오른쪽 별을 누르면 맨 위 즐겨찾기 묶음에 그 메뉴가 들어가고, 다시 누르면 빠진다. 넣은 차례대로 늘어놓는다.
+   즐겨찾기 줄은 원래 메뉴 줄을 복사해 data-sec 대신 data-fav를 단다. home.js가 data-sec로 메뉴를 모으므로 홈 카드에 겹치지 않는다.
+   전구는 UI/UIWindow2.img/QuestGuide/QuestMark/0, 별은 UI/Enchant.img/starForce/summaryStar의 normal·empty. 모두 GMS v270 원본.
+   지수가 인게임에서 캡처한 왼쪽 알림 전구·별의 원본을 아직 못 찾아 2026-10-31 지수 요청으로 비슷한 원본을 임시로 골랐다 */
+const FAV_KEY = 'gms_sidebar_fav';
+const _favSrc = sec => document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
+let _favs = [];
+try { _favs = JSON.parse(localStorage.getItem(FAV_KEY) || '[]').filter(s => typeof s === 'string' && s !== 'home' && _favSrc(s)); } catch (e) { _favs = []; }
+
+function renderFavs() {
+  const list = document.getElementById('sbFavList');
+  if (!list) return;
+  const cur = document.querySelector('.sec.active')?.id.replace(/^sec-/, '');
+  document.querySelectorAll('.sb-nav__item[data-sec]').forEach(b => b.classList.toggle('is-fav', _favs.includes(b.dataset.sec)));
+  list.replaceChildren(..._favs.map(sec => {
+    const b = _favSrc(sec).cloneNode(true);
+    b.removeAttribute('data-sec');
+    b.dataset.fav = sec;
+    b.classList.toggle('active', sec === cur);
+    return b;
+  }));
+}
+document.querySelectorAll('.sb-nav__item[data-sec]:not([data-sec="home"])').forEach(b => {
+  b.insertAdjacentHTML('beforeend', '<span class="sb-fav" role="button" aria-label="즐겨찾기"><img class="sb-fav__on" src="images/icons/fav_star.png" alt=""><img class="sb-fav__off" src="images/icons/fav_star_empty.png" alt=""></span>');
+});
+document.querySelector('.sb-nav')?.addEventListener('click', e => {
+  const star = e.target.closest('.sb-fav');
+  if (star) {
+    const item = star.closest('.sb-nav__item');
+    const sec = item.dataset.sec || item.dataset.fav;
+    _favs = _favs.includes(sec) ? _favs.filter(s => s !== sec) : [..._favs, sec];
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(_favs)); } catch (err) {}
+    renderFavs();
+    return;
+  }
+  const fav = e.target.closest('.sb-nav__item[data-fav]');
+  if (fav) { navigateTo(fav.dataset.fav); closeSidebar(); }
+});
+renderFavs();
 document.querySelectorAll('.sb-group__head').forEach(head => {
   head.addEventListener('click', () => head.closest('.sb-group').classList.toggle('open'));
 });

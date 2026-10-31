@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261031ze" />
+  <link rel="stylesheet" href="style.css?v=20261031zj" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
@@ -105,6 +105,13 @@
       <!-- 순서는 지수가 정한 것: 홈, 캐릭터 목록, 오늘의 채널 추천, 메이플 캘린더, 숙제 트래커, 계산기, 시뮬레이터,
            이벤트 게임 공략, 보스 정보. 묶음 메뉴는 가운데 아래쪽에 모은다.
            홈 전체 기능도 묶음을 풀어 이 순서 그대로 늘어놓는다 -->
+      <!-- 즐겨찾기는 홈보다 위 맨 위. 비어 있어도 늘 보인다. 목록은 app.js renderFavs가 채운다 -->
+      <div class="sb-group open" id="sbFavGroup">
+        <button class="sb-nav__item sb-group__head" type="button">
+          <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/fav_bulb.png" alt=""></span><span>즐겨찾기</span>
+        </button>
+        <div class="sb-group__list" id="sbFavList"></div>
+      </div>
       <button class="sb-nav__item active" data-sec="home">
         <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/etc/MapleStory_logo.png" alt="" onerror="this.style.display='none'"></span><span>홈</span>
       </button>
@@ -900,7 +907,7 @@
 <script src="data_liberation.js?v=20261031a"></script>
 <script src="starforce.js?v=20261030a"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261031zg"></script>
+<script src="app.js?v=20261031zj"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261031zh"></script>
 <script src="character.js?v=20261031v"></script>

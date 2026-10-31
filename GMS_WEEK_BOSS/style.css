@@ -1078,6 +1078,9 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
    위치가 전부 같아진다. */
 .hx-res-icon-wrap { width: 40px; height: 40px; flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center; }
 .hx-result-sep { margin: 14px 0 10px; border: none; border-top: 2px solid var(--border); }
+/* 솔 에르다 조각 큰 그림 54×57은 위쪽 투명 여백이 8줄, 아래가 5줄이라 그림이 가운데보다 아래에 그려진다.
+   그림은 그대로 두고 보이는 자리만 그 차이만큼 올린다 */
+img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .hexa-result-label { font-size: .78rem; font-weight: 900; color: var(--text-dim); letter-spacing: .8px; text-transform: uppercase; margin-bottom: 4px; }
 
 /* ── LIBERATION ── */

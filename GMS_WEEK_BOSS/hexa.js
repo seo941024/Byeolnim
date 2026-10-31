@@ -251,7 +251,7 @@ function _hxCompute() {
       <span class="rl">솔 에르다 조각 부족량</span>
       <span class="rv ${enoughF?'hp-suf':'ng'}">${enoughF?'요구량 충족':(totalSEF-haveSEF).toLocaleString()+' 개 부족'}</span>
     </div>`;
-  // 비용은 근삿값이라 실제 게임과 차이가 있을 수 있다. 화면 안내는 지수 요청으로 뺐다
+  // 비용표는 게임 파일에 없는 서버 값이라 GMS 위키 표와 대조해 같음을 확인했다. data_hexa.js 머리 주석 참고
 }
 /* 솔 에르다 최대 소지량 — 캐릭터 레벨에 따라 274까지 20개, 275~289는 25개, 290부터 30개.
    GMS 위키 Sol_Erda 표 260-274 20, 275-289 25, 290+ 30 기준.

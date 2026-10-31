@@ -23,7 +23,9 @@ const BACKUP_MARK = '_byeolnim';
    알림 켜짐 표시는 구독이 없는 다른 기기에서 켜진 것처럼 보이게 된다. */
 // ciImgHash는 코디 컬렉션에서 같은 그림인지 비교하려고 만든 캐시라 언제든 다시 만든다.
 // 캐릭터 그림 주소를 키로 500개까지 쌓여 서버 저장 크기만 키우므로 백업에서 뺀다
-const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed', 'ciImgHash']);
+// 경험치 기록은 서버가 매일 모으고 캐릭터 정보를 열 때 서버에서 다시 받아 덮어쓴다. 한 줄마다 1,066자짜리 그림 주소가 들어가
+// 캐릭터당 180줄까지 쌓이면서 서버 저장 한도 512KB를 넘겨, 2026-10-31 지수 요청으로 백업에서 뺐다
+const BACKUP_SKIP_KEYS = new Set(['gms_cloud_token', 'gms_cloud_id', 'boss_push_enabled', 'pwa_installed', 'ciImgHash', STORAGE_KEYS.charHistory]);
 
 /* 지금 브라우저에 있는 모든 데이터를 한 덩어리로. 파일 백업과 서버 저장이 같은 모양을 쓴다. */
 function backupBundle() {

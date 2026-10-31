@@ -10,13 +10,14 @@
      PIP 창이 열려 있으면 그 창의 타이머로도 다시 그린다
    - 이름은 게임 영어 이름 Lethal Strike I 그대로 적는다(지수 요청)
    - 그림: GMS v.270 Etc/VCore.img/vSkill/CoreData/30000001/icon, images/myutil/lethal_strike.png. 스킬 400007003의 icon과 같은 그림이다.
-     세는 동안은 회색, 다시 발동할 수 있으면 컬러로 보인다(지수 요청). 게임의 회색 그림 iconDisabled는 maplestory.io가
-     GMS v.270에서 내려 주지 못해(서버 오류), style.css grayscale 필터로 채도를 빼고 밝기를 1.4배로 올린다. KMS의 400007003은 다른 스킬이라 쓸 수 없다
+     세는 동안은 회색, 다시 발동할 수 있으면 컬러로 보인다(지수 요청). 회색은 같은 코어의 게임 그림 iconDisabled,
+     images/myutil/lethal_strike_disabled.png다. 판마다 두 그림을 다 넣어 두고 style.css가 상태에 따라 하나만 보여 준다
    ═══════════════════════════════════════════════════════════ */
 
 const LT_SEC = 60;
 const LT_TICK_MS = 100;
 const LT_ICON = 'images/myutil/lethal_strike.png?v=20261031a';
+const LT_ICON_OFF = 'images/myutil/lethal_strike_disabled.png?v=20261031a';
 
 let _ltEnd = 0;           // 끝나는 시각(ms). 0이면 멈춘 상태
 let _ltDone = false;      // 60초를 다 센 뒤
@@ -25,7 +26,8 @@ const _ltTimers = new Map();   // 창 → setInterval 번호
 
 function _ltBoardHtml(pip) {
   return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-state="idle">
-      <img class="lt-ico" src="${LT_ICON}" alt="">
+      <img class="lt-ico lt-ico--on" src="${LT_ICON}" alt="">
+      <img class="lt-ico lt-ico--off" src="${LT_ICON_OFF}" alt="">
       <div class="lt-main">
         <div class="lt-name">Lethal Strike I</div>
         <div class="lt-time">${LT_SEC}</div>

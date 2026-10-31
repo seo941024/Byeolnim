@@ -780,7 +780,7 @@ function syncWorldDd() {
     sel.after(dd);
     const btn = dd.querySelector('.world-dd__btn'), list = dd.querySelector('.world-dd__list');
     const opt = (o, indent) => {
-      const src = o.value ? 'images/world_px/' + o.value + '.png' : '';
+      const src = o.value ? 'images/world_px/' + o.value + '.png?v=1' : '';
       return `<button type="button" class="world-dd__opt${indent ? ' is-sub' : ''}" role="option" data-v="${o.value}">${src ? `<img src="${src}" alt="">` : '<span class="world-dd__none"></span>'}<span>${escHtml(o.textContent)}</span></button>`;
     };
     list.innerHTML = [...sel.children].map(c => c.tagName === 'OPTGROUP'
@@ -793,7 +793,7 @@ function syncWorldDd() {
     });
     document.addEventListener('click', e => { if (!dd.contains(e.target)) list.hidden = true; });
   }
-  const o = sel.selectedOptions[0], v = sel.value, src = v ? 'images/world_px/' + v + '.png' : '';
+  const o = sel.selectedOptions[0], v = sel.value, src = v ? 'images/world_px/' + v + '.png?v=1' : '';
   dd.querySelector('.world-dd__btn').innerHTML = `${src ? `<img src="${src}" alt="">` : ''}<span>${escHtml(o ? o.textContent : '선택 안 함')}</span><span class="world-dd__arrow">▾</span>`;
   dd.querySelectorAll('.world-dd__opt').forEach(b => b.classList.toggle('is-cur', b.dataset.v === v));
 }

@@ -899,9 +899,10 @@
      (예: 사이드바 클릭이 스크립트 로드보다 빠를 때) 잃어버리지 않고 쌓아뒀다가
      스크립트가 로드되면 순서대로 처리해준다. 공식 문서에 나온 방식. -->
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
-<script defer src="/_vercel/insights/script.js"></script>
+<!-- 방문 통계는 배포 주소에서만 불러온다 — 로컬(localhost)에는 이 파일이 없어 404가 난다 -->
+<script>if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) { var s = document.createElement('script'); s.defer = true; s.src = '/_vercel/insights/script.js'; document.head.appendChild(s); }</script>
 <script src="common.js?v=20261030a"></script>
-<script src="data.js?v=20261030d"></script>
+<script src="data.js?v=20261101a"></script>
 <script src="data_hexa.js?v=20261031zb"></script>
 <script src="data_bosshp.js?v=20261031a"></script>
 <script src="data_itemdesc.js?v=20260924b"></script>

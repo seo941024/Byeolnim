@@ -8,13 +8,14 @@
 ═══════════════════════════════════════════════ */
 
 /* 항목 그림은 모두 GMS v.270 게임 그림이다. 2026-10-31 픽셀 대조
-   - 골럭스·아카이럼: 보스 체력바 그림. UI/UIWindow2.img/MobGage/backgrnd 테두리 위에 MobGage/Mob/9390600·8860000 아이콘을 얹어 합쳤다
+   - 골럭스·아카이럼: 보스 체력바 그림. UI/UIWindow2.img/MobGage/backgrnd 테두리 35×37을 자르지 않고 그 위 x6·y6에 MobGage/Mob/9390600·8860000 아이콘을 얹어 합쳤다.
+     게임 데이터에 얹는 좌표가 없어 x6·y6은 인게임 캡처와 맞춰 정했다
    - 일일퀘스트: 1714001 Grand Sacred Symbol: Geardock icon, 몬스터 파크: Map/MapHelper.img/mark/MonsterPark
    - 헤이스트: 2831711 Haste Fever Time Booster iconRaw, 별조각 상자: 2830545 Mysterious Star Speck Box iconRaw
    같은 파일 이름으로 그림을 바꿀 때는 서비스 워커가 옛 그림을 내주지 않게 v를 올린다 */
 const DAILY_TASK_PRESETS = [
-  { id: 'gollux',      label: '골럭스',        img: 'images/dailytasks/gollux.png?v=20261031a' },
-  { id: 'akaium',      label: '아카이럼',      img: 'images/dailytasks/akaium.png?v=20261031a' },
+  { id: 'gollux',      label: '골럭스',        img: 'images/dailytasks/gollux.png?v=20261031b' },
+  { id: 'akaium',      label: '아카이럼',      img: 'images/dailytasks/akaium.png?v=20261031b' },
   { id: 'dailyquest',  label: '일일퀘스트',    img: 'images/dailytasks/dailyquest.png' },
   { id: 'monsterpark', label: '몬스터 파크',   img: 'images/dailytasks/monsterpark.png' },
   { id: 'haste',       label: '헤이스트',      img: 'images/dailytasks/haste.png' },

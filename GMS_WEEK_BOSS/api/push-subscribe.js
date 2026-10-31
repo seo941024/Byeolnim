@@ -42,6 +42,23 @@ module.exports = async function handler(req, res) {
   const body = parseBody(req);
   if (!body || !body.subscription || !body.subscription.endpoint) return bad(res, 400, 'subscription 없음');
 
+  /* 서버가 이 주소로 요청을 보내므로 아무 주소나 받으면 안 된다.
+     브라우저 푸시 서비스(https)의 도메인만 허용하고, 저장할 필드도 걸러낸다. */
+  const subIn = body.subscription;
+  if (typeof subIn.endpoint !== 'string' || subIn.endpoint.length > 1000) return bad(res, 400, 'endpoint 형식 오류');
+  let host = '';
+  try {
+    const u = new URL(subIn.endpoint);
+    if (u.protocol === 'https:') host = u.hostname.toLowerCase();
+  } catch { /* host 빈 채로 아래에서 거절 */ }
+  const PUSH_HOSTS = ['fcm.googleapis.com', 'push.services.mozilla.com', 'push.apple.com', 'notify.windows.com'];
+  if (!PUSH_HOSTS.some(h => host === h || host.endsWith('.' + h))) return bad(res, 400, '허용되지 않은 푸시 주소');
+  const keys = subIn.keys || {};
+  if (typeof keys.p256dh !== 'string' || typeof keys.auth !== 'string' || keys.p256dh.length > 200 || keys.auth.length > 100) {
+    return bad(res, 400, 'keys 형식 오류');
+  }
+  body.subscription = { endpoint: subIn.endpoint, keys: { p256dh: keys.p256dh, auth: keys.auth } };
+
   const id = subId(body.subscription.endpoint);
 
   // Redis 쓰기 오류가 함수를 통째로 죽여 FUNCTION_INVOCATION_FAILED만 보이던 적이 있다.

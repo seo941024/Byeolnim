@@ -3625,32 +3625,42 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .lt-board[data-state="ready"] { border-color: rgb(var(--star)); box-shadow: inset 0 0 0 1px rgba(var(--star), .45); }
 .lt-ico-wrap { position: relative; flex: none; width: 64px; height: 64px; }
 .lt-ico { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
-/* 효과 남은 초: 게임 버프 아이콘처럼 우측 상단에 노란 도트 숫자. 32×32 아이콘을 2배로 키웠으니 숫자도 11px 높이를 2배로 */
+/* 효과·재발동 남은 초: 게임 버프 아이콘처럼 우측 상단에 노란 도트 숫자. 32×32 아이콘을 2배로 키웠으니 숫자도 11px 높이를 2배로 */
 .lt-buffno { position: absolute; top: 0; right: 0; display: flex; pointer-events: none; }
 .lt-buffno img { display: block; height: 22px; width: auto; image-rendering: pixelated; }
-/* 세는 동안은 게임의 회색 그림, 다시 발동할 수 있으면 컬러 */
-.lt-ico--off, .lt-board[data-state="run"] .lt-ico--on { display: none; }
-.lt-board[data-state="run"] .lt-ico--off { display: block; }
+/* 재발동을 기다리는 동안과 스위칭 중에는 게임의 회색 그림, 효과 중과 다시 발동할 수 있으면 컬러 */
+.lt-ico--off, .lt-board:is([data-state="cool"], [data-state="swap"]) .lt-ico--on { display: none; }
+.lt-board:is([data-state="cool"], [data-state="swap"]) .lt-ico--off { display: block; }
 .lt-main { flex: 1; min-width: 0; }
 .lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
-/* 효과 중에는 이름 옆에 효과 남은 초를 띄우고 테두리를 주 색으로 */
-.lt-buff { display: none; margin-left: 8px; padding: 1px 8px; border-radius: 6px; background: var(--primary); color: #fff; font-size: .78rem; font-variant-numeric: tabular-nums; }
-.lt-board--buff { border-color: var(--primary); }
-.lt-board--buff .lt-buff { display: inline-block; }
+/* 효과 중에는 테두리를 주 색으로 */
+.lt-board[data-state="buff"] { border-color: var(--primary); }
+/* 큰 숫자는 스위칭 60초만 센다. 코어가 발동해 세는 동안 서 있는 60은 흐리게 */
 .lt-time { font-size: 2.4rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.lt-board:is([data-state="buff"], [data-state="cool"]) .lt-time { color: var(--text-sub); opacity: .55; }
 .lt-board[data-state="ready"] .lt-time { color: rgb(var(--star)); font-size: 1.9rem; }
 .lt-bar { height: 6px; margin-top: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
 .lt-bar i { display: block; width: 100%; height: 100%; background: var(--primary); }
-.lt-btns { display: flex; flex-direction: column; gap: 6px; flex: none; }
+/* 시작·초기화를 위아래로, 스위칭은 그 옆에 두 칸 높이로 */
+.lt-btns { display: grid; grid-template-columns: auto auto; gap: 6px; flex: none; }
+.lt-btns [data-lt="swap"] { grid-column: 2; grid-row: 1 / 3; padding: 6px 12px; }
+/* 좁은 화면에서는 버튼 셋을 판 아래 한 줄로 내려 큰 숫자 자리를 지킨다 */
+@media (max-width: 520px) {
+  .lt-board:not(.lt-board--pip) { flex-wrap: wrap; }
+  .lt-board:not(.lt-board--pip) .lt-btns { width: 100%; grid-template-columns: repeat(3, 1fr); }
+  .lt-board:not(.lt-board--pip) .lt-btns [data-lt="swap"] { grid-column: auto; grid-row: auto; }
+}
 .lt-btns button {
   padding: 6px 16px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text);
   font-size: .9rem; font-weight: 800; cursor: var(--cur-pointer);
 }
 .lt-btns [data-lt="start"] { background: var(--primary); border-color: var(--primary); color: #fff; }
 .lt-btns button:hover { filter: brightness(1.08); }
-/* PIP 창 — 판 두 개가 창을 위아래로 나눠 덮는다. 배경 층 body::before보다 위에 오게 한다 */
+/* PIP 창 — 코어 판들이 창을 위아래로 나눠 덮는다. 배경 층 body::before보다 위에 오게 한다 */
 .lt-pip-body { margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg2); }
-.lt-board--pip { position: relative; z-index: 1; flex: 1; min-height: 0; max-width: none; padding: 8px 14px; border-width: 0; border-radius: 0; }
+.lt-board--pip { position: relative; z-index: 1; flex: 1; min-height: 0; max-width: none; gap: 12px; padding: 8px 14px; border-width: 0; border-radius: 0; }
+/* 작은 창은 버튼 좌우 여백을 줄여 큰 글자 발동 가능이 잘리지 않게 한다 */
+.lt-board--pip .lt-btns button { padding: 5px 10px; }
 .lt-board--pip + .lt-board--pip { border-top-width: 1.5px; }
 .lt-board--pip[data-state="ready"] { border-width: 2px; }
 .sb-nav__icon--px { image-rendering: pixelated; }

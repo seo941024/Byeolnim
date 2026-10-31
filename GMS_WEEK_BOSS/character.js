@@ -17,6 +17,7 @@ function openCharModal(idx = -1) {
   document.getElementById('inpName').value  = ch ? ch.name  : '';
   document.getElementById('inpLevel').value = ch ? ch.level : '';
   document.getElementById('inpWorld').value = ch?.fetched?.world || '';
+  syncWorldDd();
   document.getElementById('inpJobSearch').value = '';
   document.getElementById('lkName').value = ch ? ch.name : '';
   document.getElementById('lkResult').innerHTML = '';
@@ -765,3 +766,34 @@ async function exportCharCard(idx) {
 
 renderCharInfo();
 refreshStaleChars();
+
+
+/* 직접 입력의 서버 고르기 — 기본 select는 칸마다 그림을 못 넣어서, 숨겨 둔 select(#inpWorld)와 값을 맞추는 목록을 따로 그린다.
+   값을 읽고 쓰는 쪽은 그대로 #inpWorld를 쓴다 */
+function syncWorldDd() {
+  const sel = document.getElementById('inpWorld'); if (!sel) return;
+  let dd = document.getElementById('inpWorldDd');
+  if (!dd) {
+    sel.hidden = true;
+    dd = document.createElement('div'); dd.id = 'inpWorldDd'; dd.className = 'world-dd';
+    dd.innerHTML = '<button type="button" class="world-dd__btn" aria-haspopup="listbox"></button><div class="world-dd__list" role="listbox" hidden></div>';
+    sel.after(dd);
+    const btn = dd.querySelector('.world-dd__btn'), list = dd.querySelector('.world-dd__list');
+    const opt = (o, indent) => {
+      const src = o.value ? 'images/world_px/' + o.value + '.png' : '';
+      return `<button type="button" class="world-dd__opt${indent ? ' is-sub' : ''}" role="option" data-v="${o.value}">${src ? `<img src="${src}" alt="">` : '<span class="world-dd__none"></span>'}<span>${escHtml(o.textContent)}</span></button>`;
+    };
+    list.innerHTML = [...sel.children].map(c => c.tagName === 'OPTGROUP'
+      ? `<div class="world-dd__grp">${escHtml(c.label)}</div>` + [...c.children].map(o => opt(o, true)).join('')
+      : opt(c, false)).join('');
+    btn.addEventListener('click', () => { list.hidden = !list.hidden; });
+    list.addEventListener('click', e => {
+      const b = e.target.closest('.world-dd__opt'); if (!b) return;
+      sel.value = b.dataset.v; list.hidden = true; syncWorldDd();
+    });
+    document.addEventListener('click', e => { if (!dd.contains(e.target)) list.hidden = true; });
+  }
+  const o = sel.selectedOptions[0], v = sel.value, src = v ? 'images/world_px/' + v + '.png' : '';
+  dd.querySelector('.world-dd__btn').innerHTML = `${src ? `<img src="${src}" alt="">` : ''}<span>${escHtml(o ? o.textContent : '선택 안 함')}</span><span class="world-dd__arrow">▾</span>`;
+  dd.querySelectorAll('.world-dd__opt').forEach(b => b.classList.toggle('is-cur', b.dataset.v === v));
+}

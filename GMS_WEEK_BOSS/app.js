@@ -107,6 +107,8 @@ function navigateTo(sec, fromHistory = false) {
   const btn = document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
   setActive(document.querySelectorAll('.sb-nav__item'), btn);
   setActive(document.querySelectorAll('.sec'), document.getElementById('sec-' + sec));
+  // PC에서는 홈일 때 사이드바를 빼고, 메뉴에 들어가면 펼쳐 둔다. style.css body.on-home
+  document.body.classList.toggle('on-home', sec === 'home');
   // 시뮬레이터·이벤트 게임 공략 묶음 안의 메뉴가 열리면 묶음도 펼치고 머리를 강조한다
   const grp = btn?.closest('.sb-group');
   setActive(document.querySelectorAll('.sb-group'), grp, 'has-active');
@@ -160,25 +162,11 @@ window.addEventListener('popstate', e => {
 
 /* ── 사이드바 ──
    모바일(≤768px): 햄버거로 여닫는 드로어(sidebar-open).
-   PC: 늘 숨겨 두고, 화면 왼쪽 끝에 마우스를 대면 튀어나오고(sidebar-peek) 벗어나면 다시 숨는다.
-   항상 펼쳐 두는 고정 기능은 지웠다 */
+   PC: 홈에서는 띄우지 않고, 메뉴에 들어가면 늘 펼쳐 둔다. 홈 카드에 메뉴가 다 있어서다. navigateTo의 body.on-home */
 function closeSidebar() {
-  document.body.classList.remove('sidebar-open', 'sidebar-peek');
+  document.body.classList.remove('sidebar-open');
 }
-(() => {
-  try { localStorage.removeItem('gms_sidebar_pinned'); } catch (e) {}   // 지운 고정 기능이 남긴 값
-
-  const hot = document.createElement('div');
-  hot.className = 'sidebar-hotzone';
-  document.body.appendChild(hot);
-  let hideTimer = null;
-  const peek = () => { clearTimeout(hideTimer); document.body.classList.add('sidebar-peek'); };
-  const unpeek = () => { clearTimeout(hideTimer); hideTimer = setTimeout(() => document.body.classList.remove('sidebar-peek'), 250); };
-  hot.addEventListener('mouseenter', peek);
-  const sb = document.querySelector('.sidebar');
-  sb?.addEventListener('mouseenter', () => { if (document.body.classList.contains('sidebar-peek')) peek(); });
-  sb?.addEventListener('mouseleave', unpeek);
-})();
+try { localStorage.removeItem('gms_sidebar_pinned'); } catch (e) {}   // 지운 고정 기능이 남긴 값
 document.getElementById('btnHamburger')?.addEventListener('click', () => {
   document.body.classList.toggle('sidebar-open');
 });

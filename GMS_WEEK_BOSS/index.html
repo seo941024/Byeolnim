@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261031n" />
+  <link rel="stylesheet" href="style.css?v=20261031z" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
   <link rel="icon" href="images/etc/MapleStory_logo.png" type="image/png" />
@@ -86,8 +86,8 @@
         </div>
         <div class="crystal-bar__track"><div class="crystal-bar__fill" id="totalCrystalFill" style="width:0%"></div></div>
         <div class="crystal-bar__detail">
-          <span class="crystal-bar__type"><img src="images/icons/daily.webp" class="crystal-icon" alt=""><span class="icon-lbl"><span id="totalCrystalWeekly">0</span>개</span></span>
-          <span class="crystal-bar__type"><img src="images/icons/monthly.webp" class="crystal-icon" alt=""><span class="icon-lbl"><span id="totalCrystalMonthly">0</span>개</span></span>
+          <span class="crystal-bar__type"><img src="images/official/item/crystal_daily.png" class="crystal-icon" alt=""><span class="icon-lbl"><span id="totalCrystalWeekly">0</span>개</span></span>
+          <span class="crystal-bar__type"><img src="images/official/item/crystal_monthly.png" class="crystal-icon" alt=""><span class="icon-lbl"><span id="totalCrystalMonthly">0</span>개</span></span>
         </div>
       </div>
       <div class="sb-weekmeso">
@@ -126,10 +126,10 @@
         </button>
         <div class="sb-group__list">
           <button class="sb-nav__item" data-sec="boss">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/daily.webp" alt=""></span><span>보스 수익 계산기</span>
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/official/item/crystal_daily.png" alt=""></span><span>보스 수익 계산기</span>
       </button>
           <button class="sb-nav__item" data-sec="hexa">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" alt=""></span><span>헥사 계산기</span>
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/official/item/sol_erda_fragment.png" alt=""></span><span>헥사 계산기</span>
       </button>
           <!-- 장비 교체 비교 — 2026-09-17 사용자 요청으로 내림. gearcompare.js/
                data_gearcompare.js 파일은 남겨뒀으니 다시 켜려면 이 주석만 풀면 됨.
@@ -180,7 +180,7 @@
       </button>
           <!-- 의문의 결계 시뮬레이터 — 2026-10-30 잠시 숨겼다가 게임 원본 그림으로 바꾼 뒤 지수 요청으로 다시 켬 -->
           <button class="sb-nav__item" data-sec="mysticseal">
-        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/mysticseal/official/icon.png" alt="" onerror="this.style.display='none'"></span><span>의문의 결계 시뮬레이터</span>
+        <span class="sb-nav__icon-wrap"><img class="sb-nav__icon" src="images/mysticseal/official/inventory_legendary.png" alt="" onerror="this.style.display='none'"></span><span>의문의 결계 시뮬레이터</span>
       </button>
         </div>
       </div>
@@ -307,7 +307,7 @@
               <input class="inp" id="hxHaveSE" type="number" value="0" min="0" max="30" placeholder="0" />
             </div>
             <div class="hexa-row">
-              <span class="hexa-label"><span class="hexa-label__icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-node-icon" alt=""></span>보유 솔 에르다 조각</span>
+              <span class="hexa-label"><span class="hexa-label__icon-wrap"><img src="images/official/item/sol_erda_fragment.png" class="hx-node-icon" alt=""></span>보유 솔 에르다 조각</span>
               <input class="inp" id="hxHaveSEF" type="number" value="0" min="0" placeholder="0" />
             </div>
           </div>
@@ -900,13 +900,13 @@
 <script src="data_liberation.js?v=20261031a"></script>
 <script src="starforce.js?v=20261030a"></script>
 <script src="data_exp.js?v=20261002a"></script>
-<script src="app.js?v=20261031b"></script>
+<script src="app.js?v=20261031z"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261030a"></script>
 <script src="character.js?v=20261031v"></script>
 <!-- 에르다 링크 화면. 데이터 data_erdalink.js는 두 직업으로 헥사 탭을 열 때만 받는다. hexa.js가 부르므로 그 앞에 둔다 -->
-<script src="erdalink.js?v=20261030c"></script>
-<script src="hexa.js?v=20261030c"></script>
+<script src="erdalink.js?v=20261031z"></script>
+<script src="hexa.js?v=20261031z"></script>
 <!-- <script src="data_gearcompare.js?v=20260916a"></script> 장비 교체 비교 — 내림
 <script src="gearcompare.js?v=20261031u"></script> -->
 <!-- <script src="hyperstat.js?v=20261031u"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->

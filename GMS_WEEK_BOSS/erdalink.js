@@ -360,7 +360,7 @@ function _elRefresh() {
 const _elFmtN = n => Math.round(n).toLocaleString();
 const _EL_ICON = {
   se:   '<span class="hx-res-icon-wrap"><img src="images/icons/Use_Sol_Erda.png" class="hx-res-icon" alt=""></span>',
-  sef:  '<span class="hx-res-icon-wrap"><img src="images/icons/Etc_Sol_Erda_Fragment_(Full_Size).png" class="hx-res-icon" alt=""></span>',
+  sef:  '<span class="hx-res-icon-wrap"><img src="images/official/item/sol_erda_fragment.png" class="hx-res-icon" alt=""></span>',
   meso: '<span class="hx-res-icon-wrap"><img src="images/icons/meso.webp" class="hx-res-icon" alt=""></span>',
 };
 function _elRow(label, val, icon) {

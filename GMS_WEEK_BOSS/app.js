@@ -479,7 +479,7 @@ function renderBossTable() {
   const cp  = document.getElementById('btnCrystalCount');
 
   const weekRow = document.getElementById('bossWeekRow');
-  const countHtml = (w, m) => `<span class="cc-item"><img src="images/icons/weekly.webp" alt="">${w}개</span><span class="cc-item"><img src="images/icons/monthly.webp" alt="">${m}개</span>`;
+  const countHtml = (w, m) => `<span class="cc-item"><img src="images/official/item/crystal_weekly.png" alt="">${w}개</span><span class="cc-item"><img src="images/official/item/crystal_monthly.png" alt="">${m}개</span>`;
   if (!ch) {
     nm.textContent = '캐릭터를 선택하세요';
     cp.innerHTML = countHtml(0, 0);

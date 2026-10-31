@@ -649,7 +649,8 @@ textarea, [contenteditable="true"] { cursor: text; }
    훨씬 작아 보인다는 지적을 받아 원본 크기에 가깝게 올린다.
    rem이라 글자 크기를 키우면 아이콘도 같이 커진다(고정 px이라 글씨만 커졌을 때
    상대적으로 더 작아 보이던 문제도 같이 해결된다). */
-.crystal-icon { width: 1.5rem; height: 1.5rem; object-fit: contain; vertical-align: middle; }
+/* 결정석·연마석 아이콘은 게임 원본 크기 그대로 */
+.crystal-icon { width: auto; height: auto; vertical-align: middle; }
 .crystal-bar__label { font-size: .72rem; color: var(--text-sub); font-weight: 700; }
 .crystal-bar__count { font-size: .72rem; font-weight: 800; color: var(--text); }
 .crystal-bar__track {
@@ -704,19 +705,19 @@ textarea, [contenteditable="true"] { cursor: text; }
   box-shadow: 0 4px 16px rgba(0,0,0,.4), 0 0 12px rgba(var(--star),.08);
   text-shadow: 0 0 8px rgba(var(--star),.35);
 }
-/* 가장 큰 아이콘(38px)이 들어가고도 남을 만큼 — 좁으면 아이콘이 그릇을 벗어나
+/* 가장 큰 아이콘인 데스티니 무기 42×41이 원본 크기로 들어가는 상자 — 좁으면 아이콘이 그릇을 벗어나
    라벨을 밀어낸다 */
 .sb-nav__icon-wrap {
-  width: 40px; height: 40px; flex-shrink: 0;
+  width: 42px; height: 42px; flex-shrink: 0;
   display: inline-flex; align-items: center; justify-content: center;
 }
 /* ── nav 아이콘 크기 ──
-   그림마다 원본 픽셀 크기 그대로 보여주고, 40px 상자(.sb-nav__icon-wrap)보다
-   큰 것만 줄인다 — 작은 원본을 억지로 키우면 도트가 뭉개져서(예: 28px→32px)
+   그림마다 원본 픽셀 크기 그대로 보여주고, 42px 상자(.sb-nav__icon-wrap)보다
+   큰 것만 줄인다. 지금은 모든 아이콘이 42px 안이라 줄어드는 그림이 없다 — 작은 원본을 억지로 키우면 도트가 뭉개져서(예: 28px→32px)
    흐려 보였던 문제 때문. width/height를 auto로 두고 max-width/max-height로만
    상한을 걸면, 상자가 고정폭이라 그 옆 글자 위치는 아이콘 크기와 무관하게
    항상 같은 자리에서 시작한다. */
-.sb-nav__icon { object-fit: contain; width: auto; height: auto; max-width: 40px; max-height: 40px; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
+.sb-nav__icon { object-fit: contain; width: auto; height: auto; max-width: 42px; max-height: 42px; transition: transform .25s cubic-bezier(.3,1.6,.5,1); }
 .sb-nav__item:hover .sb-nav__icon { transform: scale(1.14) rotate(-6deg); }
 .sb-nav__item.active .sb-nav__icon { filter: drop-shadow(0 0 6px rgba(var(--star),.55)); }
 .sb-nav__item.active::before {
@@ -812,7 +813,7 @@ textarea, [contenteditable="true"] { cursor: text; }
    여기선 가로 한 줄에 끼워 넣는 것이라 필요 없다. */
 .cg-weekrow--inline { margin-top: 0; padding-top: 0; border-top: none; gap: 6px; }
 .boss-crystal-count { display: flex; align-items: center; gap: 12px; }
-.boss-crystal-count img { width: 22px; height: 22px; object-fit: contain; }
+.boss-crystal-count img { width: auto; height: auto; }
 .boss-crystal-count .cc-item { display: flex; align-items: center; gap: 5px; font-size: 1.1rem; font-weight: 800; color: var(--text); }
 .pill { padding: 5px 16px; border-radius: var(--radius-pill); font-size: .76rem; font-weight: 800; }
 .pill--red { background: var(--danger-l); color: var(--danger); cursor: var(--cur-pointer); transition: .15s; border: 1px solid transparent; }
@@ -1080,7 +1081,8 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
 
 /* ── LIBERATION ── */
 .lib-tabs { display: flex; gap: 0; margin-bottom: 16px; border: 1.5px solid var(--border); border-radius: 12px; overflow: hidden; }
-.lib-tab__icon { width: 40px; height: 40px; object-fit: contain; margin-right: 10px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(var(--star),.6)); }
+/* 무기 아이콘은 게임 원본 크기 그대로. 37×36, 42×41, 37×38로 서로 다르다 */
+.lib-tab__icon { width: auto; height: auto; margin-right: 10px; flex-shrink: 0; filter: drop-shadow(0 0 6px rgba(var(--star),.6)); }
 .lib-tab {
   flex: 1; display: inline-flex; align-items: center; justify-content: center;
   padding: 14px 20px; border-radius: 0;
@@ -1089,6 +1091,11 @@ select optgroup { background: var(--bg2); color: var(--text-sub); }
   border: none; border-right: 1.5px solid var(--border); transition: .15s;
 }
 .lib-tab:last-child { border-right: none; }
+/* 좁은 화면에서는 아이콘을 글자 위로 올리고 여백을 줄여 세 탭이 폭 안에 다 들어가게 한다. 아이콘은 줄이지 않는다 */
+@media (max-width: 520px) {
+  .lib-tab { min-width: 0; flex-direction: column; gap: 6px; padding: 10px 4px; font-size: .85rem; }
+  .lib-tab__icon { margin-right: 0; }
+}
 .lib-tab:hover { background: rgba(var(--hue),.1); color: var(--primary); }
 .lib-tab.active { background: var(--btn); color: var(--on-btn); box-shadow: none; }
 .lib-panel { display: none; flex-direction: column; gap: 14px; }
@@ -2932,7 +2939,7 @@ body::before {
 .home-mine .sb-weekmeso__val { font-size: 1.3rem; }
 /* 홈 결정석 줄의 일간·월간 결정석 그림은 사이드바보다 조금 크게. 너무 작다는 지수 의견, 사이드바는 그대로 */
 .home-mine .crystal-bar__type { gap: 6px; font-size: .86rem; }
-.home-mine .crystal-icon { width: 2rem; height: 2rem; }
+.home-mine .crystal-icon { width: auto; height: auto; }
 /* 769~1099px — 메소 칸 둘을 옆으로 놓으면 칸이 좁아 금액이 서너 줄로 쪼개진다.
    [캐릭터 + 추가 | 결정석 수입] / [명찰 | 결정석 막대] / [명찰 | 주간 수익] / [명찰 | 월간 수익]으로 쌓는다 */
 @media (min-width: 769px) and (max-width: 1099px) {
@@ -3484,8 +3491,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .wc-item:hover { background: var(--bg-hover); }
 /* 아이콘을 고정폭 상자(사이드바 nav와 동일한 패턴)에 넣어서, 그림 크기가
    제각각이어도 옆 텍스트는 항상 같은 위치에서 시작하게 한다. */
-.wc-item__img-wrap { width: 32px; height: 32px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
-.wc-item__img { width: auto; height: auto; max-width: 32px; max-height: 32px; object-fit: contain; }
+/* 아이템 아이콘은 게임 원본 크기 그대로. 가장 큰 38×38, 35×39가 들어가는 40px 칸 */
+.wc-item__img-wrap { width: 40px; height: 40px; flex: none; display: inline-flex; align-items: center; justify-content: center; }
+.wc-item__img { width: auto; height: auto; }
 .wc-item__name { flex: 1 1 auto; min-width: 0; font-size: .8rem; font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wc-result { display: flex; align-items: center; gap: 14px; }
 .wc-result__img { flex: none; width: 84px; height: 84px; object-fit: contain; }
@@ -4059,7 +4067,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
    티어 그림도 도트 훈장 아이콘이라 원래 크기 그대로 두고, 높이가 31~35px로 달라 버튼 아래쪽에 맞춰 이름 줄을 가지런히 한다 */
 .ms-ico { vertical-align: middle; }
 .ms-ico--rod { width: 26px; height: 26px; margin-right: 6px; image-rendering: pixelated; }
-.ms-ico--energy { width: 35px; height: 35px; margin: -4px 6px -4px 0; image-rendering: auto; }
+/* 에너지는 게임 원본 70×70 그대로. 작은 원본이 게임 파일에 없다 */
+.ms-ico--energy { width: auto; height: auto; margin: -8px 6px -8px 0; image-rendering: auto; }
 .ms-core, .ms-th-img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-now__img { width: auto; height: auto; image-rendering: pixelated; }
 .ms-tier { justify-content: flex-end; }

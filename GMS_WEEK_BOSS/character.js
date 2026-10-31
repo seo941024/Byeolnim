@@ -403,7 +403,7 @@ function ciExpChartHtml(ch) {
 
 const CHARINFO_HEAD = `
   <div class="sec-head"><h2 class="sec-title">캐릭터 목록</h2></div>
-  <p class="dt-help">등록한 캐릭터 모음입니다.</p>`;
+  <p class="dt-help">캐릭터 카드를 등록합니다. 등록 후, 레벨/경험치량, 레벨 히스토리, 코디 컬렉션의 정보를 기록할 수 있습니다.</p>`;
 
 function renderCharInfo() {
   const box = document.getElementById('charInfoBody');

@@ -93,6 +93,7 @@ function initPolish() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">연마석 시뮬레이터</h2></div>
+    <p class="dt-help">연마석 시뮬레이션을 돌려볼 수 있습니다. 개수를 직접 지정해 확률 조정이 가능합니다.</p>
 
     <div class="sf-tabs">
       <button class="sf-tab pol-type-tab active" data-poltype="life">생명의 연마석</button>

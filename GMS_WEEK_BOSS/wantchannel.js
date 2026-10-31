@@ -154,7 +154,7 @@ function renderWantChannel() {
     <div class="sec-head">
       <h2 class="sec-title">오늘의 채널 추천</h2>
     </div>
-    <p class="dt-help">아이템별 무작위 채널 추천입니다.</p>
+    <p class="dt-help">물욕 아이템의 채널을 추천해줍니다. 활성화 된 채널을 기준으로만 추천합니다.</p>
     ${WANT_CATEGORIES.map(cat => `
       <div class="wc-category">
         <div class="wc-category__title">${cat.title}</div>

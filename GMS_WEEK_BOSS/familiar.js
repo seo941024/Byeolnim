@@ -273,6 +273,7 @@ function initFamiliar() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">패밀리어 시뮬레이터</h2></div>
+    <p class="dt-help">패밀리어 시스템 중 등급업, 목표 옵션 시뮬레이션을 돌려볼 수 있습니다.</p>
 
     <div class="sf-tabs">
       <button class="sf-tab active" data-famtab="rankup">등급업 시뮬레이터</button>

@@ -580,6 +580,7 @@ function initAddOption() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">추가 옵션 시뮬레이터</h2></div>
+    <p class="dt-help">추가옵션 목표 옵션 기댓값을 계산합니다. 현재 자신이 목표로 하는 값의 기댓값도 계산이 가능하며, 추옵 직작 탭을 통해 시뮬레이션을 돌려볼 수 있습니다.</p>
 
     <!-- 탭 -->
     <div class="sf-tabs">

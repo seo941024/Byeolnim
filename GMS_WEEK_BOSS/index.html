@@ -286,6 +286,7 @@
     <!-- ══════ 헥사 계산기 ══════ -->
     <section class="sec" id="sec-hexa">
       <div class="sec-head"><h2 class="sec-title">헥사 매트릭스 솔 에르다 계산기</h2></div>
+      <p class="dt-help">6차 스킬의 솔 에르다, 솔 에르다 조각의 예상 소모량을 예측합니다.</p>
 
       <div class="hexa-layout">
         <!-- 입력 -->
@@ -349,6 +350,7 @@
     <!-- ══════ 해방 계산기 ══════ -->
     <section class="sec" id="sec-liberation">
       <div class="sec-head"><h2 class="sec-title">무기 해방 계산기</h2></div>
+      <p class="dt-help">제네시스, 데스티니, 아스트라 무기의 해방 예상일을 계산합니다.</p>
 
       <div class="lib-tabs">
         <button class="lib-tab active" data-lib="genesis"><img src="images/icons/Eqp_Genesis_Dual_Bowguns.png" class="lib-tab__icon" alt="" onerror="this.style.display='none'">제네시스</button>
@@ -364,6 +366,7 @@
     <!-- ══════ 스타포스 시뮬레이터 ══════ -->
     <section class="sec" id="sec-starforce">
       <div class="sec-head"><h2 class="sec-title">스타포스 시뮬레이터</h2></div>
+      <p class="dt-help">스타포스의 기댓값을 계산합니다. 스타포스 직작 탭을 통해 시뮬레이션을 돌려볼 수 있습니다.</p>
       <div style="font-size:.82rem;color:var(--text-sub);margin:-4px 0 10px">
         확률·비용 계산 로직 출처: <a href="https://jaehoom.cloud" target="_blank" rel="noopener">jaehoom.cloud</a>
       </div>
@@ -498,6 +501,7 @@
     <!-- ══════ 큐브 시뮬레이터 ══════ -->
     <section class="sec" id="sec-cube">
       <div class="sec-head"><h2 class="sec-title">큐브 시뮬레이터</h2></div>
+      <p class="dt-help">원하는 목표 옵션의 기댓값을 계산합니다. 큐브 직작 탭을 통해 시뮬레이션을 돌려볼 수 있습니다.</p>
 
       <!-- 탭 -->
       <div class="sf-tabs">
@@ -617,7 +621,7 @@
       <div class="sec-head">
         <h2 class="sec-title">보스 정보</h2>
       </div>
-      <p class="dt-help">보스별 HP와 드랍 아이템, 보상 최소 딜량 정보입니다.</p>
+      <p class="dt-help">보스별 HP 테이블과 포스 요구량, 5% 요구 딜량을 확인할 수 있습니다. 보스 이미지를 클릭 시, 드랍 아이템을 확인할 수 있습니다.</p>
 
       <!-- 5% 빠른 참조 -->
       <div class="bus-panel">
@@ -899,7 +903,7 @@
 <script src="app.js?v=20261031b"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
 <script src="settings.js?v=20261030a"></script>
-<script src="character.js?v=20261031u"></script>
+<script src="character.js?v=20261031v"></script>
 <!-- 에르다 링크 화면. 데이터 data_erdalink.js는 두 직업으로 헥사 탭을 열 때만 받는다. hexa.js가 부르므로 그 앞에 둔다 -->
 <script src="erdalink.js?v=20261030c"></script>
 <script src="hexa.js?v=20261030c"></script>
@@ -908,15 +912,15 @@
 <!-- <script src="hyperstat.js?v=20261031u"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20261030b"></script>
 <script src="starforce_sim.js?v=20261027b"></script>
-<script src="cube.js?v=20261030c"></script><script src="familiar.js?v=20261031t"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031t"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261031u"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261030b"></script><script src="meundi.js?v=20261029a"></script><script src="victorypose.js?v=20261031u"></script><script src="mysticseal.js?v=20261031a"></script><script src="myutil.js?v=20261031t"></script>
-<script src="addoption.js?v=20261031t"></script><script src="bosshp.js?v=20261031f"></script>
+<script src="cube.js?v=20261030c"></script><script src="familiar.js?v=20261031v"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031v"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261031v"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261031v"></script><script src="meundi.js?v=20261031v"></script><script src="victorypose.js?v=20261031v"></script><script src="mysticseal.js?v=20261031v"></script><script src="myutil.js?v=20261031t"></script>
+<script src="addoption.js?v=20261031v"></script><script src="bosshp.js?v=20261031f"></script>
 
 <script src="dailytasks.js?v=20261031u"></script>
-<script src="wantchannel.js?v=20261031u"></script>
+<script src="wantchannel.js?v=20261031v"></script>
 <!-- 캘린더가 알림 켜기/끄기를 호출하므로 mcalendar.js보다 먼저 와야 한다 -->
 <script src="bosspush.js?v=20261027b"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->
-<script src="mcalendar.js?v=20261031u"></script>
+<script src="mcalendar.js?v=20261031v"></script>
 <!-- "앱으로 설치" 배너 -->
 <script src="pwa.js?v=20261027b"></script>
 <!-- 클라우드 저장(로그인) — state/save/showToast와 settings.js의 백업 묶음을 쓰므로 그 뒤에 와야 한다 -->

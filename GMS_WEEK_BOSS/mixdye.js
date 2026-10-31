@@ -959,7 +959,7 @@ function initMixdye() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">코디 시뮬레이터</h2></div>
-    <p class="dt-help">믹스 염색·믹스 렌즈와 캐시 코디 미리보기입니다.</p>
+    <p class="dt-help">커스텀 믹스 헤어, 커스텀 믹스 렌즈, 커스텀 피부의 비율을 설정할 수 있습니다. 코디 아이템도 미리 입어볼 수 있습니다.</p>
 
     <div class="mx-topbar">
       <div class="sf-tabs mx-sextabs">

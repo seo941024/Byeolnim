@@ -821,6 +821,7 @@ function initFrontier() {
 
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">미스틱 프론티어 계산기</h2></div>
+    <p class="dt-help">이벤트인 미스틱 프론티어 계산기입니다. 이벤트시에만 나오는 옵션인 로로 카드의 옵션이 존재합니다. 아래에는 직접 주사위의 값을 지정해 최댓값과 최솟값 등을 알 수 있습니다.</p>
 
     <!-- 위: 팀 구성 (한 화면 전체 폭) -->
     <div class="card">

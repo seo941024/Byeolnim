@@ -302,6 +302,7 @@ function initMysticSeal() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">의문의 결계 시뮬레이터</h2></div>
+    <p class="dt-help">의문의 결계 시뮬레이션을 돌려볼 수 있습니다. 결계 해제를 통해 레전드리가 나올 때까지 시뮬레이션이 가능합니다. 핵 강화를 통해 Lv. 12까지 시뮬레이션을 돌려볼 수 있습니다.</p>
     <div class="sf-tabs">
       <button class="sf-tab ms-tab active" type="button" data-mstab="draw">결계 해제</button>
       <button class="sf-tab ms-tab" type="button" data-mstab="enh">핵 강화</button>

@@ -248,6 +248,7 @@ function initMeundi() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">고!고! 사이드킥 공략</h2></div>
+    <p class="dt-help">이벤트인 고!고! 사이드킥 계산기입니다. 각 뽑기 횟수를 보고 내 덱에 비슷한 상황이 있는지, 클리어 여부를 확인할 수 있습니다.<br>레벨업: 등급이 높은 순부터 강화, 같은 등급일 경우에 빨강 > 노랑 > 검정 순으로 강화합니다.</p>
     <div class="sf-tabs">
       <button class="sf-tab active" data-mutab="sheet">치트시트</button>
       <button class="sf-tab" data-mutab="guide">가이드</button>

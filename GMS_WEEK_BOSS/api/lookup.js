@@ -4,13 +4,27 @@
    ============================================= */
 const { lookupCharacter, histKey, getRedis, pushSnapshot, snapshotOf, bad } = require('./_lib');
 
+/* 추적 등록(저장소 쓰기)만 IP당 시간당 횟수를 제한한다. 조회 자체는 막지 않는다.
+   Redis 오류 때는 제한하지 않고 통과시킨다. */
+async function underTrackLimit(redis, req) {
+  try {
+    const ip = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim() || 'unknown';
+    const k = 'rl:track:' + ip + ':' + Math.floor(Date.now() / 3600000);
+    const n = await redis.incr(k);
+    if (n === 1) await redis.expire(k, 3700);
+    return n <= 200;
+  } catch (e) { return true; }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   const name   = (req.query.name || '').trim();
   const reboot = req.query.reboot === '1';
-  const region = (req.query.region || 'na').toLowerCase();
+  /* 지역은 na/eu만 쓴다. 다른 값이 그대로 추적 키에 들어가면 저장소가 계속 불어난다 */
+  const region = String(req.query.region || 'na').toLowerCase() === 'eu' ? 'eu' : 'na';
 
   if (!name) return bad(res, 400, '캐릭터명을 입력하세요.');
+  if (name.length > 20) return bad(res, 400, '캐릭터명이 너무 깁니다.');
 
   try {
     const info = await lookupCharacter(name, reboot, region);
@@ -18,7 +32,7 @@ module.exports = async function handler(req, res) {
 
     // 추적 등록 + 즉시 스냅샷 (Redis 사용 가능할 때만)
     const redis = getRedis();
-    if (redis) {
+    if (redis && await underTrackLimit(redis, req)) {
       const key = histKey(info.name, region, reboot);
       try {
         await redis.sadd('tracked', key + '|' + region + '|' + (reboot ? 1 : 0) + '|' + info.name);

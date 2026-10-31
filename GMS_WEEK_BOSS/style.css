@@ -3616,7 +3616,6 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 
 /* ── 특수 코어 타이머 · Lethal Strike I·Fatal Strike I (myutil.js) ──
    아이콘은 32×32 도트라 정수 배율로 픽셀 그대로 키운다. 다 세면 테두리와 글자를 금색으로 바꾼다 */
-.lt-tools { display: flex; margin-bottom: 10px; }
 .lt-stack { display: flex; flex-direction: column; gap: 10px; }
 .lt-board {
   display: flex; align-items: center; gap: 16px; max-width: 520px; padding: 14px 16px; border-radius: 10px;
@@ -3627,12 +3626,27 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .lt-ico { width: 64px; height: 64px; flex: none; image-rendering: pixelated; }
 /* 효과·재발동 남은 초: 게임 버프 아이콘처럼 우측 상단에 노란 도트 숫자. 32×32 아이콘을 2배로 키웠으니 숫자도 11px 높이를 2배로 */
 .lt-buffno { position: absolute; top: 0; right: 0; display: flex; pointer-events: none; }
-.lt-buffno img { display: block; height: 22px; width: auto; image-rendering: pixelated; }
+/* 숫자판 digits.png는 0~9를 한 줄로 이어 붙인 77×11 그림. 1만 5px, 나머지는 8px 폭. 2배로 키워 숫자마다 위치만 옮긴다 */
+.lt-buffno i {
+  display: block; width: 16px; height: 22px; image-rendering: pixelated;
+  background: url("images/myutil/num/digits.png?v=20261031a") 0 0 / 154px 22px no-repeat;
+}
+.lt-buffno .lt-d1 { width: 10px; background-position-x: -16px; }
+.lt-buffno .lt-d2 { background-position-x: -26px; }
+.lt-buffno .lt-d3 { background-position-x: -42px; }
+.lt-buffno .lt-d4 { background-position-x: -58px; }
+.lt-buffno .lt-d5 { background-position-x: -74px; }
+.lt-buffno .lt-d6 { background-position-x: -90px; }
+.lt-buffno .lt-d7 { background-position-x: -106px; }
+.lt-buffno .lt-d8 { background-position-x: -122px; }
+.lt-buffno .lt-d9 { background-position-x: -138px; }
 /* 재발동을 기다리는 동안과 스위칭 중에는 게임의 회색 그림, 효과 중과 다시 발동할 수 있으면 컬러 */
 .lt-ico--off, .lt-board:is([data-state="cool"], [data-state="swap"]) .lt-ico--on { display: none; }
 .lt-board:is([data-state="cool"], [data-state="swap"]) .lt-ico--off { display: block; }
 .lt-main { flex: 1; min-width: 0; }
-.lt-name { font-size: .9rem; font-weight: 800; color: var(--text-sub); }
+.lt-name { display: flex; align-items: center; gap: 8px; font-size: .9rem; font-weight: 800; color: var(--text-sub); }
+/* 코어마다 그 코어 하나만 띄우는 PIP 버튼. 이름 옆에 작게 */
+.lt-name .lt-pip { padding: 1px 8px; border-radius: 6px; font-size: .72rem; }
 /* 효과 중에는 테두리를 주 색으로 */
 .lt-board[data-state="buff"] { border-color: var(--primary); }
 /* 큰 숫자는 스위칭 60초만 센다. 코어가 발동해 세는 동안 서 있는 60은 흐리게 */
@@ -3656,12 +3670,12 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .lt-btns [data-lt="start"] { background: var(--primary); border-color: var(--primary); color: #fff; }
 .lt-btns button:hover { filter: brightness(1.08); }
-/* PIP 창 — 코어 판들이 창을 위아래로 나눠 덮는다. 배경 층 body::before보다 위에 오게 한다 */
+/* PIP 창 — 코어 판 하나가 창 전체를 덮는다. 배경 층 body::before보다 위에 오게 한다 */
 .lt-pip-body { margin: 0; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background: var(--bg2); }
 .lt-board--pip { position: relative; z-index: 1; flex: 1; min-height: 0; max-width: none; gap: 12px; padding: 8px 14px; border-width: 0; border-radius: 0; }
 /* 작은 창은 버튼 좌우 여백을 줄여 큰 글자 발동 가능이 잘리지 않게 한다 */
 .lt-board--pip .lt-btns button { padding: 5px 10px; }
-.lt-board--pip + .lt-board--pip { border-top-width: 1.5px; }
+.lt-board--pip[data-state="ready"] .lt-time { font-size: 1.6rem; }
 .lt-board--pip[data-state="ready"] { border-width: 2px; }
 .sb-nav__icon--px { image-rendering: pixelated; }
 

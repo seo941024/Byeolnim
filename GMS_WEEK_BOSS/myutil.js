@@ -7,11 +7,13 @@
      큰 숫자로 센다. 큰 숫자와 막대는 이 스위칭 60초만 센다
    - 효과 시간과 재발동 시간은 큰 숫자 없이 아이콘 우측 상단 숫자로만 보여 준다, 지수 요청. 효과 중에는 컬러 아이콘에 효과 남은 초,
      효과가 끝나면 회색 아이콘에 재발동까지 남은 초. 숫자 그림은 GMS v.270 UI/Basic.img/ItemNoSecond,
-     게임 버프 시간 숫자와 픽셀까지 같은 그림이다. images/myutil/num/<0~9>.png
+     게임 버프 시간 숫자와 픽셀까지 같은 그림이다. 0~9를 한 줄로 이어 붙인 images/myutil/num/digits.png 한 장을 CSS 배경으로 두고
+     숫자마다 위치만 옮긴다. 숫자가 바뀔 때마다 새 그림을 끼우면 그림이 뜨기 전 한 프레임이 비어 점멸해 보인다
    - 코어마다 타이머는 하나이고 코어끼리는 따로 돈다. 시작과 스위칭은 서로를 덮어쓴다. 초기화는 멈추고 처음으로 되돌린다
-   - 키보드: Lethal Strike I은 S 시작·R 초기화·W 스위칭, Fatal Strike I은 D 시작·F 초기화·E 스위칭.
-     한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다
-   - PIP모드: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 이 화면과 작은 창이 같은 타이머를 보여 준다.
+   - 키보드: Space 시작, Esc 초기화, R 스위칭, 지수 요청. 한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다.
+     PIP 창에서는 그 창의 코어에, 이 화면에서는 지금 코어에 적용한다. 지금 코어는 마지막으로 버튼을 누르거나 PIP를 띄운 코어다
+   - PIP: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 특수 코어는 하나만 낄 수 있어서 코어마다 PIP 버튼을 두고
+     창에는 그 코어 하나만 띄운다, 지수 요청. 브라우저는 PIP 창을 하나만 허락하므로 다른 코어를 띄우면 앞 창이 닫힌다.
      키보드는 그 창을 눌러 둔 동안만 받는다. 게임 창을 누르면 키는 게임이 가져간다
    - 남은 시간은 끝나는 시각에서 지금 시각을 빼서 구한다. 게임 창이 앞에 있으면 브라우저가 가려진 탭의 타이머를 늦추므로,
      PIP 창이 열려 있으면 그 창의 타이머로도 다시 그린다
@@ -24,22 +26,25 @@
    ═══════════════════════════════════════════════════════════ */
 
 const LT_TICK_MS = 100;
-const LT_NUM = 'images/myutil/num/';
+const LT_DIGITS = 'images/myutil/num/digits.png?v=20261031a';
 const LT_SWAP_SEC = 60;
+const LT_KEYS = { Space: 'start', Escape: 'reset', KeyR: 'swap' };
 // sec: 재발동 시간, buff: 효과 시간. end: 끝나는 시각(ms), 0이면 멈춘 상태. mode: 'skill' 발동 뒤, 'swap' 스위칭 뒤. done: 다 센 뒤
 const LT_TIMERS = [
-  { id: 'lethal', name: 'Lethal Strike I', sec: 60, buff: 10, startKey: 'KeyS', resetKey: 'KeyR', swapKey: 'KeyW',
+  { id: 'lethal', name: 'Lethal Strike I', sec: 60, buff: 10,
     icon: 'images/myutil/lethal_strike.png?v=20261031a', iconOff: 'images/myutil/lethal_strike_disabled.png?v=20261031a',
     end: 0, mode: 'skill', done: false },
-  { id: 'fatal', name: 'Fatal Strike I', sec: 30, buff: 4, startKey: 'KeyD', resetKey: 'KeyF', swapKey: 'KeyE',
+  { id: 'fatal', name: 'Fatal Strike I', sec: 30, buff: 4,
     icon: 'images/myutil/fatal_strike.png?v=20261031a', iconOff: 'images/myutil/fatal_strike_disabled.png?v=20261031a',
     end: 0, mode: 'skill', done: false },
 ];
 
+let _ltCur = LT_TIMERS[0];   // 이 화면 키보드가 움직이는 지금 코어
 let _ltPipWin = null;     // 열려 있는 작은 창
 const _ltTimers = new Map();   // 창 → setInterval 번호
 
 function _ltBoardHtml(t, pip) {
+  const pipBtn = !pip && window.documentPictureInPicture ? '<button class="lt-pip" type="button" data-lt="pip">PIP</button>' : '';
   return `<div class="lt-board${pip ? ' lt-board--pip' : ''}" data-lt-id="${t.id}" data-state="idle">
       <span class="lt-ico-wrap">
         <img class="lt-ico lt-ico--on" src="${t.icon}" alt="">
@@ -47,7 +52,7 @@ function _ltBoardHtml(t, pip) {
         <span class="lt-buffno"></span>
       </span>
       <div class="lt-main">
-        <div class="lt-name">${t.name}</div>
+        <div class="lt-name">${t.name}${pipBtn}</div>
         <div class="lt-time">${LT_SWAP_SEC}</div>
         <div class="lt-bar"><i></i></div>
       </div>
@@ -57,10 +62,6 @@ function _ltBoardHtml(t, pip) {
         <button type="button" data-lt="swap">스위칭</button>
       </div>
     </div>`;
-}
-
-function _ltBoardsHtml(pip) {
-  return LT_TIMERS.map(t => _ltBoardHtml(t, pip)).join('');
 }
 
 function _ltBoards(t) {
@@ -90,7 +91,7 @@ function _ltRender() {
       const no = b.querySelector('.lt-buffno');
       if (no.dataset.v !== icoText) {
         no.dataset.v = icoText;
-        no.innerHTML = [...icoText].map(n => `<img src="${LT_NUM}${n}.png?v=20261031a" alt="">`).join('');
+        no.innerHTML = [...icoText].map(n => `<i class="lt-d${n}"></i>`).join('');
       }
       b.querySelector('.lt-bar i').style.width = pct + '%';
     });
@@ -132,31 +133,38 @@ function _ltReset(t) {
   _ltRender();
 }
 
+function _ltDo(t, act) {
+  if (act === 'start') _ltStart(t);
+  else if (act === 'swap') _ltSwap(t);
+  else if (act === 'reset') _ltReset(t);
+  else if (act === 'pip') _ltPip(t).catch(err => console.warn('[myutil] PiP 실패', err));
+}
+
 function _ltOnClick(e) {
   const b = e.target.closest('[data-lt]');
   const t = b && LT_TIMERS.find(x => x.id === b.closest('.lt-board')?.dataset.ltId);
   if (!t) return;
-  if (b.dataset.lt === 'start') _ltStart(t);
-  else if (b.dataset.lt === 'swap') _ltSwap(t);
-  else _ltReset(t);
+  _ltCur = t;
+  // 누른 버튼에 초점이 남으면 다음 Space가 그 버튼을 한 번 더 누른다
+  b.blur();
+  _ltDo(t, b.dataset.lt);
 }
 
-// 코어마다 시작·초기화·스위칭 키가 따로 있다. 누르고 있어 반복되는 입력은 버린다
-function _ltOnKey(e) {
+// Space 시작, Esc 초기화, R 스위칭. 누르고 있어 반복되는 입력은 버린다
+function _ltOnKey(e, t) {
   if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
-  const t = LT_TIMERS.find(x => [x.startKey, x.resetKey, x.swapKey].includes(e.code));
-  if (!t) return;
+  const act = LT_KEYS[e.code];
+  if (!act) return;
   e.preventDefault();
-  if (t.startKey === e.code) _ltStart(t);
-  else if (t.swapKey === e.code) _ltSwap(t);
-  else _ltReset(t);
+  _ltDo(t, act);
 }
 
-async function _ltPip() {
+// 코어 하나만 띄운다. 다른 코어를 띄우면 앞 창은 닫힌다
+async function _ltPip(t) {
   if (!window.documentPictureInPicture) return;
   documentPictureInPicture.window?.close();
   // preferInitialWindowPlacement가 없으면 브라우저가 지난번 창 크기를 되살린다
-  const win = await documentPictureInPicture.requestWindow({ width: 400, height: 220, preferInitialWindowPlacement: true });
+  const win = await documentPictureInPicture.requestWindow({ width: 400, height: 120, preferInitialWindowPlacement: true });
   const d = win.document;
   d.head.innerHTML = '<meta charset="utf-8">' + [...document.styleSheets].filter(ss => ss.href).map(ss => `<link rel="stylesheet" href="${ss.href}">`).join('');
   const theme = document.documentElement.getAttribute('data-theme');
@@ -166,16 +174,16 @@ async function _ltPip() {
   d.body.style.fontFamily = document.body.style.fontFamily;
   if (document.body.dataset.font) d.body.dataset.font = document.body.dataset.font;
   d.body.className = 'lt-pip-body';
-  d.body.innerHTML = _ltBoardsHtml(true);
+  d.body.innerHTML = _ltBoardHtml(t, true);
   d.body.addEventListener('click', _ltOnClick);
-  win.addEventListener('keydown', _ltOnKey);
+  win.addEventListener('keydown', e => _ltOnKey(e, t));
   win.addEventListener('pagehide', () => {
     if (_ltPipWin !== win) return;
     _ltTimers.delete(win);
     _ltPipWin = null;
   });
   _ltPipWin = win;
-  if (LT_TIMERS.some(t => t.end)) _ltStartTimers();
+  if (LT_TIMERS.some(x => x.end)) _ltStartTimers();
   _ltRender();
 }
 
@@ -185,24 +193,20 @@ function initMyUtil() {
   sec.dataset.inited = '1';
   sec.innerHTML = `
     <div class="sec-head"><h2 class="sec-title">특수 코어 타이머</h2></div>
-    <p class="dt-help">코어가 발동하면 시작을, 코어를 뺐다 끼우면 스위칭을 누릅니다. 효과 중에는 컬러 아이콘에 효과 남은 초가, 재발동을 기다리는 동안은 회색 아이콘에 남은 초가 표시되고, 스위칭 60초는 큰 숫자로 표시됩니다. Lethal Strike I은 S 시작·R 초기화·W 스위칭, Fatal Strike I은 D 시작·F 초기화·E 스위칭입니다.</p>
+    <p class="dt-help">코어가 발동하면 시작을, 코어를 뺐다 끼우면 스위칭을 누릅니다. 효과 중에는 컬러 아이콘에 효과 남은 초가, 재발동을 기다리는 동안은 회색 아이콘에 남은 초가 표시되고, 스위칭 60초는 큰 숫자로 표시됩니다. 키보드는 Space 시작, Esc 초기화, R 스위칭이며 PIP 창에서는 그 창의 코어에, 이 화면에서는 마지막으로 누른 코어에 적용됩니다.</p>
     <div class="card lt-card">
-      ${window.documentPictureInPicture ? '<div class="lt-tools"><button class="lt-pip" type="button">PIP모드</button></div>' : ''}
-      <div class="lt-stack">${_ltBoardsHtml(false)}</div>
+      <div class="lt-stack">${LT_TIMERS.map(t => _ltBoardHtml(t, false)).join('')}</div>
     </div>`;
-  sec.addEventListener('click', e => {
-    if (e.target.closest('.lt-pip')) { _ltPip().catch(err => console.warn('[myutil] PiP 실패', err)); return; }
-    _ltOnClick(e);
-  });
+  sec.addEventListener('click', _ltOnClick);
   // 이 화면의 키보드 입력. 승리 포즈 연습처럼 이 메뉴가 열려 있고, 입력칸을 고치는 중이 아니고, 모달이 없을 때만
   document.addEventListener('keydown', e => {
     if (!sec.classList.contains('active')) return;
     const tag = document.activeElement?.tagName;
     if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA') return;
     if (document.querySelector('.overlay.open, .overlay[style*="flex"]')) return;
-    _ltOnKey(e);
+    _ltOnKey(e, _ltCur);
   });
-  // 효과가 처음 뜰 때 숫자 그림이 늦게 뜨지 않게 미리 받아 둔다
-  for (let n = 0; n < 10; n++) new Image().src = `${LT_NUM}${n}.png?v=20261031a`;
+  // 숫자가 처음 뜰 때 숫자판 그림이 늦게 뜨지 않게 미리 받아 둔다. style.css의 배경 주소와 같아야 한다
+  new Image().src = LT_DIGITS;
   _ltRender();
 }

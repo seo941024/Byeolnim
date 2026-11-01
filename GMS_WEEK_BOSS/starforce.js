@@ -145,7 +145,9 @@ function sfStepInfo(cfg, s) {
   };
 }
 
-function getDestStar(star) {
+/* 파괴된 뒤 다시 강화를 시작하는 성수. 스페어로 복구하는 장비는 cfg.destStar로 정해진 성수가 된다 */
+function getDestStar(star, cfg) {
+  if (cfg && cfg.destStar != null) return cfg.destStar;
   if (star <= 14) return 0;
   if (star <= 19) return 12;
   if (star === 20) return 15;
@@ -155,7 +157,7 @@ function getDestStar(star) {
 }
 
 /* 기댓값 정확해 — 시뮬레이션 없이 마르코프 연쇄를 직접 푼다.
-   sfRunOnce와 완전히 동일한 모델이어야 한다: 실패=유지, 파괴=getDestStar로 복귀.
+   sfRunOnce와 완전히 동일한 모델이어야 한다: 실패=유지, 파괴=getDestStar로 복귀하고 cfg.spare 메소를 더 낸다.
 
    E[s] = 목표까지 남은 기대 비용이라 하면
      E[s] = c(s) + Ps·E[s+1] + Pf·E[s] + Pd·E[d(s)]
@@ -180,10 +182,10 @@ function sfExpectedExact(cfg) {
     A[s][s] += 1 - p.fail;
     if (s + 1 < to) A[s][s + 1] -= p.succ;      // s+1 === to 이면 E=0이라 항이 사라짐
     if (p.dest > 0) {
-      const d = getDestStar(s);
+      const d = getDestStar(s, cfg);
       if (d < to) A[s][d] -= p.dest;
     }
-    B[s][0] = c;
+    B[s][0] = c + p.dest * (cfg.spare || 0);   // 파괴되면 스페어 값을 한 번 더 낸다
     B[s][1] = p.dest;
     B[s][2] = 1;
   }
@@ -229,7 +231,8 @@ function sfRunOnce(cfg) {
       /* 실패 — 유지 */
     } else {
       destroys++;
-      star = getDestStar(star);
+      totalCost += cfg.spare || 0;
+      star = getDestStar(star, cfg);
     }
   }
   return { cost: totalCost, destroys };

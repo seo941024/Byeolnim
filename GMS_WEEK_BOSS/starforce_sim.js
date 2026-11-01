@@ -59,9 +59,13 @@ function _sfGetLevel()    { return Math.max(1, parseInt(document.getElementById(
 /* 목표·현재 성수는 장비 레벨의 상한을 넘을 수 없다. 확률표는 성수 0~29를
    통짜로 갖고 있어서, 막지 않으면 120제에 22성 같은 게임에 없는 조합도
    숫자만 그럴듯하게 계산돼 버린다. */
-function _sfGetFrom()     { return Math.max(0, Math.min(sfMaxStar(_sfGetLevel()), parseInt(document.getElementById('sfFrom').value) || 0)); }
+/* 성수 상한은 장비 레벨로 정해지고, 고른 장비에 따로 정한 상한이 있으면 그보다 낮출 수 있다.
+   시작 성수 하한은 장비를 받을 때의 성수다. 데스티니 무기는 22~25성. starforce_items.js */
+function _sfCap()         { const cap = sfMaxStar(_sfGetLevel()); return _sfItem?.maxStar ? Math.min(cap, _sfItem.maxStar) : cap; }
+function _sfMinFrom()     { return _sfItem?.minStar || 0; }
+function _sfGetFrom()     { return Math.max(_sfMinFrom(), Math.min(_sfCap(), parseInt(document.getElementById('sfFrom').value) || 0)); }
 function _sfGetTo()       {
-  const cap = sfMaxStar(_sfGetLevel());
+  const cap = _sfCap();
   return Math.min(cap, parseInt(document.getElementById('sfTo').value) || Math.min(22, cap));
 }
 
@@ -71,7 +75,7 @@ function _sfGetTo()       {
    되돌리거나 현재>=목표를 손보는 건 다 친 뒤(change)에 해야 한다. */
 function _sfClampMaxWhileTyping(el) {
   if (el.value === '') return;                 // 지우고 다시 치는 중이면 그대로 둔다
-  const cap = sfMaxStar(_sfGetLevel());
+  const cap = _sfCap();
   const max = el.id === 'sfFrom' ? Math.max(0, cap - 1) : cap;
   const v   = parseInt(el.value);
   if (!isNaN(v) && v > max) el.value = max;
@@ -80,16 +84,19 @@ function _sfClampMaxWhileTyping(el) {
 /* 레벨이 바뀌면 상한도 바뀌므로 입력칸의 max와 값 자체를 상한에 맞춰 잘라준다.
    max 속성만으로는 직접 타이핑을 막지 못해 값도 같이 손봐야 한다. */
 function _sfClampInputs() {
-  const cap  = sfMaxStar(_sfGetLevel());
+  const cap  = _sfCap();
   const toEl = document.getElementById('sfTo');
   const frEl = document.getElementById('sfFrom');
   if (!toEl || !frEl) return;
 
+  const lo = _sfMinFrom();
   toEl.max = cap;
+  toEl.min = lo + 1;
   frEl.max = Math.max(0, cap - 1);
+  frEl.min = lo;
 
-  let to = Math.min(cap, Math.max(1, parseInt(toEl.value) || Math.min(22, cap)));
-  let fr = Math.min(cap - 1, Math.max(0, parseInt(frEl.value) || 0));
+  let to = Math.min(cap, Math.max(lo + 1, parseInt(toEl.value) || Math.min(22, cap)));
+  let fr = Math.min(cap - 1, Math.max(lo, parseInt(frEl.value) || 0));
   if (fr >= to) fr = to - 1;          // 현재가 목표 이상이면 굴릴 게 없다
 
   toEl.value = to;
@@ -102,6 +109,7 @@ function _sfReadCfg() {
   return {
     level: _sfGetLevel(), current: _sfGetFrom(), target: _sfGetTo(),
     mvpDiscount: _sfGetMvp(), isShining: _sfGetEvent() === 'shining',
+    destStar: _sfItem?.destStar ?? null, spare: _sfItem?.spare || 0,
     stages: { ..._sfStages }
   };
 }
@@ -110,11 +118,12 @@ function _sfReadCfg() {
    장비 레벨 상한까지 계속 올릴 수 있다 — 목표는 자동 강화를 어디서 끊을지 정하는
    값이지, 손으로 더 못 올리게 막는 값이 아니다. */
 function sfEnhanceOnce(forAuto) {
-  const limit = forAuto ? _sfGetTo() : sfMaxStar(_sfGetLevel());
+  const limit = forAuto ? _sfGetTo() : _sfCap();
   if (_sfState.star >= limit) return false;
 
   const star = _sfState.star;
-  const { cost, p } = sfStepInfo(_sfReadCfg(), star);
+  const cfg = _sfReadCfg();
+  const { cost, p } = sfStepInfo(cfg, star);
   _sfState.cost += cost;
   _sfState.attempts++;
 
@@ -132,8 +141,9 @@ function sfEnhanceOnce(forAuto) {
     result = { type: 'fail', from: star, to: star, cost };
   } else {
     _sfState.destroys++;
-    nextStar = getDestStar(star);
-    result = { type: 'destroy', from: star, to: nextStar, cost };
+    nextStar = getDestStar(star, cfg);
+    _sfState.cost += cfg.spare;   // 스페어를 사서 복구하는 장비는 파괴마다 그 값을 더 낸다
+    result = { type: 'destroy', from: star, to: nextStar, cost: cost + cfg.spare };
   }
 
   _sfState.star = nextStar;
@@ -188,7 +198,7 @@ function sfRenderStarPanel(to, done) {
 
   /* 칸 수는 목표가 아니라 장비 레벨의 상한을 따른다. 목표를 25로 낮춰도
      26~30번째 칸이 빈 별로 남아 있어야 게임 강화창과 같아 보인다. */
-  const slots = Math.max(sfMaxStar(_sfGetLevel()), to);
+  const slots = Math.max(_sfCap(), to);
   /* 바로 다음에 얻을 별 한 칸을 점멸시킨다. 목표 성수와는 무관하게 "지금 도전 중인
      칸"을 가리키므로, 별이 1개면 2번째 칸이 깜빡인다. 칸을 다 채웠으면 없다. */
   const goalIdx = (star < slots) ? star : -1;
@@ -223,7 +233,7 @@ function sfRenderStarPanel(to, done) {
   /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로 확률표는 그대로 둔다(목표 달성 문구는
      왼쪽 정보 칸에 따로 뜬다). 레벨 상한까지 다 채웠을 때만 더 올릴 수 없으니 확률표를 접는다. */
   const rates = document.getElementById('sfStarRates');
-  const maxed = star >= sfMaxStar(_sfGetLevel());
+  const maxed = star >= _sfCap();
   const costEl = document.getElementById('sfSpentVal');
   if (maxed) {
     rates.innerHTML = '<div class="sfw__max">최대 성수 도달</div>';
@@ -247,7 +257,8 @@ function _sfApplyItem(item) {
   _sfItem = item;
   if (item) document.getElementById('sfLevel').value = item.lv;
   _sfClampInputs();
-  _sfState.star = Math.min(_sfState.star, sfMaxStar(_sfGetLevel()));
+  // 데스티니 무기처럼 받을 때부터 별이 있는 장비는 그 성수부터 강화한다
+  _sfState.star = Math.max(_sfMinFrom(), Math.min(_sfState.star, _sfCap()));
   sfRenderResult();
   _sfRecalcExpected();
 }
@@ -282,7 +293,7 @@ function _sfBindItems() {
    1단계 확률 위에서만 적용되므로, 켜면 슬라이더는 1에 잠기고 15~17성 슬라이더는 3까지만 간다. */
 function _sfStageRange() {
   const star = _sfState.star;
-  return star >= 15 && star <= 21 && star < sfMaxStar(_sfGetLevel()) ? (star <= 17 ? 3 : 4) : 0;
+  return star >= 15 && star <= 21 && star < _sfCap() ? (star <= 17 ? 3 : 4) : 0;
 }
 function _sfSetStage(star, v) {
   if ((_sfStages[star] || 1) === v) return;

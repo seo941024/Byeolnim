@@ -40,6 +40,7 @@ function sfBuildStageGrid() {
 
   grid.querySelectorAll('.sf-stage-sel').forEach(sel => {
     sel.addEventListener('change', () => {
+      sel.blur();
       _sfStages[+sel.dataset.star] = +sel.value;
       sfBuildStageGrid();
       sfRenderResult();     // 별 판의 파괴 확률도 바뀐 단계로
@@ -260,11 +261,13 @@ function _sfBindItems() {
     list.forEach(i => slotSel.add(new Option(i.name, SF_ITEMS.indexOf(i))));
     slotSel.disabled = !list.length;
   };
+  /* 목록을 고른 뒤에도 포커스가 select에 남아 있으면 S 단축키가 먹지 않으므로 바로 놓아준다 */
   setSel.addEventListener('change', () => {
+    setSel.blur();
     fillSlots();
     _sfApplyItem(slotSel.value === '' ? null : SF_ITEMS[+slotSel.value]);
   });
-  slotSel.addEventListener('change', () => _sfApplyItem(SF_ITEMS[+slotSel.value]));
+  slotSel.addEventListener('change', () => { slotSel.blur(); _sfApplyItem(SF_ITEMS[+slotSel.value]); });
   document.getElementById('sfLevel').addEventListener('input', () => {
     if (!_sfItem) return;
     _sfItem = null;

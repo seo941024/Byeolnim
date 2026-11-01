@@ -1232,25 +1232,26 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__num[data-white="1"] { background-position: calc(var(--n, 0) * -41px) -23px; }
 .sfw__arrow { width: 30px; height: 18px; }
 
-.sfw__stat { left: 10px; top: 310px; width: 398px; height: 150px; background: url(images/starforce/stat.png); padding: 16px 30px; display: flex; flex-direction: column; gap: 9px; }
-.sfw__row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: #aab6c2; }
-.sfw__row b { color: #fff; font-variant-numeric: tabular-nums; }
-.sfw__row--big { font-size: 12px; color: #dfe7ee; }
-.sfw__row--big b { font-size: 14px; color: #ffd429; }
+.sfw__stat { left: 10px; top: 310px; width: 398px; height: 150px; background: url(images/starforce/stat.png); padding-top: 8px; }
+.sfw__row { position: relative; height: 16px; line-height: 16px; font-size: 12px; color: #bed0d3; white-space: nowrap; }
+.sfw__row span { position: absolute; right: 221px; }
+.sfw__row b { position: absolute; left: 186px; color: #fff; font-variant-numeric: tabular-nums; }
+.sfw__row--big b { color: #ffd429; }
 .sfw__row b.is-bad { color: #ff8a8a; }
 .sfw__done { margin-top: 2px; text-align: center; color: #b8f5c4; font-size: 12px; }
 
 .sfw__prob { left: 10px; top: 463px; width: 398px; height: 70px; background: url(images/starforce/prob.png); padding-top: 11px; }
-.sfw__rate { display: flex; justify-content: center; gap: 22px; line-height: 16.5px; }
-.sfw__rate span { width: 50px; text-align: right; color: #c3cdd7; }
-.sfw__rate b { width: 62px; font-variant-numeric: tabular-nums; }
+/* 확률 칸: 이름은 160px, 값은 224px에서 왼쪽 정렬(창 좌표 - 칸 left 10px), 줄 간격 16px */
+.sfw__rate { position: relative; height: 16px; line-height: 16px; color: #bed0d3; }
+.sfw__rate span { position: absolute; left: 150px; }
+.sfw__rate b { position: absolute; left: 214px; font-variant-numeric: tabular-nums; }
 .sfw__rate--succ b { color: #8ff2a4; }
 .sfw__rate--dest b { color: #ff8a8a; }
 .sfw__max { text-align: center; line-height: 46px; color: #ffd429; font-size: 12px; }
 
-.sfw__cost { left: 10px; top: 538px; width: 398px; height: 33px; background: url(images/starforce/cost.png); display: flex; align-items: center; justify-content: center; gap: 6px; padding-left: 70px; }
-.sfw__cost img { width: 14px; height: 14px; }
-.sfw__cost span { color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
+.sfw__cost { left: 10px; top: 538px; width: 398px; height: 33px; background: url(images/starforce/cost.png); }
+.sfw__cost img { position: absolute; left: 188px; top: 10px; width: 14px; height: 14px; }
+.sfw__cost span { position: absolute; left: 206px; top: 0; line-height: 33px; color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
 
 /* 버튼 묶음 — 자바스크립트가 보이기/숨기기를 inline으로 바꾸므로 상자 없이 자식만 창 위에 얹는다 */
 .sfw__btns { display: contents !important; }

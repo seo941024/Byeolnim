@@ -10,6 +10,8 @@
      게임 버프 시간 숫자와 픽셀까지 같은 그림이다. 0~9를 한 줄로 이어 붙인 images/myutil/num/digits.png 한 장을 CSS 배경으로 두고
      숫자마다 위치만 옮긴다. 숫자가 바뀔 때마다 새 그림을 끼우면 그림이 뜨기 전 한 프레임이 비어 점멸해 보인다
    - 코어마다 타이머는 하나이고 코어끼리는 따로 돈다. 시작과 스위칭은 서로를 덮어쓴다. 초기화는 멈추고 처음으로 되돌린다
+   - 시작하면 재발동 시간이 끝날 때마다 자동으로 다시 돈다(일격필살 30초, 치명적인 일격 60초). 중지를 누를 때까지 계속 돈다, 지수 요청.
+     스위칭 60초가 끝난 뒤에는 자동으로 돌지 않고 발동 가능으로 멈춘다
    - 키보드: Space 시작, Esc 초기화, R 스위칭, 지수 요청. 한글 입력 상태에서도 되도록 글자 대신 키 자리 e.code로 본다.
      PIP 창에서는 그 창의 코어에, 이 화면에서는 지금 코어에 적용한다. 지금 코어는 마지막으로 버튼을 누르거나 PIP를 띄운 코어다
    - PIP: 승리 포즈 연습과 같은 Document Picture-in-Picture 창. 특수 코어는 하나만 낄 수 있어서 코어마다 PIP 버튼을 두고
@@ -58,6 +60,7 @@ function _ltBoardHtml(t, pip) {
       </div>
       <div class="lt-btns">
         <button type="button" data-lt="start">시작</button>
+        <button type="button" data-lt="stop">중지</button>
         <button type="button" data-lt="reset">초기화</button>
         <button type="button" data-lt="swap">스위칭</button>
       </div>
@@ -74,6 +77,11 @@ function _ltRender() {
   const now = Date.now();
   LT_TIMERS.forEach(t => {
     const total = (t.mode === 'swap' ? LT_SWAP_SEC : t.sec) * 1000;
+    // 발동 뒤 재발동 시간이 끝나면 중지할 때까지 다음 주기로 넘어간다. 탭이 가려져 틱이 늦었어도 지난 주기는 건너뛴다
+    if (t.end && t.mode === 'skill' && t.loop && t.end <= now) {
+      const period = t.sec * 1000;
+      t.end += Math.ceil((now - t.end + 1) / period) * period;
+    }
     const left = t.end ? Math.max(0, t.end - now) : 0;
     if (t.end && left === 0) { t.end = 0; t.done = true; }
     // 발동한 뒤 지난 시간이 효과 시간보다 짧으면 효과 중이다
@@ -112,6 +120,7 @@ function _ltStopTimers() {
 
 function _ltStart(t) {
   t.mode = 'skill';
+  t.loop = true;
   t.end = Date.now() + t.sec * 1000;
   t.done = false;
   _ltStartTimers();
@@ -121,13 +130,23 @@ function _ltStart(t) {
 // 코어를 뺐다 끼운 뒤 60초. 재발동을 기다리던 중이어도 처음부터 60초로 덮어쓴다
 function _ltSwap(t) {
   t.mode = 'swap';
+  t.loop = false;
   t.end = Date.now() + LT_SWAP_SEC * 1000;
   t.done = false;
   _ltStartTimers();
   _ltRender();
 }
 
+// 반복을 멈추고 처음 상태로 돌아간다
+function _ltStop(t) {
+  t.loop = false;
+  t.end = 0;
+  t.done = false;
+  _ltRender();
+}
+
 function _ltReset(t) {
+  t.loop = false;
   t.end = 0;
   t.done = false;
   _ltRender();
@@ -136,6 +155,7 @@ function _ltReset(t) {
 function _ltDo(t, act) {
   if (act === 'start') _ltStart(t);
   else if (act === 'swap') _ltSwap(t);
+  else if (act === 'stop') _ltStop(t);
   else if (act === 'reset') _ltReset(t);
   else if (act === 'pip') _ltPip(t).catch(err => console.warn('[myutil] PiP 실패', err));
 }

@@ -3692,12 +3692,10 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .lt-bar i { display: block; width: 100%; height: 100%; background: var(--primary); }
 /* 시작·초기화를 위아래로, 스위칭은 그 옆에 두 칸 높이로 */
 .lt-btns { display: grid; grid-template-columns: auto auto; gap: 6px; flex: none; }
-.lt-btns [data-lt="swap"] { grid-column: 2; grid-row: 1 / 3; padding: 6px 12px; }
-/* 좁은 화면에서는 버튼 셋을 판 아래 한 줄로 내려 큰 숫자 자리를 지킨다 */
+/* 좁은 화면에서는 버튼 넷을 판 아래 한 줄로 내려 큰 숫자 자리를 지킨다 */
 @media (max-width: 520px) {
   .lt-board:not(.lt-board--pip) { flex-wrap: wrap; }
-  .lt-board:not(.lt-board--pip) .lt-btns { width: 100%; grid-template-columns: repeat(3, 1fr); }
-  .lt-board:not(.lt-board--pip) .lt-btns [data-lt="swap"] { grid-column: auto; grid-row: auto; }
+  .lt-board:not(.lt-board--pip) .lt-btns { width: 100%; grid-template-columns: repeat(4, 1fr); }
 }
 .lt-btns button {
   padding: 6px 16px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--bg); color: var(--text);

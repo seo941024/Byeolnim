@@ -151,6 +151,7 @@ function sfRenderResult() {
   const done = _sfState.star >= to;
 
   sfRenderStarPanel(to, done);
+  _sfRenderMode();
 
   /* 창 안 "강화 정보" 칸 — 누적 메소·횟수·파괴. 게임 창에서 장비 능력치가 나오는 자리다 */
   const stat = document.getElementById('sfStats');
@@ -233,6 +234,62 @@ function sfRenderStarPanel(to, done) {
   if (costEl) costEl.textContent = fmtMeso(cost);
 }
 
+/* 창 아래쪽 "Safeguard" 버튼과 "Enhancement Mode" 슬라이더 — 지금 도전하는 성수의 단계를 바꾼다.
+   왼쪽 '파괴 단계 설정'과 같은 _sfStages를 쓰므로 어느 쪽을 바꿔도 서로 맞는다.
+   단계 4는 15~17성에서는 파괴방지, 18성부터는 가장 비싼 4번째 모드다. 모델상 파괴방지는
+   1단계 확률 위에서만 적용되므로, 켜면 슬라이더는 1에 잠기고 15~17성 슬라이더는 3까지만 간다. */
+function _sfStageRange() {
+  const star = _sfState.star;
+  return star >= 15 && star <= 21 && star < sfMaxStar(_sfGetLevel()) ? (star <= 17 ? 3 : 4) : 0;
+}
+function _sfSetStage(star, v) {
+  if ((_sfStages[star] || 1) === v) return;
+  _sfStages[star] = v;
+  sfBuildStageGrid();
+  sfRenderResult();
+  _sfRecalcExpected();
+}
+function _sfRenderMode() {
+  const sg = document.getElementById('sfSafe'), mode = document.getElementById('sfMode');
+  if (!sg || !mode) return;
+  const star = _sfState.star, max = _sfStageRange();
+  const stage = max ? (_sfStages[star] || 1) : 1;
+  const safe = max === 3 && stage === 4;
+  sg.disabled = max !== 3;
+  sg.classList.toggle('is-on', safe);
+  sg.setAttribute('aria-pressed', safe);
+  const on = max > 0 && !safe;
+  mode.classList.toggle('is-off', !on);
+  mode.setAttribute('aria-disabled', !on);
+  mode.setAttribute('aria-valuemax', max || 4);
+  mode.setAttribute('aria-valuenow', safe ? 1 : stage);
+  mode.style.setProperty('--m', safe ? 1 : stage);
+}
+function _sfBindMode() {
+  const sg = document.getElementById('sfSafe'), mode = document.getElementById('sfMode');
+  if (!sg || !mode) return;
+  const cur = () => _sfStages[_sfState.star] || 1;
+  sg.addEventListener('click', () => {
+    if (_sfStageRange() === 3) _sfSetStage(_sfState.star, cur() === 4 ? 1 : 4);
+  });
+  // 슬라이더 선은 그림 안에서 188~374px, 눈금은 62px 간격이다
+  const pick = ev => {
+    const max = _sfStageRange();
+    if (!max || cur() === 4 && max === 3) return;
+    const x = (ev.clientX - mode.getBoundingClientRect().left) / mode.getBoundingClientRect().width * 402;
+    _sfSetStage(_sfState.star, Math.max(1, Math.min(max, Math.round((x - 188) / 62) + 1)));
+  };
+  mode.addEventListener('pointerdown', ev => { mode.setPointerCapture(ev.pointerId); pick(ev); });
+  mode.addEventListener('pointermove', ev => { if (mode.hasPointerCapture(ev.pointerId)) pick(ev); });
+  mode.addEventListener('keydown', ev => {
+    const d = { ArrowLeft: -1, ArrowDown: -1, ArrowRight: 1, ArrowUp: 1 }[ev.key];
+    const max = _sfStageRange();
+    if (!d || !max || cur() === 4 && max === 3) return;
+    ev.preventDefault();
+    _sfSetStage(_sfState.star, Math.max(1, Math.min(max, cur() + d)));
+  });
+}
+
 /* 자동 강화 — 80ms마다 한 번씩 누른다. 화면은 sfEnhanceOnce가 매번 그린다 */
 const _sfAuto = createAutoRunner({
   btnId: 'sfBtnAuto', idleLabel: '자동 강화 [A]', runLabel: '■ 중지 [A]',
@@ -266,6 +323,7 @@ function initStarforce() {
   // 시작부터 입력칸의 max가 레벨 상한을 따르도록 한 번 맞춰둔다
   _sfClampInputs();
   sfBuildStageGrid();
+  _sfBindMode();
   _sfResetState();   // 처음 열었을 때도 별 판을 그려둔다
 
   // 토글 그룹 처리. .sf-toggle-group도 추옵 시뮬레이터가 같이 쓰므로 섹션 안으로 한정한다

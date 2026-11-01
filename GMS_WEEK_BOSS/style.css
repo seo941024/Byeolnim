@@ -1253,7 +1253,7 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__btns { display: contents !important; }
 .sfw__sub, .sfw__go { position: absolute; padding: 0; cursor: var(--cur-pointer); }
 .sfw__sub {
-  top: 600px; width: 129px; height: 32px; border: 1px solid #0a0f14; border-radius: 6px;
+  top: 634px; width: 129px; height: 30px; border: 1px solid #0a0f14; border-radius: 6px;
   background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12.5px; font-weight: normal;
 }
 .sfw__sub:first-child { left: 76px; }
@@ -1261,8 +1261,30 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__sub:hover { filter: brightness(1.15); }
 .sfw__sub.sbtn--danger { background: linear-gradient(#a24545, #6b2626); color: #fff; }
 .sfw__go {
-  left: 147px; top: 673px; width: 129px; height: 35px; border: 0; background: url(images/starforce/btn.png) no-repeat; font-size: 0;
+  left: 147px; top: 675px; width: 129px; height: 35px; border: 0; background: url(images/starforce/btn.png) no-repeat; font-size: 0;
 }
+/* Safeguard 버튼·Enhancement Mode 슬라이더 — 위치와 크기는 게임 원본. 슬라이더 손잡이만 우리가 그린다 */
+.sfw__sg {
+  left: 215px; top: 579px; width: 195px; height: 22px; padding: 0; border: 0;
+  background: url(images/starforce/sg.png) no-repeat; cursor: var(--cur-pointer); font-size: 0;
+}
+.sfw__sg:hover:not(:disabled) { background-image: url(images/starforce/sg_hover.png); }
+.sfw__sg:active:not(:disabled) { background-image: url(images/starforce/sg_press.png); }
+.sfw__sg:disabled { background-image: url(images/starforce/sg_off.png); cursor: default; }
+.sfw__sg i { position: absolute; left: 165px; top: 4px; width: 25px; height: 13px; background: url(images/starforce/sg_off_mark.png) no-repeat; }
+.sfw__sg.is-on i { left: 166px; top: 5px; width: 23px; height: 11px; background-image: url(images/starforce/sg_on_mark.png); }
+.sfw__mode {
+  left: 8px; top: 605px; width: 402px; height: 22px; background: url(images/starforce/mode.png) no-repeat;
+  cursor: var(--cur-pointer); touch-action: none; outline: none;
+}
+.sfw__mode.is-off { background-image: url(images/starforce/mode_off.png); cursor: default; }
+.sfw__thumb {
+  position: absolute; top: 6px; left: calc(188px + (var(--m, 1) - 1) * 62px - 7px); width: 14px; height: 14px;
+  border-radius: 50%; border: 1px solid #0a0f14; background: radial-gradient(circle at 35% 30%, #fff, #b9c4cf 70%, #7e8b97);
+  box-shadow: 0 1px 2px rgba(0,0,0,.6); transition: left .08s;
+}
+.sfw__mode.is-off .thumb, .sfw__mode.is-off .sfw__thumb { display: none; }
+.sfw__mode:focus-visible { box-shadow: 0 0 0 2px #ffd429; }
 .sfw__go:hover { background-image: url(images/starforce/btn_hover.png); }
 .sfw__go:active { background-image: url(images/starforce/btn_press.png); }
 

@@ -3604,10 +3604,12 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 @media (hover: none) { .sb-fav { visibility: visible; } }
 /* 즐겨찾기 줄의 순서 바꾸기 화살표. GMS v270 UI/Basic.img BtUP·BtDown의 normal·mouseOver·disabled, 원본 12×12 그대로.
    위·아래를 세로로 쌓아 줄 높이 안에 넣고, 평소에는 흐리게 두었다가 화살표에 직접 마우스를 올리면 또렷하게 보인다 */
-.sb-mv { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 1px; opacity: .25; transition: opacity .15s; }
+.sb-mv { margin-left: auto; flex-shrink: 0; display: flex; flex-direction: column; gap: 1px; }
 .sb-mv + .sb-fav { margin-left: 4px; }
-.sb-mv:has(.sb-mv__b:hover) { opacity: 1; }
-@media (hover: none) { .sb-mv { opacity: .6; } }
+.sb-mv__b { opacity: .25; transition: opacity .15s; }
+.sb-mv__b:hover { opacity: 1; }
+.sb-mv__b.is-off:hover { opacity: .25; }
+@media (hover: none) { .sb-mv__b { opacity: .6; } }
 .sb-mv__b { position: relative; width: 12px; height: 12px; background: no-repeat center / 12px 12px; image-rendering: pixelated; cursor: var(--cur-pointer); }
 /* 12px는 손가락으로 누르기 작아 눈에 안 보이는 누르는 영역을 넓힌다 */
 .sb-mv__b::after { content: ''; position: absolute; inset: -4px -5px -1px; }

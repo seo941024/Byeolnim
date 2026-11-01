@@ -507,8 +507,6 @@ textarea, [contenteditable="true"] { cursor: text; }
    닿아 보여서, 배경은 단순 cover로 되돌린다. */
 .portrait-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .char-card:hover { border-color: rgba(var(--hue-l),.4); }
-.char-card.dragging { opacity: .35; cursor: grabbing; }
-.char-card.drag-over { border-color: var(--primary); box-shadow: 0 0 0 2px var(--primary); }
 .char-card[draggable="true"] { cursor: grab; }
 .char-card.active {
   border-color: #f5c842;
@@ -2407,6 +2405,26 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .cg-card:hover .cg-card__save { opacity: 1; }
 .cg-card__save:hover { background: rgba(var(--hue),.7); }
 .cg-card__save:disabled { opacity: .6; cursor: var(--cur-default); }
+/* 카드 순서 바꾸기 화살표. 일러스트 칸 아래 양 끝에 둔다. 사이드바 즐겨찾기 화살표 BtUP을 90도 돌린 그림이고,
+   맨 앞 카드의 왼쪽·맨 뒤 카드의 오른쪽은 회색으로 막는다. 저장 버튼처럼 카드에 마우스를 올렸을 때만 보인다 */
+.cg-mv {
+  position: absolute; left: 0; bottom: 6px; z-index: 2; width: 112px; padding: 0 6px;
+  display: flex; justify-content: space-between; pointer-events: none;
+  opacity: 0; transition: opacity .15s;
+}
+.cg-card:hover .cg-mv { opacity: 1; }
+@media (hover: none) { .cg-mv { opacity: 1; } }
+.cg-mv__b {
+  position: relative; width: 12px; height: 12px; pointer-events: auto;
+  background: no-repeat center / 12px 12px; image-rendering: pixelated; cursor: var(--cur-pointer);
+}
+.cg-mv__b::after { content: ''; position: absolute; inset: -6px; }
+.cg-mv__b--left { background-image: url(images/icons/move_left.png); }
+.cg-mv__b--left:hover { background-image: url(images/icons/move_left_hover.png); }
+.cg-mv__b--right { background-image: url(images/icons/move_right.png); }
+.cg-mv__b--right:hover { background-image: url(images/icons/move_right_hover.png); }
+.cg-mv__b--left.is-off { background-image: url(images/icons/move_left_off.png); cursor: var(--cur-default); }
+.cg-mv__b--right.is-off { background-image: url(images/icons/move_right_off.png); cursor: var(--cur-default); }
 .cg-card--active {
   border-color: var(--primary);
   box-shadow: 0 0 0 1px #f5c842;

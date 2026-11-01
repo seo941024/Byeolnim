@@ -450,6 +450,10 @@ function renderCharInfo() {
     return `
       <div class="cg-card${isActive ? ' cg-card--active' : ''}" data-ci="${i}">
         <button type="button" class="cg-card__save" data-ci="${i}">메애기 저장하기</button>
+        <span class="cg-mv">
+          <span class="cg-mv__b cg-mv__b--left${i === 0 ? ' is-off' : ''}" role="button" data-mv="-1" aria-label="앞으로"></span>
+          <span class="cg-mv__b cg-mv__b--right${i === state.chars.length - 1 ? ' is-off' : ''}" role="button" data-mv="1" aria-label="뒤로"></span>
+        </span>
         <div class="cg-portrait${f?.img ? '' : ' cg-portrait--no'}">${portraitBgHtml(ch.cardBg)}${portrait}</div>
         <div class="ci-card__body">
           <div class="ci-card__nameline">
@@ -479,8 +483,6 @@ function renderCharInfo() {
     });
   });
 
-  let dragSrc = null;
-  const clearOver = () => box.querySelectorAll('.cg-card').forEach(c => c.classList.remove('drag-over'));
   // 순서를 바꾸면서 활성 캐릭터 번호도 같은 캐릭터를 계속 가리키게 옮긴다
   const moveChar = (from, to) => {
     const arr = state.chars;
@@ -491,73 +493,16 @@ function renderCharInfo() {
     save(); renderCharList(); renderBossTable(); renderCharInfo();
   };
   box.querySelectorAll('.cg-card').forEach(card => {
-    card.setAttribute('draggable', 'true');
     card.addEventListener('click', e => {
+      const mv = e.target.closest('.cg-mv__b');
+      if (mv) {
+        if (mv.classList.contains('is-off')) return;
+        const i = parseInt(card.dataset.ci);
+        moveChar(i, i + Number(mv.dataset.mv));
+        return;
+      }
       if (e.target.closest('[data-action]')) return;
       selectChar(parseInt(card.dataset.ci));
-    });
-    card.addEventListener('dragstart', e => {
-      dragSrc = card;
-      card.classList.add('dragging');
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    card.addEventListener('dragend', () => {
-      card.classList.remove('dragging');
-      clearOver();
-    });
-
-    // 터치 드래그 — 롱프레스(400ms) 후 드래그 시작, 그 전엔 스크롤 허용
-    let longPressTimer = null, touchDragging = false;
-    card.addEventListener('touchstart', e => {
-      touchDragging = false;
-      longPressTimer = setTimeout(() => {
-        touchDragging = true;
-        dragSrc = card;
-        card.classList.add('dragging');
-        if (navigator.vibrate) navigator.vibrate(40);
-      }, 400);
-    }, { passive: true });
-    card.addEventListener('touchmove', e => {
-      if (!touchDragging) { clearTimeout(longPressTimer); return; }
-      e.preventDefault();
-      const touch = e.touches[0];
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const target = el && el.closest('.cg-card');
-      clearOver();
-      if (target && target !== dragSrc) target.classList.add('drag-over');
-    }, { passive: false });
-    card.addEventListener('touchend', e => {
-      clearTimeout(longPressTimer);
-      card.classList.remove('dragging');
-      clearOver();
-      if (!touchDragging) { dragSrc = null; return; }
-      const touch = e.changedTouches[0];
-      const el = document.elementFromPoint(touch.clientX, touch.clientY);
-      const target = el && el.closest('.cg-card');
-      if (!target || target === dragSrc) { dragSrc = null; return; }
-      const from = parseInt(dragSrc.dataset.ci);
-      dragSrc = null;
-      moveChar(from, parseInt(target.dataset.ci));
-    });
-    card.addEventListener('touchcancel', () => {
-      clearTimeout(longPressTimer);
-      card.classList.remove('dragging');
-      clearOver();
-      dragSrc = null; touchDragging = false;
-    });
-
-    card.addEventListener('dragover', e => {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (card !== dragSrc) {
-        clearOver();
-        card.classList.add('drag-over');
-      }
-    });
-    card.addEventListener('drop', e => {
-      e.preventDefault();
-      if (!dragSrc || dragSrc === card) return;
-      moveChar(parseInt(dragSrc.dataset.ci), parseInt(card.dataset.ci));
     });
   });
 }

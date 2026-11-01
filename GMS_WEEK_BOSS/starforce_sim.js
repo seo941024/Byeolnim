@@ -257,7 +257,7 @@ function _sfBindItems() {
   const fillSlots = () => {
     const list = SF_ITEMS.filter(i => i.set === setSel.value);
     slotSel.innerHTML = list.length ? '' : '<option value=""></option>';
-    list.forEach(i => slotSel.add(new Option(`${i.name} ${i.lv}제`, SF_ITEMS.indexOf(i))));
+    list.forEach(i => slotSel.add(new Option(i.name, SF_ITEMS.indexOf(i))));
     slotSel.disabled = !list.length;
   };
   setSel.addEventListener('change', () => {

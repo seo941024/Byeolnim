@@ -1185,60 +1185,103 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
   box-shadow: 0 0 10px 1px rgba(47,111,150,.55);
 }
 
-/* ══ 스타포스 별 판 — 게임 강화창처럼 성수만큼 별이 차오른다 ══ */
-.sfstar-panel {
-  position: relative;
-  margin-top: 10px; padding: 14px;
-  border: 2px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--bg3);
+/* ══ 스타포스 강화창 — 게임 UI(GMS v270 UI/Enchant.img/starForce)를 418×720 그대로 옮긴 창 ══
+   배경·칸·버튼·숫자는 모두 게임 원본 그림(images/starforce/). 칸 위치는 원본 배치이고
+   좁은 화면에서는 starforce_sim.js _sfwFit이 transform으로 통째로 줄인다.
+   창 안의 글씨만 우리가 쓴다(원본 칸 그림에 박혀 있는 영어 제목은 그대로 둔다). */
+.sf-right#sfRightSimulate { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sf-right#sfRightSimulate[style*="none"] { display: none; }
+.sfw-fit { position: relative; width: 100%; height: 720px; }
+.sfw {
+  position: absolute; left: 0; top: 0; width: 418px; height: 720px;
+  background: url(images/starforce/bg.png) no-repeat; transform-origin: 0 0;
+  color: #e6edf3; font-size: 13px; font-weight: 700; text-shadow: 0 1px 0 rgba(0,0,0,.55);
+  user-select: none; -webkit-user-select: none;
 }
-/* 게임과 같이 5개씩 묶어 한 줄에 15개(3묶음), 최대 30개가 두 줄로 들어간다 */
-.sfstar-grid {
-  display: grid; grid-template-columns: repeat(15, 1fr);
-  gap: 2px 3px; justify-items: center;
+.sfw > * { position: absolute; box-sizing: border-box; }
+/* 23성 이상 — 창 테두리가 금색으로 맥동한다. opacity만 움직여 리페인트가 없다 */
+.sfw--hi::after {
+  content: ""; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
+  box-shadow: inset 0 0 0 2px #ffd429, 0 0 14px 2px rgba(255,196,41,.85);
+  opacity: .15; animation: sfstarGlow 1.8s ease-in-out infinite; will-change: opacity;
 }
-/* 22성 이상 — 굵은 금색 테두리 + 은은한 맥동.
-   모바일 성능을 위해 box-shadow를 직접 애니메이션하지 않는다(매 프레임 리페인트).
-   대신 광채를 고정한 가상 요소를 얹고 opacity만 바꾼다 — GPU 합성만 일어나
-   레이아웃·페인트가 발생하지 않는다. */
-.sfstar-panel--hi { border-color: #ffd429; }
-.sfstar-panel--hi::after {
-  content: ""; position: absolute; inset: 0;
-  border-radius: inherit; pointer-events: none;
-  /* 바깥으로 뻗는 광채. 부모 .card 가 overflow:hidden 이라 카드 안쪽 여백을
-     넘어가면 잘리고, 그 단면이 어두운 띠처럼 보인다. 카드 좌우 여백이 23px이므로
-     번짐(16px) + 퍼짐(2px) = 18px 로 잡아 잘리지 않는 선을 지킨다. */
-  box-shadow: 0 0 16px 2px rgba(255,196,41,.9);
-  opacity: .1;
-  animation: sfstarGlow 1.8s ease-in-out infinite;
-  will-change: opacity;
-}
-/* opacity만 움직인다 — GPU 합성만 일어나 리페인트가 없다 */
 @keyframes sfstarGlow { 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .sfw--hi::after { animation: none; opacity: .8; } }
 
-/* 모션을 줄이도록 설정한 기기에서는 맥동 없이 고정 광채만 */
-@media (prefers-reduced-motion: reduce) {
-  .sfstar-panel--hi::after { animation: none; opacity: .8; }
+.sfw__item { left: 152px; top: 59px; width: 114px; height: 114px; display: grid; place-items: center; }
+.sfw__item img { width: 44px; height: 40px; image-rendering: pixelated; filter: drop-shadow(0 0 8px rgba(255,212,41,.55)); }
+.sfw__name { left: 67px; top: 184px; width: 286px; height: 31px; display: grid; place-items: center; font-size: 15px; color: #fff; }
+
+.sfw__sum { left: 66px; top: 240px; width: 286px; height: 37px; background: url(images/starforce/summary.png); display: grid; place-items: center; }
+.sfstar-grid { display: flex; flex-wrap: wrap; width: 179px; gap: 6px 0; }
+.sfstar-grid__s {
+  position: relative; width: 11px; height: 10px; font-size: 0; line-height: 0;
+  background: url(images/icons/fav_star_empty.png) no-repeat;
 }
-.sfstar-grid__s { position: relative; font-size: 1rem; line-height: 1.15; color: var(--border); transition: color .12s; }
-.sfstar-grid__s.on { color: #ffd429; text-shadow: 0 0 6px rgba(255,196,41,.55); }
+.sfstar-grid__s.on { background-image: url(images/icons/fav_star.png); }
+/* 5개 묶음 사이를 살짝 띄워 세는 단위를 만든다 */
+.sfstar-grid__s:nth-child(5n) { margin-right: 7px; }
+.sfstar-grid__s:nth-child(15n) { margin-right: 0; }
+
+.sfw__diff { left: 66px; top: 280px; width: 286px; height: 26px; background: url(images/starforce/diff.png); display: flex; align-items: center; justify-content: center; gap: 22px; }
+.sfw__num { display: block; width: 41px; height: 23px; background: url(images/starforce/nums.png) no-repeat; background-position: calc(var(--n, 0) * -41px) 0; }
+.sfw__num[data-white="1"] { background-position: calc(var(--n, 0) * -41px) -23px; }
+.sfw__arrow { width: 30px; height: 18px; }
+
+.sfw__stat { left: 10px; top: 310px; width: 398px; height: 150px; background: url(images/starforce/stat.png); padding: 16px 30px; display: flex; flex-direction: column; gap: 9px; }
+.sfw__row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #aab6c2; }
+.sfw__row b { color: #fff; font-variant-numeric: tabular-nums; }
+.sfw__row--big { font-size: 14px; color: #dfe7ee; }
+.sfw__row--big b { font-size: 17px; color: #ffd429; }
+.sfw__row b.is-bad { color: #ff8a8a; }
+.sfw__done { margin-top: 2px; text-align: center; color: #b8f5c4; font-size: 14px; }
+
+.sfw__prob { left: 10px; top: 463px; width: 398px; height: 70px; background: url(images/starforce/prob.png); padding-top: 11px; }
+.sfw__rate { display: flex; justify-content: center; gap: 22px; line-height: 16.5px; }
+.sfw__rate span { width: 50px; text-align: right; color: #c3cdd7; }
+.sfw__rate b { width: 62px; font-variant-numeric: tabular-nums; }
+.sfw__rate--succ b { color: #8ff2a4; }
+.sfw__rate--dest b { color: #ff8a8a; }
+.sfw__max { text-align: center; line-height: 46px; color: #ffd429; font-size: 14px; }
+
+.sfw__cost { left: 10px; top: 538px; width: 398px; height: 33px; background: url(images/starforce/cost.png); display: flex; align-items: center; justify-content: center; gap: 6px; padding-left: 70px; }
+.sfw__cost img { width: 14px; height: 14px; }
+.sfw__cost span { color: #fff; font-size: 13px; font-variant-numeric: tabular-nums; }
+
+/* 버튼 묶음 — 자바스크립트가 보이기/숨기기를 inline으로 바꾸므로 상자 없이 자식만 창 위에 얹는다 */
+.sfw__btns { display: contents !important; }
+.sfw__sub, .sfw__go { position: absolute; padding: 0; cursor: var(--cur-pointer); }
+.sfw__sub {
+  top: 600px; width: 129px; height: 32px; border: 1px solid #0a0f14; border-radius: 6px;
+  background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12.5px; font-weight: 700;
+}
+.sfw__sub:first-child { left: 76px; }
+.sfw__sub:nth-child(2) { left: 213px; }
+.sfw__sub:hover { filter: brightness(1.15); }
+.sfw__sub.sbtn--danger { background: linear-gradient(#a24545, #6b2626); color: #fff; }
+.sfw__go {
+  left: 147px; top: 673px; width: 129px; height: 35px; border: 0; background: url(images/starforce/btn.png) no-repeat; font-size: 0;
+}
+.sfw__go:hover { background-image: url(images/starforce/btn_hover.png); }
+.sfw__go:active { background-image: url(images/starforce/btn_press.png); }
+
+.sfw-log[hidden] { display: none; }
+/* 한 줄로 쌓이는 폭에서는 강화창을 설정 카드 위로 올린다. 직작에서는 창이 주인공이라 맨 위가 맞다 */
+@media (max-width: 768px) { .sf-layout > #sfRightSimulate { order: -1; } }
 
 /* ── 23성 이상 성공 시 반짝임 ──
    transform / opacity 만 움직인다. 별이 튀어오르고(pop), 고리가 퍼지고(burst),
    불티가 사방으로 흩어진다(spark). 셋 다 GPU 합성이라 리페인트가 없고,
    0.55초 뒤 끝나는 일회성이라 상시 부하도 없다. */
-/* 목표 성수 칸 — 별 자체를 금색으로 점멸시켜 어디까지 가야 하는지 보여준다.
-   색(color)을 오가게 하면 매 프레임 다시 그려야 하므로, 색은 금색으로 고정해두고
-   opacity만 움직인다 — GPU 합성만 일어나 리페인트가 없다. */
-.sfstar-grid__s.goal {
-  /* 채운 별(#ffd429)보다 채도와 명도를 낮춘 금색 — 나란히 뒀을 때 서로 구분된다 */
-  color: #8a7942;
-  animation: sfStarGoal 2.6s ease-in-out infinite;
-  will-change: opacity;
+/* 목표 성수 칸 — 비어 있는 별 위에 금색 별을 겹쳐 opacity만 점멸시켜 어디까지 가야 하는지 보여준다.
+   색을 오가게 하면 매 프레임 다시 그려야 하므로 GPU 합성만 일어나는 opacity를 쓴다. */
+.sfstar-grid__s.goal::after {
+  content: ""; position: absolute; inset: 0; background: url(images/icons/fav_star.png) no-repeat;
+  animation: sfStarGoal 2.6s ease-in-out infinite; will-change: opacity;
 }
 @keyframes sfStarGoal { 0%, 100% { opacity: .06; } 50% { opacity: .95; } }
 @media (prefers-reduced-motion: reduce) {
-  .sfstar-grid__s.goal { animation: none; opacity: .8; }
+  .sfstar-grid__s.goal::after { animation: none; opacity: .8; }
 }
 
 .sfstar-grid__s.pop { animation: sfStarPop .5s ease-out; z-index: 1; }
@@ -1280,28 +1323,6 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
   .sfstar-grid__s.pop, .sfstar-grid__s.pop::before, .sfstar-grid__s.pop::after { animation: none; }
   .sfstar-grid__s.pop::before, .sfstar-grid__s.pop::after { display: none; }
 }
-/* 5개 묶음 사이를 살짝 띄워 세는 단위를 만든다 */
-.sfstar-grid__s:nth-child(5n) { margin-right: 6px; }
-.sfstar-grid__s:nth-child(15n) { margin-right: 0; }
-
-.sfstar-arrow {
-  display: flex; align-items: center; justify-content: center; gap: 12px;
-  margin-top: 12px; padding: 8px 0;
-  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-  font-weight: 800; font-size: 1rem;
-}
-.sfstar-arrow__ico { color: #ffd429; margin-right: 4px; }
-.sfstar-arrow__cur { color: var(--text-sub); }
-.sfstar-arrow__next { color: var(--text); }
-.sfstar-arrow__sep { color: var(--primary); font-size: .72rem; letter-spacing: -1px; }
-
-.sfstar-rates { display: flex; flex-direction: column; gap: 5px; margin-top: 11px; }
-.sfstar-rates__row { display: flex; justify-content: space-between; font-size: .82rem; }
-.sfstar-rates__row span:first-child { color: var(--text-sub); }
-.sfstar-rates__row span:last-child { font-weight: 700; font-variant-numeric: tabular-nums; }
-.sfstar-rates__row--succ span:last-child { color: var(--success); }
-.sfstar-rates__row--dest span:last-child { color: var(--danger); }
-.sfstar-rates__row--done { justify-content: center; color: var(--success); font-weight: 800; }
 
 /* ── 설정 카드 헤더 — 제목 좌측, 미라클 타임 토글 우측 ── */
 .cube-set-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }

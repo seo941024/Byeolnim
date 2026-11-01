@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261101o" />
+  <link rel="stylesheet" href="style.css?v=20261101q" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
   <link rel="icon" href="images/icons/home_star.png" type="image/png" />
@@ -420,12 +420,6 @@
           <div id="sfBtnWrapExpected">
             <button class="sbtn sbtn--ghost w100" id="sfBtnExpected">기댓값 계산</button>
           </div>
-          <!-- 강화 버튼 -->
-          <div id="sfBtnWrapSimulate" style="display:none;grid-template-columns:1fr 1fr;gap:8px">
-            <button class="sbtn sbtn--primary" id="sfBtn1">강화하기 [S]</button>
-            <button class="sbtn sbtn--primary" id="sfBtnAuto">자동 강화 [A]</button>
-            <button class="sbtn sbtn--ghost" id="sfBtnReset" style="grid-column:1/-1">초기화 [R]</button>
-          </div>
         </div>
 
         <!-- 우측: 기댓값 탭 -->
@@ -478,29 +472,34 @@
 
         <!-- 우측: 강화 탭 -->
         <div class="sf-right" id="sfRightSimulate" style="display:none">
-          <div class="card">
-            <div class="card__title">강화 결과</div>
+          <!-- 게임 스타포스 강화창(GMS v270 UI/Enchant.img/starForce)을 418×720 그대로 옮긴 창.
+               칸 위치는 원본 배치이고, 좁은 화면에서는 starforce_sim.js _sfwFit이 통째로 줄인다 -->
+          <div class="sfw-fit" id="sfwFit">
+            <div class="sfw" id="sfw">
+              <div class="sfw__item"><img src="images/icons/fav_star.png" alt=""></div>
+              <div class="sfw__name" id="sfwName">200제 장비</div>
 
-            <!-- 별 판 — 성수만큼 별이 채워진다 -->
-            <div class="sfstar-panel">
-              <div class="sfstar-grid" id="sfStarGrid"></div>
-              <div class="sfstar-arrow">
-                <span class="sfstar-arrow__cur"><span class="sfstar-arrow__ico">★</span><span id="sfStarCur">0</span></span>
-                <span class="sfstar-arrow__sep">▶▶▶</span>
-                <span class="sfstar-arrow__next"><span class="sfstar-arrow__ico">★</span><span id="sfStarNext">1</span></span>
+              <!-- 별 판 — 성수만큼 별이 채워진다 -->
+              <div class="sfw__sum"><div class="sfstar-grid" id="sfStarGrid"></div></div>
+              <div class="sfw__diff">
+                <i class="sfw__num" id="sfStarCur"></i>
+                <img class="sfw__arrow" src="images/starforce/arrow.png" alt="">
+                <i class="sfw__num" id="sfStarNext"></i>
               </div>
-              <div class="sfstar-rates" id="sfStarRates"></div>
-            </div>
 
-            <div id="sfSpentWrap" style="display:none;margin-top:14px">
-              <div class="sf-res-item" style="border:none;padding:0 0 8px">
-                <span class="sf-res-label">누적 소모 메소</span>
-                <span class="sf-res-val big" id="sfSpentVal">0</span>
+              <div class="sfw__stat" id="sfStats"></div>
+              <div class="sfw__prob" id="sfStarRates"></div>
+              <div class="sfw__cost"><img src="images/starforce/meso.png" alt=""><span id="sfSpentVal">0</span></div>
+
+              <div class="sfw__btns" id="sfBtnWrapSimulate" style="display:none">
+                <button class="sfw__sub" id="sfBtnAuto" type="button">자동 강화 [A]</button>
+                <button class="sfw__sub" id="sfBtnReset" type="button">초기화 [R]</button>
+                <button class="sfw__go" id="sfBtn1" type="button">강화하기 [S]</button>
               </div>
-              <hr style="border:none;border-top:1px solid var(--border);margin:0 0 8px">
             </div>
-            <div id="sfResult"><p class="empty">강화 버튼을 눌러주세요.</p></div>
           </div>
+          <div id="sfSpentWrap" style="display:none"></div>
+          <div class="card sfw-log" id="sfResult"></div>
         </div>
       </div>
     </section>
@@ -920,7 +919,7 @@
 <script src="gearcompare.js?v=20261031u"></script> -->
 <!-- <script src="hyperstat.js?v=20261031u"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20261030b"></script>
-<script src="starforce_sim.js?v=20261101z"></script>
+<script src="starforce_sim.js?v=20261101za"></script>
 <script src="cube.js?v=20261031zg"></script><script src="familiar.js?v=20261031v"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031v"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261031ze"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261031v"></script><script src="meundi.js?v=20261031v"></script><script src="victorypose.js?v=20261031v"></script><script src="mysticseal.js?v=20261031za"></script><script src="myutil.js?v=20261101a"></script>
 <script src="addoption.js?v=20261031v"></script><script src="bosshp.js?v=20261031zg"></script>
 

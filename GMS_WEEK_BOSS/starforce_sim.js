@@ -150,20 +150,15 @@ function sfRenderResult() {
   const to = _sfGetTo();
   const done = _sfState.star >= to;
 
-  // 누적 메소 별도 영역
-  const spentWrap = document.getElementById('sfSpentWrap');
-  const spentVal  = document.getElementById('sfSpentVal');
-  if (_sfState.attempts > 0) {
-    if (spentWrap) spentWrap.style.display = 'block';
-    if (spentVal)  spentVal.textContent = fmtMeso(_sfState.cost);
-  }
-
   sfRenderStarPanel(to, done);
 
-  const stats = `
-    <div class="sf-res-item"><span class="sf-res-label">강화 횟수</span><span class="sf-res-val">${_sfState.attempts.toLocaleString()} 회</span></div>
-    <div class="sf-res-item"><span class="sf-res-label">파괴 횟수</span><span class="sf-res-val" style="color:${_sfState.destroys>0?'var(--danger)':'var(--text)'}">${_sfState.destroys} 회</span></div>
-    ${done ? '<div class="sf-res-item" style="color:var(--success);font-weight:700;text-align:center;padding:10px 0">목표 달성!</div>' : ''}`;
+  /* 창 안 "강화 정보" 칸 — 누적 메소·횟수·파괴. 게임 창에서 장비 능력치가 나오는 자리다 */
+  const stat = document.getElementById('sfStats');
+  if (stat) stat.innerHTML = `
+    <div class="sfw__row sfw__row--big"><span>누적 소모 메소</span><b>${fmtMeso(_sfState.cost)}</b></div>
+    <div class="sfw__row"><span>강화 횟수</span><b>${_sfState.attempts.toLocaleString()} 회</b></div>
+    <div class="sfw__row"><span>파괴 횟수</span><b class="${_sfState.destroys > 0 ? 'is-bad' : ''}">${_sfState.destroys} 회</b></div>
+    ${done ? '<div class="sfw__done">목표 달성!</div>' : ''}`;
 
   const logHtml = _sfState.log.map(l => {
     const cls  = l.type === 'success' ? 'log-success' : l.type === 'destroy' ? 'log-destroy' : 'log-fail';
@@ -172,7 +167,8 @@ function sfRenderResult() {
     return `<div class="sf-log-row ${cls}"><span class="sf-log-icon">${icon}</span><span class="sf-log-desc">${desc}</span><span class="sf-log-cost">${fmtMeso(l.cost)}</span></div>`;
   }).join('');
 
-  el.innerHTML = stats + (logHtml ? `<div class="sf-log">${logHtml}</div>` : '');
+  el.hidden = !logHtml;
+  el.innerHTML = logHtml ? `<div class="card__title">강화 기록</div><div class="sf-log">${logHtml}</div>` : '';
 }
 
 /* 별 판 — 장비 레벨의 상한만큼 별칸을 만들고 현재 성수까지 채운다.
@@ -199,29 +195,42 @@ function sfRenderStarPanel(to, done) {
     return `<span class="sfstar-grid__s${cls}">★</span>`;
   }).join('');
 
-  // 23성부터는 게임처럼 판 테두리를 금색으로 바꿔 한눈에 구분되게 한다
-  grid.closest('.sfstar-panel')?.classList.toggle('sfstar-panel--hi', star >= 23);
+  // 23성부터는 게임처럼 창 테두리를 금색으로 바꿔 한눈에 구분되게 한다
+  document.getElementById('sfw')?.classList.toggle('sfw--hi', star >= 23);
 
-  document.getElementById('sfStarCur').textContent  = star;
-  document.getElementById('sfStarNext').textContent = done ? star : star + 1;
+  /* "★현재 >>> ★다음" 숫자는 게임이 쓰는 그림(images/starforce/nums.png)에서 오려 쓴다.
+     윗줄이 현재(노란색 0~29), 아랫줄이 다음(흰색 1~30). 30성은 노란 그림이 없어 흰 그림으로 대신한다 */
+  const next = done ? star : star + 1;
+  const setNum = (id, n, white) => {
+    const e = document.getElementById(id);
+    e.style.setProperty('--n', Math.min(n, 30));
+    e.dataset.white = white || n >= 30 ? '1' : '';
+    e.setAttribute('aria-label', n + '성');
+  };
+  setNum('sfStarCur', star, false);
+  setNum('sfStarNext', Math.max(next, 1), true);
 
-  /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로, 확률표를 치우지 않고 위에 한 줄만
-     덧붙인다. 레벨 상한까지 다 채웠을 때만 더 올릴 수 없으니 확률표를 접는다. */
+  const name = document.getElementById('sfwName');
+  if (name) name.textContent = `${_sfGetLevel()}제 장비`;
+
+  /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로 확률표는 그대로 둔다(목표 달성 문구는
+     왼쪽 정보 칸에 따로 뜬다). 레벨 상한까지 다 채웠을 때만 더 올릴 수 없으니 확률표를 접는다. */
   const rates = document.getElementById('sfStarRates');
   const maxed = star >= sfMaxStar(_sfGetLevel());
+  const costEl = document.getElementById('sfSpentVal');
   if (maxed) {
-    rates.innerHTML = '<div class="sfstar-rates__row sfstar-rates__row--done">최대 성수 도달</div>';
+    rates.innerHTML = '<div class="sfw__max">최대 성수 도달</div>';
+    if (costEl) costEl.textContent = '–';
     return;
   }
-  const doneRow = done ? '<div class="sfstar-rates__row sfstar-rates__row--done">목표 달성!</div>' : '';
   const { cost, p } = sfStepInfo(_sfReadCfg(), star);
   const pct = v => (v * 100).toFixed(2) + '%';
   rates.innerHTML = `
-    ${doneRow}
-    <div class="sfstar-rates__row sfstar-rates__row--succ"><span>성공</span><span>${pct(p.succ)}</span></div>
-    <div class="sfstar-rates__row"><span>실패</span><span>${pct(p.fail)}</span></div>
-    <div class="sfstar-rates__row sfstar-rates__row--dest"><span>파괴</span><span>${pct(p.dest)}</span></div>
-    <div class="sfstar-rates__row"><span>사용 재화</span><span>${fmtMeso(cost)}</span></div>`;
+    <div class="sfw__rate sfw__rate--succ"><span>성공</span><b>${pct(p.succ)}</b></div>
+    <div class="sfw__rate"><span>실패</span><b>${pct(p.fail)}</b></div>
+    <div class="sfw__rate sfw__rate--dest"><span>파괴</span><b>${pct(p.dest)}</b></div>`;
+  // 게임의 "Material Cost" 칸 — 지금 한 번 강화하는 데 드는 메소(누적 소모는 정보 칸에 따로)
+  if (costEl) costEl.textContent = fmtMeso(cost);
 }
 
 /* 자동 강화 — 80ms마다 한 번씩 누른다. 화면은 sfEnhanceOnce가 매번 그린다 */
@@ -235,11 +244,24 @@ function sfStopAuto() { _sfAuto.stop(); }
 /* 별 위치를 sfFrom 값으로 되돌리고 별 판을 다시 그린다 */
 function _sfResetState() {
   _sfState = { star: _sfGetFrom(), cost: 0, attempts: 0, destroys: 0, log: [] };
-  sfRenderStarPanel(_sfGetTo(), _sfState.star >= _sfGetTo());
+  sfRenderResult();
+}
+
+/* 강화창은 418×720 고정 배치라 좁은 화면에서는 통째로 줄여 맞춘다(넓으면 원본 크기).
+   보이지 않을 때(탭이 숨겨져 폭이 0)는 건드리지 않고, 다시 보이면 ResizeObserver가 부른다 */
+function _sfwFit() {
+  const fit = document.getElementById('sfwFit'), win = document.getElementById('sfw');
+  if (!fit || !win || !fit.clientWidth) return;
+  const s = Math.min(1, fit.clientWidth / 418);
+  win.style.transform = `scale(${s})`;
+  win.style.marginLeft = (fit.clientWidth - 418 * s) / 2 + 'px';
+  fit.style.height = 720 * s + 'px';
 }
 
 function initStarforce() {
   if (!document.getElementById('sfStageGrid')) return;
+  if (window.ResizeObserver) new ResizeObserver(_sfwFit).observe(document.getElementById('sfwFit'));
+  window.addEventListener('resize', _sfwFit);
 
   // 시작부터 입력칸의 max가 레벨 상한을 따르도록 한 번 맞춰둔다
   _sfClampInputs();
@@ -309,8 +331,6 @@ function initStarforce() {
   document.getElementById('sfBtnReset')?.addEventListener('click', () => {
     sfStopAuto();
     _sfResetState();
-    document.getElementById('sfResult').innerHTML = '<p class="empty">강화 버튼을 눌러주세요.</p>';
-    document.getElementById('sfSpentWrap').style.display = 'none';
   });
 
   // 기댓값 보기

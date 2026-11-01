@@ -1195,10 +1195,11 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw {
   position: absolute; left: 0; top: 0; width: 418px; height: 720px;
   background: url(images/starforce/bg.png) no-repeat; transform-origin: 0 0;
-  color: #e6edf3; font-size: 13px; font-weight: 700; text-shadow: 0 1px 0 rgba(0,0,0,.55);
+  color: #e6edf3; font-family: 'Maple', '고딕', sans-serif; font-size: 13px; font-weight: normal; font-synthesis: none; text-shadow: 0 1px 0 rgba(0,0,0,.55);
   user-select: none; -webkit-user-select: none;
 }
 .sfw > * { position: absolute; box-sizing: border-box; }
+.sfw b { font-weight: normal; }
 /* 23성 이상 — 창 테두리가 금색으로 맥동한다. opacity만 움직여 리페인트가 없다 */
 .sfw--hi::after {
   content: ""; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
@@ -1253,7 +1254,7 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__sub, .sfw__go { position: absolute; padding: 0; cursor: var(--cur-pointer); }
 .sfw__sub {
   top: 600px; width: 129px; height: 32px; border: 1px solid #0a0f14; border-radius: 6px;
-  background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12.5px; font-weight: 700;
+  background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12.5px; font-weight: normal;
 }
 .sfw__sub:first-child { left: 76px; }
 .sfw__sub:nth-child(2) { left: 213px; }

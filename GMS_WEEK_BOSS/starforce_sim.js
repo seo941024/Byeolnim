@@ -218,9 +218,6 @@ function sfRenderStarPanel(to, done) {
   if (ico) {
     ico.src = _sfItem ? `images/items/${_sfItem.id}.png` : 'images/icons/fav_star.png';
     ico.classList.toggle('is-item', !!_sfItem);
-    /* 아이콘마다 가로세로 비율이 달라서 비율을 지키며 2배로 키운다 */
-    ico.onload = () => { ico.style.width = ico.naturalWidth * 2 + 'px'; ico.style.height = ico.naturalHeight * 2 + 'px'; };
-    if (!_sfItem) { ico.style.width = ''; ico.style.height = ''; }
   }
 
   /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로 확률표는 그대로 둔다(목표 달성 문구는

@@ -212,7 +212,12 @@ function sfRenderStarPanel(to, done) {
   setNum('sfStarNext', Math.max(next, 1), true);
 
   const name = document.getElementById('sfwName');
-  if (name) name.textContent = `${_sfGetLevel()}제 장비`;
+  if (name) name.textContent = _sfItem ? _sfItem.name : `${_sfGetLevel()}제 장비`;
+  const ico = document.querySelector('.sfw__item img');
+  if (ico) {
+    ico.src = _sfItem ? `images/items/${_sfItem.id}.png` : 'images/icons/fav_star.png';
+    ico.classList.toggle('is-item', !!_sfItem);
+  }
 
   /* 목표에 닿아도 손으로는 계속 올릴 수 있으므로 확률표는 그대로 둔다(목표 달성 문구는
      왼쪽 정보 칸에 따로 뜬다). 레벨 상한까지 다 채웠을 때만 더 올릴 수 없으니 확률표를 접는다. */
@@ -232,6 +237,40 @@ function sfRenderStarPanel(to, done) {
     <div class="sfw__rate sfw__rate--dest"><span>파괴</span><b>${pct(p.dest)}</b></div>`;
   // 게임의 "Material Cost" 칸 — 지금 한 번 강화하는 데 드는 메소(누적 소모는 정보 칸에 따로)
   if (costEl) costEl.textContent = fmtMeso(cost);
+}
+
+/* 세트·부위 선택 — 고르면 그 장비의 제한 레벨이 장비 레벨 칸에 들어가고 창에 아이콘·이름이 나온다.
+   레벨 칸을 직접 고치면 장비 선택은 풀린다(레벨은 사용자가 정한 값이 우선) */
+let _sfItem = null;
+function _sfApplyItem(item) {
+  _sfItem = item;
+  if (item) document.getElementById('sfLevel').value = item.lv;
+  _sfClampInputs();
+  _sfState.star = Math.min(_sfState.star, sfMaxStar(_sfGetLevel()));
+  sfRenderResult();
+  _sfRecalcExpected();
+}
+function _sfBindItems() {
+  const setSel = document.getElementById('sfItemSet'), slotSel = document.getElementById('sfItemSlot');
+  if (!setSel || !slotSel || typeof SF_ITEMS === 'undefined') return;
+  [...new Set(SF_ITEMS.map(i => i.set))].forEach(s => setSel.add(new Option(s, s)));
+  const fillSlots = () => {
+    const list = SF_ITEMS.filter(i => i.set === setSel.value);
+    slotSel.innerHTML = list.length ? '' : '<option value="">–</option>';
+    list.forEach(i => slotSel.add(new Option(`${i.name} (${i.lv}제)`, SF_ITEMS.indexOf(i))));
+    slotSel.disabled = !list.length;
+  };
+  setSel.addEventListener('change', () => {
+    fillSlots();
+    _sfApplyItem(slotSel.value === '' ? null : SF_ITEMS[+slotSel.value]);
+  });
+  slotSel.addEventListener('change', () => _sfApplyItem(SF_ITEMS[+slotSel.value]));
+  document.getElementById('sfLevel').addEventListener('input', () => {
+    if (!_sfItem) return;
+    _sfItem = null;
+    setSel.value = '';
+    fillSlots();
+  });
 }
 
 /* 창 아래쪽 "Safeguard" 버튼과 "Enhancement Mode" 슬라이더 — 지금 도전하는 성수의 단계를 바꾼다.
@@ -324,6 +363,7 @@ function initStarforce() {
   _sfClampInputs();
   sfBuildStageGrid();
   _sfBindMode();
+  _sfBindItems();
   _sfResetState();   // 처음 열었을 때도 별 판을 그려둔다
 
   // 토글 그룹 처리. .sf-toggle-group도 추옵 시뮬레이터가 같이 쓰므로 섹션 안으로 한정한다

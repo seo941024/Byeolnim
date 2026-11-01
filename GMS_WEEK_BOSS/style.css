@@ -1195,11 +1195,12 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw {
   position: absolute; left: 0; top: 0; width: 418px; height: 720px;
   background: url(images/starforce/bg.png) no-repeat; transform-origin: 0 0;
-  color: #e6edf3; font-family: 'Maple', '고딕', sans-serif; font-size: 13px; font-weight: normal; font-synthesis: none; text-shadow: 0 1px 0 rgba(0,0,0,.55);
+  color: #e6edf3; font-family: Arial, 'Malgun Gothic', sans-serif; font-size: 12px; font-weight: normal; text-shadow: 0 1px 0 rgba(0,0,0,.55);
   user-select: none; -webkit-user-select: none;
 }
 .sfw > * { position: absolute; box-sizing: border-box; }
 .sfw b { font-weight: normal; }
+.sfw__rate b { font-weight: 700; }
 /* 23성 이상 — 창 테두리가 금색으로 맥동한다. opacity만 움직여 리페인트가 없다 */
 .sfw--hi::after {
   content: ""; position: absolute; inset: 0; border-radius: 8px; pointer-events: none;
@@ -1213,7 +1214,7 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__item img { width: 44px; height: 40px; image-rendering: pixelated; filter: drop-shadow(0 0 8px rgba(255,212,41,.55)); }
 .sfw__item img { visibility: hidden; }
 .sfw__item img.is-item { visibility: visible; width: 64px; height: 64px; }
-.sfw__name { left: 67px; top: 184px; width: 286px; height: 31px; display: grid; place-items: center; font-size: 15px; color: #fff; }
+.sfw__name { left: 67px; top: 184px; width: 286px; height: 31px; display: grid; place-items: center; font-size: 12px; color: #fff; }
 
 .sfw__sum { left: 66px; top: 240px; width: 286px; height: 37px; background: url(images/starforce/summary.png); display: grid; place-items: center; }
 .sfstar-grid { display: flex; flex-wrap: wrap; width: 179px; gap: 6px 0; }
@@ -1232,12 +1233,12 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__arrow { width: 30px; height: 18px; }
 
 .sfw__stat { left: 10px; top: 310px; width: 398px; height: 150px; background: url(images/starforce/stat.png); padding: 16px 30px; display: flex; flex-direction: column; gap: 9px; }
-.sfw__row { display: flex; justify-content: space-between; align-items: baseline; font-size: 13px; color: #aab6c2; }
+.sfw__row { display: flex; justify-content: space-between; align-items: baseline; font-size: 12px; color: #aab6c2; }
 .sfw__row b { color: #fff; font-variant-numeric: tabular-nums; }
-.sfw__row--big { font-size: 14px; color: #dfe7ee; }
-.sfw__row--big b { font-size: 17px; color: #ffd429; }
+.sfw__row--big { font-size: 12px; color: #dfe7ee; }
+.sfw__row--big b { font-size: 14px; color: #ffd429; }
 .sfw__row b.is-bad { color: #ff8a8a; }
-.sfw__done { margin-top: 2px; text-align: center; color: #b8f5c4; font-size: 14px; }
+.sfw__done { margin-top: 2px; text-align: center; color: #b8f5c4; font-size: 12px; }
 
 .sfw__prob { left: 10px; top: 463px; width: 398px; height: 70px; background: url(images/starforce/prob.png); padding-top: 11px; }
 .sfw__rate { display: flex; justify-content: center; gap: 22px; line-height: 16.5px; }
@@ -1245,18 +1246,18 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__rate b { width: 62px; font-variant-numeric: tabular-nums; }
 .sfw__rate--succ b { color: #8ff2a4; }
 .sfw__rate--dest b { color: #ff8a8a; }
-.sfw__max { text-align: center; line-height: 46px; color: #ffd429; font-size: 14px; }
+.sfw__max { text-align: center; line-height: 46px; color: #ffd429; font-size: 12px; }
 
 .sfw__cost { left: 10px; top: 538px; width: 398px; height: 33px; background: url(images/starforce/cost.png); display: flex; align-items: center; justify-content: center; gap: 6px; padding-left: 70px; }
 .sfw__cost img { width: 14px; height: 14px; }
-.sfw__cost span { color: #fff; font-size: 13px; font-variant-numeric: tabular-nums; }
+.sfw__cost span { color: #fff; font-size: 12px; font-variant-numeric: tabular-nums; }
 
 /* 버튼 묶음 — 자바스크립트가 보이기/숨기기를 inline으로 바꾸므로 상자 없이 자식만 창 위에 얹는다 */
 .sfw__btns { display: contents !important; }
 .sfw__sub, .sfw__go { position: absolute; padding: 0; cursor: var(--cur-pointer); }
 .sfw__sub {
   top: 634px; width: 129px; height: 30px; border: 1px solid #0a0f14; border-radius: 6px;
-  background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12.5px; font-weight: normal;
+  background: linear-gradient(#4a5865, #2c3742); color: #e6edf3; font: inherit; font-size: 12px; font-weight: normal;
 }
 .sfw__sub:first-child { left: 76px; }
 .sfw__sub:nth-child(2) { left: 213px; }

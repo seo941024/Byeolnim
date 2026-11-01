@@ -170,11 +170,15 @@ function renderFavs() {
   if (!list) return;
   const cur = document.querySelector('.sec.active')?.id.replace(/^sec-/, '');
   document.querySelectorAll('.sb-nav__item[data-sec]').forEach(b => b.classList.toggle('is-fav', _favs.includes(b.dataset.sec)));
-  list.replaceChildren(..._favs.map(sec => {
+  list.replaceChildren(..._favs.map((sec, i) => {
     const b = _favSrc(sec).cloneNode(true);
     b.removeAttribute('data-sec');
     b.dataset.fav = sec;
     b.classList.toggle('active', sec === cur);
+    // 순서 바꾸기 화살표. 맨 위 줄은 위로, 맨 아래 줄은 아래로 못 가니 회색으로 둔다
+    b.querySelector('.sb-fav')?.insertAdjacentHTML('beforebegin',
+      `<span class="sb-mv"><span class="sb-mv__b sb-mv__b--up${i === 0 ? ' is-off' : ''}" role="button" data-mv="-1" aria-label="위로"></span>`
+      + `<span class="sb-mv__b sb-mv__b--down${i === _favs.length - 1 ? ' is-off' : ''}" role="button" data-mv="1" aria-label="아래로"></span></span>`);
     return b;
   }));
 }
@@ -182,6 +186,16 @@ document.querySelectorAll('.sb-nav__item[data-sec]:not([data-sec="home"])').forE
   b.insertAdjacentHTML('beforeend', '<span class="sb-fav" role="button" aria-label="즐겨찾기"><img class="sb-fav__on" src="images/icons/fav_star.png" alt=""><img class="sb-fav__off" src="images/icons/fav_star_empty.png" alt=""></span>');
 });
 document.querySelector('.sb-nav')?.addEventListener('click', e => {
+  const mv = e.target.closest('.sb-mv__b');
+  if (mv) {
+    const from = _favs.indexOf(mv.closest('.sb-nav__item').dataset.fav);
+    const to = from + Number(mv.dataset.mv);
+    if (from < 0 || to < 0 || to >= _favs.length) return;
+    [_favs[from], _favs[to]] = [_favs[to], _favs[from]];
+    try { localStorage.setItem(FAV_KEY, JSON.stringify(_favs)); } catch (err) {}
+    renderFavs();
+    return;
+  }
   const star = e.target.closest('.sb-fav');
   if (star) {
     const item = star.closest('.sb-nav__item');

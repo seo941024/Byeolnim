@@ -1213,7 +1213,7 @@ img[src*="Sol_Erda_Fragment_(Full_Size)"] { position: relative; top: -1px; }
 .sfw__item { left: 152px; top: 59px; width: 114px; height: 114px; display: grid; place-items: center; }
 .sfw__item img { width: 44px; height: 40px; image-rendering: pixelated; filter: drop-shadow(0 0 8px rgba(255,212,41,.55)); }
 .sfw__item img { visibility: hidden; }
-.sfw__item img.is-item { visibility: visible; width: 64px; height: 64px; }
+.sfw__item img.is-item { visibility: visible; }
 .sfw__name { left: 67px; top: 184px; width: 286px; height: 31px; display: grid; place-items: center; font-size: 12px; color: #fff; }
 
 .sfw__sum { left: 66px; top: 240px; width: 286px; height: 37px; background: url(images/starforce/summary.png); display: grid; place-items: center; }

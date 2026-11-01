@@ -158,7 +158,7 @@ document.querySelectorAll('.sb-nav__item[data-sec]').forEach(btn => {
 /* ── 사이드바 즐겨찾기 ──
    메뉴 줄 오른쪽 별을 누르면 맨 위 즐겨찾기 묶음에 그 메뉴가 들어가고, 다시 누르면 빠진다. 넣은 차례대로 늘어놓는다.
    즐겨찾기 줄은 원래 메뉴 줄을 복사해 data-sec 대신 data-fav를 단다. home.js가 data-sec로 메뉴를 모으므로 홈 카드에 겹치지 않는다.
-   전구는 UI/UIWindow2.img/QuestGuide/QuestMark/0, 별 버튼은 UI/UIEventList.img/UIList/button:bookmarkOff·bookmarkOn의 normal(24×24). 모두 GMS v270 원본.
+   전구는 UI/UIWindow2.img/QuestGuide/QuestMark/0, 별은 UI/Enchant.img/starForce/summaryStar의 normal·empty. 모두 GMS v270 원본.
    지수가 인게임에서 캡처한 왼쪽 알림 전구·별의 원본을 아직 못 찾아 2026-10-31 지수 요청으로 비슷한 원본을 임시로 골랐다 */
 const FAV_KEY = 'gms_sidebar_fav';
 const _favSrc = sec => document.querySelector(`.sb-nav__item[data-sec="${sec}"]`);
@@ -183,7 +183,7 @@ function renderFavs() {
   }));
 }
 document.querySelectorAll('.sb-nav__item[data-sec]:not([data-sec="home"])').forEach(b => {
-  b.insertAdjacentHTML('beforeend', '<span class="sb-fav" role="button" aria-label="즐겨찾기"><img class="sb-fav__on" src="images/icons/fav_bm_on.png" alt=""><img class="sb-fav__off" src="images/icons/fav_bm.png" alt=""></span>');
+  b.insertAdjacentHTML('beforeend', '<span class="sb-fav" role="button" aria-label="즐겨찾기"><img class="sb-fav__on" src="images/icons/fav_star.png" alt=""><img class="sb-fav__off" src="images/icons/fav_star_empty.png" alt=""></span>');
 });
 document.querySelector('.sb-nav')?.addEventListener('click', e => {
   const mv = e.target.closest('.sb-mv__b');

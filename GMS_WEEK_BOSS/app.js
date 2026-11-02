@@ -520,6 +520,7 @@ function selectChar(i) {
 }
 
 /* ── 보스 테이블 렌더 ── */
+document.addEventListener('namelang', () => renderBossTable());
 function renderBossTable() {
   const ch  = state.chars[state.activeChar];
   const tb  = document.getElementById('bossTableBody');
@@ -615,7 +616,7 @@ function renderBossTable() {
     tr.innerHTML = `
       <td><div class="boss-name-cell">
         <div class="boss-thumb${boss.img.startsWith('images/official/') ? ' boss-thumb--icon' : ''}"><img src="${boss.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
-        <span class="boss-label">${boss.name}</span>
+        <span class="boss-label">${bossName(boss.name)}</span>
         ${bmToggleHtml}
       </div></td>
       <td>${pillsHtml}</td>

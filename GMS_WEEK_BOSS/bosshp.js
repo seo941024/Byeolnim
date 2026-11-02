@@ -15,7 +15,9 @@ const BOSS_CARD_EXTRA = { '벨로나': 'bellona' };
 const _bhpCardSrc = id => `images/official/boss_card/${id}.png?v=20261031c`;
 // 카드 그림이 일본어판인 보스는 화면 글자도 그림 속 원문 그대로 적는다, 지수 요청. 데이터 키는 한글 이름 그대로 둔다
 const BOSS_NAME_SHOWN = { '아케치': 'アケチミツヒデ', '노히메': 'ノウ姫' };
-const _bhpName = n => BOSS_NAME_SHOWN[n] || n;
+// 한글 표기에서는 아케치·노히메만 원본 일본어로, 영어 표기에서는 GMS 보스 목록 이름으로
+const _bhpName = n => nameLang() === 'en' ? bossName(n) : (BOSS_NAME_SHOWN[n] || n);
+document.addEventListener('namelang', () => { if (document.getElementById('sec-bosshp')?.classList.contains('active')) renderBossHPTable(); });
 
 /* 페이즈 HP 줄 합치기, 지수 요청. BOSS_HP_PHASES는 Phase 2 ×2, Perils ×3처럼 한 마리 값과 마리 수로 적혀 있다.
    화면에서는 ×n을 곱하고, 같은 페이즈 번호의 줄은 하나로 더한다. 윌 1페이즈 Blue·Purple, 카링 3페이즈 카링·흉수가 한 줄이 된다.

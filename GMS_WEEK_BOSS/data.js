@@ -5,6 +5,19 @@
 /* 결정석 가격은 히어로익 월드 값이다. GMS 위키 Intense Power Crystal 표 값의 5배이고, 일반 월드는 app.js crystalPrice가 1/5로 나눈다 */
 /* 보스 그림은 GMS v.270 게임 파일 UI/UIBoss.img 보스 목록의 작은 아이콘 원본 PNG다. 테두리가 그림에 들어 있다.
    보스 정보 팝업은 파일 이름으로 images/bosses_gif/<id>.gif를 찾으므로 파일 이름은 id와 같게 둔다 */
+/* 보스 GMS 영문 이름. GMS v270 UI/UIBoss.img/BossList/<번호>/info 값 그대로다. 벨로나는 GMS에 아직 없어 빠졌다.
+   해방 퀘스트 단계 이름에 나오는 반 레온·아카이럼·사도 카링도 같은 목록에서 가져왔다 */
+const BOSS_NAME_EN = {
+  '유피테르':'Jupiter', '발드릭스':'Baldrix', '림보':'Limbo', '찬란한 흉성':'Malefic Star', '카링':'Kaling', '사도 카링':'Kaling',
+  '최초의 대적자':'First Adversary', '감시자 칼로스':'Kalos the Guardian', '선택받은 세렌':'Chosen Seren', '검은 마법사':'Black Mage',
+  '진 힐라':'Verus Hilla', '듄켈':'Darknell', '더스크':'Gloom', '윌':'Will', '루시드':'Lucid', '가디언 엔젤 슬라임':'Guardian Angel Slime',
+  '데미안':'Damien', '스우':'Lotus', '파풀라투스':'Papulatus', '아케치':'Akechi Mitsuhide', '노히메':'Princess No', '벨룸':'Vellum',
+  '블러디퀸':'Crimson Queen', '피에르':'Pierre', '반반':'Von Bon', '매그너스':'Magnus', '시그너스':'Cygnus', '핑크빈':'Pink Bean',
+  '힐라':'Hilla', '자쿰':'Zakum', '반 레온':'Von Leon', '아카이럼':'Arkarium',
+};
+/* 화면에 쓸 보스 이름. 게임 이름 표기가 영어면 GMS 이름, 없으면 한글 그대로 */
+const bossName = ko => gameName(ko, BOSS_NAME_EN[ko]);
+
 const BOSS_DATA = [
   { id:'jupiter',    name:'유피테르',            diffs:{normal:2_965_000_000,hard:5_953_000_000},                                       maxParty:3, minLevel:295, img:'images/official/boss/jupiter.png' },
   { id:'baldrix',    name:'발드릭스',            diffs:{normal:2_800_000_000,hard:4_200_000_000},                                        maxParty:3, minLevel:290, img:'images/official/boss/baldrix.png' },

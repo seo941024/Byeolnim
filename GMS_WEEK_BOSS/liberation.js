@@ -100,7 +100,7 @@ function libTotals(rows) {
 
 function libResRowHtml(cfg, row, unit) {
   return `<div class="gen-res-row"${row.cleared ? ' style="opacity:.4"' : ''}>
-      <span class="gen-res-name">${row.name} (${cfg.diffLabel(row.diff)})</span>
+      <span class="gen-res-name">${bossName(row.name)} (${cfg.diffLabel(row.diff)})</span>
       <b class="gen-res-val">${libFmt(row.raw)}${unit}</b>
     </div>`;
 }
@@ -113,7 +113,7 @@ function libBossCardHtml(cfg, b) {
   const diffOpts = ['none', ...Object.keys(cfg.yields[b.id] || {})].map(d =>
     `<option value="${d}" ${diff===d?'selected':''}>${cfg.diffLabel(d)}</option>`
   ).join('');
-  const name = `<span class="gen-boss__name">${b.name}</span>`;
+  const name = `<span class="gen-boss__name">${bossName(b.name)}</span>`;
   return `
       <div class="gen-boss ${active?'on':''}" data-id="${b.id}">
         <div class="boss-thumb${b.img.startsWith('images/liberation/') ? ' boss-thumb--icon' : ''}"><img src="${b.img}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="noimg" style="display:none">BOSS</span></div>
@@ -330,7 +330,7 @@ function renderGenesis() {
   const panel = document.getElementById('lib-genesis');
 
   const questOpts = GENESIS_QUESTS.map((qq, i) =>
-    `<option value="${i}" ${i===genState.quest?'selected':''}>${qq.name} (${libFmt(qq.need)})</option>`
+    `<option value="${i}" ${i===genState.quest?'selected':''}>${bossName(qq.name)} (${libFmt(qq.need)})</option>`
   ).join('');
   const bossCards = GEN.bosses.map(b => libBossCardHtml(GEN, b)).join('');
   const held = Math.max(0, genState.held);
@@ -469,7 +469,7 @@ function renderDestinyResult() {
       <b>${libFmt(r.held)}</b>
     </div>
     <div class="gen-res-row">
-      <span>진행 중 · ${r.quest.name}</span>
+      <span>진행 중 · ${bossName(r.quest.name)}</span>
       <b>${libFmt(r.quest.need)}</b>
     </div>
     ${r.doneCum > 0 ? `<div class="gen-res-row">
@@ -511,7 +511,7 @@ function renderDestiny() {
     const inner = DESTINY_QUESTS
       .map((q, i) => ({ q, i }))
       .filter(x => x.q.stage === stage)
-      .map(({ q, i }) => `<option value="${i}" ${curQuest===i?'selected':''}>${q.name} (${libFmt(q.need)})</option>`)
+      .map(({ q, i }) => `<option value="${i}" ${curQuest===i?'selected':''}>${bossName(q.name)} (${libFmt(q.need)})</option>`)
       .join('');
     return `<optgroup label="${stage}차 초월">${inner}</optgroup>`;
   }).join('');
@@ -651,14 +651,14 @@ function renderAstraResult() {
   const questBlocks = r.quests.map(q => `
     <div class="gen-res-divider"></div>
     <div class="gen-res-row" style="margin-bottom:4px">
-      <span style="font-weight:700">${q.name}</span>
+      <span style="font-weight:700">${bossName(q.name)}</span>
       <b style="font-size:.78rem;color:var(--text-sub)">누적 조각 ${libFmt(q.cumFrag)} · 누적 흔적 ${libFmt(q.cumTrace)}</b>
     </div>
     <div class="gen-res-row gen-res-accent">
       <span>예상 기간</span><b>${q.weeksStr}</b>
     </div>
     <div class="gen-date-wrap">
-      <div class="gen-date-label">${q.name} 예상 날짜</div>
+      <div class="gen-date-label">${bossName(q.name)} 예상 날짜</div>
       <div class="gen-date-big">${q.dateStr}</div>
     </div>`).join('');
 
@@ -759,3 +759,5 @@ libTabs.forEach(tab => {
 renderGenesis();
 renderDestiny();
 renderAstra();
+// 게임 이름 표기를 바꾸면 보스·퀘스트 이름이 들어간 세 판을 다시 그린다
+document.addEventListener('namelang', () => { renderGenesis(); renderDestiny(); renderAstra(); });

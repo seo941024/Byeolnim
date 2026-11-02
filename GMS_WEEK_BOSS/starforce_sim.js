@@ -223,7 +223,7 @@ function sfRenderStarPanel(to, done) {
   setNum('sfStarNext', Math.max(next, 1), true);
 
   const name = document.getElementById('sfwName');
-  if (name) name.textContent = _sfItem ? _sfItem.name : `${_sfGetLevel()}제 장비`;
+  if (name) name.textContent = _sfItem ? gameName(_sfItem.name, _sfItem.en) : `${_sfGetLevel()}제 장비`;
   const ico = document.querySelector('.sfw__item img');
   if (ico) {
     ico.src = _sfItem ? `images/items/${_sfItem.id}.png` : 'images/icons/fav_star.png';
@@ -269,7 +269,7 @@ function _sfBindItems() {
   const fillSlots = () => {
     const list = SF_ITEMS.filter(i => i.set === setSel.value);
     slotSel.innerHTML = list.length ? '' : '<option value=""></option>';
-    list.forEach(i => slotSel.add(new Option(i.name, SF_ITEMS.indexOf(i))));
+    list.forEach(i => slotSel.add(new Option(gameName(i.name, i.en), SF_ITEMS.indexOf(i))));
     slotSel.disabled = !list.length;
   };
   /* 목록을 고른 뒤에도 포커스가 select에 남아 있으면 S 단축키가 먹지 않으므로 바로 놓아준다 */
@@ -279,6 +279,11 @@ function _sfBindItems() {
     _sfApplyItem(slotSel.value === '' ? null : SF_ITEMS[+slotSel.value]);
   });
   slotSel.addEventListener('change', () => { slotSel.blur(); _sfApplyItem(SF_ITEMS[+slotSel.value]); });
+  // 게임 이름 표기를 바꾸면 부위 목록 글자와 창의 장비 이름만 다시 쓴다. 고른 부위는 그대로 둔다
+  document.addEventListener('namelang', () => {
+    [...slotSel.options].forEach(o => { const i = SF_ITEMS[+o.value]; if (o.value !== '' && i) o.text = gameName(i.name, i.en); });
+    sfRenderResult();
+  });
   document.getElementById('sfLevel').addEventListener('input', () => {
     if (!_sfItem) return;
     _sfItem = null;

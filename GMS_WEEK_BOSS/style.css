@@ -223,7 +223,6 @@
 :root[data-theme="light"] .bhp-tr__dot--5             { color: #1d4ed8; }
 :root[data-theme="light"] .force-arc                  { color: #1d4ed8; }
 :root[data-theme="light"] .force-auth                 { color: #6d28d9; }
-:root[data-theme="light"] .dt-card__del:hover         { color: var(--danger); }
 /* select 화살표가 흰색으로 박혀 있어 흰 배경에서 안 보인다 → 어두운 화살표로 교체 */
 :root[data-theme="light"] .bhp-diff-sel {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='5' viewBox='0 0 9 5'%3E%3Cpath d='M0 0l4.5 5L9 0z' fill='%2314121c88'/%3E%3C/svg%3E");
@@ -3485,11 +3484,7 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 /* ── 숙제 트래커 ── */
 .dt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
 .dt-card { display: flex; flex-direction: column; gap: 12px; transition: opacity .15s, border-color .15s; }
-.dt-card--dragging { opacity: .4; }
-.dt-card--dragover { border-color: var(--primary); }
 .dt-card__head { display: flex; align-items: center; gap: 12px; }
-.dt-card__drag { flex: none; cursor: grab; color: var(--text-dim); font-size: 1.1rem; line-height: 1; user-select: none; }
-.dt-card__drag:active { cursor: grabbing; }
 /* 캘린더 칩·프론티어 덱과 같은 112px. cover는 96px 아바타의 가장자리를 잘라내므로
    contain으로 전체가 들어오게 한다(다른 화면과 같은 처리). */
 .dt-card__portrait {
@@ -3497,16 +3492,14 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
   display: flex; align-items: center; justify-content: center; background: transparent;
 }
 .dt-card__portrait-img { max-width: 100%; max-height: 100%; object-fit: contain; image-rendering: pixelated; }
-.dt-card__portrait-no { font-size: .74rem; font-weight: 800; color: var(--text-dim); text-align: center; }
 .dt-card__whoBody { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
 .dt-card__name { min-width: 0; font-weight: 800; font-size: 1.2rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .dt-card__lv { font-size: .78rem; font-weight: 700; color: var(--text-dim); }
-.dt-card__edit, .dt-card__del {
+.dt-card__edit {
   flex: none; width: 22px; height: 22px; border-radius: 50%; border: none; background: transparent;
   color: var(--text-dim); font-size: .92rem; line-height: 1; cursor: var(--cur-pointer); transition: background .15s, color .15s;
 }
 .dt-card__edit:hover { background: rgba(var(--hue),.18); color: var(--primary); }
-.dt-card__del:hover { background: rgba(239,68,68,.15); color: #ef4444; }
 .dt-help { font-size: .78rem; color: var(--text-sub); margin: 6px 0 14px; word-break: keep-all; }
 .dt-step2-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
 .dt-step2-portrait { flex: none; width: 112px; height: 112px; border-radius: var(--radius-sm); object-fit: contain; image-rendering: pixelated; background: rgba(0,0,0,.2); }

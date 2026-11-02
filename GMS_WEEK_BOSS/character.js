@@ -251,6 +251,8 @@ function renderAfterCharsChange() {
   if (typeof renderAllHexaLists === 'function') renderAllHexaLists();
   // 캘린더의 캐릭터 선택 목록에도 바로 반영한다 — 새 캐릭터가 빠지거나 지운 캐릭터가 남지 않게
   if (typeof renderMapleCalendar === 'function') renderMapleCalendar();
+  // 숙제 트래커는 캐릭터 목록을 그대로 쓴다. 보고 있을 때만 다시 그린다
+  if (typeof renderDailyTasks === 'function' && document.getElementById('sec-dailytasks')?.classList.contains('active')) renderDailyTasks();
 }
 
 /* 서버(Vercel Cron 수집) 히스토리를 가져와 로컬에 병합.

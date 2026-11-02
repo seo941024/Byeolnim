@@ -507,6 +507,9 @@ textarea, [contenteditable="true"] { cursor: text; }
    닿아 보여서, 배경은 단순 cover로 되돌린다. */
 .portrait-bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; }
 .char-card:hover { border-color: rgba(var(--hue-l),.4); }
+/* 다크 모드의 캐릭터 카드는 불투명한 카드 색으로. 반투명 --panel-veil이면 본문 쪽 카드에는 배경의 보라 빛이 비치고
+   사이드바 카드에는 사이드바 바탕이 비쳐, 같은 카드인데 색이 달라 보였다. 사이드바·홈·캐릭터 목록 카드 공통 */
+:root:not([data-theme="light"]) :is(.char-card, .cg-card) { background: var(--bg-card); }
 .char-card[draggable="true"] { cursor: grab; }
 .char-card.active {
   border-color: #f5c842;
@@ -586,8 +589,9 @@ textarea, [contenteditable="true"] { cursor: text; }
   .char-card__portrait .char-card__btns { opacity: .22; transition: opacity .18s ease; }
   .char-card__portrait:hover .char-card__btns, .char-card__portrait:focus-within .char-card__btns { opacity: 1; }
 }
-/* 직업 일러스트는 이름 줄 안에 넣는다. 테두리·옅은 바탕은 캐릭터 목록 카드 .ci-jobicon과 같다 */
-.char-card__jobicon { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; border-radius: 9px; border: 1px solid var(--border-hl); background: var(--primary-l); }
+/* 직업 일러스트는 이름 줄 안에 넣는다. 테두리·옅은 바탕은 캐릭터 목록 카드 .ci-jobicon과 같고,
+   다크 모드에서도 화이트 모드의 금색 --border-hl·--primary-l 값을 그대로 쓴다 */
+.char-card__jobicon { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; border-radius: 9px; border: 1px solid rgba(184,134,11,.6); background: rgba(184,134,11,.13); }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 /* 경험치·랭킹이 없는 카드의 빈 줄 자리 app.js charCardSpacerHtml. 보이지 않게 두고 자리만 차지한다.
    랭킹 줄은 원래 통계 칸 안의 1px·홈 7px 간격 대신 바깥 간격을 받으므로 그만큼 당긴다 */
@@ -2206,9 +2210,10 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-card__body { padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
 .ci-card__nameline > div { min-width: 0; }
-/* 직업 일러스트는 투명한 곳이 많아 밝은 그림이 카드 바탕에 묻힌다 → 테두리와 옅은 바탕으로 칸을 잡는다
+/* 직업 일러스트는 투명한 곳이 많아 밝은 그림이 카드 바탕에 묻힌다 → 테두리와 옅은 바탕으로 칸을 잡는다.
+   색은 두 테마 모두 화이트 모드 금색 --border-hl·--primary-l 값
    카드 폭(cqw) 기준으로 크기를 잡아 카드가 커지면 아이콘도 함께 커진다 */
-.ci-jobicon { width: clamp(36px, 13cqw, 64px); height: clamp(36px, 13cqw, 64px); object-fit: contain; border-radius: 9px; border: 1px solid var(--border-hl); background: var(--primary-l); flex-shrink: 0; }
+.ci-jobicon { width: clamp(36px, 13cqw, 64px); height: clamp(36px, 13cqw, 64px); object-fit: contain; border-radius: 9px; border: 1px solid rgba(184,134,11,.6); background: rgba(184,134,11,.13); flex-shrink: 0; }
 .ci-card__name { font-size: clamp(.8rem, .6rem + 1.8cqw, 1.25rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__job { font-size: clamp(.6rem, .46rem + .8cqw, .88rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {

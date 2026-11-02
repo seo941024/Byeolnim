@@ -23,13 +23,13 @@ const DAILY_TASK_PRESETS = [
   { id: 'haste',       label: '헤이스트',      img: 'images/dailytasks/haste.png' },
   { id: 'starspeck',   label: '별조각 상자',   img: 'images/icons/Use_Mysterious_Star_Speck_Box.png' },
 ];
-const DT_DEFAULT_PORTRAIT = 'images/dailytasks/default.png';
 
 let _dtStep = 1;              // 1=이름 정하기(조회/직접입력), 2=항목 선택
 let _dtPendingName = '';
 let _dtPendingImg = null;
 let _dtPendingLevel = null;   // GMS 랭킹 조회로 정한 경우만 채워짐(직접 입력은 레벨을 모른다)
 let _dtPendingRegion = null;  // GMS 랭킹 조회로 정한 경우만 채워짐 → 자동 최신화에 사용
+let _dtPendingSex = 'f';      // 그림이 없을 때 보일 기본 캐릭터 성별. 캐릭터 창과 같은 app.js charDefaultImg
 let _dtNewActive = new Set(); // 2단계에서 지금 체크 중인 항목(제출 전 임시 상태)
 let _dtEditCharId = null;     // null이면 신규 추가, 값이 있으면 그 캐릭터의 항목 수정 모드
 
@@ -57,9 +57,9 @@ function _dtGetChar(charId) {
   const rec = _dtLoadAll().items[charId];
   if (!rec) return null;
   const today = _dtTodayKey();
-  return { name: rec.name, img: rec.img || null, level: rec.level || null, active: rec.active || [], region: rec.region || null, done: rec.date === today ? (rec.done || []) : [] };
+  return { name: rec.name, img: rec.img || null, level: rec.level || null, active: rec.active || [], region: rec.region || null, sex: rec.sex === 'm' ? 'm' : 'f', done: rec.date === today ? (rec.done || []) : [] };
 }
-function _dtSaveChar(charId, name, img, active, done, region, syncedAt, level) {
+function _dtSaveChar(charId, name, img, active, done, region, syncedAt, level, sex) {
   const all = _dtLoadAll();
   const prev = all.items[charId] || {};
   all.items[charId] = {
@@ -67,6 +67,7 @@ function _dtSaveChar(charId, name, img, active, done, region, syncedAt, level) {
     region: region !== undefined ? region : prev.region,
     syncedAt: syncedAt !== undefined ? syncedAt : prev.syncedAt,
     level: level !== undefined ? level : prev.level,
+    sex: sex !== undefined ? sex : prev.sex,
   };
   _dtSaveAll(all);
 }
@@ -76,13 +77,13 @@ function _dtDeleteChar(charId) {
   all.order = all.order.filter(id => id !== charId);
   _dtSaveAll(all);
 }
-function _dtCreateChar(name, img, activeIds, region, level) {
+function _dtCreateChar(name, img, activeIds, region, level, sex) {
   const all = _dtLoadAll();
   const id = String(Date.now());
   all.items[id] = {
     name, img, active: activeIds, date: _dtTodayKey(), done: [],
     region: region || null, syncedAt: region ? Date.now() : null,
-    level: level || null,
+    level: level || null, sex,
   };
   all.order.push(id);
   _dtSaveAll(all);
@@ -187,8 +188,8 @@ function _dtTileHtml(charId, task, done) {
 }
 
 function _dtCardHtml(charId, rec) {
-  const { name, img, level, active, done } = rec;
-  const portraitSrc = img || DT_DEFAULT_PORTRAIT;
+  const { name, img, level, active, done, sex } = rec;
+  const portraitSrc = img || charDefaultImg({ sex });
   const portraitHtml = `
     <img class="dt-card__portrait-img" src="${portraitSrc}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
     <span class="dt-card__portrait-no" style="display:none">NO IMG</span>`;
@@ -221,6 +222,7 @@ function _dtResetPending() {
   _dtPendingImg = null;
   _dtPendingLevel = null;
   _dtPendingRegion = null;
+  _dtPendingSex = 'f';
   _dtNewActive = new Set();
   _dtEditCharId = null;
 }
@@ -258,6 +260,7 @@ function _dtOpenEditModal(charId) {
   _dtPendingImg = rec.img;
   _dtPendingLevel = rec.level;
   _dtPendingRegion = rec.region;
+  _dtPendingSex = rec.sex;
   _dtNewActive = new Set(rec.active);
   _dtEditCharId = charId;
   _dtRenderAddModal();
@@ -287,6 +290,7 @@ function _dtStep1Html() {
             <input class="inp" id="dtLkName" placeholder="캐릭터명을 입력하세요." autocomplete="off" />
             <button class="sbtn sbtn--primary" id="dtLkBtn">조회</button>
           </div>
+          <p class="lookup-box__note">※ 챌린저스 서버 캐릭터는 검색이 되지 않습니다. 직접 입력을 활용해 주세요.</p>
         </div>
         <div class="lookup-box__result" id="dtLkResult"></div>
 
@@ -301,7 +305,14 @@ function _dtStep1Html() {
           <input class="inp" id="dtManualLevel" type="number" min="1" max="300" placeholder="예: 275"
                  value="${_dtPendingRegion ? '' : (_dtPendingLevel || '')}" />
         </div>
-        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 챌린저스 등 랭킹 조회에 안 잡히는 캐릭터는 직접 입력을 쓰세요. 기본 이미지로 등록됩니다. 레벨은 비워두면 표시하지 않습니다.</p>
+        <div class="field">
+          <label class="field__label">기본 캐릭터</label>
+          <div class="sf-tabs char-sextabs" id="dtSexTabs">
+            <button type="button" class="sf-tab${_dtPendingSex === 'f' ? ' active' : ''}" data-sex="f">여자</button>
+            <button type="button" class="sf-tab${_dtPendingSex === 'm' ? ' active' : ''}" data-sex="m">남자</button>
+          </div>
+        </div>
+        <p style="font-size:.75rem;color:var(--text-sub);margin-top:8px">※ 직접 입력한 캐릭터는 이미지가 기본 이미지로 표시됩니다. 레벨은 비워두면 표시하지 않습니다.</p>
         <button class="sbtn sbtn--ghost w100" id="dtManualBtn" style="margin-top:8px">직접 입력으로 계속</button>
       </div>
     </div>`;
@@ -339,6 +350,12 @@ function _dtWireStep1() {
       box.innerHTML = '<span class="lk-err">조회 실패 — serve.js 서버가 실행 중인지 확인하세요.</span>';
     }
   });
+  document.getElementById('dtSexTabs').addEventListener('click', e => {
+    const b = e.target.closest('[data-sex]');
+    if (!b) return;
+    _dtPendingSex = b.dataset.sex;
+    document.querySelectorAll('#dtSexTabs [data-sex]').forEach(x => x.classList.toggle('active', x === b));
+  });
   document.getElementById('dtManualBtn').addEventListener('click', () => {
     const nameInp = document.getElementById('dtManualName');
     const name = nameInp.value.trim();
@@ -364,7 +381,7 @@ function _dtStep2Html() {
       </div>
       <div class="modal__body">
         <div class="dt-step2-head">
-          <img class="dt-step2-portrait" src="${_dtPendingImg || DT_DEFAULT_PORTRAIT}" alt="" onerror="this.src='${DT_DEFAULT_PORTRAIT}'" />
+          <img class="dt-step2-portrait" src="${_dtPendingImg || charDefaultImg({ sex: _dtPendingSex })}" alt="" onerror="this.src='${charDefaultImg({ sex: _dtPendingSex })}'" />
           <span class="dt-step2-namebox">
             <span class="dt-step2-name">${escHtml(_dtPendingName)}</span>
             ${_dtPendingLevel ? `<span class="dt-step2-lv">Lv.${_dtPendingLevel}</span>` : ''}
@@ -414,9 +431,9 @@ function _dtWireStep2() {
       // region이 바뀌면(랭킹으로 다시 조회) 자동 갱신 대상도 그에 맞게 바뀌어야 한다.
       _dtSaveChar(_dtEditCharId, _dtPendingName, _dtPendingImg, activeIds,
         rec.done.filter(d => activeIds.includes(d)),
-        _dtPendingRegion, _dtPendingRegion ? Date.now() : null, _dtPendingLevel);
+        _dtPendingRegion, _dtPendingRegion ? Date.now() : null, _dtPendingLevel, _dtPendingSex);
     } else {
-      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion, _dtPendingLevel);
+      _dtCreateChar(_dtPendingName, _dtPendingImg, activeIds, _dtPendingRegion, _dtPendingLevel, _dtPendingSex);
     }
     _dtCloseAddModal();
     renderDailyTasks();

@@ -432,7 +432,7 @@ function renderCharListInto(ul) {
         <div class="char-card__top">
           <div class="char-card__id">
             <div class="char-card__name">${escHtml(ch.name)}</div>
-            ${jn ? `<div class="char-card__job-line">${escHtml(jn)}</div>` : ''}
+            ${jn ? `<div class="char-card__job-line">${escHtml(charJobLabel(ch))}</div>` : ''}
           </div>
           ${headSrc ? `<img class="char-card__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
         </div>
@@ -485,7 +485,7 @@ function charHomeCardHtml(ch, i, portrait) {
         <div class="hc__top">
           <div class="hc__id">
             <div class="hc__name">${escHtml(ch.name)}</div>
-            ${jn ? `<div class="hc__job">${escHtml(jn)}</div>` : ''}
+            ${jn ? `<div class="hc__job">${escHtml(charJobLabel(ch))}</div>` : ''}
           </div>
           ${headSrc ? `<img class="hc__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
         </div>
@@ -520,7 +520,7 @@ function selectChar(i) {
 }
 
 /* ── 보스 테이블 렌더 ── */
-document.addEventListener('namelang', () => renderBossTable());
+document.addEventListener('namelang', () => { renderBossTable(); renderCharList(); });
 function renderBossTable() {
   const ch  = state.chars[state.activeChar];
   const tb  = document.getElementById('bossTableBody');
@@ -800,6 +800,15 @@ function jobIdxFromName(jobName) {
   const norm = normJobName(jobName);
   return JOB_LIST.findIndex(j => normJobName(j.name) === norm);
 }
+
+/* 화면에 쓸 직업 이름. 게임 이름 표기가 한글이면 JOB_LIST의 ko, 목록에서 못 찾으면 받은 영어 그대로 */
+function jobLabel(en) {
+  if (!en) return '';
+  let i = jobIdxFromName(en);
+  if (i < 0) i = jobIdxFromName(canonJobName(en));
+  return gameName(JOB_LIST[i]?.ko, en);
+}
+function charJobLabel(ch) { return jobLabel(charJobName(ch)); }
 
 /* 직업 아이콘 파일명이 영문 직업명에서 공백만 뺀 것과 다른 직업 */
 const JOB_ASSET_NAMES = {

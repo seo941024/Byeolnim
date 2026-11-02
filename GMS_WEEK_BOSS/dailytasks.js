@@ -333,7 +333,7 @@ function _dtWireStep1() {
         <div class="lk-card">
           ${j.data.img ? `<img class="lk-card__av" src="${escHtml(j.data.img)}" onerror="this.style.display='none'" />` : ''}
           <div class="lk-card__info">
-            <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(j.data.job || '')}</span></div>
+            <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(jobLabel(j.data.job))}</span></div>
             <div class="lk-card__meta">Lv.${escHtml(j.data.level)} · ${escHtml(j.data.region)} ${escHtml(j.data.world)}</div>
           </div>
         </div>

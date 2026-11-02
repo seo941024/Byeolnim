@@ -28,6 +28,12 @@ function openCharModal(idx = -1) {
   document.getElementById('overlayChar').classList.add('open');
 }
 
+// 게임 이름 표기를 바꾸면 직업 이름이 들어간 캐릭터 목록 화면과 열려 있는 캐릭터 창의 직업 목록을 다시 그린다
+document.addEventListener('namelang', () => {
+  renderCharInfo();
+  if (document.getElementById('overlayChar').classList.contains('open')) renderJobGrid(document.getElementById('inpJobSearch').value);
+});
+
 /* ── 기본 캐릭터 성별 ── 랭킹 그림이 없을 때 보일 기본 캐릭터. app.js charDefaultImg */
 function syncCharSexTabs() {
   document.querySelectorAll('#charSexTabs [data-sex]').forEach(b => b.classList.toggle('active', b.dataset.sex === selectedSex));
@@ -141,7 +147,7 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
       <div class="lk-card">
         ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
         <div class="lk-card__info">
-          <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(j.data.job)}</span></div>
+          <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(jobLabel(j.data.job))}</span></div>
           <div class="lk-card__meta">Lv.${j.data.level} · ${escHtml(j.data.region)} ${escHtml(j.data.world)} · 전체 ${j.data.rank.toLocaleString()}위</div>
           <div class="lk-card__exp">누적 EXP ${Number(j.data.exp).toLocaleString()}</div>
         </div>
@@ -157,11 +163,12 @@ function renderJobGrid(filter) {
   grid.innerHTML = '';
   const q = filter.toLowerCase();
   JOB_LIST.forEach((job, i) => {
-    if (q && !job.name.toLowerCase().includes(q)) return;
+    // 검색은 영어·한글 이름 둘 다 찾는다
+    if (q && !job.name.toLowerCase().includes(q) && !(job.ko || '').includes(q)) return;
     const div = document.createElement('div');
     div.className = 'job-item' + (i === selectedJob ? ' sel' : '');
     const iconSrc = charJobHeadSrc({ jobIdx:i, fetched:null });
-    div.innerHTML = `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="job-noimg" style="display:none">JOB</span><span>${job.name}</span>`;
+    div.innerHTML = `<img src="${iconSrc}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" /><span class="job-noimg" style="display:none">JOB</span><span>${gameName(job.ko, job.name)}</span>`;
     div.addEventListener('click', () => { selectedJob = i; renderJobGrid(filter); });
     grid.appendChild(div);
   });
@@ -432,7 +439,6 @@ function renderCharInfo() {
 
   const cards = state.chars.map((ch, i) => {
     const f = ch.fetched;
-    const jn = charJobName(ch);
     const world = f?.world || '';
     const region = charRegion(ch);
     const sIcon = world ? serverIconSrc(world) : '';
@@ -472,7 +478,7 @@ function renderCharInfo() {
           <div class="ci-card__nameline">
             <div>
               <div class="ci-card__name">${escHtml(ch.name)}</div>
-              <div class="ci-card__job">${escHtml(jn || '')}</div>
+              <div class="ci-card__job">${escHtml(charJobLabel(ch))}</div>
             </div>
             ${headHtml}
           </div>
@@ -592,7 +598,6 @@ async function exportCharCard(idx) {
   const ch = state.chars[idx];
   if (!ch) return;
   const f = ch.fetched || {};
-  const jn = charJobName(ch);
   const region = charRegion(ch);
   const world = f.world || '';
   const lv = f.level || ch.level;
@@ -666,7 +671,7 @@ async function exportCharCard(idx) {
 
   ctx.fillStyle = textSub;
   ctx.font = F(13, false);
-  ctx.fillText(jn || '', tx, 60);
+  ctx.fillText(charJobLabel(ch), tx, 60);
 
   const divider = y => {
     ctx.strokeStyle = border;

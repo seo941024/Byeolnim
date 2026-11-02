@@ -89,22 +89,25 @@ const STORAGE_KEYS = {
   mapleCalEvents: 'mc_events_v1',
 };
 
+/* ko: 게임 이름 표기가 한글일 때 쓰는 직업 이름. 나무위키 "메이플스토리/직업" 직업 목록 표기, 2026-11-02 확인.
+   하야토·칸나·린·묵현·에릴 라이트·시아 아스텔은 KMS에 없는 직업이라 지수가 알려 준 이름이다.
+   아크메이지는 괄호 대신 불·독, 썬·콜로 쓴다 */
 const JOB_LIST = [
-  {name:'Hero'},{name:'Paladin'},{name:'Dark Knight'},
-  {name:'Arch Mage (Fire, Poison)'},{name:'Arch Mage (Ice, Lightning)'},{name:'Bishop'},
-  {name:'Bowmaster'},{name:'Marksman'},{name:'Pathfinder'},
-  {name:'Night Lord'},{name:'Shadower'},{name:'Dual Blade'},
-  {name:'Buccaneer'},{name:'Corsair'},{name:'Cannoneer'},
-  {name:'Dawn Warrior'},{name:'Blaze Wizard'},{name:'Wind Archer'},{name:'Night Walker'},{name:'Thunder Breaker'},{name:'Mihile'},
-  {name:'Aran'},{name:'Evan'},{name:'Mercedes'},{name:'Phantom'},{name:'Luminous'},{name:'Shade'},
-  {name:'Battle Mage'},{name:'Wild Hunter'},{name:'Mechanic'},{name:'Blaster'},
-  {name:'Demon Slayer'},{name:'Demon Avenger'},{name:'Xenon'},
-  {name:'Kaiser'},{name:'Kain'},{name:'Cadena'},{name:'Angelic Buster'},
-  {name:'Hayato'},{name:'Kanna'},
-  {name:'Illium'},{name:'Ark'},{name:'Adele'},{name:'Khali'},
-  {name:'Hoyoung'},{name:'Lara'},{name:'Ren'},
-  {name:'Zero'},{name:'Kinesis'},{name:'Lynn'},
-  {name:'Erel Light'},{name:'Sia Astelle'},{name:'Lethe'},
+  {name:'Hero',ko:'히어로'},{name:'Paladin',ko:'팔라딘'},{name:'Dark Knight',ko:'다크나이트'},
+  {name:'Arch Mage (Fire, Poison)',ko:'아크메이지 불·독'},{name:'Arch Mage (Ice, Lightning)',ko:'아크메이지 썬·콜'},{name:'Bishop',ko:'비숍'},
+  {name:'Bowmaster',ko:'보우마스터'},{name:'Marksman',ko:'신궁'},{name:'Pathfinder',ko:'패스파인더'},
+  {name:'Night Lord',ko:'나이트로드'},{name:'Shadower',ko:'섀도어'},{name:'Dual Blade',ko:'듀얼블레이드'},
+  {name:'Buccaneer',ko:'바이퍼'},{name:'Corsair',ko:'캡틴'},{name:'Cannoneer',ko:'캐논슈터'},
+  {name:'Dawn Warrior',ko:'소울마스터'},{name:'Blaze Wizard',ko:'플레임위자드'},{name:'Wind Archer',ko:'윈드브레이커'},{name:'Night Walker',ko:'나이트워커'},{name:'Thunder Breaker',ko:'스트라이커'},{name:'Mihile',ko:'미하일'},
+  {name:'Aran',ko:'아란'},{name:'Evan',ko:'에반'},{name:'Mercedes',ko:'메르세데스'},{name:'Phantom',ko:'팬텀'},{name:'Luminous',ko:'루미너스'},{name:'Shade',ko:'은월'},
+  {name:'Battle Mage',ko:'배틀메이지'},{name:'Wild Hunter',ko:'와일드헌터'},{name:'Mechanic',ko:'메카닉'},{name:'Blaster',ko:'블래스터'},
+  {name:'Demon Slayer',ko:'데몬슬레이어'},{name:'Demon Avenger',ko:'데몬어벤져'},{name:'Xenon',ko:'제논'},
+  {name:'Kaiser',ko:'카이저'},{name:'Kain',ko:'카인'},{name:'Cadena',ko:'카데나'},{name:'Angelic Buster',ko:'엔젤릭버스터'},
+  {name:'Hayato',ko:'하야토'},{name:'Kanna',ko:'칸나'},
+  {name:'Illium',ko:'일리움'},{name:'Ark',ko:'아크'},{name:'Adele',ko:'아델'},{name:'Khali',ko:'칼리'},
+  {name:'Hoyoung',ko:'호영'},{name:'Lara',ko:'라라'},{name:'Ren',ko:'렌'},
+  {name:'Zero',ko:'제로'},{name:'Kinesis',ko:'키네시스'},{name:'Lynn',ko:'린'},
+  {name:'Erel Light',ko:'에릴 라이트'},{name:'Sia Astelle',ko:'시아 아스텔'},{name:'Lethe',ko:'레테'},
   // 캐릭터는 jobIdx로 저장되므로 새 직업은 항상 맨 뒤에 붙인다
-  {name:'Mo Xuan'},
+  {name:'Mo Xuan',ko:'묵현'},
 ];

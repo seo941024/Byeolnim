@@ -226,7 +226,7 @@ function sfRenderStarPanel(to, done) {
   if (name) name.textContent = _sfItem ? gameName(_sfItem.name, _sfItem.en) : `${_sfGetLevel()}제 장비`;
   const ico = document.querySelector('.sfw__item img');
   if (ico) {
-    ico.src = _sfItem ? `images/items/${_sfItem.id}.png` : 'images/icons/fav_star.png';
+    ico.src = _sfItem ? (_sfItem.icon || `images/items/${_sfItem.id}.png`) : 'images/icons/fav_star.png';
     ico.classList.toggle('is-item', !!_sfItem);
   }
 

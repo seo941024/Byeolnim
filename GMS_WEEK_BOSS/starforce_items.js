@@ -1,9 +1,11 @@
-/* 스타포스 직작 — 세트·부위 목록. 아이콘은 images/items/<id>.png.
+/* 스타포스 직작 — 세트·부위 목록. 아이콘은 images/items/<id>.png, icon이 있으면 그 그림.
    제외: 포켓·뱃지·엠블렘·기계 심장·훈장은 스타포스 가능 여부를 확인하지 못해 뺐다.
    방어구·무기는 직업마다 이름이 달라 메르세데스 장비 하나를 대표로 쓴다. 방어구는 궁수, 무기는 듀얼보우건, 보조무기는 마법화살. 지수 요청
    name은 maplestory.io KMS 389 아이템 번호로 받은 한글 이름, en은 GMS 270 이름이다.
    에테르넬 아처글러브·아처슈즈·아처케이프, 데스티니 듀얼보우건, 아스트라 마법 화살은 KMS 389에 아직 없어
    2026-11-02 지수가 맞다고 확인한 이름이다
+   굶주리는 핏빛 원혼은 벨로나 하드 장비라 GMS 270에 없어 id·en이 없다. 지수 요청으로 넣었다.
+     눈장식·250레벨·최대 30성은 나무위키 광휘의 보스 세트 문서 정보 상자, 아이콘은 채널 추천과 같은 그림
    minStar·maxStar: 강화를 시작하는 성수와 올릴 수 있는 상한. 데스티니 무기는 22성으로 받아 25성까지 올린다.
      출처 maplestorywiki.net Destiny Weapon 문서 2단계 초월 보상 "Star Force 22-Star, can be enhanced to 25 stars"
    destStar·spare: 파괴되면 스페어를 사서 destStar성으로 복구하고, 파괴마다 spare 메소를 누적 비용에 더한다.
@@ -17,6 +19,7 @@ const SF_ITEMS = [
 { "set": "칠흑의 보스 세트", "slot": "귀고리", "name": "커맨더 포스 이어링", "lv": 200, "id": 1032316, "en": "Commanding Force Earring" },
 { "set": "칠흑의 보스 세트", "slot": "반지", "name": "거대한 공포", "lv": 200, "id": 1113306, "en": "Endless Terror" },
 { "set": "광휘의 보스 세트", "slot": "얼굴장식", "name": "오만의 원죄", "lv": 250, "id": 1012911, "en": "Original Sin of Pride" },
+{ "set": "광휘의 보스 세트", "slot": "눈장식", "name": "굶주리는 핏빛 원혼", "lv": 250, "icon": "images/WANT/Eqp_Starving_Blood_Spirit.png" },
 { "set": "광휘의 보스 세트", "slot": "반지", "name": "근원의 속삭임", "lv": 250, "id": 1113341, "en": "Whisper of the Source" },
 { "set": "광휘의 보스 세트", "slot": "반지", "name": "황홀한 악몽", "lv": 250, "id": 1113360, "en": "Blissful Nightmare" },
 { "set": "광휘의 보스 세트", "slot": "펜던트", "name": "죽음의 맹세", "lv": 250, "id": 1122447, "en": "Oath of Death" },

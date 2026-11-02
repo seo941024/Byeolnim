@@ -2,51 +2,53 @@
    오늘의 채널 추천 — 갖고 싶은 아이템을 고르면 팝업으로, 지금 선택된
    캐릭터가 속한 서버의 점검 중이 아닌 채널 중 하나를 무작위로 추천해준다.
    캐릭터가 없거나 서버 정보를 조회한 적이 없으면 기본값(Kronos)을 쓴다.
+   en은 GMS v270 아이템 이름. maplestory.io GMS 270 아이템 검색에서 같은 이름을 확인했다.
+   굶주리는 핏빛 원혼은 아직 GMS에 나오지 않아 en이 없고, 영어 표기에서도 한글로 나온다.
 ═══════════════════════════════════════════════ */
 
 const WANT_CATEGORIES = [
   {
     title: '칠흑의 보스 세트',
     items: [
-      { file: 'Eqp_Berserked.png',               name: '루즈 컨트롤 머신 마크' },
-      { file: 'Etc_Damaged_Black_Heart.png',       name: '블랙 하트' },
-      { file: 'Eqp_Total_Control.png',            name: '컴플리트 언더컨트롤' },
-      { file: 'Eqp_Magic_Eyepatch.png',           name: '마력이 깃든 안대' },
-      { file: 'Eqp_Dreamy_Belt.png',              name: '몽환의 벨트' },
-      { file: "Use_Will's_Cursed_Spellbook_Selection_Box.png", name: '저주받은 마도서' },
-      { file: 'Eqp_Endless_Terror.png',           name: '거대한 공포' },
-      { file: 'Eqp_Commanding_Force_Earring.png', name: '커맨더 포스 이어링' },
-      { file: 'Eqp_Source_of_Suffering.png',      name: '고통의 근원' },
-      { file: 'Eqp_Genesis_Badge.png',            name: '창세의 뱃지' },
-      { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노' },
+      { file: 'Eqp_Berserked.png',               name: '루즈 컨트롤 머신 마크', en: "Berserked" },
+      { file: 'Etc_Damaged_Black_Heart.png',       name: '블랙 하트', en: "Damaged Black Heart" },
+      { file: 'Eqp_Total_Control.png',            name: '컴플리트 언더컨트롤', en: "Total Control" },
+      { file: 'Eqp_Magic_Eyepatch.png',           name: '마력이 깃든 안대', en: "Magic Eyepatch" },
+      { file: 'Eqp_Dreamy_Belt.png',              name: '몽환의 벨트', en: "Dreamy Belt" },
+      { file: "Use_Will's_Cursed_Spellbook_Selection_Box.png", name: '저주받은 마도서', en: "Will's Cursed Spellbook Selection Box" },
+      { file: 'Eqp_Endless_Terror.png',           name: '거대한 공포', en: "Endless Terror" },
+      { file: 'Eqp_Commanding_Force_Earring.png', name: '커맨더 포스 이어링', en: "Commanding Force Earring" },
+      { file: 'Eqp_Source_of_Suffering.png',      name: '고통의 근원', en: "Source of Suffering" },
+      { file: 'Eqp_Genesis_Badge.png',            name: '창세의 뱃지', en: "Genesis Badge" },
+      { file: "Use_Mitra's_Rage_Selection_Box.png", name: '미트라의 분노', en: "Mitra's Rage Selection Box" },
     ],
   },
   {
     title: '광휘의 보스 세트',
     items: [
-      { file: 'Eqp_Immortal_Legacy.png',          name: '불멸의 유산' },
-      { file: 'Eqp_Blissful_Nightmare.png',       name: '황홀한 악몽' },
+      { file: 'Eqp_Immortal_Legacy.png',          name: '불멸의 유산', en: "Immortal Legacy" },
+      { file: 'Eqp_Blissful_Nightmare.png',       name: '황홀한 악몽', en: "Blissful Nightmare" },
       { file: 'Eqp_Starving_Blood_Spirit.png',    name: '굶주리는 핏빛 원혼' },
-      { file: 'Eqp_Whisper_of_the_Source.png',    name: '근원의 속삭임' },
-      { file: 'Eqp_Oath_of_Death.png',            name: '죽음의 맹세' },
-      { file: 'Eqp_Original_Sin_of_Pride.png',    name: '오만의 원죄' },
+      { file: 'Eqp_Whisper_of_the_Source.png',    name: '근원의 속삭임', en: "Whisper of the Source" },
+      { file: 'Eqp_Oath_of_Death.png',            name: '죽음의 맹세', en: "Oath of Death" },
+      { file: 'Eqp_Original_Sin_of_Pride.png',    name: '오만의 원죄', en: "Original Sin of Pride" },
     ],
   },
   {
     title: '연마석',
     items: [
-      { file: 'Use_Grindstone_of_Life.png',   name: '생명의 연마석' },
-      { file: 'Use_Grindstone_of_Faith.png',  name: '신념의 연마석' },
+      { file: 'Use_Grindstone_of_Life.png',   name: '생명의 연마석', en: "Grindstone of Life" },
+      { file: 'Use_Grindstone_of_Faith.png',  name: '신념의 연마석', en: "Grindstone of Faith" },
     ],
   },
   {
     title: '익셉셔널 해머',
     items: [
-      { file: 'Use_Exceptional_Hammer_(Belt).png',     name: '익셉셔널 해머 (벨트)' },
-      { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머 (얼굴장식)' },
-      { file: 'Use_Exceptional_Hammer_(Eye_Acc).png',  name: '익셉셔널 해머 (눈장식)' },
-      { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머 (귀걸이)' },
-      { file: 'Use_Exceptional_Hammer_(Medal).png',    name: '익셉셔널 해머 (훈장)' },
+      { file: 'Use_Exceptional_Hammer_(Belt).png',     name: '익셉셔널 해머 (벨트)', en: "Exceptional Hammer (Belt)" },
+      { file: 'Use_Exceptional_Hammer_(Face_Acc).png', name: '익셉셔널 해머 (얼굴장식)', en: "Exceptional Hammer (Face Acc)" },
+      { file: 'Use_Exceptional_Hammer_(Eye_Acc).png',  name: '익셉셔널 해머 (눈장식)', en: "Exceptional Hammer (Eye Acc)" },
+      { file: 'Use_Exceptional_Hammer_(Earrings).png', name: '익셉셔널 해머 (귀걸이)', en: "Exceptional Hammer (Earrings)" },
+      { file: 'Use_Exceptional_Hammer_(Medal).png',    name: '익셉셔널 해머 (훈장)', en: "Exceptional Hammer (Medal)" },
     ],
   },
 ];
@@ -86,7 +88,7 @@ function _wcModalBodyHtml(item, res) {
     <div class="wc-result">
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
-        <div class="wc-result__item">${item.name}</div>
+        <div class="wc-result__item">${gameName(item.name, item.en)}</div>
         <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${_wcCurrentWorld()} - ${res.channel}채널</span></div>
       </div>
     </div>`;
@@ -142,9 +144,11 @@ function _wcRowHtml(item) {
   return `
     <div class="wc-item" data-want="${item.file}">
       <span class="wc-item__img-wrap"><img class="wc-item__img" src="${_wcImgSrc(item)}" alt="" /></span>
-      <span class="wc-item__name">${item.name}</span>
+      <span class="wc-item__name">${gameName(item.name, item.en)}</span>
     </div>`;
 }
+
+document.addEventListener('namelang', () => { if (document.getElementById('sec-wantchannel')?.classList.contains('active')) renderWantChannel(); });
 
 function renderWantChannel() {
   const sec = document.getElementById('sec-wantchannel');

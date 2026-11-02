@@ -140,6 +140,21 @@ function createAutoRunner({ btnId, idleLabel, runLabel, runClass, idleClass, bat
   return { start, stop, running: () => on };
 }
 
+/* ── 게임 이름 표기 한글·영어 ──
+   아이템·스킬 같은 게임 이름을 한글로 볼지 GMS 영어로 볼지. 사이트 전체가 이 값 하나를 따른다. 기본은 한글.
+   헤더 스위치와 설정 창 버튼이 setNameLang으로 바꾸고, 바뀌면 document에 'namelang' 이벤트를 보내 화면마다 다시 그린다.
+   한쪽 이름이 없으면 있는 쪽을 보여 준다 */
+const NAME_LANG_KEY = 'gms_name_lang';
+let _nameLang = 'ko';
+try { if (localStorage.getItem(NAME_LANG_KEY) === 'en') _nameLang = 'en'; } catch (e) {}
+function nameLang() { return _nameLang; }
+function gameName(ko, en) { return (_nameLang === 'en' ? (en || ko) : (ko || en)) || ''; }
+function setNameLang(l) {
+  _nameLang = l === 'en' ? 'en' : 'ko';
+  try { localStorage.setItem(NAME_LANG_KEY, _nameLang); } catch (e) {}
+  document.dispatchEvent(new CustomEvent('namelang'));
+}
+
 /* 목록에서 el만 active로 둔다. 탭·토글 버튼에 쓴다. */
 function setActive(items, el, cls = 'active') {
   items.forEach(x => x.classList.toggle(cls, x === el));

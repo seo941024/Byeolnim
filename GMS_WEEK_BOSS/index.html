@@ -6,7 +6,7 @@
        가려지는 만큼은 CSS의 env(safe-area-inset-*)으로 직접 띄운다 -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>별님앱</title>
-  <link rel="stylesheet" href="style.css?v=20261102y" />
+  <link rel="stylesheet" href="style.css?v=20261102n" />
   <!-- 홈 제목 글꼴(2KB)을 미리 받아 둔다. 제목을 그릴 때 받기 시작하면 잠깐 글자가 비어 보인다 -->
   <link rel="preload" href="font/maple_home.woff" as="font" type="font/woff" crossorigin />
   <link rel="icon" href="images/icons/home_star.png" type="image/png" />
@@ -43,6 +43,13 @@
     <span class="header__title"><span class="header__title-kr">별님앱</span><small class="header__title-en">byeolnim.app</small></span>
   </div>
   <div class="header__center">
+    <!-- 게임 이름 한글·영어 스위치. 폰에서는 테마 스위치처럼 숨기고 설정 창에서 고른다. settings.js가 상태를 맞춘다 -->
+    <span class="theme-toggle-wrap name-lang">
+      <span class="theme-toggle__label" id="nameLangLabel">한글</span>
+      <button class="theme-toggle" id="nameLangToggle" type="button" aria-label="게임 이름 한글 영어 전환" title="게임 이름 한글 영어 전환" aria-pressed="false">
+        <span class="theme-toggle__knob"></span>
+      </button>
+    </span>
     <span class="theme-toggle-wrap">
       <span class="theme-toggle__label" id="themeLabel">다크 모드</span>
       <button class="theme-toggle" id="themeToggle" type="button" aria-label="테마 전환" title="테마 전환">
@@ -298,15 +305,8 @@
       <div class="hexa-layout">
         <!-- 입력 -->
         <div class="card">
-          <!-- 코어 이름 표기 스위치. 이 카드의 코어 이름만 바뀌므로 카드 제목 줄 오른쪽에 둔다. hexa.js가 상태를 맞춘다 -->
           <div class="hx-card-head">
             <div class="card__title">보유 현황</div>
-            <span class="hx-lang" id="hxLang">
-              <span class="hx-lang__label" id="hxLangLabel">영어</span>
-              <button class="theme-toggle" id="hxLangToggle" type="button" aria-label="코어 이름 한글 영어 전환" title="코어 이름 한글 영어 전환" aria-pressed="false">
-                <span class="theme-toggle__knob"></span>
-              </button>
-            </span>
           </div>
           <div class="hexa-field-group">
             <div class="hexa-row">
@@ -789,6 +789,13 @@
         <button class="sbtn sbtn--ghost" id="btnInstallApp">설치 안내 보기</button>
       </div>
       <div class="settings-box">
+        <div class="settings-box__title">게임 이름 표기</div>
+        <div class="settings-font-btns">
+          <button class="sbtn" data-namelang-set="ko">한글</button>
+          <button class="sbtn" data-namelang-set="en">영어</button>
+        </div>
+      </div>
+      <div class="settings-box">
         <div class="settings-box__title">화면 테마</div>
         <div class="settings-font-btns">
           <button class="sbtn" data-theme-set="dark">다크 모드</button>
@@ -908,8 +915,8 @@
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <!-- 방문 통계는 배포 주소에서만 불러온다 — 로컬(localhost)에는 이 파일이 없어 404가 난다 -->
 <script>if (!/^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname)) { var s = document.createElement('script'); s.defer = true; s.src = '/_vercel/insights/script.js'; document.head.appendChild(s); }</script>
-<script src="common.js?v=20261030a"></script>
-<script src="data.js?v=20261101a"></script>
+<script src="common.js?v=20261102n"></script>
+<script src="data.js?v=20261102n"></script>
 <script src="data_hexa.js?v=20261031zb"></script>
 <script src="data_bosshp.js?v=20261031a"></script>
 <script src="data_itemdesc.js?v=20260924b"></script>
@@ -918,22 +925,22 @@
 <script src="data_exp.js?v=20261002a"></script>
 <script src="app.js?v=20261101d"></script>
 <!-- app.js의 state·save를 쓰고, 끝에서 테마·글꼴과 캐릭터 목록 화면을 처음 그린다. app.js 바로 뒤에 와야 한다 -->
-<script src="settings.js?v=20261101z"></script>
+<script src="settings.js?v=20261102n"></script>
 <script src="character.js?v=20261102y"></script>
 <!-- 에르다 링크 화면. 데이터 data_erdalink.js는 두 직업으로 헥사 탭을 열 때만 받는다. hexa.js가 부르므로 그 앞에 둔다 -->
 <script src="erdalink.js?v=20261031za"></script>
-<script src="hexa.js?v=20261102a"></script>
+<script src="hexa.js?v=20261102n"></script>
 <!-- <script src="data_gearcompare.js?v=20260916a"></script> 장비 교체 비교 — 내림
 <script src="gearcompare.js?v=20261031u"></script> -->
 <!-- <script src="hyperstat.js?v=20261031u"></script> 하이퍼스탯 최적화 — 데이터 검증 전까지 내림 -->
 <script src="liberation.js?v=20261030b"></script>
 <script src="starforce_items.js?v=20261102z"></script>
 <script src="starforce_sim.js?v=20261102z"></script>
-<script src="cube.js?v=20261031zg"></script><script src="familiar.js?v=20261031v"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031v"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261031ze"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261031v"></script><script src="meundi.js?v=20261031v"></script><script src="victorypose.js?v=20261031v"></script><script src="mysticseal.js?v=20261031za"></script><script src="myutil.js?v=20261101a"></script>
+<script src="cube.js?v=20261031zg"></script><script src="familiar.js?v=20261031v"></script><script src="soulsim.js?v=20261027f"></script><script src="polish.js?v=20261031v"></script><script src="mixdye_layer.js?v=20261028a"></script><script src="mixdye.js?v=20261102n"></script><script src="data_frontier.js?v=20260825g"></script><script src="frontier.js?v=20261031v"></script><script src="meundi.js?v=20261031v"></script><script src="victorypose.js?v=20261031v"></script><script src="mysticseal.js?v=20261031za"></script><script src="myutil.js?v=20261101a"></script>
 <script src="addoption.js?v=20261031v"></script><script src="bosshp.js?v=20261031zg"></script>
 
 <script src="dailytasks.js?v=20261101z"></script>
-<script src="wantchannel.js?v=20261031zg"></script>
+<script src="wantchannel.js?v=20261102n"></script>
 <!-- 캘린더가 알림 켜기/끄기를 호출하므로 mcalendar.js보다 먼저 와야 한다 -->
 <script src="bosspush.js?v=20261027b"></script>
 <!-- WANT_CATEGORIES를 그대로 가져다 쓰므로 wantchannel.js 뒤에 와야 한다 -->

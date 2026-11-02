@@ -427,8 +427,13 @@ function _mxMakeList(key, rows, item) {
     <span class="mx-item__fav" title="찜">★</span>`;
     b.classList.toggle('is-fav', (_mxFav[key] || []).includes(r[0]));
     _mxPutIcon(b.querySelector('img'), key, r[0], 36);
-    b.querySelector('.mx-item__en').textContent = en;
-    b.querySelector('.mx-item__ko').textContent = [r[2], `ID ${r[0]}`, tag, off ? '데이터 없음' : ''].filter(Boolean).join(' · ');
+    // 게임 이름 표기를 바꾸면 다시 쓰도록 글자 넣는 일을 함수로 남겨 둔다. 고른 표기가 윗줄, 다른 표기는 아랫줄
+    const setText = () => {
+      const [main, sub] = _mxNames(r, en);
+      b.querySelector('.mx-item__en').textContent = main;
+      b.querySelector('.mx-item__ko').textContent = [sub, `ID ${r[0]}`, tag, off ? '데이터 없음' : ''].filter(Boolean).join(' · ');
+    };
+    setText();
     // 별표를 누르면 찜만 바꾸고 입히지는 않는다
     if (!off) b.addEventListener('click', e => {
       if (e.target.closest('.mx-item__fav')) { _mxToggleFav(key, r[0], b); return; }
@@ -436,7 +441,7 @@ function _mxMakeList(key, rows, item) {
       pick();
     });
     box.appendChild(b);
-    L.items.push({ el: b, id: r[0], hide, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
+    L.items.push({ el: b, id: r[0], hide, setText, key: `${r[1]} ${r[2]} ${r[2].replace(/\s+/g, '')} ${r[0]}`.toLowerCase() });
   }
   box.appendChild(empty);
 }
@@ -637,7 +642,7 @@ function _mxPick(role, i) {
 /* ── 화면 갱신 ── */
 function _mxCombo(p) {
   const r = _mxRow(p), st = _mxState[p.key], C = p.colors;
-  const name = `<b>${escHtml(r[1] || `ID ${r[0]}`)}</b>`, base = _mxDotName(C[st.base]);
+  const name = `<b>${escHtml(_mxNames(r)[0])}</b>`, base = _mxDotName(C[st.base]);
   if (!_mxMixOn(p)) return `${name}${base} 100%`;
   return `${name}${base} ${100 - st.ratio}%${_mxDotName(C[st.mix])} ${st.ratio}%`;
 }
@@ -646,21 +651,31 @@ function _mxWornName(slot, id) {
   const basic = MX_BASIC[_mxState.g][slot];
   if (basic && basic[0] === id) return basic[1];
   const r = _mxCD() && (_mxCD().items[slot] || []).find(x => x[0] === id);
-  return r ? r[1] : `ID ${id}`;
+  return r ? _mxNames(r)[0] : `ID ${id}`;
 }
+
+/* 행 [ID, 영문 이름, 한국 서버 이름, …]에서 지금 표기로 [윗줄 이름, 아랫줄 이름]. 한쪽이 없으면 있는 쪽만 윗줄에 둔다 */
+function _mxNames(r, en = r[1] || `ID ${r[0]}`) {
+  const ko = r[2] || '';
+  if (!ko) return [en, ''];
+  return nameLang() === 'en' ? [en, ko] : [ko, en];
+}
+document.addEventListener('namelang', () => {
+  for (const L of Object.values(_mxLists)) for (const it of L.items) it.setText?.();
+  if (document.getElementById('mxSelName')) _mxRender();
+});
 
 function _mxSkinText() {
   const sk = _mxSkin();
   const line = _mxIsCustom(sk.id) ? ` 색조 ${sk.tone} · 채도 ${sk.chroma} · 명도 ${sk.bright}` : '';
-  return `<b>${escHtml(_mxSkinName(sk.id))}</b>${line}`;
+  return `<b>${escHtml(_mxNames(_mxSkinRow(sk.id) || [sk.id, `ID ${sk.id}`, ''])[0])}</b>${line}`;
 }
 
 function _mxRenderSkinCard() {
   const sk = _mxSkin(), line = _mxIsCustom(sk.id);
   _mxPutIcon(document.getElementById('mxSelIcon'), 'skin', sk.id, 44);
   const r = _mxSkinRow(sk.id) || [sk.id, '', ''];
-  document.getElementById('mxSelName').textContent = r[1] || `ID ${sk.id}`;
-  document.getElementById('mxSelSub').textContent = r[2] || '';
+  [document.getElementById('mxSelName').textContent, document.getElementById('mxSelSub').textContent] = _mxNames(r, r[1] || `ID ${sk.id}`);
   document.getElementById('mxLineBox').style.display = line ? '' : 'none';
   for (const k of ['tone', 'chroma', 'bright']) {
     document.getElementById(`mxLine-${k}`).value = sk[k];
@@ -723,8 +738,7 @@ function _mxRender() {
     const B = p.colors[st.base], M = p.colors[Math.max(0, st.mix)], b0 = _mxDotName(B), m0 = _mxDotName(M);
 
     _mxPutIcon(document.getElementById('mxSelIcon'), key, r[0], 44);
-    document.getElementById('mxSelName').textContent = r[1] || `ID ${r[0]}`;
-    document.getElementById('mxSelSub').textContent = r[2] || '';
+    [document.getElementById('mxSelName').textContent, document.getElementById('mxSelSub').textContent] = _mxNames(r);
 
     document.querySelectorAll('#mxBaseChips .mx-chip').forEach(b => {
       const i = +b.dataset.i;

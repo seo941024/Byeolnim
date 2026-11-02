@@ -295,6 +295,20 @@ document.querySelectorAll('[data-theme-set]').forEach(btn => {
   btn.addEventListener('click', () => applyTheme(btn.dataset.themeSet));
 });
 
+/* ── 게임 이름 표기 ── 값은 common.js nameLang. 헤더 스위치는 모바일에서 숨겨지므로 설정 창 버튼도 같은 상태를 보여 준다 */
+function syncNameLangUI() {
+  const en = nameLang() === 'en';
+  const btn = document.getElementById('nameLangToggle');
+  if (btn) { btn.classList.toggle('is-en', en); btn.setAttribute('aria-pressed', en); }
+  const label = document.getElementById('nameLangLabel');
+  if (label) label.textContent = en ? '영어' : '한글';
+  document.querySelectorAll('[data-namelang-set]').forEach(b => b.classList.toggle('sbtn--primary', b.dataset.namelangSet === nameLang()));
+}
+document.getElementById('nameLangToggle')?.addEventListener('click', () => setNameLang(nameLang() === 'en' ? 'ko' : 'en'));
+document.querySelectorAll('[data-namelang-set]').forEach(b => b.addEventListener('click', () => setNameLang(b.dataset.namelangSet)));
+document.addEventListener('namelang', syncNameLangUI);
+syncNameLangUI();
+
 // 기본은 화이트 모드. 다크를 고른 사람만 다크로 연다
 try { localStorage.removeItem('gms_theme'); } catch (e) {}
 applyTheme(localStorage.getItem(THEME_KEY) || 'light');

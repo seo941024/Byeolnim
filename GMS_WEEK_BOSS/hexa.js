@@ -98,43 +98,25 @@ function _hxShowErdaLink(on) {
   if (layout) layout.style.display = on ? 'none' : '';
   if (root)   root.style.display   = on ? '' : 'none';
   if (title)  title.textContent    = on ? _HX_TITLE.erdalink : _HX_TITLE.hexa;
-  // 이름 표기 스위치는 헥사 목록에만 쓰이므로 에르다 링크 판에서는 감춘다
-  const lang = document.getElementById('hxLang');
-  if (lang) lang.style.display = on ? 'none' : '';
 }
 
-/* 코어 이름 표기. 영어가 기본이고 고른 값은 STORAGE_KEYS.hexaLang에 남긴다.
+/* 코어 이름 표기는 사이트 전체 스위치 common.js nameLang을 따른다.
    화면 이름만 바꾸며 저장값·비용·아이콘은 기준 영문 이름으로 판단하므로 영향이 없다 */
-let _hxLang = 'en';
-try { if (localStorage.getItem(STORAGE_KEYS.hexaLang) === 'ko') _hxLang = 'ko'; } catch (e) {}
+try { localStorage.removeItem('hx_name_lang'); } catch (e) {}   // 헥사 전용 스위치를 쓰던 때의 값
 let _hxIcons = null;   // 현재 직업의 노드별 아이콘 주소. 표기만 바꿔 다시 그릴 때 쓴다
-
-function _hxSyncLangToggle() {
-  const btn = document.getElementById('hxLangToggle');
-  const label = document.getElementById('hxLangLabel');
-  const ko = _hxLang === 'ko';
-  if (btn) { btn.classList.toggle('is-ko', ko); btn.setAttribute('aria-pressed', ko); }
-  if (label) label.textContent = ko ? '한글' : '영어';
-}
 
 /* 불러 둔 노드를 현재 표기로 다시 그린다. 저장값은 다시 읽지 않는다 */
 function _hxRenderLists() {
   const jd = _hxJobData;
   if (!jd || !_hxIcons) return;
-  const label = cat => jd[cat].map((n, i) => (_hxLang === 'ko' && jd.ko?.[cat]?.[i]) || n);
+  const label = cat => jd[cat].map((n, i) => gameName(jd.ko?.[cat]?.[i], n));
   renderNodeList(hxSkill,   'hxSkillList',   STORAGE_KEYS.hexaSkill,   _hxIcons.skill,   label('skill'));
   renderNodeList(hxMastery, 'hxMasteryList', STORAGE_KEYS.hexaMastery, _hxIcons.mastery, label('mastery'));
   renderNodeList(hxBoost,   'hxBoostList',   STORAGE_KEYS.hexaBoost,   _hxIcons.boost,   label('boost'));
   renderNodeList(hxCommon,  'hxCommonList',  STORAGE_KEYS.hexaCommon,  _hxIcons.common,  label('common'));
 }
 
-document.getElementById('hxLangToggle')?.addEventListener('click', () => {
-  _hxLang = _hxLang === 'ko' ? 'en' : 'ko';
-  try { localStorage.setItem(STORAGE_KEYS.hexaLang, _hxLang); } catch (e) {}
-  _hxSyncLangToggle();
-  _hxRenderLists();
-});
-_hxSyncLangToggle();
+document.addEventListener('namelang', _hxRenderLists);
 
 /* 탭 진입·캐릭 전환 때마다 활성 캐릭터의 저장 수치로 다시 불러와 그린다 */
 function renderAllHexaLists() {

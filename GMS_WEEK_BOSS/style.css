@@ -3482,7 +3482,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .adm-result.is-err { color: var(--danger); }
 
 /* ── 숙제 트래커 ── */
-.dt-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; align-items: stretch; }
+/* 두 개씩 놓되 카드 한 칸이 340px보다 좁아지면 한 줄에 하나씩. 지수가 캡처로 정한 기준: 한 칸 약 350px까지는 두 개씩이 괜찮고
+   그보다 좁은 두 칸은 보기 불편하다. 칸 최소 폭을 340px과 절반 폭 중 큰 값으로 잡아 세 칸 이상은 생기지 않는다 */
+.dt-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, max(340px, calc((100% - 14px) / 2))), 1fr)); gap: 14px; align-items: stretch; }
 .dt-card { display: flex; flex-direction: column; gap: 12px; transition: opacity .15s, border-color .15s; container-type: inline-size; }
 .dt-card__head { display: flex; align-items: center; gap: 12px; }
 /* 캘린더 칩·프론티어 덱과 같은 112px. cover는 96px 아바타의 가장자리를 잘라내므로

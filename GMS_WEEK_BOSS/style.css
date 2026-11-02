@@ -3616,11 +3616,47 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
    측정상으로는 1px에서 이미 잉크 중심이 맞지만, 눈으로는 1px 더 내린 쪽이
    맞아 보인다고 해서 여기만 2px로 둔다. 되돌리려면 이 규칙만 지우면 된다. */
 .crystal-bar__type .icon-lbl { top: 2px; }
-/* 레벨과 한 줄에 놓인 서버 이름은 보정하지 않는다. 사이드바·캐릭터 목록·홈·숙제 트래커 카드 공통.
-   2026-11-02 글자·그림의 잉크 중심을 재 보니 레벨 글자와 서버 아이콘 중심은 같은 높이고, 서버 이름만 예전에 넣은
-   보정 1~2px만큼 아래에 있어 레벨 → 아이콘 → 서버 이름으로 계단처럼 내려가 보였다는 지수 의견.
-   보정을 빼면 세 중심이 0.5px 안으로 맞는다 */
-:is(.char-card__world-line, .ci-server, .hc__server, .dt-card__server) .icon-lbl { top: 0; }
+/* 레벨과 한 줄에 놓인 서버 아이콘·서버 이름은 레벨 글자와 중심 높이를 같게 둔다. 지수 기준: 사람 눈으로 볼 때 각 글자·그림의 가운데가 한 줄에 놓일 것.
+   2026-11-02 화면의 기준선과 실제 칠해진 픽셀을 재서, 레벨 글자의 픽셀 중심에서 어긋난 만큼 옮겼다. 글꼴 높이 정보로 재면 1px 가까이 틀려서 쓰지 않는다.
+   카드·글꼴마다 글자 크기와 모양이 달라 값이 다르다. 화면 폭에 따라 글자 크기가 바뀌어도 맞도록 서버 이름 글자 크기에 비례하는 em으로 둔다.
+   그림의 em도 같은 글자 크기를 물려받는다. 아래 첫 묶음이 기본 글꼴 고딕, 그다음이 설정에서 고르는 다른 글꼴 */
+:is(.char-card__world-line, .ci-server, .hc__server, .dt-card__server) img { position: relative; }
+.char-card__world-line .icon-lbl { top: -0.04em; } .char-card__world-line img { top: -0.067em; }
+.hc__server .icon-lbl { top: 0.114em; } .hc__server img { top: 0.0em; }
+.dt-card__server .icon-lbl { top: 0.088em; } .dt-card__server img { top: 0.0em; }
+body[data-font="8bit"] .char-card__world-line .icon-lbl { top: -0.055em; } body[data-font="8bit"] .char-card__world-line img { top: -0.094em; }
+body[data-font="8bit"] .hc__server .icon-lbl { top: 0.006em; } body[data-font="8bit"] .hc__server img { top: -0.047em; }
+body[data-font="8bit"] .dt-card__server .icon-lbl { top: -0.015em; } body[data-font="8bit"] .dt-card__server img { top: -0.046em; }
+body[data-font="Maple"] .char-card__world-line .icon-lbl { top: 0.05em; } body[data-font="Maple"] .char-card__world-line img { top: -0.031em; }
+body[data-font="Maple"] .hc__server .icon-lbl { top: -0.033em; } body[data-font="Maple"] .hc__server img { top: -0.047em; }
+body[data-font="Maple"] .dt-card__server .icon-lbl { top: 0.012em; } body[data-font="Maple"] .dt-card__server img { top: -0.046em; }
+body[data-font="Pretendard"] .char-card__world-line .icon-lbl { top: 0.05em; } body[data-font="Pretendard"] .char-card__world-line img { top: -0.01em; }
+body[data-font="Pretendard"] .hc__server .icon-lbl { top: 0.035em; } body[data-font="Pretendard"] .hc__server img { top: -0.038em; }
+body[data-font="Pretendard"] .dt-card__server .icon-lbl { top: 0.012em; } body[data-font="Pretendard"] .dt-card__server img { top: -0.037em; }
+/* 폰 폭은 기준 글자 크기가 달라 글꼴이 픽셀을 반올림하는 자리가 바뀐다. em만으로는 0.5~2px 어긋나 390px 폭에서 따로 잰 값을 쓴다 */
+@media (max-width: 768px) {
+  body[data-font="고딕"] .char-card__world-line .icon-lbl { top: -0.034em; } body[data-font="고딕"] .char-card__world-line img { top: -0.080em; }
+  body[data-font="고딕"] .hc__server .icon-lbl { top: 0.041em; } body[data-font="고딕"] .hc__server img { top: -0.011em; }
+  body[data-font="고딕"] .dt-card__server .icon-lbl { top: 0.099em; } body[data-font="고딕"] .dt-card__server img { top: -0.011em; }
+  body[data-font="Maple"] .char-card__world-line .icon-lbl { top: -0.017em; } body[data-font="Maple"] .char-card__world-line img { top: -0.044em; }
+  body[data-font="Maple"] .hc__server .icon-lbl { top: 0.052em; } body[data-font="Maple"] .hc__server img { top: -0.046em; }
+  body[data-font="Maple"] .dt-card__server .icon-lbl { top: 0.030em; } body[data-font="Maple"] .dt-card__server img { top: -0.044em; }
+  body[data-font="8bit"] .char-card__world-line .icon-lbl { top: 0.037em; } body[data-font="8bit"] .char-card__world-line img { top: -0.023em; }
+  body[data-font="8bit"] .hc__server .icon-lbl { top: 0.002em; } body[data-font="8bit"] .hc__server img { top: -0.046em; }
+  body[data-font="8bit"] .dt-card__server .icon-lbl { top: -0.011em; } body[data-font="8bit"] .dt-card__server img { top: -0.044em; }
+  body[data-font="Pretendard"] .char-card__world-line .icon-lbl { top: 0.072em; } body[data-font="Pretendard"] .char-card__world-line img { top: -0.011em; }
+  body[data-font="Pretendard"] .hc__server .icon-lbl { top: 0.042em; } body[data-font="Pretendard"] .hc__server img { top: -0.026em; }
+  body[data-font="Pretendard"] .dt-card__server .icon-lbl { top: 0.030em; } body[data-font="Pretendard"] .dt-card__server img { top: -0.024em; }
+}
+/* 캐릭터 목록 카드는 카드 폭에 따라 글자 크기가 계속 바뀌어, 글꼴이 픽셀을 반올림하는 자리가 폭마다 달라졌다.
+   레벨·서버 이름의 줄 높이를 1로 고정하면 그 반올림이 사라져, 글꼴마다 하나의 em 값으로 360~1920px 폭에서 0.5px 안으로 맞는다.
+   서버 이름은 말줄임 때문에 넘친 부분을 자르므로, 위아래 여백을 늘리고 같은 만큼 바깥 여백을 당겨 글자가 잘리지 않게 한다 */
+.ci-lv, .ci-server .icon-lbl { line-height: 1; }
+.ci-server .icon-lbl { padding: .15em 0; margin: -.15em 0; top: 0; }
+.ci-server img { top: -0.042em; }
+body[data-font="8bit"] .ci-server .icon-lbl { top: 0.051em; } body[data-font="8bit"] .ci-server img { top: -0.038em; }
+body[data-font="Maple"] .ci-server .icon-lbl { top: 0; } body[data-font="Maple"] .ci-server img { top: -0.058em; }
+body[data-font="Pretendard"] .ci-server .icon-lbl { top: 0.075em; } body[data-font="Pretendard"] .ci-server img { top: -0.027em; }
 /* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
    내려가야 하므로 같은 규칙을 물려준다. */
 .ci-server .icon-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

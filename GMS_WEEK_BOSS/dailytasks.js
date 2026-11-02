@@ -37,26 +37,40 @@ function _dtTodayKey() {
 // 헥사도 id가 없으면 순번을 키로 쓰므로, 여기서 캐릭터에 id를 새로 붙이지 않는다
 function _dtKey(ch) { return ch.id != null ? String(ch.id) : 'n:' + String(ch.name || '').toLowerCase(); }
 
-// { v: 2, items: { [캐릭터 키]: { active, date, done } } }
+/* 처음 켜 두는 항목. 별조각 상자는 월드당으로 세서 사실상 한 캐릭터만, 몬스터 파크는 월드당 두 캐릭터만 한다. 2026-11-02 지수 설명
+   그래서 같은 월드 캐릭터 중 캐릭터 목록 순서로 앞의 한 캐릭터·두 캐릭터에만 켠다. 서버를 모르는 캐릭터끼리는 한 월드로 친다 */
+const DT_WORLD_LIMIT = { starspeck: 1, monsterpark: 2 };
+function _dtDefaultActive(ch) {
+  const world = ch.fetched?.world || '';
+  const rank = state.chars.filter(c => (c.fetched?.world || '') === world).indexOf(ch);
+  return DAILY_TASK_PRESETS.map(t => t.id).filter(id => !(id in DT_WORLD_LIMIT) || rank < DT_WORLD_LIMIT[id]);
+}
+
+// { v: 2, items: { [캐릭터 키]: { active, date, done } } }. active는 항목 수정 창에서 직접 고른 캐릭터만 있다
 function _dtLoadAll() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null');
     if (raw && raw.v === 2 && raw.items) return raw;
   } catch {}
-  return { v: 2, items: {} };
+  return { v: 2, wl: 1, items: {} };
 }
 function _dtSaveAll(all) { localStorage.setItem(STORAGE_KEYS.dailyTasks, JSON.stringify(all)); }
 
 // 캐릭터 하나의 오늘자 상태. 저장된 날짜가 오늘(9시 기준)이 아니면 done을 비운 채로 반환 → 자동 초기화.
-// 기록이 없는 캐릭터는 항목이 모두 켜진 상태다
+// 항목을 직접 고른 적이 없는 캐릭터는 _dtDefaultActive를 따른다
 function _dtState(ch) {
   const rec = _dtLoadAll().items[_dtKey(ch)];
-  if (!rec) return { active: DAILY_TASK_PRESETS.map(t => t.id), done: [] };
-  return { active: rec.active || [], done: rec.date === _dtTodayKey() ? (rec.done || []) : [] };
+  return {
+    active: rec?.active || _dtDefaultActive(ch),
+    done: rec && rec.date === _dtTodayKey() ? (rec.done || []) : [],
+  };
 }
+// active를 넘기지 않으면 직접 고른 항목이 있을 때만 그대로 둔다. 완료 체크만으로 기본 항목이 굳지 않게 한다
 function _dtSaveState(ch, active, done) {
   const all = _dtLoadAll();
-  all.items[_dtKey(ch)] = { active, date: _dtTodayKey(), done };
+  const key = _dtKey(ch);
+  const keep = active !== undefined ? active : all.items[key]?.active;
+  all.items[key] = { ...(keep ? { active: keep } : {}), date: _dtTodayKey(), done };
   _dtSaveAll(all);
 }
 
@@ -67,12 +81,19 @@ function _dtDropV1() {
   try { raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null'); } catch {}
   if (!(raw && raw.v === 2)) localStorage.removeItem(STORAGE_KEYS.dailyTasks);
   localStorage.removeItem(STORAGE_KEYS.dailyTasks + '_old');
+  // 월드당 제한 전에는 완료 체크만 해도 6개 전부가 active로 저장됐다. 그대로 두면 제한이 안 걸리므로 한 번 지운다
+  if (raw && raw.v === 2 && !raw.wl) {
+    const all = DAILY_TASK_PRESETS.map(t => t.id).join();
+    Object.values(raw.items || {}).forEach(r => { if (r.active && r.active.join() === all) delete r.active; });
+    raw.wl = 1;
+    _dtSaveAll(raw);
+  }
 }
 
 // 활성 항목 클릭 → 오늘 완료(CLEAR) 토글
 function _dtToggleDone(ch, taskId) {
-  const { active, done } = _dtState(ch);
-  _dtSaveState(ch, active, done.includes(taskId) ? done.filter(d => d !== taskId) : [...done, taskId]);
+  const { done } = _dtState(ch);
+  _dtSaveState(ch, undefined, done.includes(taskId) ? done.filter(d => d !== taskId) : [...done, taskId]);
 }
 
 function _dtTileHtml(i, task, done) {
@@ -97,14 +118,22 @@ function _dtCardHtml(ch, i) {
   const { active, done } = _dtState(ch);
   const lv = ch.fetched?.level || ch.level;
   const activeTasks = DAILY_TASK_PRESETS.filter(t => active.includes(t.id));
+  // 직업 이름·서버·직업 일러스트는 캐릭터 목록 카드와 같은 함수로 그린다
+  const jn = charJobLabel(ch), headSrc = charJobHeadSrc(ch);
+  const world = ch.fetched?.world || '', sIcon = world ? serverIconSrc(world) : '';
   return `
     <div class="card dt-card" data-ci="${i}">
       <div class="dt-card__head">
         <span class="dt-card__portrait">${_dtPortraitHtml(ch, 'dt-card__portrait-img')}</span>
         <span class="dt-card__whoBody">
           <span class="dt-card__name">${escHtml(ch.name)}</span>
-          ${lv ? `<span class="dt-card__lv">Lv.${lv}</span>` : ''}
+          ${jn ? `<span class="dt-card__job">${escHtml(jn)}</span>` : ''}
+          <span class="dt-card__meta">
+            ${lv ? `<span class="dt-card__lv">Lv.${lv}</span>` : ''}
+            ${world ? `<span class="dt-card__server">${sIcon ? `<img src="${sIcon}" alt="" onerror="this.style.display='none'" />` : ''}<span class="icon-lbl">${escHtml(worldName(world))}</span></span>` : ''}
+          </span>
         </span>
+        ${headSrc ? `<img class="dt-card__jobicon" src="${headSrc}" alt="" onerror="this.style.display='none'" />` : ''}
         <button class="dt-card__edit" data-ci="${i}" title="추적 항목 수정">✎</button>
       </div>
       <div class="dt-tiles">
@@ -215,3 +244,5 @@ function renderDailyTasks() {
 }
 
 _dtDropV1();
+// 게임 이름 표기를 바꾸면 직업 이름·서버 이름이 들어간 카드를 다시 그린다
+document.addEventListener('namelang', () => { if (document.getElementById('sec-dailytasks')?.classList.contains('active')) renderDailyTasks(); });

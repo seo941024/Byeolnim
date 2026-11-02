@@ -43,7 +43,7 @@ function _hxMigrateOrder(job, jd) {
 }
 
 /* 아이콘을 게임 그림으로 바꾼 판. 서비스 워커가 그림을 캐시에서 먼저 주므로 주소에 붙여 새 그림을 받게 한다 */
-const _HX_ICON_V = '20261030';
+const _HX_ICON_V = '20261102';
 
 let hxSkill, hxMastery, hxBoost, hxCommon;
 let _hxJobData = null;   // 현재 직업의 HEXA 데이터 (비용 예외 참조용)

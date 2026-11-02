@@ -60,42 +60,13 @@ function _dtSaveState(ch, active, done) {
   _dtSaveAll(all);
 }
 
-/* 예전 트래커는 캐릭터를 따로 등록했다. { order, items: { id: { name, img, level, region, sex, active, date, done } } }
-   캐릭터 목록에 이름이 같은 캐릭터가 있으면 그 캐릭터의 항목·오늘 완료로 옮기고, 없으면 캐릭터 목록에 추가한다.
-   추가할 때 레벨을 모르면 캐릭터 창 직접 입력이 레벨을 비웠을 때와 같은 260을 쓴다.
-   랭킹 조회로 등록했던 캐릭터는 이름·지역을 넘겨 캐릭터 목록의 자동 재조회가 직업·서버를 채우게 한다.
-   예전 기록은 지우지 않고 같은 키 뒤에 _old를 붙여 남겨 둔다 */
-function _dtMigrateV1() {
-  let raw;
-  try { raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null'); } catch { return; }
-  if (!raw || typeof raw !== 'object' || raw.v === 2) return;
-  const old = Array.isArray(raw.order) && raw.items ? raw : { order: Object.keys(raw), items: raw };
-  try { localStorage.setItem(STORAGE_KEYS.dailyTasks + '_old', JSON.stringify(raw)); } catch {}
-  const next = { v: 2, items: {} };
-  let added = false;
-  old.order.filter(id => old.items[id]).forEach((oid, i) => {
-    const rec = old.items[oid];
-    const name = String(rec.name || '').trim();
-    if (!name) return;
-    let ch = state.chars.find(c => (c.name || '').toLowerCase() === name.toLowerCase());
-    if (!ch) {
-      if (state.chars.length >= MAX_CHARS) return;
-      ch = {
-        id: Date.now() + i, name, level: rec.level || 260, jobIdx: -1, checks: {}, cardBg: null, sex: rec.sex === 'm' ? 'm' : 'f',
-        fetched: rec.region ? { name, img: rec.img || '', level: rec.level || null, region: String(rec.region).toUpperCase(), syncedAt: 0 } : null,
-      };
-      state.chars.push(ch);
-      added = true;
-    }
-    const key = _dtKey(ch);
-    if (!next.items[key]) next.items[key] = { active: rec.active || [], date: rec.date, done: rec.done || [] };
-  });
-  _dtSaveAll(next);
-  if (added) {
-    if (state.activeChar < 0) state.activeChar = 0;
-    save();
-    renderAfterCharsChange();
-  }
+/* 예전 트래커는 캐릭터를 따로 등록하던 형식이다. { order, items: { id: { name, img, level, region, sex, active, date, done } } }
+   지수 요청으로 캐릭터 목록에 옮기지 않고 지운다. 잠깐 남겨 두던 예전 기록 사본 _old도 같이 지운다. 2026-11-02 */
+function _dtDropV1() {
+  let raw = null;
+  try { raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null'); } catch {}
+  if (!(raw && raw.v === 2)) localStorage.removeItem(STORAGE_KEYS.dailyTasks);
+  localStorage.removeItem(STORAGE_KEYS.dailyTasks + '_old');
 }
 
 // 활성 항목 클릭 → 오늘 완료(CLEAR) 토글
@@ -243,4 +214,4 @@ function renderDailyTasks() {
   });
 }
 
-_dtMigrateV1();
+_dtDropV1();

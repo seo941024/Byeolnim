@@ -3616,11 +3616,14 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
    측정상으로는 1px에서 이미 잉크 중심이 맞지만, 눈으로는 1px 더 내린 쪽이
    맞아 보인다고 해서 여기만 2px로 둔다. 되돌리려면 이 규칙만 지우면 된다. */
 .crystal-bar__type .icon-lbl { top: 2px; }
-/* 캐릭터 카드·캐릭터 정보의 서버 이름도 눈으로는 1px 더 내린 쪽이 맞아 보인다는 요청 */
-.char-card__world-line .icon-lbl { top: 1.5px; }
+/* 레벨과 한 줄에 놓인 서버 이름은 보정하지 않는다. 사이드바·캐릭터 목록·홈·숙제 트래커 카드 공통.
+   2026-11-02 글자·그림의 잉크 중심을 재 보니 레벨 글자와 서버 아이콘 중심은 같은 높이고, 서버 이름만 예전에 넣은
+   보정 1~2px만큼 아래에 있어 레벨 → 아이콘 → 서버 이름으로 계단처럼 내려가 보였다는 지수 의견.
+   보정을 빼면 세 중심이 0.5px 안으로 맞는다 */
+:is(.char-card__world-line, .ci-server, .hc__server, .dt-card__server) .icon-lbl { top: 0; }
 /* .ci-server는 말줄임을 쓰는데, 글자를 span으로 감싸면 잘림 처리가 그 span으로
    내려가야 하므로 같은 규칙을 물려준다. */
-.ci-server .icon-lbl { top: 2px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ci-server .icon-lbl { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 
 /* ── 메운디 ── */

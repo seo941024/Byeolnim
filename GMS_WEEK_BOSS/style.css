@@ -586,7 +586,8 @@ textarea, [contenteditable="true"] { cursor: text; }
   .char-card__portrait .char-card__btns { opacity: .22; transition: opacity .18s ease; }
   .char-card__portrait:hover .char-card__btns, .char-card__portrait:focus-within .char-card__btns { opacity: 1; }
 }
-.char-card__jobicon { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; margin: -8px -2px -8px 0; }
+/* 직업 일러스트는 이름 줄 안에 넣는다. 테두리·옅은 바탕은 캐릭터 목록 카드 .ci-jobicon과 같다 */
+.char-card__jobicon { flex-shrink: 0; width: 40px; height: 40px; object-fit: contain; border-radius: 9px; border: 1px solid var(--border-hl); background: var(--primary-l); }
 .char-card__stats { display: flex; flex-direction: column; gap: 1px; margin-top: 5px; padding-top: 5px; border-top: 1px solid var(--border); }
 .char-card__stat { display: flex; align-items: center; justify-content: space-between; gap: 6px; font-size: .68rem; }
 .char-card__stat span { color: var(--text-sub); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
@@ -2199,9 +2200,9 @@ select.sel.sf-stage-sel { width: 80px; flex-shrink: 0; font-size: .8rem; padding
 .ci-card__body { padding: 9px 11px; display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .ci-card__nameline { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; min-width: 0; }
 .ci-card__nameline > div { min-width: 0; }
-/* 직업 일러스트는 투명 배경 → 뒤에 박스가 보이지 않도록 배경 없음
+/* 직업 일러스트는 투명한 곳이 많아 밝은 그림이 카드 바탕에 묻힌다 → 테두리와 옅은 바탕으로 칸을 잡는다
    카드 폭(cqw) 기준으로 크기를 잡아 카드가 커지면 아이콘도 함께 커진다 */
-.ci-jobicon { width: clamp(36px, 13cqw, 64px); height: clamp(36px, 13cqw, 64px); object-fit: contain; border-radius: 9px; background: transparent; flex-shrink: 0; }
+.ci-jobicon { width: clamp(36px, 13cqw, 64px); height: clamp(36px, 13cqw, 64px); object-fit: contain; border-radius: 9px; border: 1px solid var(--border-hl); background: var(--primary-l); flex-shrink: 0; }
 .ci-card__name { font-size: clamp(.8rem, .6rem + 1.8cqw, 1.25rem); font-weight: 900; letter-spacing: -.2px; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__job { font-size: clamp(.6rem, .46rem + .8cqw, .88rem); color: var(--text-sub); font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .ci-card__meta {

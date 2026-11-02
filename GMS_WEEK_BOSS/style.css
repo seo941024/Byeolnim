@@ -3528,6 +3528,8 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 }
 .dt-addform__opt input { display: none; }
 .dt-addform__opt--checked { background: rgba(var(--hue),.15); border-color: rgba(var(--hue),.4); color: var(--text); }
+/* 같은 월드에서 이미 제한 수만큼 켠 별조각 상자·몬스터 파크 */
+.dt-addform__opt--off { opacity: .4; cursor: not-allowed; }
 /* 항목 2개씩 고정 폭으로 줄바꿈 — 이름 길이와 무관하게 상자 크기가 통일되고,
    최대 5개(3줄)만큼 높이를 항상 확보해서 항목 개수와 무관하게 카드 크기가 같아진다 */
 .dt-tiles {
@@ -3558,6 +3560,9 @@ tbody tr:hover { background: rgba(var(--hue),.05); }
 .dt-tile--active .dt-tile__emoji { filter: none; opacity: 1; }
 .dt-tile--active .dt-tile__label { color: var(--text); }
 .dt-tile--done { background: rgba(74,222,128,.1); border-color: rgba(74,222,128,.4); }
+/* 카드 안에서 직접 항목을 고르는 칸. 처음에는 항목 없이 이 칸만 있다 */
+.dt-tile--add { justify-content: center; border-style: dashed; background: transparent; color: var(--text-sub); font: inherit; font-size: .82rem; font-weight: 700; }
+.dt-tile--add:hover { color: var(--text); background: rgba(var(--hue),.08); }
 .dt-tile--done .dt-tile__img { opacity: .4; }
 .dt-tile--done .dt-tile__emoji { opacity: .35; }
 .dt-tile__stamp {

@@ -2,7 +2,7 @@
    숙제 트래커 — 캐릭터별 일일 숙제 체크리스트
    캐릭터는 캐릭터 목록 state.chars를 그대로 쓴다. 추가·삭제·순서·그림은 캐릭터 목록에서만 바꾸고,
    여기서는 캐릭터마다 추적할 항목과 오늘 완료만 저장한다. 2026-11-02 지수 결정.
-   처음 보는 캐릭터는 항목이 모두 켜진 채로 시작한다.
+   처음에는 모든 캐릭터가 항목 없이 시작하고, ✎ 항목 수정 창에서 켠다.
 ═══════════════════════════════════════════════ */
 
 /* 항목 그림은 모두 GMS v.270 게임 그림이다. 2026-10-31 픽셀 대조
@@ -37,57 +37,58 @@ function _dtTodayKey() {
 // 헥사도 id가 없으면 순번을 키로 쓰므로, 여기서 캐릭터에 id를 새로 붙이지 않는다
 function _dtKey(ch) { return ch.id != null ? String(ch.id) : 'n:' + String(ch.name || '').toLowerCase(); }
 
-/* 처음 켜 두는 항목. 별조각 상자는 월드당으로 세서 사실상 한 캐릭터만, 몬스터 파크는 월드당 두 캐릭터만 한다. 2026-11-02 지수 설명
-   그래서 같은 월드 캐릭터 중 캐릭터 목록 순서로 앞의 한 캐릭터·두 캐릭터에만 켠다. 서버를 모르는 캐릭터끼리는 한 월드로 친다 */
+/* 월드당 제한. 별조각 상자는 월드당으로 세서 사실상 한 캐릭터만, 몬스터 파크는 월드당 두 캐릭터만 한다. 2026-11-02 지수 설명
+   서버를 모르는 캐릭터끼리는 한 월드로 친다 */
 const DT_WORLD_LIMIT = { starspeck: 1, monsterpark: 2 };
-function _dtDefaultActive(ch) {
-  const world = ch.fetched?.world || '';
-  const rank = state.chars.filter(c => (c.fetched?.world || '') === world).indexOf(ch);
-  return DAILY_TASK_PRESETS.map(t => t.id).filter(id => !(id in DT_WORLD_LIMIT) || rank < DT_WORLD_LIMIT[id]);
-}
+const _dtWorld = ch => ch.fetched?.world || '';
 
-// { v: 2, items: { [캐릭터 키]: { active, date, done } } }. active는 항목 수정 창에서 직접 고른 캐릭터만 있다
+// { v: 3, items: { [캐릭터 키]: { active, date, done } } }
 function _dtLoadAll() {
   try {
     const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null');
-    if (raw && raw.v === 2 && raw.items) return raw;
+    if (raw && raw.v === 3 && raw.items) return raw;
   } catch {}
-  return { v: 2, wl: 1, items: {} };
+  return { v: 3, items: {} };
+}
+
+// 캐릭터 목록 순서대로 각 캐릭터의 켜진 항목. 월드당 제한 항목은 같은 월드에서 앞의 캐릭터부터 제한 수까지만 켠다.
+// 항목 수정 창이 제한을 넘겨 켜지 못하게 막지만, 캐릭터 서버가 바뀌는 경우까지 여기서 한 번 더 거른다
+function _dtActiveList() {
+  const items = _dtLoadAll().items, used = {};
+  return state.chars.map(ch => (items[_dtKey(ch)]?.active || []).filter(id => {
+    if (!(id in DT_WORLD_LIMIT)) return true;
+    const k = _dtWorld(ch) + '|' + id;
+    used[k] = (used[k] || 0) + 1;
+    return used[k] <= DT_WORLD_LIMIT[id];
+  }));
 }
 function _dtSaveAll(all) { localStorage.setItem(STORAGE_KEYS.dailyTasks, JSON.stringify(all)); }
 
 // 캐릭터 하나의 오늘자 상태. 저장된 날짜가 오늘(9시 기준)이 아니면 done을 비운 채로 반환 → 자동 초기화.
-// 항목을 직접 고른 적이 없는 캐릭터는 _dtDefaultActive를 따른다
 function _dtState(ch) {
   const rec = _dtLoadAll().items[_dtKey(ch)];
   return {
-    active: rec?.active || _dtDefaultActive(ch),
+    active: _dtActiveList()[state.chars.indexOf(ch)] || [],
     done: rec && rec.date === _dtTodayKey() ? (rec.done || []) : [],
   };
 }
-// active를 넘기지 않으면 직접 고른 항목이 있을 때만 그대로 둔다. 완료 체크만으로 기본 항목이 굳지 않게 한다
+// active를 넘기지 않으면 저장된 항목을 그대로 둔다
 function _dtSaveState(ch, active, done) {
   const all = _dtLoadAll();
   const key = _dtKey(ch);
-  const keep = active !== undefined ? active : all.items[key]?.active;
-  all.items[key] = { ...(keep ? { active: keep } : {}), date: _dtTodayKey(), done };
+  all.items[key] = { active: active !== undefined ? active : (all.items[key]?.active || []), date: _dtTodayKey(), done };
   _dtSaveAll(all);
 }
 
-/* 예전 트래커는 캐릭터를 따로 등록하던 형식이다. { order, items: { id: { name, img, level, region, sex, active, date, done } } }
-   지수 요청으로 캐릭터 목록에 옮기지 않고 지운다. 잠깐 남겨 두던 예전 기록 사본 _old도 같이 지운다. 2026-11-02 */
-function _dtDropV1() {
+/* 예전 기록은 지운다. 2026-11-02 지수 요청
+   - v1: 캐릭터를 트래커에 따로 등록하던 형식 { order, items: { id: { name, img, ... } } }. 캐릭터 목록으로 옮기지 않는다
+   - v2: 캐릭터 목록을 쓰되 처음에 항목이 켜진 채로 시작하던 때의 기록. 처음은 항목 없이 시작하기로 바꾸며 비운다
+   잠깐 남겨 두던 v1 사본 _old도 같이 지운다 */
+function _dtDropOld() {
   let raw = null;
   try { raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.dailyTasks) || 'null'); } catch {}
-  if (!(raw && raw.v === 2)) localStorage.removeItem(STORAGE_KEYS.dailyTasks);
+  if (!(raw && raw.v === 3)) localStorage.removeItem(STORAGE_KEYS.dailyTasks);
   localStorage.removeItem(STORAGE_KEYS.dailyTasks + '_old');
-  // 월드당 제한 전에는 완료 체크만 해도 6개 전부가 active로 저장됐다. 그대로 두면 제한이 안 걸리므로 한 번 지운다
-  if (raw && raw.v === 2 && !raw.wl) {
-    const all = DAILY_TASK_PRESETS.map(t => t.id).join();
-    Object.values(raw.items || {}).forEach(r => { if (r.active && r.active.join() === all) delete r.active; });
-    raw.wl = 1;
-    _dtSaveAll(raw);
-  }
 }
 
 // 활성 항목 클릭 → 오늘 완료(CLEAR) 토글
@@ -137,14 +138,20 @@ function _dtCardHtml(ch, i) {
         <button class="dt-card__edit" data-ci="${i}" title="추적 항목 수정">✎</button>
       </div>
       <div class="dt-tiles">
-        ${activeTasks.length
-          ? activeTasks.map(t => _dtTileHtml(i, t, done)).join('')
-          : '<p class="empty" style="margin:4px 0">추적할 항목이 없어요.</p>'}
+        ${activeTasks.map(t => _dtTileHtml(i, t, done)).join('')}
+        ${activeTasks.length < DAILY_TASK_PRESETS.length ? `<button type="button" class="dt-tile dt-tile--add" data-ci="${i}">+ 항목 추가</button>` : ''}
       </div>
     </div>`;
 }
 
 /* ── 추적 항목 수정 창 ── */
+
+// 이 캐릭터를 뺀 같은 월드 캐릭터들이 이미 제한 수만큼 이 항목을 켰는지
+function _dtWorldFull(i, id) {
+  if (!(id in DT_WORLD_LIMIT)) return false;
+  const world = _dtWorld(state.chars[i]), list = _dtActiveList();
+  return state.chars.filter((c, j) => j !== i && _dtWorld(c) === world && list[j].includes(id)).length >= DT_WORLD_LIMIT[id];
+}
 
 function _dtCloseEditModal() {
   document.getElementById('dtAddOverlay')?.classList.remove('open');
@@ -187,11 +194,14 @@ function _dtRenderEditModal() {
           </span>
         </div>
         <div class="dt-addform__presets">
-          ${DAILY_TASK_PRESETS.map(t => `
-            <label class="dt-addform__opt ${_dtNewActive.has(t.id) ? 'dt-addform__opt--checked' : ''}" data-preset="${t.id}">
-              <input type="checkbox" ${_dtNewActive.has(t.id) ? 'checked' : ''} />
+          ${DAILY_TASK_PRESETS.map(t => {
+            const on = _dtNewActive.has(t.id), full = !on && _dtWorldFull(_dtEditIdx, t.id);
+            return `
+            <label class="dt-addform__opt ${on ? 'dt-addform__opt--checked' : ''}${full ? ' dt-addform__opt--off' : ''}" data-preset="${t.id}"${full ? ` title="같은 월드에서 ${t.label}은 ${DT_WORLD_LIMIT[t.id]}캐릭터까지"` : ''}>
+              <input type="checkbox" ${on ? 'checked' : ''} />
               <span>${t.label}</span>
-            </label>`).join('')}
+            </label>`;
+          }).join('')}
         </div>
       </div>
       <div class="modal__foot">
@@ -205,12 +215,12 @@ function _dtRenderEditModal() {
     label.addEventListener('click', e => {
       e.preventDefault();
       const id = label.dataset.preset;
+      if (label.classList.contains('dt-addform__opt--off')) return;
       if (_dtNewActive.has(id)) _dtNewActive.delete(id); else _dtNewActive.add(id);
       _dtRenderEditModal();
     });
   });
   document.getElementById('dtStepSave').addEventListener('click', () => {
-    if (_dtNewActive.size === 0) return;
     const activeIds = DAILY_TASK_PRESETS.map(t => t.id).filter(id => _dtNewActive.has(id));
     _dtSaveState(ch, activeIds, _dtState(ch).done.filter(d => activeIds.includes(d)));
     _dtCloseEditModal();
@@ -230,7 +240,10 @@ function renderDailyTasks() {
       ? `<div class="dt-grid">${state.chars.map((ch, i) => _dtCardHtml(ch, i)).join('')}</div>`
       : '<p class="empty">캐릭터 목록에서 캐릭터를 추가하세요.</p>'}
   `;
-  sec.querySelectorAll('.dt-tile').forEach(tile => {
+  sec.querySelectorAll('.dt-tile--add').forEach(btn => {
+    btn.addEventListener('click', () => _dtOpenEditModal(+btn.dataset.ci));
+  });
+  sec.querySelectorAll('.dt-tile[data-task]').forEach(tile => {
     tile.addEventListener('click', () => {
       const ch = state.chars[+tile.dataset.ci];
       if (!ch) return;
@@ -243,6 +256,6 @@ function renderDailyTasks() {
   });
 }
 
-_dtDropV1();
+_dtDropOld();
 // 게임 이름 표기를 바꾸면 직업 이름·서버 이름이 들어간 카드를 다시 그린다
 document.addEventListener('namelang', () => { if (document.getElementById('sec-dailytasks')?.classList.contains('active')) renderDailyTasks(); });

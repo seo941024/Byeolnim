@@ -410,8 +410,8 @@ function renderCharListInto(ul) {
   const li = document.createElement('li');
   li.className = 'char-card active';
   const portrait = ch.fetched?.img
-    ? `<img src="${ch.fetched.img}" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('char-card__portrait--no')" />`
-    : `<img src="images/dailytasks/default.png" alt="" />`;
+    ? `<img src="${ch.fetched.img}" onerror="this.src='${charDefaultImg(ch)}';this.parentElement.classList.add('char-card__portrait--no')" />`
+    : `<img src="${charDefaultImg(ch)}" alt="" />`;
   // 홈에 복사한 목록이면 홈 카드로 그린다
   if (ul.closest('#homeMine')) {
     li.classList.add('char-card--home');
@@ -852,6 +852,11 @@ function charJobHeadSrc(ch) {
   if (!asset) return '';
   return `images/jobs/Head/${asset}.${asset === 'Lethe' ? 'webp' : 'png'}?v=20261031a`;
 }
+/* 랭킹 그림이 없을 때 쓰는 기본 캐릭터. 코디 시뮬레이터의 기본 헤어·성형·피부에 지수가 고른 옷을 입혀 조립한 96×96 그림이고,
+   2026-11-02 maplestory.io 렌더와 픽셀이 모두 같은 것을 확인했다.
+   여자 White Tubetop 1041002·Red Miniskirt 1061002, 남자 White Undershirt 1040002·Blue Jean Shorts 1060002,
+   둘 다 Red Rubber Boots 1072001·Wooden Club 1322005. 캐릭터 창에서 여자·남자를 고르고, 고르지 않은 캐릭터는 여자 */
+function charDefaultImg(ch) { return `images/char/default_${ch?.sex === 'm' ? 'm' : 'f'}.png`; }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];
   return ext ? `images/world_px/${encodeURIComponent(world)}.${ext}?v=${WORLD_ICON_VER}` : '';

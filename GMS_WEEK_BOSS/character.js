@@ -5,7 +5,7 @@
    ============================================= */
 
 /* ── 캐릭터 모달 ── */
-let editIdx = -1, selectedJob = 0, fetchedInfo = null, selectedCardBg = null;
+let editIdx = -1, selectedJob = 0, fetchedInfo = null, selectedCardBg = null, selectedSex = 'f';
 
 function openCharModal(idx = -1) {
   const ch = idx >= 0 ? state.chars[idx] : null;
@@ -13,6 +13,8 @@ function openCharModal(idx = -1) {
   selectedJob = ch ? ch.jobIdx : 0;
   fetchedInfo = ch?.fetched ? { ...ch.fetched } : null;
   selectedCardBg = ch ? (ch.cardBg || null) : null;
+  selectedSex = ch?.sex === 'm' ? 'm' : 'f';
+  syncCharSexTabs();
   document.getElementById('modalCharTitle').textContent = ch ? '캐릭터 수정' : '캐릭터 추가';
   document.getElementById('inpName').value  = ch ? ch.name  : '';
   document.getElementById('inpLevel').value = ch ? ch.level : '';
@@ -25,6 +27,17 @@ function openCharModal(idx = -1) {
   renderCardBgGrid();
   document.getElementById('overlayChar').classList.add('open');
 }
+
+/* ── 기본 캐릭터 성별 ── 랭킹 그림이 없을 때 보일 기본 캐릭터. app.js charDefaultImg */
+function syncCharSexTabs() {
+  document.querySelectorAll('#charSexTabs [data-sex]').forEach(b => b.classList.toggle('active', b.dataset.sex === selectedSex));
+}
+document.getElementById('charSexTabs').addEventListener('click', e => {
+  const b = e.target.closest('[data-sex]');
+  if (!b) return;
+  selectedSex = b.dataset.sex;
+  syncCharSexTabs();
+});
 
 /* ── 카드 배경 선택 그리드 ──
    images/bg/bg{0..CARD_BG_COUNT-1}에 png 또는 webp로 넣어두면 뜨는 방식.
@@ -194,9 +207,9 @@ document.getElementById('modalCharSave').addEventListener('click', () => {
   if (dup >= 0) return alert('이미 추가된 캐릭터입니다.');
 
   if (editIdx >= 0) {
-    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched, cardBg: selectedCardBg };
+    state.chars[editIdx] = { ...state.chars[editIdx], name, level, jobIdx: selectedJob, fetched, cardBg: selectedCardBg, sex: selectedSex };
   } else {
-    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched, cardBg: selectedCardBg });
+    state.chars.push({ id: Date.now(), name, level, jobIdx: selectedJob, checks: {}, fetched, cardBg: selectedCardBg, sex: selectedSex });
     state.activeChar = state.chars.length - 1;
   }
   save();
@@ -428,8 +441,8 @@ function renderCharInfo() {
     // 그릴 때 다른 출처 이미지면 캔버스가 오염돼 막히기 때문. 화면에 보이는
     // 모습은 완전히 동일(프록시가 원본 그대로 스트리밍).
     const portrait = f?.img
-      ? `<img src="${proxiedImgSrc(f.img)}" crossorigin="anonymous" onerror="this.src='images/dailytasks/default.png';this.parentElement.classList.add('cg-portrait--no')" />`
-      : `<img src="images/dailytasks/default.png" alt="" />`;
+      ? `<img src="${proxiedImgSrc(f.img)}" crossorigin="anonymous" onerror="this.src='${charDefaultImg(ch)}';this.parentElement.classList.add('cg-portrait--no')" />`
+      : `<img src="${charDefaultImg(ch)}" alt="" />`;
     const lv = f?.level || ch.level;
     const headSrc = charJobHeadSrc(ch);
     const headHtml = headSrc ? `<img class="ci-jobicon" src="${headSrc}" onerror="this.style.display='none'" />` : '';
@@ -629,7 +642,7 @@ async function exportCharCard(idx) {
     const bgImg = await loadFirstAvailable(cardBgCandidates(id));
     if (bgImg) drawImgCover(ctx, bgImg, 0, 0, PW, H);
   }
-  const charImg = await loadFirstAvailable(f.img ? [proxiedImgSrc(f.img), 'images/dailytasks/default.png'] : ['images/dailytasks/default.png']);
+  const charImg = await loadFirstAvailable(f.img ? [proxiedImgSrc(f.img), charDefaultImg(ch)] : [charDefaultImg(ch)]);
   if (charImg) {
     const pct = 0.92;
     const boxW = PW * pct, boxH = H * pct;

@@ -89,7 +89,7 @@ function _wcModalBodyHtml(item, res) {
       <img class="wc-result__img" src="${_wcImgSrc(item)}" alt="" />
       <div class="wc-result__body">
         <div class="wc-result__item">${gameName(item.name, item.en)}</div>
-        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${_wcCurrentWorld()} - ${res.channel}채널</span></div>
+        <div class="wc-result__pick">${_wcWorldIconHtml()}<span class="icon-lbl">${escHtml(worldName(_wcCurrentWorld()))} - ${res.channel}채널</span></div>
       </div>
     </div>`;
 }

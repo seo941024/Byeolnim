@@ -31,7 +31,10 @@ function openCharModal(idx = -1) {
 // 게임 이름 표기를 바꾸면 직업 이름이 들어간 캐릭터 목록 화면과 열려 있는 캐릭터 창의 직업 목록을 다시 그린다
 document.addEventListener('namelang', () => {
   renderCharInfo();
-  if (document.getElementById('overlayChar').classList.contains('open')) renderJobGrid(document.getElementById('inpJobSearch').value);
+  if (document.getElementById('overlayChar').classList.contains('open')) {
+    renderJobGrid(document.getElementById('inpJobSearch').value);
+    syncWorldDd();
+  }
 });
 
 /* ── 기본 캐릭터 성별 ── 랭킹 그림이 없을 때 보일 기본 캐릭터. app.js charDefaultImg */
@@ -148,7 +151,7 @@ document.getElementById('lkBtn').addEventListener('click', async () => {
         ${j.data.img ? `<img class="lk-card__av" src="${j.data.img}" onerror="this.style.display='none'" />` : ''}
         <div class="lk-card__info">
           <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(jobLabel(j.data.job))}</span></div>
-          <div class="lk-card__meta">Lv.${j.data.level} · ${escHtml(j.data.region)} ${escHtml(j.data.world)} · 전체 ${j.data.rank.toLocaleString()}위</div>
+          <div class="lk-card__meta">Lv.${j.data.level} · ${escHtml(worldName(j.data.world))} · 전체 ${j.data.rank.toLocaleString()}위</div>
           <div class="lk-card__exp">누적 EXP ${Number(j.data.exp).toLocaleString()}</div>
         </div>
       </div>
@@ -484,7 +487,7 @@ function renderCharInfo() {
           </div>
           <div class="ci-card__meta">
             <span class="ci-lv">Lv.${lv}</span>
-            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>
+            <span class="ci-server">${sIconHtml}<span class="icon-lbl">${escHtml(worldName(world))}</span></span>
           </div>
         </div>
         ${rankRow}
@@ -688,14 +691,14 @@ async function exportCharCard(idx) {
   ctx.font = F(19, true);
   ctx.fillText(`Lv.${lv}`, tx, 102);
 
-  // 서버 아이콘 + "NA Kronos" 형태로 화면과 동일하게
+  // 서버 아이콘 + 서버 이름, 화면과 동일하게
   const sIconSrc = world ? serverIconSrc(world) : '';
   const sIconImg = await loadOptional(sIconSrc);
   let worldTx = tx;
   if (sIconImg) { drawImgContain(ctx, sIconImg, tx, 112, 16, 16); worldTx = tx + 22; }
   ctx.fillStyle = textColor;
   ctx.font = F(14, false);
-  ctx.fillText(`${region} ${world}`.trim(), worldTx, 124);
+  ctx.fillText(worldName(world), worldTx, 124);
 
   if (f.rank) {
     divider(140);
@@ -746,7 +749,7 @@ function syncWorldDd() {
     const btn = dd.querySelector('.world-dd__btn'), list = dd.querySelector('.world-dd__list');
     const opt = (o, indent) => {
       const src = o.value ? serverIconSrc(o.value) : '';
-      return `<button type="button" class="world-dd__opt${indent ? ' is-sub' : ''}" role="option" data-v="${o.value}">${src ? `<img src="${src}" alt="">` : '<span class="world-dd__none"></span>'}<span>${escHtml(o.textContent)}</span></button>`;
+      return `<button type="button" class="world-dd__opt${indent ? ' is-sub' : ''}" role="option" data-v="${o.value}">${src ? `<img src="${src}" alt="">` : '<span class="world-dd__none"></span>'}<span>${escHtml(o.value ? worldName(o.value) : o.textContent)}</span></button>`;
     };
     list.innerHTML = [...sel.children].map(c => c.tagName === 'OPTGROUP'
       ? `<div class="world-dd__grp">${escHtml(c.label)}</div>` + [...c.children].map(o => opt(o, true)).join('')
@@ -767,6 +770,9 @@ function syncWorldDd() {
   }
   dd.querySelector('.world-dd__list').hidden = true;   // 창을 다시 열 때 목록이 열린 채 남지 않게
   const o = sel.selectedOptions[0], v = sel.value, src = v ? serverIconSrc(v) : '';
-  dd.querySelector('.world-dd__btn').innerHTML = `${src ? `<img src="${src}" alt="">` : ''}<span>${escHtml(o ? o.textContent : '선택 안 함')}</span><span class="world-dd__arrow">▾</span>`;
-  dd.querySelectorAll('.world-dd__opt').forEach(b => b.classList.toggle('is-cur', b.dataset.v === v));
+  dd.querySelector('.world-dd__btn').innerHTML = `${src ? `<img src="${src}" alt="">` : ''}<span>${escHtml(v ? worldName(v) : (o ? o.textContent : '선택 안 함'))}</span><span class="world-dd__arrow">▾</span>`;
+  dd.querySelectorAll('.world-dd__opt').forEach(b => {
+    b.classList.toggle('is-cur', b.dataset.v === v);
+    if (b.dataset.v) b.lastElementChild.textContent = worldName(b.dataset.v);   // 게임 이름 표기를 바꿨을 때
+  });
 }

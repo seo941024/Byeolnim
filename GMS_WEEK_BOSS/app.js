@@ -438,9 +438,10 @@ function renderCharListInto(ul) {
         </div>
         <div class="char-card__meta">
           <span class="char-card__lv">Lv.${ch.level}</span>
-          ${world ? `<span class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
+          ${world ? `<span class="char-card__world-line">${sIconHtml}<span class="icon-lbl">${escHtml(worldName(world))}</span></span>` : ''}
         </div>
         ${charExpHtml(ch)}
+        ${charCardSpacerHtml(ch, 'char-card__stat')}
         <div class="char-card__stats">
           ${rank ? `<div class="char-card__stat"><span>${escHtml(region)} 랭킹</span><b>#${rank.toLocaleString()}</b></div>` : ''}
           <div class="char-card__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
@@ -468,6 +469,14 @@ function charExpHtml(ch) {
   return `<div class="hc__exp"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"><i style="width:${pct.toFixed(2)}%"></i></span><span class="hc__exp-val">${pct.toFixed(3)}%</span></div>`;
 }
 
+/* 직접 입력한 캐릭터처럼 경험치·랭킹이 없으면 카드가 낮아진다. 빠진 줄 자리에 같은 모양의 보이지 않는 줄을 넣어
+   다른 카드와 높이를 맞춘다. 실제 줄과 같은 요소라 글꼴·화면 폭이 바뀌어도 높이가 같다. statCls: 랭킹 줄 클래스 */
+function charCardSpacerHtml(ch, statCls) {
+  const exp = charExpHtml(ch) ? '' : '<div class="hc__exp cc-ph" aria-hidden="true"><span class="hc__exp-lbl">경험치</span><span class="hc__exp-track"></span><span class="hc__exp-val">0%</span></div>';
+  const rank = ch.fetched?.rank ? '' : `<div class="${statCls} cc-ph" aria-hidden="true"><span>랭킹</span><b>#0</b></div>`;
+  return exp + rank;
+}
+
 /* 홈의 내 캐릭터 카드. 캐릭터 목록 카드와 같은 정보에 경험치 막대를 더했다.
    수정·삭제는 왼쪽 캐릭터 그림의 위쪽 왼편, 캐릭터 머리 위 빈 배경에 얹는다 */
 function charHomeCardHtml(ch, i, portrait) {
@@ -491,9 +500,10 @@ function charHomeCardHtml(ch, i, portrait) {
         </div>
         <div class="hc__meta">
           <span class="hc__lv">Lv.${lv}</span>
-          ${world ? `<span class="hc__server">${sIcon ? `<img src="${sIcon}" alt="" onerror="this.style.display='none'" />` : ''}<span class="icon-lbl">${escHtml(region)} ${escHtml(world)}</span></span>` : ''}
+          ${world ? `<span class="hc__server">${sIcon ? `<img src="${sIcon}" alt="" onerror="this.style.display='none'" />` : ''}<span class="icon-lbl">${escHtml(worldName(world))}</span></span>` : ''}
         </div>
         ${charExpHtml(ch)}
+        ${charCardSpacerHtml(ch, 'hc__stat')}
         <div class="hc__stats">
           ${f?.rank ? `<div class="hc__stat"><span>${escHtml(region)} 랭킹</span><b>#${f.rank.toLocaleString()}</b></div>` : ''}
           <div class="hc__stat"><span>주간 수익</span>${charWeeklyHtml(ch)}</div>
@@ -866,6 +876,11 @@ function charJobHeadSrc(ch) {
    여자 White Tubetop 1041002·Red Miniskirt 1061002, 남자 White Undershirt 1040002·Blue Jean Shorts 1060002,
    둘 다 Red Rubber Boots 1072001·Wooden Club 1322005. 캐릭터 창에서 여자·남자를 고르고, 고르지 않은 캐릭터는 여자 */
 function charDefaultImg(ch) { return `images/char/default_${ch?.sex === 'm' ? 'm' : 'f'}.png`; }
+/* 서버 이름. 게임 이름 표기가 한글이면 한글로 쓴다. 지역 NA·EU는 서버 이름이 모두 달라 붙이지 않는다.
+   베라·스카니아·챌린저스는 나무위키 GMS 문서, 루나는 KMS 서버 이름, 크로노스·하이페리온·솔리스는 공식 한글 이름이 없어
+   인벤 GMS 게시판 글 제목의 표기를 따랐다. 2026-11-02 확인 */
+const WORLD_NAME_KO = { Kronos:'크로노스', Hyperion:'하이페리온', Bera:'베라', Scania:'스카니아', Luna:'루나', Solis:'솔리스', Challengers:'챌린저스' };
+function worldName(world) { return world ? gameName(WORLD_NAME_KO[world], world) : ''; }
 function serverIconSrc(world) {
   const ext = SERVER_ASSET_EXT[world];
   return ext ? `images/world_px/${encodeURIComponent(world)}.${ext}?v=${WORLD_ICON_VER}` : '';

@@ -334,7 +334,7 @@ function _dtWireStep1() {
           ${j.data.img ? `<img class="lk-card__av" src="${escHtml(j.data.img)}" onerror="this.style.display='none'" />` : ''}
           <div class="lk-card__info">
             <div class="lk-card__name">${escHtml(j.data.name)} <span class="lk-card__job">${escHtml(jobLabel(j.data.job))}</span></div>
-            <div class="lk-card__meta">Lv.${escHtml(j.data.level)} · ${escHtml(j.data.region)} ${escHtml(j.data.world)}</div>
+            <div class="lk-card__meta">Lv.${escHtml(j.data.level)} · ${escHtml(worldName(j.data.world))}</div>
           </div>
         </div>
         <button class="sbtn sbtn--primary w100" id="dtLkUse" style="margin-top:8px">이 캐릭터로 계속</button>`;

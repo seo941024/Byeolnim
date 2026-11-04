@@ -14,9 +14,9 @@
 |---|---|
 | ![코디 시뮬레이터](docs/images/coordi.png) | ![보스 정보](docs/images/bosshp.png) |
 
-| 스타포스 시뮬레이터 | 서버 상태 |
+| 스타포스 시뮬레이터 | 오늘의 채널 추천 |
 |---|---|
-| ![스타포스 시뮬레이터](docs/images/starforce.png) | ![서버 상태](docs/images/serverstatus.png) |
+| ![스타포스 시뮬레이터](docs/images/starforce.png) | ![오늘의 채널 추천](docs/images/wantchannel.png) |
 
 ---
 

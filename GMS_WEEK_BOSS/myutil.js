@@ -19,6 +19,9 @@
      키보드는 그 창을 눌러 둔 동안만 받는다. 게임 창을 누르면 키는 게임이 가져간다
    - 남은 시간은 끝나는 시각에서 지금 시각을 빼서 구한다. 게임 창이 앞에 있으면 브라우저가 가려진 탭의 타이머를 늦추므로,
      PIP 창이 열려 있으면 그 창의 타이머로도 다시 그린다
+   - 효과 중 아이콘: 게임처럼 아래에서부터 효과 시간 동안 진한 막이 차오르고, 끝나기 전 깜빡이다 꺼진다, 지수 요청.
+     이 연출은 게임 데이터에 그림이나 수치로 없어 게임 녹화로 맞추기 전 임시 값이다. 2026-11-04 지수 요청으로 먼저 넣었다.
+     막 진하기·깜빡임 간격은 style.css .lt-fill·ltBlink, 깜빡임을 시작하는 남은 시간은 LT_BLINK_MAX_SEC
    - 이름은 게임 영어 이름 그대로 적는다, 지수 요청
    - 그림·초: GMS v.270 Etc/VCore.img/vSkill/CoreData/<코어>의 icon·iconDisabled와 spCoreOption/cond/cooltime.
      30000001이 Lethal Strike I, 스킬 400007003이고 30000023이 Fatal Strike I, 스킬 400007013이다.
@@ -31,6 +34,9 @@ const LT_TICK_MS = 100;
 const LT_DIGITS = 'images/myutil/num/digits.png?v=20261031a';
 const LT_SWAP_SEC = 60;
 const LT_KEYS = { Space: 'start', Escape: 'reset', KeyR: 'swap' };
+// 효과가 이 초만큼 남으면 깜빡이기 시작한다. 효과 시간의 절반을 넘지는 않는다. 임시 값, 녹화로 맞출 것
+const LT_BLINK_MAX_SEC = 3;
+const LT_ICON_PX = 32;   // 아이콘 원본 도트 크기. 막은 이 한 칸씩 올라간다
 // sec: 재발동 시간, buff: 효과 시간. end: 끝나는 시각(ms), 0이면 멈춘 상태. mode: 'skill' 발동 뒤, 'swap' 스위칭 뒤. done: 다 센 뒤
 const LT_TIMERS = [
   { id: 'lethal', name: 'Lethal Strike I', sec: 60, buff: 10,
@@ -51,6 +57,7 @@ function _ltBoardHtml(t, pip) {
       <span class="lt-ico-wrap">
         <img class="lt-ico lt-ico--on" src="${t.icon}" alt="">
         <img class="lt-ico lt-ico--off" src="${t.iconOff}" alt="">
+        <span class="lt-fill"></span>
         <span class="lt-buffno"></span>
       </span>
       <div class="lt-main">
@@ -92,6 +99,9 @@ function _ltRender() {
     const icoText = icoSec ? String(icoSec) : '';
     const text = state === 'ready' ? '발동 가능' : state === 'swap' ? String(Math.ceil(left / 1000)) : String(LT_SWAP_SEC);
     const pct = state === 'ready' ? 0 : state === 'swap' ? left / (LT_SWAP_SEC * 10) : 100;
+    // 효과 중 아이콘 막: 지난 비율만큼 아래에서부터 도트 한 칸 단위로 채운다. 아이콘은 2배라 한 칸이 2px
+    const fillRows = state === 'buff' ? Math.round((1 - buffLeft / (t.buff * 1000)) * LT_ICON_PX) : 0;
+    const blink = state === 'buff' && buffLeft <= Math.min(LT_BLINK_MAX_SEC, t.buff / 2) * 1000;
     _ltBoards(t).forEach(b => {
       b.dataset.state = state;
       const el = b.querySelector('.lt-time');
@@ -102,6 +112,8 @@ function _ltRender() {
         no.innerHTML = [...icoText].map(n => `<i class="lt-d${n}"></i>`).join('');
       }
       b.querySelector('.lt-bar i').style.width = pct + '%';
+      b.querySelector('.lt-fill').style.height = fillRows * 2 + 'px';
+      b.classList.toggle('lt-blink', blink);
     });
   });
   if (!LT_TIMERS.some(t => t.end)) _ltStopTimers();
